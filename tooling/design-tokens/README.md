@@ -6,12 +6,12 @@ Brand colors, typography, spacing, and Liquid Glass semantics are defined in **R
 
 The `tran-tokens-codegen` binary emits platform artifacts:
 
-| Output | Purpose |
-|--------|---------|
-| `packages/core-ts/src/generated/tokens.json` | JSON snapshot for tooling |
-| `packages/core-ts/src/generated/tokens.ts` | Typed theme API for `@tran/core` |
-| `apps/web/src/styles/generated/theme.css` | CSS custom properties (`:root` / `[data-theme]`) |
-| `apps/native/src/generated/brandTokens.ts` | RN re-export stub (same contract as web) |
+| Output                                       | Purpose                                          |
+| -------------------------------------------- | ------------------------------------------------ |
+| `packages/core-ts/src/generated/tokens.json` | JSON snapshot for tooling                        |
+| `packages/core-ts/src/generated/tokens.ts`   | Typed theme API for `@tran/core`                 |
+| `apps/web/src/styles/generated/theme.css`    | CSS custom properties (`:root` / `[data-theme]`) |
+| `apps/native/src/generated/brandTokens.ts`   | RN re-export stub (same contract as web)         |
 
 ## Commands
 

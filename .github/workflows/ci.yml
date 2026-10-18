@@ -27,8 +27,11 @@ jobs:
       - name: Clippy Linter
         run: cargo clippy --workspace --all-targets -- -D warnings
 
-      - name: Run Cargo Tests
-        run: cargo test --workspace --verbose
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Tests + 100% coverage gate (unit, parity fixtures, HTTP integration)
+        run: cargo llvm-cov --workspace --ignore-filename-regex 'tran-tokens-codegen|main.rs' --fail-under-lines 100 --fail-under-regions 100
 
       - name: Sync design tokens and verify generated artifacts
         run: |
@@ -62,5 +65,36 @@ jobs:
       - name: Typecheck
         run: pnpm run typecheck
 
-      - name: Run TypeScript Tests
-        run: pnpm run test:ts
+      - name: Typecheck E2E
+        run: pnpm --filter e2e typecheck
+
+      - name: Tests + 100% coverage gate (unit, parity fixtures, components)
+        run: pnpm run test:ts:coverage
+
+  e2e:
+    name: E2E + BDD (Playwright, real API + web)
+    runs-on: ubuntu-latest
+    needs: [rust-check, node-check]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build:libs
+      - run: pnpm --filter e2e exec playwright install --with-deps chromium
+      - name: Run Gherkin scenarios
+        run: pnpm run test:e2e
+        env:
+          CI: 'true'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results

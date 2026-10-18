@@ -66,11 +66,11 @@ Evaluates voting eligibility using **Rust Core** (`crates/rust-core/src/voting.r
 
 ### Headers
 
-| Header | Purpose |
-| :----- | :------ |
-| `Content-Type` | `application/json` |
-| `X-Forwarded-For` / `X-Real-IP` | Client IP for country stub |
-| `X-Debug-Country` | **Development only** — force ISO country (`US`, `IN`, `NP`, `BR`, …) |
+| Header                          | Purpose                                                              |
+| :------------------------------ | :------------------------------------------------------------------- |
+| `Content-Type`                  | `application/json`                                                   |
+| `X-Forwarded-For` / `X-Real-IP` | Client IP for country stub                                           |
+| `X-Debug-Country`               | **Development only** — force ISO country (`US`, `IN`, `NP`, `BR`, …) |
 
 Loopback addresses default to `US`; private ranges stub to `IN` for demo variety.
 
@@ -144,11 +144,11 @@ const result = await client.checkVoteEligibility({ age: 20 });
 
 ## Route modules
 
-| Path | Rust module |
-| :--- | :---------- |
-| `/api/health` | `apps/api/src/routes/health.rs` |
-| `/api/tran/info` | `apps/api/src/routes/tran.rs` |
-| `/api/vote/eligibility` | `apps/api/src/routes/vote.rs` |
+| Path                    | Rust module                     |
+| :---------------------- | :------------------------------ |
+| `/api/health`           | `apps/api/src/routes/health.rs` |
+| `/api/tran/info`        | `apps/api/src/routes/tran.rs`   |
+| `/api/vote/eligibility` | `apps/api/src/routes/vote.rs`   |
 
 Router wiring: `apps/api/src/routes/mod.rs`.
 

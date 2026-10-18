@@ -35,10 +35,10 @@ flowchart LR
 
 ## Offline vs API
 
-| Path | Where rules run | Country source |
-| :--- | :-------------- | :------------- |
-| **Offline** | `evaluateVoteEligibilityOffline` in `@tran/core` (mirrors `voting.rs`) | User picks country in the UI |
-| **API** | `TranEngine::evaluate_vote_eligibility` in Rust | Stub geo from IP + `X-Debug-Country` |
+| Path        | Where rules run                                                        | Country source                       |
+| :---------- | :--------------------------------------------------------------------- | :----------------------------------- |
+| **Offline** | `evaluateVoteEligibilityOffline` in `@tran/core` (mirrors `voting.rs`) | User picks country in the UI         |
+| **API**     | `TranEngine::evaluate_vote_eligibility` in Rust                        | Stub geo from IP + `X-Debug-Country` |
 
 Web: `apps/web/src/hooks/useTranApi.ts`  
 Native: `apps/native/src/hooks/useTranApi.ts`
@@ -55,11 +55,11 @@ Native: `apps/native/src/hooks/useTranApi.ts`
 
 See [DESIGN.md](./DESIGN.md).
 
-## Change voting rules
+## Change voting rules (test-first)
 
-1. Edit `crates/rust-core/src/voting.rs` (source of truth).
-2. Run `cargo test -p rust-core`.
-3. Mirror logic in `packages/core-ts/src/voting.ts` for offline parity.
+1. Add/adjust a case in `fixtures/vote-eligibility.json` — Rust and TS tests go red.
+2. Edit `crates/rust-core/src/voting.rs` (source of truth); `cargo test -p rust-core`.
+3. Mirror logic in `packages/core-ts/src/voting.ts`; `pnpm test:ts`.
 4. API handlers call the engine — no duplicate business logic in Axum.
 
 ## API layer
@@ -82,13 +82,15 @@ pnpm dev:native # Expo
 2. Toggle light/dark — eligibility cards use `palette.eligibility.canVote` / `cannotVote`.
 3. Status card shows `GET /api/health` via `TranApiClient.getHealth()`.
 
+See [TESTING.md](./TESTING.md) for the TDD / BDD / E2E / coverage playbook.
+
 ## Key files
 
-| Concern | Location |
-| :------ | :------- |
-| Routes | `apps/api/src/routes/mod.rs` |
-| Vote handler | `apps/api/src/routes/vote.rs` |
-| Geo stub | `apps/api/src/geo.rs` |
-| oRPC/Zod | `packages/api/src/` |
-| Web demo UI | `apps/web/src/App.tsx` |
+| Concern        | Location                                 |
+| :------------- | :--------------------------------------- |
+| Routes         | `apps/api/src/routes/mod.rs`             |
+| Vote handler   | `apps/api/src/routes/vote.rs`            |
+| Geo stub       | `apps/api/src/geo.rs`                    |
+| oRPC/Zod       | `packages/api/src/`                      |
+| Web demo UI    | `apps/web/src/App.tsx`                   |
 | Native demo UI | `apps/native/src/screens/HomeScreen.tsx` |

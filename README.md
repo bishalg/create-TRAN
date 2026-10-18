@@ -65,7 +65,7 @@ Full endpoint reference: [docs/API.md](./docs/API.md).
 7. **Native (optional)** — `pnpm dev:native`; same offline vs API sections on `HomeScreen`.
 8. **Customize** — edit `crates/rust-core/src/tokens.rs` → `pnpm tokens:sync`; edit `voting.rs` → `cargo test -p rust-core`.
 
-Step-by-step architecture: [docs/SAMPLE_APP.md](./docs/SAMPLE_APP.md).
+Step-by-step architecture: [docs/SAMPLE_APP.md](./docs/SAMPLE_APP.md). Testing playbook (TDD, shared fixtures, BDD/E2E, 100% coverage): [docs/TESTING.md](./docs/TESTING.md).
 
 ---
 
@@ -102,15 +102,15 @@ graph TD
 
 ### Map to create-t3-turbo
 
-| create-t3-turbo | create-TRAN |
-| :-------------- | :---------- |
-| `apps/web` | `apps/web` (Vite + TanStack) |
-| `apps/native` (Expo) | `apps/native` |
-| `packages/api` (tRPC router) | `packages/api` (oRPC contract + Zod; Axum implements REST) |
-| `packages/ui` | Liquid Glass in `@tran/core` tokens (+ app-level Glass components) |
-| `packages/db` | _not included_ (add your own data layer) |
-| `tooling/*` | `tooling/typescript` |
-| Node API server | `apps/api` (Rust / Axum) + `crates/rust-core` |
+| create-t3-turbo              | create-TRAN                                                        |
+| :--------------------------- | :----------------------------------------------------------------- |
+| `apps/web`                   | `apps/web` (Vite + TanStack)                                       |
+| `apps/native` (Expo)         | `apps/native`                                                      |
+| `packages/api` (tRPC router) | `packages/api` (oRPC contract + Zod; Axum implements REST)         |
+| `packages/ui`                | Liquid Glass in `@tran/core` tokens (+ app-level Glass components) |
+| `packages/db`                | _not included_ (add your own data layer)                           |
+| `tooling/*`                  | `tooling/typescript`                                               |
+| Node API server              | `apps/api` (Rust / Axum) + `crates/rust-core`                      |
 
 ---
 
@@ -153,15 +153,15 @@ This gives tRPC-like ergonomics on the TypeScript side without a Rust oRPC runti
 
 ## Commands
 
-| Command | Action |
-| :------ | :----- |
-| `pnpm dev` | Run apps via Nx |
-| `pnpm dev:web` | Web app |
-| `pnpm dev:api` | Axum API |
-| `pnpm dev:native` | Expo |
-| `pnpm test` | `cargo test` + Vitest |
-| `pnpm typecheck` | TypeScript |
-| `pnpm lint` | Clippy |
+| Command            | Action                                                       |
+| :----------------- | :----------------------------------------------------------- |
+| `pnpm dev`         | Run apps via Nx                                              |
+| `pnpm dev:web`     | Web app                                                      |
+| `pnpm dev:api`     | Axum API                                                     |
+| `pnpm dev:native`  | Expo                                                         |
+| `pnpm test`        | `cargo test` + Vitest                                        |
+| `pnpm typecheck`   | TypeScript                                                   |
+| `pnpm lint`        | Clippy                                                       |
 | `pnpm tokens:sync` | Regenerate design tokens from `rust-core` into web/native/TS |
 
 Brand colors, typography, and light/dark semantics are defined in `crates/rust-core/src/tokens.rs` and emitted by `tran-tokens-codegen`. See [docs/DESIGN.md](./docs/DESIGN.md).
