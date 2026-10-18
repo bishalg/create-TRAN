@@ -31,7 +31,7 @@ jobs:
         uses: taiki-e/install-action@cargo-llvm-cov
 
       - name: Tests + 100% coverage gate (unit, parity fixtures, HTTP integration)
-        run: cargo llvm-cov --workspace --ignore-filename-regex 'tran-tokens-codegen|main.rs' --fail-under-lines 100 --fail-under-regions 100
+        run: cargo llvm-cov --workspace --ignore-filename-regex 'tran-tokens-codegen|main.rs|tran-uniffi' --fail-under-lines 100 --fail-under-regions 100
 
       - name: Sync design tokens and verify generated artifacts
         run: |

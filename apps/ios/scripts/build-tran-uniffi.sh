@@ -1,40 +1,67 @@
 #!/usr/bin/env bash
-# Xcode pre-build: compile tran-uniffi for the active SDK/arch and stage libtran_uniffi.a.
+# Xcode pre-build: compile tran-uniffi for the active SDK/arch(s) and stage libtran_uniffi.a.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 export CARGO_TARGET_DIR="$ROOT/target"
 cd "$ROOT"
 
 PLATFORM="${PLATFORM_NAME:-iphonesimulator}"
-ARCH="${ARCHS:-arm64}"
-case "$PLATFORM" in
-  iphonesimulator)
-    if [[ "$ARCH" == *x86_64* ]]; then
-      RUST_TARGET=x86_64-apple-ios
-    else
-      RUST_TARGET=aarch64-apple-ios-sim
+
+rust_target_for() {
+  local platform="$1"
+  local arch="$2"
+  case "$platform" in
+    iphonesimulator)
+      if [[ "$arch" == *x86_64* ]]; then
+        echo x86_64-apple-ios
+      else
+        echo aarch64-apple-ios-sim
+      fi
+      ;;
+    iphoneos)
+      echo aarch64-apple-ios
+      ;;
+    macosx)
+      rustc -vV | sed -n 's/^host: //p'
+      ;;
+    *)
+      rustc -vV | sed -n 's/^host: //p'
+      ;;
+  esac
+}
+
+build_for_rust_target() {
+  local rust_target="$1"
+  rustup target add "$rust_target" 2>/dev/null || true
+  cargo build -p tran-uniffi --release --target "$rust_target" --lib
+  local stage="$ROOT/apps/ios/RustLib/$rust_target"
+  mkdir -p "$stage"
+  cp "$CARGO_TARGET_DIR/$rust_target/release/libtran_uniffi.a" "$stage/"
+  echo "build-tran-uniffi: staged $stage/libtran_uniffi.a"
+}
+
+if [[ -n "${ARCHS:-}" ]]; then
+  # Fat / multi-arch simulator builds invoke the script once with every active arch.
+  read -r -a build_archs <<< "${ARCHS}"
+elif [[ -n "${CURRENT_ARCH:-}" && "${CURRENT_ARCH}" != "undefined_arch" ]]; then
+  build_archs=("${CURRENT_ARCH}")
+else
+  build_archs=(arm64)
+fi
+
+seen_targets=()
+for arch in "${build_archs[@]}"; do
+  rust_target="$(rust_target_for "$PLATFORM" "$arch")"
+  already=false
+  for t in "${seen_targets[@]:-}"; do
+    if [[ "$t" == "$rust_target" ]]; then
+      already=true
+      break
     fi
-    ;;
-  iphoneos)
-    RUST_TARGET=aarch64-apple-ios
-    ;;
-  macosx)
-    RUST_TARGET="$(rustc -vV | sed -n 's/^host: //p')"
-    ;;
-  *)
-    RUST_TARGET="$(rustc -vV | sed -n 's/^host: //p')"
-    ;;
-esac
-
-rustup target add "$RUST_TARGET" 2>/dev/null || true
-cargo build -p tran-uniffi --release --target "$RUST_TARGET" --lib
-
-STAGE="$ROOT/apps/ios/RustLib/$RUST_TARGET"
-mkdir -p "$STAGE"
-cp "$CARGO_TARGET_DIR/$RUST_TARGET/release/libtran_uniffi.a" "$STAGE/"
-
-cat > "$ROOT/apps/ios/RustLib/active.xcconfig" <<EOF
-RUST_UNIFFI_LIB_DIR = \$(SRCROOT)/RustLib/$RUST_TARGET
-EOF
-
-echo "build-tran-uniffi: staged $STAGE/libtran_uniffi.a"
+  done
+  if [[ "$already" == true ]]; then
+    continue
+  fi
+  seen_targets+=("$rust_target")
+  build_for_rust_target "$rust_target"
+done

@@ -47,9 +47,10 @@ First E2E run needs `pnpm --filter e2e exec playwright install chromium`.
 - **Fakes over mocks.** `apps/web/tests/helpers/fakeApi.ts` reuses the shared rules so it cannot disagree
   with the real thing.
 - **Delete dead branches** instead of excluding them from coverage. Excluded files must say why
-  (`vitest.config.ts`, root `package.json` `test:rust:coverage`): generated code, bootstrap, type-only files,
-  the scaffolder CLI, token codegen binaries, and **`crates/tran-uniffi`** (UniFFI macro regions; behaviour is
-  gated by parity fixtures + unit tests in that crate).
+  (`vitest.config.ts`, root `package.json` `test:rust:coverage`, `.github/workflows/ci.yml`): generated code,
+  bootstrap, type-only files, the scaffolder CLI, token codegen binaries, and **`crates/tran-uniffi`** (UniFFI
+  cdylib/staticlib instrumentation duplicates macro regions; behaviour is covered by parity fixtures and unit
+  tests in that crate).
 - **Make bugs reproducible first.** The `useTranApi` refetch loop and the missing CORS header both passed every
   old test; they now have a failing-first test (hook test, `cors_preflight_…`, and the E2E API scenario).
 
