@@ -37,13 +37,27 @@ Work test-first; the full playbook is in [docs/TESTING.md](./docs/TESTING.md). C
 
 TypeScript offline rules in `packages/core-ts/src/voting.ts` must stay aligned with `crates/rust-core/src/voting.rs`; the shared `fixtures/vote-eligibility.json` enforces it.
 
-## Pull requests
+## Gitflow & Pull requests
 
-- Branch from `dev`
-- Keep files focused (aim for &lt; 800 lines per file)
-- Run `pnpm test:all`, `pnpm typecheck`, and `pnpm lint` before opening a PR
-- Native changes: also run `pnpm ios:build` and/or `pnpm android:build`
-- Update README / `.env.example` when env vars or demo flows change
+We follow **Gitflow branching**:
+
+- **Base integration branch**: All active work is branched from and PRed into **`dev`**. `main` is reserved for tagged production releases.
+- **Feature branches**: Create descriptive branches off `dev`:
+  ```bash
+  git checkout dev && git pull origin dev
+  git checkout -b feat/your-feature-name
+  ```
+- **Automated Quality Hooks**:
+  - `pnpm install` automatically activates our Git native quality hooks (`core.hooksPath .githooks`).
+  - **`pre-commit`** executes fast local checks: requirement traceability (`pnpm spec:check`), code formatting (`cargo fmt`, `prettier`), TypeScript typing (`pnpm typecheck`), and Rust linting (`cargo clippy`).
+  - **`pre-push`** executes full workspace unit and parity test suites (`pnpm test`) before allowing a push to any remote branch.
+  - Run `pnpm check:quick` at any time to verify local quality gates in seconds.
+- **Pull Request Checklist**:
+  - Keep files focused (strictly ≤ 800 lines per file).
+  - Open PR targeting the **`dev`** branch.
+  - Ensure all CI checks and local pre-commit/pre-push gates pass.
+  - Native changes: verify `pnpm ios:build` and/or `pnpm android:build`.
+  - Update documentation and specs (`docs/specs/`, `docs/adr/`) for any architectural or domain changes.
 
 ## License
 

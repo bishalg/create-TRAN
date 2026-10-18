@@ -256,6 +256,8 @@ This gives tRPC-like ergonomics on the TypeScript side without a Rust oRPC runti
 | `pnpm ios:build`       | Build SwiftUI app for iOS Simulator (no signing)           |
 | `pnpm ios:project`     | Regenerate Xcode project from `apps/ios/project.yml`       |
 | `pnpm android:build`   | Build Compose debug APK                                    |
+| `pnpm check:quick`     | Quick local check (specs, formatting, types, linter)       |
+| `pnpm hooks:install`   | Configure Git hooks path to `.githooks`                    |
 
 Brand semantics: `crates/rust-core/src/tokens.rs` → `tran-tokens-codegen`. See [docs/DESIGN.md](./docs/DESIGN.md).
 
@@ -270,9 +272,29 @@ See [`.env.example`](./.env.example):
 
 ---
 
-## Contributing
+## Contributing & Gitflow Workflow
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md). PRs welcome on `dev`.
+We follow standard **Gitflow best practices** to maintain production quality across our polyglot codebase:
+
+1. **Branching Strategy**:
+   - `main`: Production-ready, stable releases.
+   - `dev`: Primary integration branch. All active development merges here.
+   - **Feature Branches**: Always branch from `dev` using descriptive prefixes (`feat/<topic>`, `fix/<issue>`, `chore/<task>`):
+     ```bash
+     git checkout dev
+     git pull origin dev
+     git checkout -b feat/my-new-feature
+     ```
+2. **Pull Requests (PRs)**:
+   - Target PRs to **`dev`** (never directly to `main`).
+   - Ensure all CI quality gates pass before requesting review.
+3. **Automated Quality Hooks (Best Practice)**:
+   - Installing dependencies (`pnpm install`) automatically configures Git native hooks from `.githooks/` (`core.hooksPath`).
+   - **`pre-commit`**: Validates requirement traceability (`pnpm spec:check`), code formatting (`cargo fmt`, `prettier`), static types (`tsc`), and Rust clippy warnings.
+   - **`pre-push`**: Runs the complete unit and parity test suites (`cargo test` + `vitest run`) so broken commits never leave your machine.
+   - Run `pnpm check:quick` anytime to test all pre-commit gates in seconds.
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) and [docs/TESTING.md](./docs/TESTING.md) for full development playbooks.
 
 ---
 
