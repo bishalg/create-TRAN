@@ -128,3 +128,5 @@ export function useTranApi({ client: injected, baseUrl }: UseTranApiOptions = {}
     checkViaApi,
   };
 }
+
+export type TranApi = ReturnType<typeof useTranApi>;

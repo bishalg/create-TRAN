@@ -36,15 +36,15 @@
     "submitting": "जाँच हो रही है…",
     "resultCountry": "देश",
     "resultMinimumAge": "न्यूनतम आयु",
-    "resultSource": "जाँच",
-    "sourceDevice": "इसी डिवाइस पर",
-    "sourceServer": "सर्वर द्वारा",
+    "sourceDevice": "इसी डिवाइस पर जाँच की गई",
+    "sourceServer": "सर्वर द्वारा जाँच की गई",
     "statusOnline": "API चालू है",
     "statusOffline": "API ऑफ़लाइन",
     "statusChecking": "API जाँची जा रही है…",
     "themeToLight": "लाइट थीम पर जाएँ",
     "themeToDark": "डार्क थीम पर जाएँ",
-    "languageLabel": "भाषा"
+    "languageLabel": "भाषा",
+    "resultLabel": "परिणाम"
   },
   "layers": {
     "tanstack": "TanStack वेब",

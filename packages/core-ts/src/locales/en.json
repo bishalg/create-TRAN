@@ -36,15 +36,15 @@
     "submitting": "Checking…",
     "resultCountry": "Country",
     "resultMinimumAge": "Minimum age",
-    "resultSource": "Checked",
-    "sourceDevice": "on this device",
-    "sourceServer": "by the server",
+    "sourceDevice": "Checked on this device",
+    "sourceServer": "Checked by the server",
     "statusOnline": "API online",
     "statusOffline": "API offline",
     "statusChecking": "Checking API…",
     "themeToLight": "Switch to light theme",
     "themeToDark": "Switch to dark theme",
-    "languageLabel": "Language"
+    "languageLabel": "Language",
+    "resultLabel": "Result"
   },
   "layers": {
     "tanstack": "TanStack Web",

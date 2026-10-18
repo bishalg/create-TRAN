@@ -14,6 +14,7 @@ export default defineConfig({
       reporter: ['text', 'lcov'],
       include: ['packages/*/src/**', 'apps/web/src/**', 'apps/native/src/hooks/**'],
       exclude: [
+        '**/*.test.{ts,tsx}',
         '**/generated/**', // emitted by `pnpm tokens:sync`, verified by the CI drift check
         '**/*.d.ts',
         'apps/web/src/main.tsx', // 5-line bootstrap, covered by E2E

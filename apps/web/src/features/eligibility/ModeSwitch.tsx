@@ -1,6 +1,5 @@
 import { type SupportedLocale, t } from '@tran/core';
-
-export type CheckMode = 'device' | 'server';
+import type { CheckMode } from './toView.js';
 
 const OPTIONS: { value: CheckMode; title: string; hint: string }[] = [
   { value: 'device', title: 'app.modeDevice', hint: 'app.modeDeviceHint' },
@@ -13,7 +12,7 @@ export interface ModeSwitchProps {
   locale: SupportedLocale;
 }
 
-/** Native radio inputs: keyboard (arrows), focus and screen-reader behaviour come for free. */
+/** Native radios: arrow-key navigation, focus and screen-reader semantics come for free. */
 export function ModeSwitch({ mode, onChange, locale }: ModeSwitchProps) {
   return (
     <fieldset className="choice-group">

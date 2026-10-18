@@ -24,7 +24,7 @@ Feature: Voting eligibility
     When I ask the server with age "16" and country "BR"
     Then I am told I am "Eligible to vote"
     And the result says "Age 16 meets the minimum voting age of 16 in BR."
-    And the result was checked "by the server"
+    And the result shows "Checked by the server"
 
   Scenario: The server rejects a malformed country and the app stays online
     When I ask the server with age "30" and country "U1"
@@ -54,6 +54,23 @@ Feature: Voting eligibility
   Scenario: The page can be used in the light theme
     When I switch to the "light" theme
     Then the page uses the "light" theme
+
+  Scenario: Results are announced to screen readers
+    Then an empty "Result" live region is already on the page
+    When I check on this device with age "30" and country "US"
+    Then the "Result" live region says "Eligible to vote"
+
+  Scenario: Switching language updates the document language
+    When I switch the language to "NE"
+    Then the document language is "ne"
+
+  Scenario: Invalid input moves focus to the age field
+    When I check on this device with age "abc" and country "US"
+    Then the age field has focus
+
+  Scenario: A keyboard-only user can complete a check
+    When I type age "30" and press Enter using only the keyboard
+    Then I am told I am "Eligible to vote"
 
   Scenario Outline: The page has no accessibility violations
     When I switch to the "<theme>" theme

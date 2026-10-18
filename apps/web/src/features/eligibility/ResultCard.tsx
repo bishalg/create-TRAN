@@ -1,5 +1,5 @@
 import { type SupportedLocale, t } from '@tran/core';
-import { CheckIcon, CrossIcon } from './icons.js';
+import { CheckIcon, CrossIcon } from '../../shared/ui/icons.js';
 
 export interface EligibilityView {
   eligible: boolean;
@@ -32,8 +32,7 @@ export function ResultCard({
             {t('app.resultMinimumAge', locale)}: <b>{result.minimumAge}</b>
           </li>
           <li className="chip">
-            {t('app.resultSource', locale)}:{' '}
-            <b>{t(result.source === 'device' ? 'app.sourceDevice' : 'app.sourceServer', locale)}</b>
+            {t(result.source === 'device' ? 'app.sourceDevice' : 'app.sourceServer', locale)}
           </li>
         </ul>
       </div>

@@ -1,8 +1,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { TranApiClient } from '@tran/core';
 import { describe, expect, it, vi } from 'vitest';
-import { DEFAULT_API_URL, resolveApiBaseUrl, useTranApi } from '../src/hooks/useTranApi.js';
-import { createFakeApi } from './helpers/fakeApi.js';
+import { DEFAULT_API_URL, resolveApiBaseUrl, useTranApi } from './useTranApi.js';
+import { createFakeApi } from '../../../tests/helpers/fakeApi.js';
 
 const BASE = 'http://api.test';
 

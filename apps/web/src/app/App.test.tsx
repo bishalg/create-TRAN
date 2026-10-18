@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { App } from '../src/App.js';
-import { createFakeApi } from './helpers/fakeApi.js';
+import { createFakeApi } from '../../tests/helpers/fakeApi.js';
+import { App } from './App.js';
 
 type User = ReturnType<typeof userEvent.setup>;
 
@@ -74,6 +74,40 @@ describe('App: shell', () => {
   });
 });
 
+describe('App: accessibility behaviour', () => {
+  it('sets the document language to the selected locale', async () => {
+    const { user } = await renderApp();
+    expect(document.documentElement.lang).toBe('en');
+
+    await user.click(screen.getByRole('button', { name: 'NE' }));
+    expect(document.documentElement.lang).toBe('ne');
+
+    await user.click(screen.getByRole('button', { name: 'HI' }));
+    expect(document.documentElement.lang).toBe('hi');
+  });
+
+  it('moves focus to the age field when the age is invalid', async () => {
+    const { user } = await renderApp();
+    await check(user, 'abc');
+    expect(ageInput()).toHaveFocus();
+  });
+
+  it('keeps focus where it is when the input is valid', async () => {
+    const { user } = await renderApp();
+    await check(user, '30');
+    expect(submit()).toHaveFocus();
+  });
+
+  it('exposes the result as a live region that exists before the first check', async () => {
+    const { user } = await renderApp();
+    const region = screen.getByRole('status', { name: 'Result' });
+    expect(region).toBeEmptyDOMElement();
+
+    await check(user, '30');
+    expect(region).toHaveTextContent('Eligible to vote');
+  });
+});
+
 describe('App: on this device', () => {
   it('declares an adult eligible and explains why, without any network call', async () => {
     const { api, user } = await renderApp();
@@ -83,7 +117,7 @@ describe('App: on this device', () => {
 
     expect(screen.getByRole('heading', { name: 'Eligible to vote' })).toBeVisible();
     expect(screen.getByText('Age 20 meets the minimum voting age of 18 in NP.')).toBeVisible();
-    expect(screen.getByText('on this device')).toBeVisible();
+    expect(screen.getByText('Checked on this device')).toBeVisible();
     expect(api.fetchFn.mock.calls.length).toBe(before);
   });
 
@@ -148,7 +182,7 @@ describe('App: ask the server', () => {
     await check(user, '16', 'BR');
 
     expect(await screen.findByRole('heading', { name: 'Eligible to vote' })).toBeVisible();
-    expect(screen.getByText('by the server')).toBeVisible();
+    expect(screen.getByText('Checked by the server')).toBeVisible();
     const [call] = api.callsTo('/api/vote/eligibility');
     expect((call[1]?.headers as Record<string, string>)['X-Debug-Country']).toBe('BR');
   });
@@ -184,13 +218,13 @@ describe('App: ask the server', () => {
   it('keeps each mode’s last result separate', async () => {
     const { user } = await renderApp();
     await check(user, '30'); // device result
-    expect(screen.getByText('on this device')).toBeVisible();
+    expect(screen.getByText('Checked on this device')).toBeVisible();
 
     await user.click(screen.getByRole('radio', { name: /Ask the server/ }));
-    expect(screen.queryByText('on this device')).toBeNull();
+    expect(screen.queryByText('Checked on this device')).toBeNull();
 
     await user.click(screen.getByRole('radio', { name: /On this device/ }));
-    expect(screen.getByText('on this device')).toBeVisible();
+    expect(screen.getByText('Checked on this device')).toBeVisible();
   });
 });
 

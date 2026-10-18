@@ -1,5 +1,5 @@
 import { type SupportedLocale, type ThemeMode, t } from '@tran/core';
-import { MoonIcon, SunIcon } from './icons.js';
+import { MoonIcon, SunIcon } from '../shared/ui/icons.js';
 
 const LOCALES: SupportedLocale[] = ['en', 'ne', 'hi'];
 

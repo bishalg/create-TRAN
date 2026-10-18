@@ -1,6 +1,6 @@
-import { type InputHTMLAttributes, useId } from 'react';
+import { type ComponentProps, useId } from 'react';
 
-export interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface FieldProps extends ComponentProps<'input'> {
   label: string;
   hint?: string;
 }

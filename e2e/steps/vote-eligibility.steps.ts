@@ -59,9 +59,39 @@ Then('the result says {string}', async ({ page }, reason: string) => {
   await expect(page.getByText(reason)).toBeVisible();
 });
 
-Then('the result was checked {string}', async ({ page }, where: string) => {
-  await expect(page.getByText(where, { exact: true })).toBeVisible();
+Then('the result shows {string}', async ({ page }, text: string) => {
+  await expect(page.getByText(text, { exact: true })).toBeVisible();
 });
+
+Then('an empty {string} live region is already on the page', async ({ page }, name: string) => {
+  await expect(page.getByRole('status', { name })).toBeEmpty();
+});
+
+Then('the {string} live region says {string}', async ({ page }, name: string, text: string) => {
+  await expect(page.getByRole('status', { name })).toContainText(text);
+});
+
+When('I switch the language to {string}', async ({ page }, code: string) => {
+  await page.getByRole('button', { name: code, exact: true }).click();
+});
+
+Then('the document language is {string}', async ({ page }, lang: string) => {
+  await expect(page.locator('html')).toHaveAttribute('lang', lang);
+});
+
+Then('the age field has focus', async ({ page }) => {
+  await expect(page.getByLabel('Your age')).toBeFocused();
+});
+
+When(
+  'I type age {string} and press Enter using only the keyboard',
+  async ({ page }, age: string) => {
+    await page.getByLabel('Your age').focus();
+    await page.keyboard.press('ControlOrMeta+A');
+    await page.keyboard.type(age);
+    await page.keyboard.press('Enter');
+  }
+);
 
 Then('I see the error {string}', async ({ page }, message: string) => {
   await expect(page.getByRole('alert')).toContainText(message);
