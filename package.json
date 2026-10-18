@@ -12,7 +12,7 @@
     "build": "nx run-many -t build",
     "test": "pnpm run test:rust && pnpm run test:ts",
     "test:rust": "cargo test",
-    "test:ts": "pnpm --filter @tran/api build && vitest run",
+    "test:ts": "pnpm --filter @tran/api build && pnpm --filter @tran/core build && vitest run",
     "typecheck": "nx run-many -t typecheck",
     "lint": "cargo clippy --workspace -- -D warnings",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",

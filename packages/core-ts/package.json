@@ -9,13 +9,11 @@
   "exports": {
     ".": {
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
+      "types": "./dist/index.d.ts"
     },
     "./tokens": {
       "import": "./dist/tokens.js",
-      "types": "./dist/tokens.d.ts",
-      "default": "./src/tokens.ts"
+      "types": "./dist/tokens.d.ts"
     },
     "./locales/*": "./src/locales/*"
   },

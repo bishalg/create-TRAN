@@ -57,7 +57,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build workspace packages
-        run: pnpm --filter @tran/api build && pnpm --filter create-tran build
+        run: pnpm --filter @tran/api build && pnpm --filter @tran/core build && pnpm --filter create-tran build
 
       - name: Typecheck
         run: pnpm run typecheck
