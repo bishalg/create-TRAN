@@ -25,7 +25,8 @@ pub fn age_from_birthdate(birthdate: NaiveDate, reference: NaiveDate) -> u16 {
     }
 
     let years = reference.year() - birthdate.year();
-    let birthday_passed = (reference.month(), reference.day()) >= (birthdate.month(), birthdate.day());
+    let birthday_passed =
+        (reference.month(), reference.day()) >= (birthdate.month(), birthdate.day());
     let age = if birthday_passed { years } else { years - 1 };
     age.max(0) as u16
 }

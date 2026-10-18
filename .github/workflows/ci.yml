@@ -30,6 +30,14 @@ jobs:
       - name: Run Cargo Tests
         run: cargo test --workspace --verbose
 
+      - name: Sync design tokens and verify generated artifacts
+        run: |
+          cargo run -p tran-tokens-codegen
+          git diff --exit-code -- \
+            packages/core-ts/src/generated \
+            apps/web/src/styles/generated \
+            apps/native/src/generated
+
   node-check:
     name: TypeScript & Frontend Monorepo
     runs-on: ubuntu-latest
@@ -48,11 +56,11 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build workspace packages
+        run: pnpm --filter @tran/api build && pnpm --filter create-tran build
+
       - name: Typecheck
         run: pnpm run typecheck
-
-      - name: Build create-tran CLI
-        run: pnpm --filter create-tran build
 
       - name: Run TypeScript Tests
         run: pnpm run test:ts

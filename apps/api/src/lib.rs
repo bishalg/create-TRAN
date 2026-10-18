@@ -1,6 +1,6 @@
 pub mod config;
-pub mod geo;
 pub mod error;
+pub mod geo;
 pub mod middleware;
 pub mod routes;
 pub mod state;

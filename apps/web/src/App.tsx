@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   type SupportedLocale,
   type ThemeMode,
@@ -18,6 +18,10 @@ export const App: React.FC = () => {
   const [country, setCountry] = useState('US');
 
   const theme = useMemo(() => getThemeTokens(themeMode), [themeMode]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = themeMode;
+  }, [themeMode]);
 
   const {
     health,

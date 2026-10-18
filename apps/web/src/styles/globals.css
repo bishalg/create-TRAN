@@ -1,8 +1,10 @@
+@import './generated/theme.css';
+
 :root {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--tran-font-family, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif);
   color-scheme: dark;
-  background-color: #0b0f19;
-  color: #f8fafc;
+  background-color: var(--tran-color-background, #0b0f19);
+  color: var(--tran-color-text-primary, #f8fafc);
 }
 
 body {
@@ -28,6 +30,6 @@ body {
 }
 
 button:focus-visible, input:focus-visible {
-  outline: 2px solid #38bdf8;
+  outline: 2px solid var(--tran-color-primary, #38bdf8);
   outline-offset: 2px;
 }

@@ -3,16 +3,14 @@ use std::time::Instant;
 use uuid::Uuid;
 
 use crate::error::{CoreError, CoreResult};
+use crate::models::VoteEligibilityRequest;
+use crate::models::VoteEligibilityResponse;
 use crate::models::{
     CalculationRequest, CalculationResponse, StackComponentStatus, StackLayer, TranHealthReport,
 };
-use crate::models::VoteEligibilityRequest;
-use crate::models::VoteEligibilityResponse;
 use crate::validation::validate_calculation_request;
 use crate::validation::validate_vote_eligibility_request;
-use crate::voting::{
-    age_from_birthdate, can_vote_by_age, voting_age_for_country,
-};
+use crate::voting::{age_from_birthdate, can_vote_by_age, voting_age_for_country};
 
 #[derive(Debug, Default, Clone)]
 pub struct TranEngine;
@@ -69,13 +67,9 @@ impl TranEngine {
         let eligible = can_vote_by_age(age, minimum_age);
 
         let reason = if eligible {
-            format!(
-                "Age {age} meets the minimum voting age of {minimum_age} in {country_code}."
-            )
+            format!("Age {age} meets the minimum voting age of {minimum_age} in {country_code}.")
         } else {
-            format!(
-                "Age {age} is below the minimum voting age of {minimum_age} in {country_code}."
-            )
+            format!("Age {age} is below the minimum voting age of {minimum_age} in {country_code}.")
         };
 
         Ok(VoteEligibilityResponse {

@@ -12,11 +12,12 @@
     "build": "nx run-many -t build",
     "test": "pnpm run test:rust && pnpm run test:ts",
     "test:rust": "cargo test",
-    "test:ts": "vitest run",
+    "test:ts": "pnpm --filter @tran/api build && vitest run",
     "typecheck": "nx run-many -t typecheck",
     "lint": "cargo clippy --workspace -- -D warnings",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\""
+    "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\"",
+    "tokens:sync": "cargo run -p tran-tokens-codegen"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

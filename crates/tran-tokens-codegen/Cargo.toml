@@ -1,0 +1,17 @@
+[package]
+name = "tran-tokens-codegen"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Codegen CLI: rust-core design tokens → TS, CSS, and native stubs"
+publish = false
+
+[[bin]]
+name = "tran-tokens-codegen"
+path = "src/main.rs"
+
+[dependencies]
+rust-core = { workspace = true }
+serde_json = { workspace = true }

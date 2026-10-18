@@ -21,6 +21,12 @@
       "options": {
         "command": "cargo clippy -p rust-core -- -D warnings"
       }
+    },
+    "sync-tokens": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cargo run -p tran-tokens-codegen"
+      }
     }
   }
 }
