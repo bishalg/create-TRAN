@@ -72,4 +72,3 @@ export const liquidGlassTokens = themeTokens.dark;
 
 export const designTypography = snapshot.typography;
 export const designSpacing = snapshot.spacing;
-
