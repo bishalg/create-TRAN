@@ -1,7 +1,9 @@
-# Dependencies
+# Dependencies (pnpm creates root + per-package symlink trees — all ignored)
 node_modules/
 .pnpm-store/
 .npm/
+.yarn/
+.pnp.*
 
 # Build artifacts
 dist/
@@ -14,13 +16,15 @@ out/
 .turbo/
 .nx/cache/
 .nx/workspace-data/
+*.tsbuildinfo
 
-# Rust / Cargo
+# Rust / Cargo build output (Cargo.lock is committed for reproducible apps)
 target/
-Cargo.lock
+**/*.rs.bk
 
 # Expo & React Native
 .expo/
+.expo-shared/
 *.jks
 *.p8
 *.p12
@@ -28,26 +32,30 @@ Cargo.lock
 *.mobileprovision
 *.orig.*
 web-build/
+apps/native/android/
+apps/native/ios/
 
 # macOS & OS files
 .DS_Store
 .AppleDouble
 .LSOverride
 Thumbs.db
+Desktop.ini
 
-# Environment variables
+# Environment variables & secrets
 .env
-.env.local
-.env.*.local
+.env.*
 !.env.example
 
-# Logs
+# Logs & coverage
 logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+coverage/
+.nyc_output/
 
 # IDE / Editor
 .idea/
@@ -56,3 +64,9 @@ pnpm-debug.log*
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
+
+# Misc
+*.local
+.cache/
+tmp/
+temp/

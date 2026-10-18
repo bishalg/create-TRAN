@@ -14,6 +14,7 @@ Usage:
 
 Options:
   --pm, --package-manager <name>  Package manager (pnpm, npm, bun, yarn) [default: pnpm]
+  --template <url-or-path>        Template git URL or local path
   --no-git                        Skip git repository initialization
   --no-native                     Exclude native mobile (Expo) app
   -v, --version                   Show version
@@ -22,6 +23,7 @@ Options:
 Examples:
   npx create-tran my-tran-app
   pnpm create tran my-tran-app --pm pnpm
+  npx create-tran my-app --no-native --no-git
 `);
     return;
   }
@@ -42,6 +44,7 @@ Examples:
     packageManager: parsed.packageManager || 'pnpm',
     includeNative: parsed.includeNative ?? true,
     initGit: parsed.initGit ?? true,
+    templateUrl: parsed.templateUrl,
   };
 
   process.stdout.write(`Creating a new TRAN stack project in ${targetDir}...\n\n`);

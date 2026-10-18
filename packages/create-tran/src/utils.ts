@@ -1,12 +1,17 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+export const DEFAULT_TEMPLATE_REPO = 'https://github.com/bishalg/create-TRAN.git';
+export const PINNED_PNPM = 'pnpm@11.22.0';
+
 export interface CliOptions {
   projectName: string;
   targetDir: string;
   packageManager: 'pnpm' | 'npm' | 'bun' | 'yarn';
   includeNative: boolean;
   initGit: boolean;
+  /** Override template source (git URL or local path). Useful for tests. */
+  templateUrl?: string;
 }
 
 export function parseArgs(
@@ -30,6 +35,11 @@ export function parseArgs(
       if (next && ['pnpm', 'npm', 'bun', 'yarn'].includes(next)) {
         options.packageManager = next as CliOptions['packageManager'];
       }
+    } else if (arg === '--template') {
+      const next = rawArgs[++i];
+      if (next) {
+        options.templateUrl = next;
+      }
     } else if (!arg.startsWith('-')) {
       positional.push(arg);
     }
@@ -51,4 +61,24 @@ export function ensureDirectory(dirPath: string): void {
 export function writeTemplateFile(filePath: string, content: string): void {
   ensureDirectory(path.dirname(filePath));
   fs.writeFileSync(filePath, content.trimStart(), 'utf-8');
+}
+
+export function assertTargetAvailable(targetDir: string): void {
+  if (!fs.existsSync(targetDir)) {
+    return;
+  }
+  const entries = fs.readdirSync(targetDir).filter((name) => name !== '.DS_Store');
+  if (entries.length > 0) {
+    throw new Error(
+      `Target directory already exists and is not empty: ${targetDir}\n` +
+        'Choose a different name or remove the directory first.'
+    );
+  }
+}
+
+export function packageManagerField(pm: CliOptions['packageManager']): string {
+  if (pm === 'pnpm') {
+    return PINNED_PNPM;
+  }
+  return `${pm}@latest`;
 }

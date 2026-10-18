@@ -1,153 +1,107 @@
+import { execFileSync } from 'node:child_process';
+import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { type CliOptions, ensureDirectory, writeTemplateFile } from './utils.js';
+import {
+  type CliOptions,
+  DEFAULT_TEMPLATE_REPO,
+  assertTargetAvailable,
+  packageManagerField,
+} from './utils.js';
 
+function run(command: string, args: string[], cwd?: string): void {
+  execFileSync(command, args, {
+    cwd,
+    stdio: 'inherit',
+    env: process.env,
+  });
+}
+
+function readJson(filePath: string): Record<string, unknown> {
+  return JSON.parse(fs.readFileSync(filePath, 'utf-8')) as Record<string, unknown>;
+}
+
+function writeJson(filePath: string, value: unknown): void {
+  fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf-8');
+}
+
+function customizeProject(options: CliOptions): void {
+  const rootPkgPath = path.join(options.targetDir, 'package.json');
+  if (fs.existsSync(rootPkgPath)) {
+    const pkg = readJson(rootPkgPath);
+    pkg.name = options.projectName;
+    pkg.private = true;
+    pkg.packageManager = packageManagerField(options.packageManager);
+    writeJson(rootPkgPath, pkg);
+  }
+
+  if (!options.includeNative) {
+    const nativeDir = path.join(options.targetDir, 'apps', 'native');
+    if (fs.existsSync(nativeDir)) {
+      fs.rmSync(nativeDir, { recursive: true, force: true });
+    }
+  }
+
+  // Drop local install artifacts if the template source was a working copy.
+  for (const artifact of ['node_modules', 'target', 'dist']) {
+    const artifactPath = path.join(options.targetDir, artifact);
+    if (fs.existsSync(artifactPath)) {
+      fs.rmSync(artifactPath, { recursive: true, force: true });
+    }
+  }
+}
+
+function resetGitHistory(options: CliOptions): void {
+  const gitDir = path.join(options.targetDir, '.git');
+  if (fs.existsSync(gitDir)) {
+    fs.rmSync(gitDir, { recursive: true, force: true });
+  }
+
+  if (!options.initGit) {
+    return;
+  }
+
+  run('git', ['init'], options.targetDir);
+  run('git', ['add', '.'], options.targetDir);
+  run(
+    'git',
+    [
+      '-c',
+      'user.name=create-tran',
+      '-c',
+      'user.email=create-tran@users.noreply.github.com',
+      'commit',
+      '-m',
+      'chore: initial commit from create-tran template',
+    ],
+    options.targetDir
+  );
+}
+
+/**
+ * Scaffold a TRAN project by cloning the GitHub template repository,
+ * then renaming / trimming options for the new app.
+ */
 export async function generateTranProject(options: CliOptions): Promise<void> {
-  const root = options.targetDir;
-  ensureDirectory(root);
+  assertTargetAvailable(options.targetDir);
 
-  // 1. Root package.json
-  writeTemplateFile(
-    path.join(root, 'package.json'),
-    JSON.stringify(
-      {
-        name: options.projectName,
-        version: '0.1.0',
-        private: true,
-        scripts: {
-          dev: 'nx run-many -t dev',
-          build: 'nx run-many -t build',
-          test: 'nx run-many -t test',
-          lint: 'nx run-many -t lint',
-          'test:rust': 'cargo test',
-          'build:rust': 'cargo build --release',
-        },
-        devDependencies: {
-          nx: '^23.3.0',
-          typescript: '^5.8.2',
-          prettier: '^3.5.3',
-        },
-        packageManager: `${options.packageManager}@latest`,
-      },
-      null,
-      2
-    ) + '\n'
-  );
+  const templateUrl =
+    options.templateUrl ||
+    process.env.CREATE_TRAN_TEMPLATE_URL ||
+    DEFAULT_TEMPLATE_REPO;
 
-  // 2. pnpm-workspace.yaml or package manager config
-  writeTemplateFile(
-    path.join(root, 'pnpm-workspace.yaml'),
-    `packages:\n  - 'apps/*'\n  - 'packages/*'\n`
-  );
+  const parent = path.dirname(options.targetDir);
+  if (!fs.existsSync(parent)) {
+    fs.mkdirSync(parent, { recursive: true });
+  }
 
-  // 3. Root Cargo.toml
-  writeTemplateFile(
-    path.join(root, 'Cargo.toml'),
-    `[workspace]
-resolver = "2"
-members = [
-    "crates/rust-core",
-    "apps/api",
-]
+  // Clone into a temp name if the destination exists as an empty dir,
+  // otherwise clone directly into targetDir.
+  if (fs.existsSync(options.targetDir)) {
+    fs.rmSync(options.targetDir, { recursive: true, force: true });
+  }
 
-[workspace.package]
-version = "0.1.0"
-edition = "2021"
-license = "MIT"
+  run('git', ['clone', '--depth', '1', templateUrl, options.targetDir]);
 
-[workspace.dependencies]
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-tokio = { version = "1.40", features = ["full"] }
-axum = { version = "0.8", features = ["macros"] }
-tower = "0.5"
-tower-http = { version = "0.6", features = ["cors", "trace"] }
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-thiserror = "2.0"
-chrono = { version = "0.4", features = ["serde"] }
-uuid = { version = "1.10", features = ["v4", "serde"] }
-rust-core = { path = "crates/rust-core" }
-`
-  );
-
-  // 4. nx.json
-  writeTemplateFile(
-    path.join(root, 'nx.json'),
-    JSON.stringify(
-      {
-        $schema: './node_modules/nx/schemas/nx-schema.json',
-        namedInputs: {
-          default: ['{projectRoot}/**/*', 'sharedGlobals'],
-          sharedGlobals: [],
-        },
-        targetDefaults: {
-          build: { cache: true, dependsOn: ['^build'] },
-          test: { cache: true },
-          dev: { continuous: true },
-        },
-        defaultBase: 'main',
-      },
-      null,
-      2
-    ) + '\n'
-  );
-
-  // 5. tsconfig.base.json
-  writeTemplateFile(
-    path.join(root, 'tsconfig.base.json'),
-    JSON.stringify(
-      {
-        compilerOptions: {
-          target: 'ES2022',
-          module: 'NodeNext',
-          moduleResolution: 'NodeNext',
-          strict: true,
-          esModuleInterop: true,
-          skipLibCheck: true,
-          resolveJsonModule: true,
-          baseUrl: '.',
-          paths: {
-            '@tran/core': ['packages/core-ts/src/index.ts'],
-          },
-        },
-      },
-      null,
-      2
-    ) + '\n'
-  );
-
-  // 6. .gitignore
-  writeTemplateFile(
-    path.join(root, '.gitignore'),
-    `node_modules/
-dist/
-target/
-.expo/
-.DS_Store
-.env
-.env.local
-`
-  );
-
-  // 7. README.md
-  writeTemplateFile(
-    path.join(root, 'README.md'),
-    `# ${options.projectName}
-
-Generated with [create-TRAN](https://github.com/bishalg/create-TRAN).
-
-## TRAN Stack
-- **T** - TanStack Start (Web SSR & Routing)
-- **R** - Rust Core (Domain Engine & Logic)
-- **A** - Axum (High-performance API)
-- **N** - Native Mobile (iOS & Android)
-
-## Getting Started
-\`\`\`bash
-${options.packageManager} install
-${options.packageManager} run dev
-cargo test
-\`\`\`
-`
-  );
+  customizeProject(options);
+  resetGitHistory(options);
 }
