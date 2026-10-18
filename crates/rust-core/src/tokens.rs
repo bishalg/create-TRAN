@@ -413,11 +413,7 @@ mod tests {
     fn default_tokens_use_valid_hex_colors() {
         let tokens = default_design_tokens();
         for color in collect_hex_colors(&tokens) {
-            assert!(
-                is_valid_hex_color(&color.0),
-                "invalid hex: {}",
-                color.0
-            );
+            assert!(is_valid_hex_color(&color.0), "invalid hex: {}", color.0);
         }
     }
 
@@ -426,8 +422,14 @@ mod tests {
         let tokens = default_design_tokens();
         assert_eq!(tokens.light.palette.eligibility.can_vote.0, "#059669");
         assert_eq!(tokens.dark.palette.eligibility.cannot_vote.0, "#f87171");
-        assert_eq!(tokens.light.palette.eligibility.can_vote.0, tokens.light.palette.success.0);
-        assert_eq!(tokens.dark.palette.eligibility.can_vote.0, tokens.dark.palette.success.0);
+        assert_eq!(
+            tokens.light.palette.eligibility.can_vote.0,
+            tokens.light.palette.success.0
+        );
+        assert_eq!(
+            tokens.dark.palette.eligibility.can_vote.0,
+            tokens.dark.palette.success.0
+        );
     }
 
     #[test]
