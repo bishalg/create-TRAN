@@ -1,0 +1,149 @@
+{
+  "$comment": "Golden cases shared by Rust (crates/rust-core/tests/parity_fixtures.rs) and TypeScript (packages/core-ts/tests/parity.test.ts). Change a rule => change this file first (red), then make both implementations pass (green).",
+  "votingAges": [
+    { "country": "US", "minimumAge": 18 },
+    { "country": "us", "minimumAge": 18 },
+    { "country": "NP", "minimumAge": 18 },
+    { "country": "BR", "minimumAge": 16 },
+    { "country": "br", "minimumAge": 16 },
+    { "country": "XX", "minimumAge": 18 }
+  ],
+  "canVote": [
+    { "age": 0, "minimumAge": 18, "expected": false },
+    { "age": 17, "minimumAge": 18, "expected": false },
+    { "age": 18, "minimumAge": 18, "expected": true },
+    { "age": 19, "minimumAge": 18, "expected": true },
+    { "age": 15, "minimumAge": 16, "expected": false },
+    { "age": 16, "minimumAge": 16, "expected": true }
+  ],
+  "ageFromBirthdate": [
+    { "name": "day before birthday", "birthdate": "2000-06-15", "reference": "2026-06-14", "expected": 25 },
+    { "name": "on birthday", "birthdate": "2000-06-15", "reference": "2026-06-15", "expected": 26 },
+    { "name": "day after birthday", "birthdate": "2000-06-15", "reference": "2026-06-16", "expected": 26 },
+    { "name": "earlier month, later day", "birthdate": "2000-06-15", "reference": "2026-05-30", "expected": 25 },
+    { "name": "later month, earlier day", "birthdate": "2000-06-15", "reference": "2026-07-01", "expected": 26 },
+    { "name": "born today", "birthdate": "2026-10-18", "reference": "2026-10-18", "expected": 0 },
+    { "name": "leap-day birthday, non-leap day before Mar 1", "birthdate": "2004-02-29", "reference": "2022-02-28", "expected": 17 },
+    { "name": "leap-day birthday, Mar 1 counts as passed", "birthdate": "2004-02-29", "reference": "2022-03-01", "expected": 18 },
+    { "name": "leap-day birthday, real leap day", "birthdate": "2004-02-29", "reference": "2024-02-29", "expected": 20 },
+    { "name": "birthdate after reference clamps to 0", "birthdate": "2030-01-01", "reference": "2026-10-18", "expected": 0 }
+  ],
+  "invalidBirthdates": ["2000-02-30", "2001-02-29", "2000-13-01", "2000-00-10", "20000101", "not-a-date", ""],
+  "invalidCountryCodes": ["", "U", "USA", "U1", "1S", " ", "U S"],
+  "evaluations": [
+    {
+      "name": "adult in Nepal by age",
+      "input": { "age": 20 },
+      "countryCode": "NP",
+      "referenceDate": "2026-10-18",
+      "expected": {
+        "eligible": true,
+        "age": 20,
+        "minimumAge": 18,
+        "countryCode": "NP",
+        "reason": "Age 20 meets the minimum voting age of 18 in NP."
+      }
+    },
+    {
+      "name": "17 year old in the US is not eligible",
+      "input": { "age": 17 },
+      "countryCode": "US",
+      "referenceDate": "2026-10-18",
+      "expected": {
+        "eligible": false,
+        "age": 17,
+        "minimumAge": 18,
+        "countryCode": "US",
+        "reason": "Age 17 is below the minimum voting age of 18 in US."
+      }
+    },
+    {
+      "name": "16 year old in Brazil is eligible",
+      "input": { "age": 16 },
+      "countryCode": "BR",
+      "referenceDate": "2026-10-18",
+      "expected": {
+        "eligible": true,
+        "age": 16,
+        "minimumAge": 16,
+        "countryCode": "BR",
+        "reason": "Age 16 meets the minimum voting age of 16 in BR."
+      }
+    },
+    {
+      "name": "lower-case country code is normalised everywhere, including the reason",
+      "input": { "age": 30 },
+      "countryCode": "np",
+      "referenceDate": "2026-10-18",
+      "expected": {
+        "eligible": true,
+        "age": 30,
+        "minimumAge": 18,
+        "countryCode": "NP",
+        "reason": "Age 30 meets the minimum voting age of 18 in NP."
+      }
+    },
+    {
+      "name": "birthdate wins over the supplied age (turns 18 tomorrow)",
+      "input": { "age": 99, "birthdate": "2008-10-19" },
+      "countryCode": "US",
+      "referenceDate": "2026-10-18",
+      "expected": {
+        "eligible": false,
+        "age": 17,
+        "minimumAge": 18,
+        "countryCode": "US",
+        "reason": "Age 17 is below the minimum voting age of 18 in US."
+      }
+    },
+    {
+      "name": "birthdate wins over the supplied age (turns 18 today)",
+      "input": { "age": 0, "birthdate": "2008-10-18" },
+      "countryCode": "US",
+      "referenceDate": "2026-10-18",
+      "expected": {
+        "eligible": true,
+        "age": 18,
+        "minimumAge": 18,
+        "countryCode": "US",
+        "reason": "Age 18 meets the minimum voting age of 18 in US."
+      }
+    },
+    {
+      "name": "unknown but well-formed country falls back to the default age",
+      "input": { "age": 18 },
+      "countryCode": "ZZ",
+      "referenceDate": "2026-10-18",
+      "expected": {
+        "eligible": true,
+        "age": 18,
+        "minimumAge": 18,
+        "countryCode": "ZZ",
+        "reason": "Age 18 meets the minimum voting age of 18 in ZZ."
+      }
+    }
+  ],
+  "rejectedEvaluations": [
+    {
+      "name": "age above 150",
+      "input": { "age": 151 },
+      "countryCode": "US",
+      "referenceDate": "2026-10-18",
+      "error": "Age must be 150 or less"
+    },
+    {
+      "name": "birthdate in the future",
+      "input": { "age": 5, "birthdate": "2026-10-19" },
+      "countryCode": "US",
+      "referenceDate": "2026-10-18",
+      "error": "Birthdate cannot be in the future"
+    },
+    {
+      "name": "malformed country code",
+      "input": { "age": 30 },
+      "countryCode": "USA",
+      "referenceDate": "2026-10-18",
+      "error": "Country code must be two ASCII letters (ISO 3166-1 alpha-2)"
+    }
+  ]
+}

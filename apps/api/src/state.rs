@@ -27,3 +27,13 @@ impl Default for AppState {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_state_starts_with_zero_uptime() {
+        assert_eq!(AppState::default().uptime_seconds(), 0);
+    }
+}

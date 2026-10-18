@@ -1,4 +1,4 @@
-use chrono::Utc;
+use chrono::{NaiveDate, Utc};
 use std::time::Instant;
 use uuid::Uuid;
 
@@ -9,8 +9,21 @@ use crate::models::{
     CalculationRequest, CalculationResponse, StackComponentStatus, StackLayer, TranHealthReport,
 };
 use crate::validation::validate_calculation_request;
-use crate::validation::validate_vote_eligibility_request;
+use crate::validation::{validate_country_code, validate_vote_eligibility_request};
 use crate::voting::{age_from_birthdate, can_vote_by_age, voting_age_for_country};
+
+fn apply_operation(operation: &str, a: f64, b: f64) -> CoreResult<f64> {
+    match operation {
+        "add" => Ok(a + b),
+        "subtract" => Ok(a - b),
+        "multiply" => Ok(a * b),
+        "divide" => Ok(a / b),
+        "power" => Ok(a.powf(b)),
+        other => Err(CoreError::ExecutionError(format!(
+            "Unreachable operation {other}"
+        ))),
+    }
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct TranEngine;
@@ -24,19 +37,7 @@ impl TranEngine {
         validate_calculation_request(&request)?;
 
         let start = Instant::now();
-        let result = match request.operation.as_str() {
-            "add" => request.a + request.b,
-            "subtract" => request.a - request.b,
-            "multiply" => request.a * request.b,
-            "divide" => request.a / request.b,
-            "power" => request.a.powf(request.b),
-            _ => {
-                return Err(CoreError::ExecutionError(format!(
-                    "Unreachable operation {}",
-                    request.operation
-                )))
-            }
-        };
+        let result = apply_operation(&request.operation, request.a, request.b)?;
 
         let elapsed = start.elapsed().as_micros() as u64;
 
@@ -48,6 +49,8 @@ impl TranEngine {
         })
     }
 
+    /// Evaluates eligibility using the current UTC date. Prefer
+    /// [`Self::evaluate_vote_eligibility_on`] in tests so results do not depend on the clock.
     pub fn evaluate_vote_eligibility(
         &self,
         request: VoteEligibilityRequest,
@@ -55,15 +58,34 @@ impl TranEngine {
         country_source: &str,
         client_ip: &str,
     ) -> CoreResult<VoteEligibilityResponse> {
-        validate_vote_eligibility_request(&request)?;
+        self.evaluate_vote_eligibility_on(
+            request,
+            country_code,
+            country_source,
+            client_ip,
+            Utc::now().date_naive(),
+        )
+    }
 
-        let today = Utc::now().date_naive();
+    /// Deterministic core of the eligibility rules: `today` is injected, never read from a clock.
+    pub fn evaluate_vote_eligibility_on(
+        &self,
+        request: VoteEligibilityRequest,
+        country_code: &str,
+        country_source: &str,
+        client_ip: &str,
+        today: NaiveDate,
+    ) -> CoreResult<VoteEligibilityResponse> {
+        validate_vote_eligibility_request(&request, today)?;
+        validate_country_code(country_code)?;
+
+        let country_code = country_code.to_uppercase();
         let age = request
             .birthdate
             .map(|bd| age_from_birthdate(bd, today))
             .unwrap_or(request.age);
 
-        let minimum_age = voting_age_for_country(country_code);
+        let minimum_age = voting_age_for_country(&country_code);
         let eligible = can_vote_by_age(age, minimum_age);
 
         let reason = if eligible {
@@ -77,7 +99,7 @@ impl TranEngine {
             eligible,
             age,
             minimum_age,
-            country_code: country_code.to_uppercase(),
+            country_code,
             country_source: country_source.to_string(),
             client_ip: client_ip.to_string(),
             reason,
@@ -123,5 +145,18 @@ impl TranEngine {
             overall_status: "HEALTHY".to_string(),
             components,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn apply_operation_rejects_operations_validation_should_have_caught() {
+        assert!(matches!(
+            apply_operation("modulo", 1.0, 2.0),
+            Err(CoreError::ExecutionError(_))
+        ));
     }
 }

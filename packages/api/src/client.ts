@@ -7,6 +7,17 @@ import {
   type VoteEligibilityOutput,
 } from './schemas/vote.js';
 
+/** An HTTP response was received but it was not a success. Network failures are NOT wrapped. */
+export class TranApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number
+  ) {
+    super(message);
+    this.name = 'TranApiError';
+  }
+}
+
 export interface TranOrpcClientOptions {
   baseUrl?: string;
   fetchFn?: typeof fetch;
@@ -53,7 +64,7 @@ export async function checkVoteEligibility(
     } catch {
       // ignore
     }
-    throw new Error(message);
+    throw new TranApiError(message, response.status);
   }
 
   const json = await response.json();

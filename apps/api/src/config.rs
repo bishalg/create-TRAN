@@ -8,22 +8,62 @@ pub struct AppConfig {
 }
 
 impl AppConfig {
+    /// Reads the process environment.
     pub fn from_env() -> Self {
-        let host = env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
-        let port = env::var("PORT")
-            .ok()
-            .and_then(|p| p.parse::<u16>().ok())
-            .unwrap_or(3001);
-        let environment = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
+        Self::from_lookup(|key| env::var(key).ok())
+    }
 
+    /// Pure core of config loading: `lookup` is injected so tests never touch the real environment.
+    pub fn from_lookup(lookup: impl Fn(&str) -> Option<String>) -> Self {
         Self {
-            host,
-            port,
-            environment,
+            host: lookup("HOST").unwrap_or_else(|| "0.0.0.0".to_string()),
+            port: lookup("PORT")
+                .and_then(|p| p.parse::<u16>().ok())
+                .unwrap_or(3001),
+            environment: lookup("APP_ENV").unwrap_or_else(|| "development".to_string()),
         }
     }
 
     pub fn socket_addr(&self) -> String {
         format!("{}:{}", self.host, self.port)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    fn config_from(pairs: &[(&str, &str)]) -> AppConfig {
+        let vars: HashMap<String, String> = pairs
+            .iter()
+            .map(|(k, v)| (k.to_string(), v.to_string()))
+            .collect();
+        AppConfig::from_lookup(|key| vars.get(key).cloned())
+    }
+
+    #[test]
+    fn defaults_apply_when_nothing_is_set() {
+        let cfg = config_from(&[]);
+        assert_eq!(cfg.socket_addr(), "0.0.0.0:3001");
+        assert_eq!(cfg.environment, "development");
+    }
+
+    #[test]
+    fn values_are_read_from_the_lookup() {
+        let cfg = config_from(&[("HOST", "127.0.0.1"), ("PORT", "4000"), ("APP_ENV", "test")]);
+        assert_eq!(cfg.socket_addr(), "127.0.0.1:4000");
+        assert_eq!(cfg.environment, "test");
+    }
+
+    #[test]
+    fn an_unparsable_port_falls_back_to_the_default() {
+        assert_eq!(config_from(&[("PORT", "not-a-port")]).port, 3001);
+        assert_eq!(config_from(&[("PORT", "99999")]).port, 3001);
+    }
+
+    #[test]
+    fn from_env_produces_a_usable_address() {
+        assert!(AppConfig::from_env().socket_addr().contains(':'));
     }
 }

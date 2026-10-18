@@ -17,7 +17,8 @@
     "eligibleYes": "मतदान गर्न योग्य",
     "eligibleNo": "मतदान गर्न अयोग्य",
     "themeLight": "उज्यालो",
-    "themeDark": "अँध्यारो"
+    "themeDark": "अँध्यारो",
+    "ageInvalid": "० देखि १५० बीचको पूर्ण संख्या उमेर राख्नुहोस्।"
   },
   "layers": {
     "tanstack": "TanStack वेब",

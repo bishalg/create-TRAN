@@ -33,3 +33,66 @@ pub fn extract_client_ip(forwarded_for: Option<&str>, direct: Option<&str>) -> S
         .filter(|s| !s.is_empty())
         .unwrap_or_else(|| "127.0.0.1".to_string())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn debug_country_wins_and_is_uppercased() {
+        assert_eq!(
+            country_from_client_ip("8.8.8.8", Some(" np ")),
+            ("NP".to_string(), "x-debug-country".to_string())
+        );
+    }
+
+    #[test]
+    fn blank_debug_country_is_ignored() {
+        assert_eq!(country_from_client_ip("8.8.8.8", Some("   ")).1, "default");
+    }
+
+    #[test]
+    fn loopback_addresses_default_to_us() {
+        for ip in ["127.0.0.1", "::1", "localhost", " 127.0.0.1 "] {
+            assert_eq!(
+                country_from_client_ip(ip, None),
+                ("US".to_string(), "loopback-default".to_string()),
+                "{ip}"
+            );
+        }
+    }
+
+    #[test]
+    fn private_ranges_stub_to_india() {
+        for ip in ["10.1.2.3", "192.168.0.10"] {
+            assert_eq!(country_from_client_ip(ip, None).0, "IN", "{ip}");
+        }
+    }
+
+    #[test]
+    fn public_addresses_use_the_default() {
+        assert_eq!(
+            country_from_client_ip("8.8.8.8", None),
+            ("US".to_string(), "default".to_string())
+        );
+    }
+
+    #[test]
+    fn forwarded_for_uses_first_hop_trimmed() {
+        assert_eq!(
+            extract_client_ip(Some(" 1.1.1.1 , 2.2.2.2"), None),
+            "1.1.1.1"
+        );
+    }
+
+    #[test]
+    fn empty_forwarded_for_falls_through_to_real_ip() {
+        assert_eq!(extract_client_ip(Some("  "), Some("3.3.3.3")), "3.3.3.3");
+    }
+
+    #[test]
+    fn no_headers_defaults_to_loopback() {
+        assert_eq!(extract_client_ip(None, None), "127.0.0.1");
+        assert_eq!(extract_client_ip(None, Some("  ")), "127.0.0.1");
+    }
+}

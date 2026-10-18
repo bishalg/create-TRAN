@@ -17,7 +17,8 @@
     "eligibleYes": "Eligible to vote",
     "eligibleNo": "Not eligible to vote",
     "themeLight": "Light",
-    "themeDark": "Dark"
+    "themeDark": "Dark",
+    "ageInvalid": "Enter a whole-number age between 0 and 150."
   },
   "layers": {
     "tanstack": "TanStack Web",

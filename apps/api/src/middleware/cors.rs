@@ -1,4 +1,4 @@
-use axum::http::{header, HeaderValue, Method};
+use axum::http::{header, HeaderName, HeaderValue, Method};
 use tower_http::cors::CorsLayer;
 
 pub fn create_cors_layer() -> CorsLayer {
@@ -9,5 +9,11 @@ pub fn create_cors_layer() -> CorsLayer {
             "http://localhost:8081".parse::<HeaderValue>().unwrap(),
         ])
         .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
-        .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION, header::ACCEPT])
+        .allow_headers([
+            header::CONTENT_TYPE,
+            header::AUTHORIZATION,
+            header::ACCEPT,
+            // Dev-only geo override sent by the web/native demo clients.
+            HeaderName::from_static("x-debug-country"),
+        ])
 }

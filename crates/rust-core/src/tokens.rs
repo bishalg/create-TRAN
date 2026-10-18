@@ -439,4 +439,24 @@ mod tests {
         assert!(snapshot.themes.contains_key("dark"));
         assert_eq!(snapshot.themes["dark"].glass.blur.md, "16px");
     }
+
+    #[test]
+    fn hex_color_validation_accepts_3_6_8_digit_forms_only() {
+        for ok in ["#fff", "#FFFFFF", "#ffffff80", "abc"] {
+            assert!(is_valid_hex_color(ok), "{ok}");
+            assert!(HexColor::new(ok).is_ok(), "{ok}");
+        }
+        for bad in ["", "#ff", "#ffff", "#ggg", "#1234567"] {
+            assert!(!is_valid_hex_color(bad), "{bad}");
+        }
+        assert_eq!(
+            HexColor::new("#zzz"),
+            Err("invalid hex color: #zzz".to_string())
+        );
+    }
+
+    #[test]
+    fn get_brand_tokens_is_the_default_token_set() {
+        assert_eq!(get_brand_tokens(), default_design_tokens());
+    }
 }

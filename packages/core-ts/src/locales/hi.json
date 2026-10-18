@@ -17,7 +17,8 @@
     "eligibleYes": "मतदान के लिए पात्र",
     "eligibleNo": "मतदान के लिए अपात्र",
     "themeLight": "लाइट",
-    "themeDark": "डार्क"
+    "themeDark": "डार्क",
+    "ageInvalid": "0 से 150 के बीच पूरी संख्या में आयु दर्ज करें।"
   },
   "layers": {
     "tanstack": "TanStack वेब",
