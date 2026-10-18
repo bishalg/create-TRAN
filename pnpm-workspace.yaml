@@ -1,6 +1,7 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+  - 'e2e'
 
 # pnpm 11+: dependency build scripts must be explicitly allowed
 allowBuilds:

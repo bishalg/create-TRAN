@@ -70,3 +70,9 @@ coverage/
 .cache/
 tmp/
 temp/
+
+# E2E / BDD generated output
+e2e/.features-gen/
+e2e/test-results/
+e2e/playwright-report/
+coverage/

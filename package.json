@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
+    "@vitest/coverage-v8": "^3.2.7",
     "nx": "^23.3.0",
     "prettier": "^3.5.3",
     "typescript": "^5.8.2",

@@ -8,6 +8,8 @@ export interface GlassCardProps {
   className?: string;
   style?: CSSProperties;
   onClick?: () => void;
+  /** id of the heading inside the card; exposes the card as a named landmark region. */
+  labelledBy?: string;
 }
 
 /**
@@ -21,6 +23,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   className = '',
   style = {},
   onClick,
+  labelledBy,
 }) => {
   const bg = theme.glass.background[variant];
   const border = theme.glass.border.standard;
@@ -43,8 +46,13 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   };
 
   return (
-    <div className={`glass-card ${className}`} style={cardStyle} onClick={onClick}>
+    <section
+      className={`glass-card ${className}`}
+      style={cardStyle}
+      onClick={onClick}
+      aria-labelledby={labelledBy}
+    >
       {children}
-    </div>
+    </section>
   );
 };

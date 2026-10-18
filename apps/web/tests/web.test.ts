@@ -1,14 +1,9 @@
-import { describe, it, expect } from 'vitest';
 import { liquidGlassTokens } from '@tran/core';
+import { describe, expect, it } from 'vitest';
 
-describe('Web App Core Tests', () => {
-  it('should utilize design system tokens properly', () => {
+describe('web design tokens', () => {
+  it('consumes the shared glass tokens', () => {
     expect(liquidGlassTokens.glass.background.standard).toBeDefined();
     expect(liquidGlassTokens.radii.lg).toBe('20px');
-  });
-
-  it('should verify layer codes match TRAN acronym', () => {
-    const acronym = ['T', 'R', 'A', 'N'];
-    expect(acronym.join('')).toBe('TRAN');
   });
 });

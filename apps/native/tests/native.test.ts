@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { liquidGlassTokens } from '@tran/core';
+import { getThemeTokens as shared } from '@tran/core';
+import { describe, expect, it } from 'vitest';
+import { getThemeTokens } from '../src/generated/brandTokens.js';
 
-describe('Native App Core', () => {
-  it('should use design system radii and background tokens', () => {
-    expect(liquidGlassTokens.radii.md).toBe('14px');
-    expect(liquidGlassTokens.glass.background.subtle).toBeDefined();
+describe('native design tokens', () => {
+  it('re-exports the shared tokens so web and native cannot drift', () => {
+    expect(getThemeTokens).toBe(shared);
   });
 });

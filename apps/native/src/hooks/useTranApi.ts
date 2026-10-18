@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   evaluateVoteEligibilityOffline,
+  isNetworkError,
   type OfflineEligibilityResult,
   TranApiClient,
   type TranHealthReport,
@@ -8,9 +9,14 @@ import {
   type VoteEligibilityOutput,
 } from '@tran/core';
 
-const defaultApiBase =
-  (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_TRAN_API_URL) ||
-  'http://127.0.0.1:3001';
+export const DEFAULT_API_URL = 'http://127.0.0.1:3001';
+
+/** Pure so it can be unit-tested; the hook passes `process.env`. */
+export function resolveApiBaseUrl(env: { EXPO_PUBLIC_TRAN_API_URL?: string } = {}): string {
+  return env.EXPO_PUBLIC_TRAN_API_URL ? env.EXPO_PUBLIC_TRAN_API_URL : DEFAULT_API_URL;
+}
+
+const defaultApiBase = resolveApiBaseUrl(process.env);
 
 export interface UseTranApiState {
   health: TranHealthReport | null;
@@ -22,8 +28,20 @@ export interface UseTranApiState {
   lastOfflineResult: OfflineEligibilityResult | null;
 }
 
-export function useTranApi() {
-  const client = useMemo(() => new TranApiClient({ baseUrl: defaultApiBase }), []);
+export interface UseTranApiOptions {
+  /** Inject a client in tests. */
+  client?: TranApiClient;
+  baseUrl?: string;
+}
+
+const messageOf = (err: unknown, fallback: string) =>
+  err instanceof Error ? err.message : fallback;
+
+export function useTranApi({ client: injected, baseUrl }: UseTranApiOptions = {}) {
+  const client = useMemo(
+    () => injected ?? new TranApiClient({ baseUrl: baseUrl ?? defaultApiBase }),
+    [injected, baseUrl]
+  );
 
   const [state, setState] = useState<UseTranApiState>({
     health: null,
@@ -57,24 +75,33 @@ export function useTranApi() {
   }, [client]);
 
   const checkOffline = useCallback((age: number, countryCode: string) => {
-    const result = evaluateVoteEligibilityOffline({ age, countryCode });
-    setState((prev) => ({ ...prev, lastOfflineResult: result, error: null }));
-    return result;
+    try {
+      const result = evaluateVoteEligibilityOffline({ age, countryCode });
+      setState((prev) => ({ ...prev, lastOfflineResult: result, error: null }));
+      return result;
+    } catch (err) {
+      setState((prev) => ({
+        ...prev,
+        lastOfflineResult: null,
+        error: messageOf(err, 'Invalid input'),
+      }));
+      return null;
+    }
   }, []);
 
   const checkViaApi = useCallback(
     async (age: number, headers?: Record<string, string>) => {
       try {
-        const apiClient =
-          headers && Object.keys(headers).length > 0
-            ? new TranApiClient({ baseUrl: defaultApiBase, headers })
-            : client;
-        const result = await apiClient.checkVoteEligibility({ age });
+        const scoped = headers && Object.keys(headers).length > 0 ? client.withHeaders(headers) : client;
+        const result = await scoped.checkVoteEligibility({ age });
         setState((prev) => ({ ...prev, lastApiResult: result, error: null, isOffline: false }));
         return result;
       } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : 'Eligibility check failed';
-        setState((prev) => ({ ...prev, error: errorMsg, isOffline: true }));
+        setState((prev) => ({
+          ...prev,
+          error: messageOf(err, 'Eligibility check failed'),
+          isOffline: isNetworkError(err) ? true : prev.isOffline,
+        }));
         return null;
       }
     },
@@ -82,7 +109,7 @@ export function useTranApi() {
   );
 
   useEffect(() => {
-    fetchStatus();
+    void fetchStatus();
   }, [fetchStatus]);
 
   return {

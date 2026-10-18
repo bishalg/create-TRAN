@@ -3,6 +3,7 @@ import {
   type SupportedLocale,
   type ThemeMode,
   getThemeTokens,
+  parseAgeInput,
   t,
 } from '@tran/core';
 import { GlassCard } from './components/ui/GlassCard.js';
@@ -82,17 +83,26 @@ export const App: React.FC = () => {
     checkViaApi,
   } = useTranApi();
 
+  const [inputError, setInputError] = useState<string | null>(null);
+
+  const readAge = (): number | null => {
+    const parsed = parseAgeInput(age);
+    setInputError(parsed === null ? t('app.ageInvalid', locale) : null);
+    return parsed;
+  };
+
   const handleOffline = () => {
-    const parsed = parseInt(age, 10);
-    if (!Number.isNaN(parsed)) checkOffline(parsed, country);
+    const parsed = readAge();
+    if (parsed !== null) checkOffline(parsed, country);
   };
 
   const handleApi = async () => {
-    const parsed = parseInt(age, 10);
-    if (!Number.isNaN(parsed)) {
-      await checkViaApi(parsed, { 'X-Debug-Country': apiCountry });
-    }
+    const parsed = readAge();
+    if (parsed !== null) await checkViaApi(parsed, { 'X-Debug-Country': apiCountry });
   };
+
+  // Unreachable servers are announced by the banner; everything else is an actionable error.
+  const alertMessage = inputError ?? (isOffline ? null : error);
 
   return (
     <div
@@ -158,6 +168,15 @@ export const App: React.FC = () => {
           </div>
         )}
 
+        {alertMessage && (
+          <p
+            role="alert"
+            style={{ color: theme.palette.danger, textAlign: 'center', marginBottom: '1rem' }}
+          >
+            {alertMessage}
+          </p>
+        )}
+
         <div
           style={{
             display: 'grid',
@@ -165,8 +184,8 @@ export const App: React.FC = () => {
             gap: '1.25rem',
           }}
         >
-          <GlassCard variant="prominent" theme={theme}>
-            <h2 style={{ marginTop: 0 }}>{t('app.sectionOffline', locale)}</h2>
+          <GlassCard variant="prominent" theme={theme} labelledBy="offline-heading">
+            <h2 id="offline-heading" style={{ marginTop: 0 }}>{t('app.sectionOffline', locale)}</h2>
             <p style={{ fontSize: '0.85rem', color: theme.palette.text.secondary, marginTop: 0 }}>
               <code>evaluateVoteEligibilityOffline</code> · mirrors{' '}
               <code>crates/rust-core/src/voting.rs</code>
@@ -217,8 +236,8 @@ export const App: React.FC = () => {
             )}
           </GlassCard>
 
-          <GlassCard variant="standard" theme={theme}>
-            <h2 style={{ marginTop: 0 }}>{t('app.sectionApi', locale)}</h2>
+          <GlassCard variant="standard" theme={theme} labelledBy="api-heading">
+            <h2 id="api-heading" style={{ marginTop: 0 }}>{t('app.sectionApi', locale)}</h2>
             <p style={{ fontSize: '0.85rem', color: theme.palette.text.secondary, marginTop: 0 }}>
               {t('app.apiCountryHint', locale)}
             </p>
@@ -262,15 +281,10 @@ export const App: React.FC = () => {
                 source="api"
               />
             )}
-            {error && (
-              <p style={{ color: theme.palette.danger, fontSize: '0.85rem', marginTop: '0.75rem' }}>
-                {error}
-              </p>
-            )}
           </GlassCard>
 
-          <GlassCard variant="subtle" theme={theme}>
-            <h2 style={{ marginTop: 0 }}>{t('app.status', locale)}</h2>
+          <GlassCard variant="subtle" theme={theme} labelledBy="status-heading">
+            <h2 id="status-heading" style={{ marginTop: 0 }}>{t('app.status', locale)}</h2>
             {isLoading ? (
               <SkeletonView count={3} height="28px" />
             ) : health ? (

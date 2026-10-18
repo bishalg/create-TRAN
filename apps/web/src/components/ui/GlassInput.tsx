@@ -1,4 +1,4 @@
-import React, { type CSSProperties, type InputHTMLAttributes } from 'react';
+import React, { type CSSProperties, type InputHTMLAttributes, useId } from 'react';
 import { liquidGlassTokens, type ThemeTokens } from '@tran/core';
 
 export interface GlassInputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -18,6 +18,10 @@ export const GlassInput: React.FC<GlassInputProps> = ({
   style = {},
   ...props
 }) => {
+  const generatedId = useId();
+  const inputId = props.id ?? generatedId;
+  const errorId = `${inputId}-error`;
+
   const inputStyle: CSSProperties = {
     backgroundColor: theme.glass.background.subtle,
     backdropFilter: `blur(${theme.glass.blur.sm})`,
@@ -36,13 +40,20 @@ export const GlassInput: React.FC<GlassInputProps> = ({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', width: '100%' }}>
       {label && (
-        <label style={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
+        <label htmlFor={inputId} style={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
           {label}
         </label>
       )}
-      <input className={`glass-input ${className}`} style={inputStyle} {...props} />
+      <input
+        className={`glass-input ${className}`}
+        style={inputStyle}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
+        {...props}
+        id={inputId}
+      />
       {error && (
-        <span style={{ fontSize: '0.75rem', color: theme.palette.danger }}>
+        <span id={errorId} style={{ fontSize: '0.75rem', color: theme.palette.danger }}>
           {error}
         </span>
       )}

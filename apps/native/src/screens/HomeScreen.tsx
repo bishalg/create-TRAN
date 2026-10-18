@@ -8,7 +8,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { getThemeTokens, t, type SupportedLocale, type ThemeMode } from '@tran/core';
+import {
+  getThemeTokens,
+  parseAgeInput,
+  t,
+  type SupportedLocale,
+  type ThemeMode,
+} from '@tran/core';
 import { GlassCard } from '../components/GlassCard.js';
 import { GlassInput } from '../components/GlassInput.js';
 import { SkeletonView } from '../components/SkeletonView.js';
@@ -61,17 +67,26 @@ export const HomeScreen: React.FC = () => {
     checkViaApi,
   } = useTranApi();
 
+  const [inputError, setInputError] = useState<string | null>(null);
+
+  const readAge = (): number | null => {
+    const parsed = parseAgeInput(age);
+    setInputError(parsed === null ? t('app.ageInvalid', locale) : null);
+    return parsed;
+  };
+
   const handleOffline = () => {
-    const parsed = parseInt(age, 10);
-    if (!Number.isNaN(parsed)) checkOffline(parsed, country);
+    const parsed = readAge();
+    if (parsed !== null) checkOffline(parsed, country);
   };
 
   const handleApi = async () => {
-    const parsed = parseInt(age, 10);
-    if (!Number.isNaN(parsed)) {
-      await checkViaApi(parsed, { 'X-Debug-Country': apiCountry });
-    }
+    const parsed = readAge();
+    if (parsed !== null) await checkViaApi(parsed, { 'X-Debug-Country': apiCountry });
   };
+
+  // Unreachable servers are announced by the offline notice; everything else is actionable.
+  const alertMessage = inputError ?? (isOffline ? null : error);
 
   return (
     <SafeAreaView
@@ -202,7 +217,11 @@ export const HomeScreen: React.FC = () => {
               extra={`${lastApiResult.country_code} · min ${lastApiResult.minimum_age} · IP ${lastApiResult.client_ip}`}
             />
           )}
-          {error ? <Text style={{ color: theme.palette.danger, marginTop: 8 }}>{error}</Text> : null}
+          {alertMessage ? (
+            <Text accessibilityRole="alert" style={{ color: theme.palette.danger, marginTop: 8 }}>
+              {alertMessage}
+            </Text>
+          ) : null}
         </GlassCard>
 
         <GlassCard variant="subtle" style={styles.sectionCard}>
