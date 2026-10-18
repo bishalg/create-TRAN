@@ -1,4 +1,4 @@
-// Verifies: REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005
+// Verifies: REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006
 import XCTest
 
 /// Native UI + accessibility tests. Journeys mirror e2e/maestro/flows and e2e/features.
@@ -50,10 +50,11 @@ final class VotingUITests: XCTestCase {
     func testControlsAreAtLeast44PointsAndLabelled() {
         let check = app.descendants(matching: .any)["check-button"]
         XCTAssertGreaterThanOrEqual(check.frame.height, 44, "check-button is too short to tap")
-        let themeRow = app.descendants(matching: .any)["theme-toggle"]
+        let themeRow = app.descendants(matching: .any).matching(identifier: "theme-toggle").element(boundBy: 0)
+        XCTAssertTrue(themeRow.waitForExistence(timeout: 2))
         XCTAssertGreaterThanOrEqual(themeRow.frame.height, 44, "theme-toggle is too short to tap")
         XCTAssertTrue(app.buttons["Check offline"].exists, "button needs a spoken label")
-        XCTAssertTrue(app.switches["Dark theme"].firstMatch.exists, "toggle needs a spoken label")
+        XCTAssertTrue(themeRow.label.contains("Dark theme"), "toggle needs a spoken label")
     }
 
     func testAccessibilityAuditPassesInBothThemes() throws {

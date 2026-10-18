@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Verifies: REQ-HOOK-001
+# Pre-commit hook: Fast local verification (specs, formatting, types, linter)
+set -e
+
+echo "🔍 [pre-commit] Running local quality gates..."
+
+# 1. Spec traceability
+echo "  ↳ Checking requirement traceability (spec:check)..."
+pnpm run spec:check
+
+# 2. Formatting
+echo "  ↳ Checking Rust and TypeScript formatting..."
+cargo fmt --all -- --check
+pnpm run format:check
+
+# 3. TypeScript Typechecking
+echo "  ↳ Typechecking TypeScript packages and apps..."
+pnpm run typecheck
+
+# 4. Rust Clippy Linter
+echo "  ↳ Running cargo clippy..."
+cargo clippy --workspace --all-targets -- -D warnings
+
+echo "✅ [pre-commit] All quality gates passed! Commit approved."

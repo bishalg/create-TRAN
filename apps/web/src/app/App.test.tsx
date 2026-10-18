@@ -285,7 +285,9 @@ describe('App: navigation and role branching', () => {
     await screen.findByText(/API (online|offline)/);
 
     await user.click(screen.getByRole('button', { name: 'Continue as Election Auditor' }));
-    expect(screen.getByRole('heading', { level: 2, name: 'Election Auditor Dashboard' })).toBeVisible();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Election Auditor Dashboard' })
+    ).toBeVisible();
     expect(screen.getByTestId('role-badge')).toHaveTextContent('Election Auditor');
     expect(screen.getByText('NP')).toBeVisible();
 

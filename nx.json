@@ -31,5 +31,6 @@
       "continuous": true
     }
   },
-  "defaultBase": "main"
+  "defaultBase": "main",
+  "analytics": false
 }

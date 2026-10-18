@@ -14,6 +14,7 @@ struct VotingHomeView: View {
         let canVote = useDark ? TranBrandTokens.Dark.eligibilityCanVote : TranBrandTokens.Light.eligibilityCanVote
         let cannotVote = useDark ? TranBrandTokens.Dark.eligibilityCannotVote : TranBrandTokens.Light.eligibilityCannotVote
         let primary = useDark ? TranBrandTokens.Dark.primary : TranBrandTokens.Light.primary
+        let surface = useDark ? TranBrandTokens.Dark.surface : TranBrandTokens.Light.surface
 
         ZStack {
             background.ignoresSafeArea()
@@ -38,21 +39,31 @@ struct VotingHomeView: View {
                         }
                     }
 
-                    VStack(spacing: 12) {
-                        TextField("Age", text: $ageText)
-                            .keyboardType(.numberPad)
-                            .padding(10)
-                            .background(.background.opacity(0.9))
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(textPrimary.opacity(0.35)))
-                            .accessibilityIdentifier("age-field")
-                        TextField("Country", text: $countryCode)
-                            .textInputAutocapitalization(.characters)
-                            .padding(10)
-                            .background(.background.opacity(0.9))
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(textPrimary.opacity(0.35)))
-                            .accessibilityIdentifier("country-field")
+                    VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Age")
+                                .font(.subheadline)
+                                .foregroundStyle(textPrimary)
+                            TextField("", text: $ageText, prompt: Text("Enter age").foregroundStyle(textPrimary))
+                                .keyboardType(.numberPad)
+                                .padding(10)
+                                .background(surface)
+                                .foregroundStyle(textPrimary)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .accessibilityIdentifier("age-field")
+                        }
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Country")
+                                .font(.subheadline)
+                                .foregroundStyle(textPrimary)
+                            TextField("", text: $countryCode, prompt: Text("Two letters").foregroundStyle(textPrimary))
+                                .textInputAutocapitalization(.characters)
+                                .padding(10)
+                                .background(surface)
+                                .foregroundStyle(textPrimary)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .accessibilityIdentifier("country-field")
+                        }
                     }
 
                     Button("Check offline") {
@@ -71,11 +82,27 @@ struct VotingHomeView: View {
                         .accessibilityIdentifier("offline-result")
                         .accessibilityAddTraits(.updatesFrequently)
 
-                    Toggle("Dark theme", isOn: $useDark)
-                        .tint(primary)
-                        .padding(.vertical, 8)
-                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                        .accessibilityIdentifier("theme-toggle")
+                    Button {
+                        useDark.toggle()
+                    } label: {
+                        HStack {
+                            Text("Dark theme")
+                                .foregroundStyle(textPrimary)
+                            Spacer()
+                            Toggle("", isOn: $useDark)
+                                .labelsHidden()
+                                .allowsHitTesting(false)
+                                .tint(primary)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Dark theme")
+                    .accessibilityAddTraits(.isToggle)
+                    .accessibilityRemoveTraits(.isButton)
+                    .accessibilityValue(useDark ? "On" : "Off")
+                    .accessibilityIdentifier("theme-toggle")
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(24)

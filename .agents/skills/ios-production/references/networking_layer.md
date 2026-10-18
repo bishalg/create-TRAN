@@ -60,9 +60,11 @@ public extension Endpoint {
 ## 2. Request Interceptors & Token Refresh
 
 ### The "Thundering Herd" Problem
+
 When multiple parallel requests fail with `401 Unauthorized`, an uncoordinated client will fire multiple simultaneous refresh token requests. This invalidates refresh tokens and breaks the user's session.
 
 ### The Actor-Based Solution
+
 Use an `actor` to serialize token refresh so only one network call is executed while other requests await the result:
 
 ```swift

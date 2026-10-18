@@ -7,6 +7,7 @@ This guide establishes the pattern for building high-performance data tables wit
 ## 1. Why URL State Synchronization Matters
 
 In dashboards and SaaS applications, table pagination, active filters, search queries, and column sorting should be stored in the URL (`?page=2&sort=created_at.desc&search=active`). This guarantees:
+
 1. Users can share exact table views via copied URLs.
 2. Browser Back/Forward buttons navigate through filter states correctly.
 3. Server Components can read initial search params to pre-render the exact filtered data without client layout shifts.
@@ -16,7 +17,12 @@ In dashboards and SaaS applications, table pagination, active filters, search qu
 ## 2. Defining Type-Safe Query Parsers with `nuqs`
 
 ```typescript
-import { createSearchParamsCache, parseAsInteger, parseAsString, parseAsStringEnum } from 'nuqs/server';
+import {
+  createSearchParamsCache,
+  parseAsInteger,
+  parseAsString,
+  parseAsStringEnum,
+} from 'nuqs/server';
 
 export const tableSearchParams = {
   page: parseAsInteger.withDefault(1),
@@ -37,7 +43,13 @@ export const searchParamsCache = createSearchParamsCache(tableSearchParams);
 'use client';
 
 import { useQueryStates } from 'nuqs';
-import { useReactTable, getCoreRowModel, ColumnDef, PaginationState, SortingState } from '@tanstack/react-table';
+import {
+  useReactTable,
+  getCoreRowModel,
+  ColumnDef,
+  PaginationState,
+  SortingState,
+} from '@tanstack/react-table';
 import { tableSearchParams } from './searchParams';
 
 export function useUrlSyncedTable<TData>({

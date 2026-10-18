@@ -6,10 +6,10 @@ In 2026, large Android engineering teams rarely write raw Espresso tests. Instea
 
 ## 1. The Three Modern BDD Approaches
 
-| Strategy | Reference Tool | Primary Use Case |
-| :--- | :--- | :--- |
-| **Strict Gherkin (`.feature`)** | `cucumber/cucumber-android` | Product-led teams where non-technical stakeholders write feature files |
-| **Kotlin BDD Step DSL** | `KasperskyLab/Kaspresso` | Engineering-led teams wanting step annotations, OS control, and zero flakiness |
+| Strategy                           | Reference Tool              | Primary Use Case                                                                     |
+| :--------------------------------- | :-------------------------- | :----------------------------------------------------------------------------------- |
+| **Strict Gherkin (`.feature`)**    | `cucumber/cucumber-android` | Product-led teams where non-technical stakeholders write feature files               |
+| **Kotlin BDD Step DSL**            | `KasperskyLab/Kaspresso`    | Engineering-led teams wanting step annotations, OS control, and zero flakiness       |
 | **Screen/Robot Pattern & Maestro** | `Firefox Fenix` & `Maestro` | Cross-platform teams wanting readable Compose tests and declarative YAML smoke flows |
 
 ---
@@ -164,6 +164,7 @@ tags: [offline, smoke]
 ```
 
 ### Running Maestro Flows
+
 ```bash
 maestro test e2e/maestro/flows/offline-eligibility.yaml
 ```

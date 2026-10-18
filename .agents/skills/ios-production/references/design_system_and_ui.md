@@ -9,6 +9,7 @@ This guide establishes the visual excellence, token integration, and accessibili
 Design tokens must originate from a single source of truth (e.g. `crates/rust-core/src/tokens.rs` synchronized via `pnpm tokens:sync` into `BrandTokens.swift`). Never hardcode hex values or magic spacing numbers in UI views.
 
 ### Token Contract Example
+
 ```swift
 import SwiftUI
 

@@ -26,7 +26,9 @@ export const teams = pgTable('teams', {
 
 export const elections = pgTable('elections', {
   id: uuid('id').defaultRandom().primaryKey(),
-  teamId: uuid('team_id').references(() => teams.id, { onDelete: 'cascade' }).notNull(),
+  teamId: uuid('team_id')
+    .references(() => teams.id, { onDelete: 'cascade' })
+    .notNull(),
   title: text('title').notNull(),
   countryCode: varchar('country_code', { length: 2 }).notNull(),
   isActive: boolean('is_active').default(true).notNull(),

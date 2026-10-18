@@ -8,8 +8,7 @@
 export type UserRole = 'citizen_voter' | 'election_auditor';
 
 export type AuthSession =
-  | { status: 'unauthenticated' }
-  | { status: 'authenticated'; userId: string; role: UserRole };
+  { status: 'unauthenticated' } | { status: 'authenticated'; userId: string; role: UserRole };
 
 export type AppDestination = 'splash' | 'auth_welcome' | 'voter_dashboard' | 'auditor_dashboard';
 

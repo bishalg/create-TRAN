@@ -13,18 +13,10 @@ export function AuthWelcomePage({ onSelectRole }: AuthWelcomePageProps) {
         className="auth-branches"
         style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}
       >
-        <button
-          type="button"
-          className="button"
-          onClick={() => onSelectRole('citizen_voter')}
-        >
+        <button type="button" className="button" onClick={() => onSelectRole('citizen_voter')}>
           Continue as Citizen Voter
         </button>
-        <button
-          type="button"
-          className="button"
-          onClick={() => onSelectRole('election_auditor')}
-        >
+        <button type="button" className="button" onClick={() => onSelectRole('election_auditor')}>
           Continue as Election Auditor
         </button>
       </div>

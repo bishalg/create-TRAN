@@ -4,12 +4,12 @@ Platform-native **N** in TRAN: Swift + SwiftUI, sharing brand tokens and **offli
 
 ## What works today
 
-| Feature | Status |
-| :-- | :-- |
-| Design tokens (`BrandTokens.swift`) | `pnpm tokens:sync` from `crates/rust-core/src/tokens.rs` |
-| Offline vote eligibility | `evaluateVoteEligibilityOffline` via `crates/tran-uniffi` → `TranEngine` |
-| Golden parity tests | `Tests/TranVotingDemoTests` reads `fixtures/vote-eligibility.json` |
-| HTTP API client | Not wired yet (stretch: URLSession + Axum envelope) |
+| Feature                             | Status                                                                   |
+| :---------------------------------- | :----------------------------------------------------------------------- |
+| Design tokens (`BrandTokens.swift`) | `pnpm tokens:sync` from `crates/rust-core/src/tokens.rs`                 |
+| Offline vote eligibility            | `evaluateVoteEligibilityOffline` via `crates/tran-uniffi` → `TranEngine` |
+| Golden parity tests                 | `Tests/TranVotingDemoTests` reads `fixtures/vote-eligibility.json`       |
+| HTTP API client                     | Not wired yet (stretch: URLSession + Axum envelope)                      |
 
 ## Layout
 

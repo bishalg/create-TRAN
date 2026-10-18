@@ -28,6 +28,7 @@ Google's architecture standard organizes applications into three decoupled layer
 ```
 
 ### Unidirectional Data Flow (UDF) Rules:
+
 1. **Downstream Data**: State flows down from repositories to domain interactors, then into the UI as immutable data classes.
 2. **Upstream Events**: User intents (clicks, text changes) flow upstream as sealed interface actions/events.
 3. **Lifecycle Awareness**: In Compose, always collect state using:
@@ -105,6 +106,7 @@ class VotingPresenter(
 ```
 
 ### Why Circuit Surpasses Traditional ViewModels
+
 - **Seamless Testing**: Presenters are standard functions tested with `presenter.test { val state = awaitItem(); ... }`.
 - **Zero Android Lifecycle Boilerplate**: No saved state handles or ViewModel factories needed.
 - **Natural Compose Integration**: State management is just Compose code running inside the composition tree.
@@ -116,6 +118,7 @@ class VotingPresenter(
 **Element X** uses **Konsist** to run automated unit tests that enforce architecture and prevent code degradation.
 
 ### Enforcing Module Boundaries
+
 Ensure feature modules do not depend on internal classes of other features:
 
 ```kotlin

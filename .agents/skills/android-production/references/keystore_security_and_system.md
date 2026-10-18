@@ -9,6 +9,7 @@ This guide establishes enterprise security standards for Android apps targeting 
 Plaintext preferences (`SharedPreferences`) or unencrypted databases must never hold credentials, tokens, or private keys. The Android Keystore provider (`AndroidKeyStore`) keeps cryptographic keys inside the device's Secure Element (SE) or Trusted Execution Environment (TEE).
 
 ### Key Generation with Biometric Policy
+
 ```kotlin
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties

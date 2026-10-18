@@ -52,7 +52,16 @@ export function Header({
         </button>
 
         {currentRole && (
-          <span className="role-badge" data-testid="role-badge" style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.875rem', fontWeight: 600 }}>
+          <span
+            className="role-badge"
+            data-testid="role-badge"
+            style={{
+              padding: '4px 8px',
+              borderRadius: '4px',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+            }}
+          >
             {currentRole === 'citizen_voter' ? 'Citizen Voter' : 'Election Auditor'}
           </span>
         )}

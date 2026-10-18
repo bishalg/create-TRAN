@@ -5,16 +5,16 @@ easy to copy. Every layer below has one reference file. Copy its shape, not its 
 
 ## The pyramid
 
-| Layer               | Tool                     | Reference file                                                                                                          | What it proves                                    |
-| :------------------ | :----------------------- | :---------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------ |
-| Rule unit tests     | `cargo test`             | `crates/rust-core/src/voting.rs` (`mod tests`)                                                                          | Pure functions, boundaries (17/18, leap day)      |
-| **Golden fixtures** | `cargo test` + `vitest`  | `fixtures/vote-eligibility.json` → `crates/rust-core/tests/parity_fixtures.rs`, `packages/core-ts/tests/parity.test.ts` | Rust and TypeScript give **identical** answers    |
-| UniFFI parity       | `cargo test -p tran-uniffi` | `crates/tran-uniffi/tests/parity_fixtures.rs` + `src/lib.rs` unit tests                                            | Native FFI surface matches the same fixture table |
-| HTTP integration    | `tower::oneshot`         | `apps/api/tests/api_test.rs`                                                                                            | Routes, headers, status codes, one error envelope |
-| Real socket smoke   | tokio `TcpListener`      | `apps/api/tests/server_test.rs`                                                                                         | `run_server` really serves                        |
-| Client / contract   | vitest + fake `fetch`    | `packages/core-ts/tests/client.test.ts`                                                                                 | Timeouts, error mapping, Zod contract             |
-| Hook / component    | vitest + Testing Library | `apps/web/tests/{useTranApi,App}.test.tsx`                                                                              | Behaviour via roles and labels, never CSS         |
-| **BDD + E2E**       | Playwright + Gherkin     | `e2e/features/vote-eligibility.feature`                                                                                 | Real browser → real Vite → real Axum (incl. CORS) |
+| Layer               | Tool                        | Reference file                                                                                                          | What it proves                                    |
+| :------------------ | :-------------------------- | :---------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------ |
+| Rule unit tests     | `cargo test`                | `crates/rust-core/src/voting.rs` (`mod tests`)                                                                          | Pure functions, boundaries (17/18, leap day)      |
+| **Golden fixtures** | `cargo test` + `vitest`     | `fixtures/vote-eligibility.json` → `crates/rust-core/tests/parity_fixtures.rs`, `packages/core-ts/tests/parity.test.ts` | Rust and TypeScript give **identical** answers    |
+| UniFFI parity       | `cargo test -p tran-uniffi` | `crates/tran-uniffi/tests/parity_fixtures.rs` + `src/lib.rs` unit tests                                                 | Native FFI surface matches the same fixture table |
+| HTTP integration    | `tower::oneshot`            | `apps/api/tests/api_test.rs`                                                                                            | Routes, headers, status codes, one error envelope |
+| Real socket smoke   | tokio `TcpListener`         | `apps/api/tests/server_test.rs`                                                                                         | `run_server` really serves                        |
+| Client / contract   | vitest + fake `fetch`       | `packages/core-ts/tests/client.test.ts`                                                                                 | Timeouts, error mapping, Zod contract             |
+| Hook / component    | vitest + Testing Library    | `apps/web/tests/{useTranApi,App}.test.tsx`                                                                              | Behaviour via roles and labels, never CSS         |
+| **BDD + E2E**       | Playwright + Gherkin        | `e2e/features/vote-eligibility.feature`                                                                                 | Real browser → real Vite → real Axum (incl. CORS) |
 
 ## TDD loop (do this for every change)
 
@@ -31,6 +31,8 @@ pnpm test                 # cargo test + vitest (fast)
 pnpm test:coverage        # Rust + TS, FAILS below 100%
 pnpm test:e2e             # Gherkin scenarios in Chromium (starts API + web itself)
 pnpm test:all             # everything CI runs
+pnpm check:quick          # spec check + formatting + typecheck + clippy (matches pre-commit hook)
+pnpm hooks:install        # configure git core.hooksPath .githooks (runs automatically on pnpm install)
 ```
 
 First E2E run needs `pnpm --filter e2e exec playwright install chromium`.

@@ -43,11 +43,11 @@ flowchart LR
 
 ## Offline vs API
 
-| Path | Where rules run | Country source |
-| :-- | :-- | :-- |
-| **Offline (web / Expo)** | `evaluateVoteEligibilityOffline` in `@tran/core` (mirrors `voting.rs`) | User picks country in the UI |
-| **Offline (iOS / Android)** | `evaluate_vote_eligibility_offline` in `crates/tran-uniffi` → `TranEngine` | User picks country in native UI |
-| **API** | `TranEngine::evaluate_vote_eligibility` in Rust | Stub geo from IP + `X-Debug-Country` |
+| Path                        | Where rules run                                                            | Country source                       |
+| :-------------------------- | :------------------------------------------------------------------------- | :----------------------------------- |
+| **Offline (web / Expo)**    | `evaluateVoteEligibilityOffline` in `@tran/core` (mirrors `voting.rs`)     | User picks country in the UI         |
+| **Offline (iOS / Android)** | `evaluate_vote_eligibility_offline` in `crates/tran-uniffi` → `TranEngine` | User picks country in native UI      |
+| **API**                     | `TranEngine::evaluate_vote_eligibility` in Rust                            | Stub geo from IP + `X-Debug-Country` |
 
 Web hook: `apps/web/src/shared/api/useTranApi.ts`  
 Legacy native: `apps/native/src/hooks/useTranApi.ts`
@@ -112,14 +112,14 @@ See [TESTING.md](./TESTING.md) for the TDD / BDD / E2E / coverage playbook.
 
 ## Key files
 
-| Concern | Location |
-| :-- | :-- |
-| Routes | `apps/api/src/routes/mod.rs` |
-| Vote handler | `apps/api/src/routes/vote.rs` |
-| Geo stub | `apps/api/src/geo.rs` |
-| oRPC/Zod | `packages/api/src/` |
-| Web demo UI | `apps/web/src/features/eligibility/EligibilityPage.tsx` |
-| UniFFI crate | `crates/tran-uniffi/src/lib.rs` |
-| iOS demo UI | `apps/ios/Sources/TranVotingDemo/VotingHomeView.swift` |
-| Android demo UI | `apps/android/.../ui/VotingHomeScreen.kt` |
-| Legacy RN demo UI | `apps/native/src/screens/HomeScreen.tsx` |
+| Concern           | Location                                                |
+| :---------------- | :------------------------------------------------------ |
+| Routes            | `apps/api/src/routes/mod.rs`                            |
+| Vote handler      | `apps/api/src/routes/vote.rs`                           |
+| Geo stub          | `apps/api/src/geo.rs`                                   |
+| oRPC/Zod          | `packages/api/src/`                                     |
+| Web demo UI       | `apps/web/src/features/eligibility/EligibilityPage.tsx` |
+| UniFFI crate      | `crates/tran-uniffi/src/lib.rs`                         |
+| iOS demo UI       | `apps/ios/Sources/TranVotingDemo/VotingHomeView.swift`  |
+| Android demo UI   | `apps/android/.../ui/VotingHomeScreen.kt`               |
+| Legacy RN demo UI | `apps/native/src/screens/HomeScreen.tsx`                |

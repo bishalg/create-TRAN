@@ -27,15 +27,15 @@ A battle-tested production engineering manual and code template system for moder
 
 When you need a specific pattern, open the matching reference and copy-ready example:
 
-| Engineering Need | Architectural Source | Reference Doc | Copy-Ready Implementation |
-| :--- | :--- | :--- | :--- |
-| **Async View State Enum (`Loadable<T>`)** | Clean Architecture / IceCubes | [Architecture & Concurrency](./references/architecture_and_concurrency.md) | [Loadable.swift](./examples/Loadable.swift) |
-| **Decoupled Navigation & Sheet Routing** | IceCubesApp (`RouterPath`) | [Navigation & Routing](./references/navigation_and_routing.md) | [Router.swift](./examples/Router.swift) |
-| **Clean `async/await` URLSession Client** | Bitwarden / IceCubesApp | [Networking Layer](./references/networking_layer.md) | [EndpointNetworkClient.swift](./examples/EndpointNetworkClient.swift) |
-| **Biometric & Secure Enclave Keychain** | Proton Pass / Bitwarden | [Security & Keychain](./references/security_and_keychain.md) | [KeychainHelper.swift](./examples/KeychainHelper.swift) |
-| **Foundational Extensions (`String`, `Date`, `Array`)** | NetNewsWire (`RSCore`) | [Foundational Utilities](./references/design_system_and_ui.md) | [FoundationExtensions.swift](./examples/FoundationExtensions.swift) |
-| **Controlled Test Dependencies** | Point-Free (`SyncUps`) | [Testing & Quality Gates](./references/testing_and_quality_gates.md) | [ControlledDependencies.swift](./examples/ControlledDependencies.swift) |
-| **Liquid Glass Design System & Tokens** | create-TRAN / Element X | [Design System & UI](./references/design_system_and_ui.md) | [Brand Tokens & Glass UI](./references/design_system_and_ui.md#liquid-glass-implementation) |
+| Engineering Need                                        | Architectural Source          | Reference Doc                                                              | Copy-Ready Implementation                                                                   |
+| :------------------------------------------------------ | :---------------------------- | :------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------ |
+| **Async View State Enum (`Loadable<T>`)**               | Clean Architecture / IceCubes | [Architecture & Concurrency](./references/architecture_and_concurrency.md) | [Loadable.swift](./examples/Loadable.swift)                                                 |
+| **Decoupled Navigation & Sheet Routing**                | IceCubesApp (`RouterPath`)    | [Navigation & Routing](./references/navigation_and_routing.md)             | [Router.swift](./examples/Router.swift)                                                     |
+| **Clean `async/await` URLSession Client**               | Bitwarden / IceCubesApp       | [Networking Layer](./references/networking_layer.md)                       | [EndpointNetworkClient.swift](./examples/EndpointNetworkClient.swift)                       |
+| **Biometric & Secure Enclave Keychain**                 | Proton Pass / Bitwarden       | [Security & Keychain](./references/security_and_keychain.md)               | [KeychainHelper.swift](./examples/KeychainHelper.swift)                                     |
+| **Foundational Extensions (`String`, `Date`, `Array`)** | NetNewsWire (`RSCore`)        | [Foundational Utilities](./references/design_system_and_ui.md)             | [FoundationExtensions.swift](./examples/FoundationExtensions.swift)                         |
+| **Controlled Test Dependencies**                        | Point-Free (`SyncUps`)        | [Testing & Quality Gates](./references/testing_and_quality_gates.md)       | [ControlledDependencies.swift](./examples/ControlledDependencies.swift)                     |
+| **Liquid Glass Design System & Tokens**                 | create-TRAN / Element X       | [Design System & UI](./references/design_system_and_ui.md)                 | [Brand Tokens & Glass UI](./references/design_system_and_ui.md#liquid-glass-implementation) |
 
 ---
 
@@ -44,38 +44,46 @@ When you need a specific pattern, open the matching reference and copy-ready exa
 Every line of Swift code written or reviewed must adhere to these 8 foundational rules:
 
 ### 1. Swift 6 Concurrency & Strict Isolation
+
 - **Rule**: All UI views and ViewModels must be `@MainActor` isolated.
 - **Rule**: Never use unstructured `Task { }` inside ViewModels without lifecycle control. Prefer SwiftUI's `.task { }` view modifier, which automatically binds task lifetime to view visibility and handles cooperative cancellation.
 - **Rule**: Data passed across concurrency boundaries must conform to `Sendable`. Prefer immutable value types (`struct`, `enum`) over classes.
 
 ### 2. Modern Observation (`@Observable`)
+
 - **Rule**: Target iOS 17+ Observation framework (`@Observable`). Avoid legacy `ObservableObject`, `@Published`, and `@StateObject` in new code.
 - **Rule**: Keep ViewModels lean. If a state property does not trigger UI invalidation, mark it with `@ObservationIgnored`.
 
 ### 3. Asynchronous UI via `Loadable<T>`
+
 - **Rule**: Never store separate `isLoading: Bool`, `data: T?`, and `errorMessage: String?` variables. This causes invalid intermediate states (e.g., `isLoading == true` and `errorMessage != nil`).
 - **Rule**: Always model async data using the single source of truth: `Loadable<T>` (`notRequested`, `isLoading(previous: T?)`, `loaded(T)`, `failed(Error)`).
 
 ### 4. Decoupled Navigation
+
 - **Rule**: Avoid hardcoded `NavigationLink(destination:)` in child views.
 - **Rule**: Use an environment-driven `Router` coordinating a `NavigationPath` with value-type `Hashable` destinations. Present sheets, covers, and alerts via state bindings in the root container.
 
 ### 5. Enterprise Security & Privacy
+
 - **Rule**: Never store tokens, passwords, or cryptographic keys in `UserDefaults` or plaintext files. Use the Keychain with `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`.
 - **Rule**: When biometric gating is required, enforce `kSecAccessControlBiometryAny`.
 - **Rule**: Clear sensitive clipboard data automatically after a timeout (default 60 seconds).
 - **Rule**: Protect screens displaying sensitive information from system app switcher snapshots using privacy overlay blurs.
 
 ### 6. Value-Type Networking with Interceptors
+
 - **Rule**: Represent network requests as declarative `Endpoint` value types, not monolithic service methods.
 - **Rule**: Coordinate authentication token refresh using an `actor` to prevent the "thundering herd" problem when multiple concurrent requests receive HTTP 401.
 
 ### 7. Zero Force-Unwraps & Safe Primitives
+
 - **Rule**: Never use `!` (force unwrap) or `try!` in production code.
 - **Rule**: Use safe array indexing (`array[safe: index]`) to prevent out-of-bounds runtime crashes.
 - **Rule**: Wrap system formatters (`ISO8601DateFormatter`, `NumberFormatter`) in static thread-safe caches to prevent high allocation overhead.
 
 ### 8. Test-First Verification & Quality Gates
+
 - **Rule**: Use Swift Testing (`import Testing`, `@Test`, `#expect`) for modern tests, with golden fixtures for cross-platform parity (e.g. UniFFI / Rust).
 - **Rule**: Inject side effects (`Date.now`, `UUID()`, `NetworkClient`) via controlled dependencies so previews and unit tests execute deterministically with 100% test coverage.
 
@@ -95,7 +103,7 @@ When implementing or modifying an iOS feature:
 
 3. **Construct the ViewModel (`@Observable` & `@MainActor`)**:
    - Inject dependencies via default parameters or environment containers.
-   - Write the failing unit tests *first* using `testValue` mocks.
+   - Write the failing unit tests _first_ using `testValue` mocks.
 
 4. **Assemble the View (SwiftUI)**:
    - Use tokenized colors and metrics from `BrandTokens`.

@@ -7,6 +7,7 @@ This guide establishes the architectural blueprint for modern iOS applications t
 ## 1. Swift 6 Concurrency & Actor Isolation
 
 ### The `@MainActor` Standard
+
 SwiftUI view bodies and UI-bound view models must be strictly isolated to the main actor to guarantee that state mutations and rendering occur deterministically on the main thread without race conditions.
 
 ```swift
@@ -37,6 +38,7 @@ public final class AccountViewModel {
 ```
 
 ### Background Computation with Non-Isolated Actors
+
 Heavy parsing, cryptography, or database queries must run on background actors and transfer results across isolation domains using `Sendable` types:
 
 ```swift
@@ -52,6 +54,7 @@ public actor BackgroundWorker {
 ```
 
 ### Task Lifecycle & Cooperative Cancellation
+
 Never launch detached, fire-and-forget tasks in view models without managing cancellation. In SwiftUI, use `.task` view modifiers that bind task lifecycles directly to the view hierarchy:
 
 ```swift
@@ -166,6 +169,7 @@ public final class VotingViewModel {
 To achieve 100% deterministic unit testing and instant SwiftUI Previews without network or system side-effects, dependencies must be abstracted behind swappable interfaces.
 
 ### Dependency Injection Pattern
+
 ```swift
 public struct Dependencies: Sendable {
     public var dateNow: @Sendable () -> Date
@@ -190,9 +194,9 @@ public struct Dependencies: Sendable {
 
 ## 4. Anti-Patterns to Avoid
 
-| Anti-Pattern | Why It Fails in Production | Correct Pattern |
-| :--- | :--- | :--- |
-| `class ViewModel: ObservableObject` + `@Published` | Excessive view re-renders, higher memory footprint, deprecated in modern Swift | Use `@Observable class ViewModel` (Swift 5.9+) |
-| `isLoading: Bool`, `error: String?`, `data: T?` | Impossible state desynchronization (e.g. `isLoading && error != nil`) | Use `Loadable<T>` enum as the single source of truth |
-| `Task.detached { await vm.update() }` | Bypasses structured concurrency, outlives view context, breaks thread safety | Use `.task` view modifier or actor methods |
-| Force unwraps (`!`) in ViewModels | Unhandled runtime crashes in production | Use `guard let`, `if let`, or typed error throwing |
+| Anti-Pattern                                       | Why It Fails in Production                                                     | Correct Pattern                                      |
+| :------------------------------------------------- | :----------------------------------------------------------------------------- | :--------------------------------------------------- |
+| `class ViewModel: ObservableObject` + `@Published` | Excessive view re-renders, higher memory footprint, deprecated in modern Swift | Use `@Observable class ViewModel` (Swift 5.9+)       |
+| `isLoading: Bool`, `error: String?`, `data: T?`    | Impossible state desynchronization (e.g. `isLoading && error != nil`)          | Use `Loadable<T>` enum as the single source of truth |
+| `Task.detached { await vm.update() }`              | Bypasses structured concurrency, outlives view context, breaks thread safety   | Use `.task` view modifier or actor methods           |
+| Force unwraps (`!`) in ViewModels                  | Unhandled runtime crashes in production                                        | Use `guard let`, `if let`, or typed error throwing   |

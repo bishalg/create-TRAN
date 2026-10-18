@@ -9,10 +9,12 @@ This guide establishes the enterprise security standards for iOS applications, i
 `UserDefaults` is plaintext and backed by a property list stored on the filesystem. Any token, secret key, or user credential must be stored in the iOS Keychain with strict accessibility attributes.
 
 ### Accessibility Attributes
+
 - **`kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`** (Default): Data is encrypted until the user unlocks their device once after reboot. It does not sync to iCloud Keychain, preventing remote exfiltration.
 - **`kSecAttrAccessibleWhenUnlockedThisDeviceOnly`**: Data is accessible only while the device is actively unlocked. Use for high-value signing keys.
 
 ### Keychain Wrapper Protocol
+
 ```swift
 import Foundation
 import Security
@@ -166,6 +168,7 @@ public struct SecureClipboard {
 iOS captures screenshots of the app window when backgrounding to display in the App Switcher. If sensitive identity or voting information is visible, this screenshot poses a security leak.
 
 ### Privacy Blur ViewModifier
+
 ```swift
 import SwiftUI
 

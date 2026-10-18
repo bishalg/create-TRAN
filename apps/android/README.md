@@ -4,13 +4,13 @@ Platform-native **N** in TRAN: Kotlin + Jetpack Compose, sharing brand tokens an
 
 ## What works today
 
-| Feature | Status |
-| :-- | :-- |
-| Design tokens (`BrandTokens.kt`) | `pnpm tokens:sync` |
-| Offline vote eligibility (JVM unit tests) | Host `libtran_uniffi.dylib` + JNA; golden `fixtures/vote-eligibility.json` |
-| Offline UI button | Calls UniFFI when native library is present |
-| On-device `.so` / emulator JNI | **Not automated yet** — build Rust for Android ABIs before expecting UI on hardware |
-| HTTP API (OkHttp) | Not wired yet |
+| Feature                                   | Status                                                                              |
+| :---------------------------------------- | :---------------------------------------------------------------------------------- |
+| Design tokens (`BrandTokens.kt`)          | `pnpm tokens:sync`                                                                  |
+| Offline vote eligibility (JVM unit tests) | Host `libtran_uniffi.dylib` + JNA; golden `fixtures/vote-eligibility.json`          |
+| Offline UI button                         | Calls UniFFI when native library is present                                         |
+| On-device `.so` / emulator JNI            | **Not automated yet** — build Rust for Android ABIs before expecting UI on hardware |
+| HTTP API (OkHttp)                         | Not wired yet                                                                       |
 
 ## Layout
 

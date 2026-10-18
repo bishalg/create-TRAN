@@ -26,6 +26,7 @@ This guide establishes the decoupling pattern for SwiftUI navigation, sheets, an
 ```
 
 ### Why Legacy `NavigationLink(destination:)` Fails
+
 1. **Tight View Coupling**: Child views must know the exact destination type and initialize it inline, even if the destination is never visited.
 2. **Double Evaluation**: Inline destination views evaluate their body or state prematurely in Lists or Grids.
 3. **Deep Linking Inflexibility**: Handling deep links or universal links requires traversing complex view hierarchies.

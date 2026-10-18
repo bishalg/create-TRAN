@@ -32,8 +32,7 @@ export function App({ initialSession }: AppProps = {}) {
   );
 
   const destination: AppDestination = resolveDestination(session);
-  const currentRole: UserRole | null =
-    session.status === 'authenticated' ? session.role : null;
+  const currentRole: UserRole | null = session.status === 'authenticated' ? session.role : null;
 
   const handleSelectRole = (role: UserRole) => {
     setSession({
@@ -64,13 +63,9 @@ export function App({ initialSession }: AppProps = {}) {
           <p>{t('app.subtitle2', locale)}</p>
         </section>
 
-        {destination === 'auth_welcome' && (
-          <AuthWelcomePage onSelectRole={handleSelectRole} />
-        )}
+        {destination === 'auth_welcome' && <AuthWelcomePage onSelectRole={handleSelectRole} />}
 
-        {destination === 'voter_dashboard' && (
-          <EligibilityPage api={api} locale={locale} />
-        )}
+        {destination === 'voter_dashboard' && <EligibilityPage api={api} locale={locale} />}
 
         {destination === 'auditor_dashboard' && (
           <AuditorPage onBackToVoter={() => handleSelectRole('citizen_voter')} />

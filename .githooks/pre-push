@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Verifies: REQ-HOOK-002
+# Pre-push hook: Runs Rust & TypeScript unit and parity tests before pushing
+set -e
+
+echo "🚀 [pre-push] Running unit and parity test suites..."
+
+pnpm run test
+
+echo "✅ [pre-push] All unit tests passed! Proceeding with git push."

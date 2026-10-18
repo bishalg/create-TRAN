@@ -9,6 +9,7 @@ This guide establishes zero-dependency edge utility standards and typed API requ
 Shared utilities in monorepos must run without Node.js-only modules (`fs`, `net`, `crypto` native binaries) to maintain compatibility with Cloudflare Workers, Vercel Edge Runtime, and browser environments.
 
 ### Resilient Fetcher with Retry
+
 ```typescript
 export async function fetchWithRetry<T>(
   url: string,

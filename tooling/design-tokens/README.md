@@ -6,14 +6,14 @@ Brand colors, typography, spacing, and Liquid Glass semantics are defined in **R
 
 The `tran-tokens-codegen` binary emits platform artifacts:
 
-| Output | Purpose |
-| --- | --- |
-| `packages/core-ts/src/generated/tokens.json` | JSON snapshot for tooling |
-| `packages/core-ts/src/generated/tokens.ts` | Typed theme API for `@tran/core` |
-| `apps/web/src/styles/generated/theme.css` | CSS custom properties (`:root` / `[data-theme]`) |
-| `apps/native/src/generated/brandTokens.ts` | Legacy RN re-export stub |
-| `apps/ios/Sources/TranVotingDemo/Generated/BrandTokens.swift` | SwiftUI semantic colors (light/dark) |
-| `apps/android/app/src/main/kotlin/com/tran/voting/generated/BrandTokens.kt` | Compose `Color` tokens |
+| Output                                                                      | Purpose                                          |
+| --------------------------------------------------------------------------- | ------------------------------------------------ |
+| `packages/core-ts/src/generated/tokens.json`                                | JSON snapshot for tooling                        |
+| `packages/core-ts/src/generated/tokens.ts`                                  | Typed theme API for `@tran/core`                 |
+| `apps/web/src/styles/generated/theme.css`                                   | CSS custom properties (`:root` / `[data-theme]`) |
+| `apps/native/src/generated/brandTokens.ts`                                  | Legacy RN re-export stub                         |
+| `apps/ios/Sources/TranVotingDemo/Generated/BrandTokens.swift`               | SwiftUI semantic colors (light/dark)             |
+| `apps/android/app/src/main/kotlin/com/tran/voting/generated/BrandTokens.kt` | Compose `Color` tokens                           |
 
 ## Commands
 
