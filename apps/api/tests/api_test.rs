@@ -1,3 +1,4 @@
+// Verifies: REQ-API-001 REQ-API-002 REQ-API-003 REQ-API-004 REQ-API-005 REQ-API-008
 //! HTTP-level integration tests. Each test drives the real router in-process (no socket),
 //! so they are fast and deterministic. Naming: `<endpoint>_<condition>_<outcome>`.
 

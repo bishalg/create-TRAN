@@ -1,3 +1,4 @@
+// Verifies: REQ-RULE-001 REQ-RULE-002 REQ-RULE-003 REQ-RULE-004 REQ-RULE-005 REQ-RULE-006 REQ-RULE-007 REQ-RULE-008
 /**
  * Parity with Rust: runs the exact same golden cases as
  * `crates/rust-core/tests/parity_fixtures.rs` from `fixtures/vote-eligibility.json`.

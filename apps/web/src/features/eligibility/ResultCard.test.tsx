@@ -1,3 +1,4 @@
+// Verifies: REQ-WEB-005
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { type EligibilityView, ResultCard } from './ResultCard.js';

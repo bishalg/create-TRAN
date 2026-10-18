@@ -1,3 +1,4 @@
+// Verifies: REQ-RULE-001 REQ-RULE-002 REQ-RULE-003 REQ-RULE-004 REQ-RULE-005 REQ-RULE-006 REQ-RULE-007 REQ-RULE-008
 //! Golden-fixture parity: `fixtures/vote-eligibility.json` is shared with the TypeScript
 //! mirror (`packages/core-ts/tests/parity.test.ts`). If a rule changes, edit the fixture first.
 

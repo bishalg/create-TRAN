@@ -1,3 +1,4 @@
+// Verifies: REQ-API-013
 //! Real-socket smoke tests: the only place the TCP listener and `run_server` are exercised.
 
 use api::config::AppConfig;

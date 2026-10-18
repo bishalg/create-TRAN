@@ -1,3 +1,4 @@
+// Verifies: REQ-WEB-003 REQ-WEB-006
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { TranApiClient } from '@tran/core';
 import { describe, expect, it, vi } from 'vitest';

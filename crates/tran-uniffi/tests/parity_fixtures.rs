@@ -1,3 +1,4 @@
+// Verifies: REQ-RULE-001
 //! Golden fixtures exercised through the UniFFI export surface (same data as rust-core parity).
 
 use chrono::NaiveDate;

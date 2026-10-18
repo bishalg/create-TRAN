@@ -1,3 +1,4 @@
+// Verifies: REQ-WEB-002
 import { describe, expect, it } from 'vitest';
 import { parseAgeInput } from '../src/voting.js';
 

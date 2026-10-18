@@ -1,3 +1,4 @@
+// Verifies: REQ-WEB-008
 import { describe, expect, it } from 'vitest';
 import { locales, t } from '../src/i18n.js';
 

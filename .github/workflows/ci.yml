@@ -70,6 +70,9 @@ jobs:
       - name: Typecheck E2E
         run: pnpm --filter e2e typecheck
 
+      - name: Spec traceability (every verified requirement has a citing test)
+        run: pnpm run spec:check
+
       - name: Tests + 100% coverage gate (unit, parity fixtures, components)
         run: pnpm run test:ts:coverage
 

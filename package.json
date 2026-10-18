@@ -27,6 +27,7 @@
     "test:ts:coverage": "pnpm run build:libs && vitest run --coverage",
     "test:rust:coverage": "cargo llvm-cov --workspace --ignore-filename-regex 'tran-tokens-codegen|main.rs|tran-uniffi' --fail-under-lines 100 --fail-under-regions 100",
     "test:e2e": "pnpm --filter e2e test",
+    "spec:check": "node tooling/spec-check/spec-check.mjs",
     "test:all": "pnpm run test:coverage && pnpm run test:e2e"
   },
   "devDependencies": {

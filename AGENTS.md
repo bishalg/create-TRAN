@@ -13,3 +13,13 @@ This is a **template**: keep the sample tiny, exemplary and fully tested.
 - New user-visible behaviour needs a Gherkin scenario in `e2e/features/`.
 - Native apps: `pnpm ios:build` (XcodeGen; regenerate with `pnpm ios:project`) and `pnpm android:build` stay part of the loop when touching `apps/ios` or `apps/android`.
 - Before finishing: `pnpm test:all`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo fmt --all`.
+
+## Workflow: spec first
+
+1. Find or add the requirement in `docs/specs/` (`REQ-<AREA>-NNN`, `[planned]` until tested).
+2. Record non-obvious decisions as an ADR in `docs/adr/`.
+3. Write the failing test and cite the ID (`// Verifies: REQ-…` or in the test title / Gherkin comment).
+4. Implement, then flip the status to `[verified]`.
+5. Run `pnpm spec:check` plus `pnpm test:coverage` before committing.
+
+Never mark a requirement `verified` without a test that cites it.
