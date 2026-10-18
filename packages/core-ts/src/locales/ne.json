@@ -1,0 +1,21 @@
+{
+  "app": {
+    "title": "TRAN स्ट्याक मोनोरेपो",
+    "subtitle": "TanStack Start + Rust Core + Axum + Native Mobile एक Nx मोनोरेपोमा",
+    "status": "प्रणाली स्थिति",
+    "healthy": "सबै प्रणालीहरू सक्रिय छन्",
+    "computing": "रस्ट कोर मार्फत गणना हुँदैछ...",
+    "computeButton": "रस्ट इन्जिनमा गणना गर्नुहोस्",
+    "offlineNotice": "अफलाइन मोड सक्रिय छ। क्यास गरिएको डाटा प्रयोग भइरहेको छ।"
+  },
+  "layers": {
+    "tanstack": "TanStack Start",
+    "rust": "रस्ट कोर",
+    "axum": "Axum ब्याकइन्ड",
+    "native": "नेटिभ iOS र Android"
+  },
+  "actions": {
+    "refresh": "डाटा ताजा गर्नुहोस्",
+    "retry": "पुन: प्रयास गर्नुहोस्"
+  }
+}

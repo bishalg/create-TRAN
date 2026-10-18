@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.npm/
+
+# Build artifacts
+dist/
+build/
+.output/
+.vinxi/
+.tanstack/
+.next/
+out/
+.turbo/
+.nx/cache/
+.nx/workspace-data/
+
+# Rust / Cargo
+target/
+Cargo.lock
+
+# Expo & React Native
+.expo/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# macOS & OS files
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDE / Editor
+.idea/
+*.sublime-project
+*.sublime-workspace
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json

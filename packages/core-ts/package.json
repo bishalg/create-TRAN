@@ -1,0 +1,32 @@
+{
+  "name": "@tran/core",
+  "version": "0.1.0",
+  "description": "Shared TypeScript SDK, models, i18n dictionaries, and Liquid Glass tokens for TRAN stack",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./tokens": {
+      "import": "./dist/tokens.js",
+      "types": "./dist/tokens.d.ts",
+      "default": "./src/tokens.ts"
+    },
+    "./locales/*": "./src/locales/*"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.7"
+  }
+}

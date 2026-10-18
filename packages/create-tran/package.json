@@ -1,0 +1,49 @@
+{
+  "name": "create-tran",
+  "version": "0.1.0",
+  "description": "Scaffolding CLI for the TRAN Stack (TanStack Start + Rust Core + Axum + Native iOS/Android Monorepo)",
+  "type": "module",
+  "bin": {
+    "create-tran": "./bin/index.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && chmod +x bin/index.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.7"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "create-tran",
+    "tanstack",
+    "tanstack-start",
+    "rust",
+    "axum",
+    "react-native",
+    "expo",
+    "nx",
+    "monorepo"
+  ],
+  "author": "Bishal Ghimire <bishal.ghimire@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bishalg/create-TRAN.git"
+  }
+}

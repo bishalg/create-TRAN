@@ -1,0 +1,49 @@
+import React, { type CSSProperties, type InputHTMLAttributes } from 'react';
+import { liquidGlassTokens } from '@tran/core';
+
+export interface GlassInputProps extends InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+}
+
+/**
+ * Pure "Dumb" View input adhering to Liquid Glass aesthetics.
+ */
+export const GlassInput: React.FC<GlassInputProps> = ({
+  label,
+  error,
+  className = '',
+  style = {},
+  ...props
+}) => {
+  const inputStyle: CSSProperties = {
+    backgroundColor: liquidGlassTokens.glass.background.subtle,
+    backdropFilter: `blur(${liquidGlassTokens.glass.blur.sm})`,
+    WebkitBackdropFilter: `blur(${liquidGlassTokens.glass.blur.sm})`,
+    border: `1px solid ${error ? liquidGlassTokens.palette.danger : liquidGlassTokens.glass.border.standard}`,
+    borderRadius: liquidGlassTokens.radii.md,
+    color: liquidGlassTokens.palette.text.primary,
+    padding: '0.75rem 1rem',
+    fontSize: '1rem',
+    outline: 'none',
+    width: '100%',
+    boxSizing: 'border-box',
+    ...style,
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', width: '100%' }}>
+      {label && (
+        <label style={{ fontSize: '0.875rem', color: liquidGlassTokens.palette.text.secondary }}>
+          {label}
+        </label>
+      )}
+      <input className={`glass-input ${className}`} style={inputStyle} {...props} />
+      {error && (
+        <span style={{ fontSize: '0.75rem', color: liquidGlassTokens.palette.danger }}>
+          {error}
+        </span>
+      )}
+    </div>
+  );
+};

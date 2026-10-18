@@ -1,0 +1,21 @@
+{
+  "app": {
+    "title": "TRAN Stack Monorepo",
+    "subtitle": "TanStack Start + Rust Core + Axum + Native Mobile in an Nx Monorepo",
+    "status": "System Status",
+    "healthy": "All Systems Operational",
+    "computing": "Computing via Rust Core...",
+    "computeButton": "Execute in Rust Engine",
+    "offlineNotice": "Offline mode active. Using cached state."
+  },
+  "layers": {
+    "tanstack": "TanStack Start",
+    "rust": "Rust Core",
+    "axum": "Axum Backend",
+    "native": "Native iOS & Android"
+  },
+  "actions": {
+    "refresh": "Refresh Data",
+    "retry": "Retry Connection"
+  }
+}

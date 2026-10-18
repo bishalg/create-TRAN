@@ -1,0 +1,33 @@
+{
+  "name": "create-tran-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TanStack Start + Rust Core + Axum + Native iOS/Android in an Nx mono-repo Template",
+  "type": "module",
+  "scripts": {
+    "dev": "nx run-many -t dev",
+    "dev:web": "nx run web:dev",
+    "dev:api": "nx run api:dev",
+    "dev:native": "nx run native:start",
+    "build": "nx run-many -t build",
+    "test": "pnpm run test:rust && pnpm run test:ts",
+    "test:rust": "cargo test",
+    "test:ts": "vitest run",
+    "typecheck": "nx run-many -t typecheck",
+    "lint": "cargo clippy --workspace -- -D warnings",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\""
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "nx": "^23.3.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.7"
+  },
+  "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}
