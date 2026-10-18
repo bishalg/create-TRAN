@@ -73,6 +73,47 @@ jobs:
       - name: Tests + 100% coverage gate (unit, parity fixtures, components)
         run: pnpm run test:ts:coverage
 
+  ios-smoke:
+    name: iOS (XcodeGen + xcodebuild)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Regenerate project (drift check)
+        run: |
+          xcodegen generate --spec apps/ios/project.yml --project apps/ios
+          git diff --exit-code -- apps/ios/TranVotingDemo.xcodeproj
+
+      - name: Build for iOS Simulator (no signing)
+        run: >
+          xcodebuild -project apps/ios/TranVotingDemo.xcodeproj
+          -scheme TranVotingDemo
+          -destination 'generic/platform=iOS Simulator'
+          build
+          CODE_SIGNING_ALLOWED=NO
+
+  android-smoke:
+    name: Android (Gradle assembleDebug)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build debug APK
+        working-directory: apps/android
+        run: ./gradlew --no-daemon assembleDebug
+
   e2e:
     name: E2E + BDD (Playwright, real API + web)
     runs-on: ubuntu-latest

@@ -4,20 +4,20 @@ Thanks for improving the TRAN template. This repo follows conventions inspired b
 
 ## Monorepo layout
 
-| Path                   | Role                                                        |
-| :--------------------- | :---------------------------------------------------------- |
-| `apps/web`             | TanStack + Vite web client                                  |
-| `apps/ios`             | SwiftUI iOS client (**N** in TRAN)                          |
-| `apps/android`         | Jetpack Compose Android client (**N** in TRAN)                |
+| Path                   | Role                                                                  |
+| :--------------------- | :-------------------------------------------------------------------- |
+| `apps/web`             | TanStack + Vite web client                                            |
+| `apps/ios`             | SwiftUI iOS client (**N** in TRAN)                                    |
+| `apps/android`         | Jetpack Compose Android client (**N** in TRAN)                        |
 | `apps/native`          | Legacy Expo / RN sketch (interim — not the stack definition of **N**) |
-| `apps/api`             | Axum HTTP API (Rust)                                        |
-| `crates/rust-core`     | Domain rules (source of truth)                              |
-| `packages/core-ts`     | Shared TS SDK, tokens, i18n, offline rule mirror            |
-| `packages/api`         | oRPC contract + Zod schemas + typed client                  |
-| `packages/create-tran` | Scaffolding CLI                                             |
-| `tooling/typescript`   | Shared `tsconfig` bases                                     |
-| `e2e`                  | Playwright + Gherkin (BDD) against the real API and web app |
-| `fixtures`             | Golden cases shared by Rust and TypeScript tests            |
+| `apps/api`             | Axum HTTP API (Rust)                                                  |
+| `crates/rust-core`     | Domain rules (source of truth)                                        |
+| `packages/core-ts`     | Shared TS SDK, tokens, i18n, offline rule mirror                      |
+| `packages/api`         | oRPC contract + Zod schemas + typed client                            |
+| `packages/create-tran` | Scaffolding CLI                                                       |
+| `tooling/typescript`   | Shared `tsconfig` bases                                               |
+| `e2e`                  | Playwright + Gherkin (BDD) against the real API and web app           |
+| `fixtures`             | Golden cases shared by Rust and TypeScript tests                      |
 
 ## Development
 
@@ -38,6 +38,7 @@ TypeScript offline rules in `packages/core-ts/src/voting.ts` must stay aligned w
 - Branch from `dev`
 - Keep files focused (aim for &lt; 800 lines per file)
 - Run `pnpm test:all`, `pnpm typecheck`, and `pnpm lint` before opening a PR
+- Native changes: also run `pnpm ios:build` and/or `pnpm android:build`
 - Update README / `.env.example` when env vars or demo flows change
 
 ## License

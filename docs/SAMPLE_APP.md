@@ -82,7 +82,11 @@ pnpm install
 pnpm dev:api    # :3001
 pnpm dev:web    # Vite
 pnpm dev:native # legacy Expo (apps/native)
-# Platform-native N: open apps/ios in Xcode or apps/android in Android Studio
+# Platform-native N:
+pnpm ios:build                          # SwiftUI → iOS Simulator build
+open apps/ios/TranVotingDemo.xcodeproj  # or run from Xcode
+pnpm android:build                      # Compose → debug APK
+cd apps/android && ./gradlew installDebug  # install on emulator/device
 ```
 
 1. Open web — try **Offline** with country `NP` and age `20`, then **API** with `X-Debug-Country` from the country field.
@@ -93,13 +97,13 @@ See [TESTING.md](./TESTING.md) for the TDD / BDD / E2E / coverage playbook.
 
 ## Key files
 
-| Concern        | Location                                 |
-| :------------- | :--------------------------------------- |
-| Routes         | `apps/api/src/routes/mod.rs`             |
-| Vote handler   | `apps/api/src/routes/vote.rs`            |
-| Geo stub       | `apps/api/src/geo.rs`                    |
-| oRPC/Zod       | `packages/api/src/`                      |
-| Web demo UI    | `apps/web/src/App.tsx`                   |
-| iOS demo UI | `apps/ios/Sources/TranVotingDemo/VotingHomeView.swift` |
-| Android demo UI | `apps/android/.../ui/VotingHomeScreen.kt` |
-| Legacy RN demo UI | `apps/native/src/screens/HomeScreen.tsx` |
+| Concern           | Location                                               |
+| :---------------- | :----------------------------------------------------- |
+| Routes            | `apps/api/src/routes/mod.rs`                           |
+| Vote handler      | `apps/api/src/routes/vote.rs`                          |
+| Geo stub          | `apps/api/src/geo.rs`                                  |
+| oRPC/Zod          | `packages/api/src/`                                    |
+| Web demo UI       | `apps/web/src/App.tsx`                                 |
+| iOS demo UI       | `apps/ios/Sources/TranVotingDemo/VotingHomeView.swift` |
+| Android demo UI   | `apps/android/.../ui/VotingHomeScreen.kt`              |
+| Legacy RN demo UI | `apps/native/src/screens/HomeScreen.tsx`               |

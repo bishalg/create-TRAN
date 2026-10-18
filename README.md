@@ -27,6 +27,8 @@ Or use **[Use this template](https://github.com/bishalg/create-TRAN/generate)** 
 
 **Requirements:** Node.js ≥ 20, pnpm ≥ 9, Rust stable.
 
+**Native apps (optional):** iOS needs Xcode 15+ (XcodeGen only to regenerate the project: `brew install xcodegen`); Android needs JDK 17 + Android SDK. See [apps/ios/README.md](./apps/ios/README.md) and [apps/android/README.md](./apps/android/README.md).
+
 ---
 
 ## Voting Eligibility demo
@@ -62,7 +64,7 @@ Full endpoint reference: [docs/API.md](./docs/API.md).
 4. **Offline** — in **Offline (Rust rules mirror)**, set age `20` and country `NP`, tap **Check offline** (uses `evaluateVoteEligibilityOffline` from `@tran/core`).
 5. **API** — in **API (country from IP stub)**, set age and **Debug country**, tap **Check via API** (`checkVoteEligibility` + Zod validation against Axum).
 6. **Theme** — toggle light/dark; eligibility cards use shared tokens from `getThemeTokens()` and `theme.css`.
-7. **Native (optional)** — Swift/Kotlin scaffolds in `apps/ios` and `apps/android` (tokens via `pnpm tokens:sync`). Legacy Expo sketch: `pnpm dev:native` → `apps/native`.
+7. **Native (optional)** — SwiftUI demo in `apps/ios` (`pnpm ios:build`, or open `TranVotingDemo.xcodeproj`) and Jetpack Compose demo in `apps/android` (`pnpm android:build`); both consume tokens via `pnpm tokens:sync`. Legacy Expo sketch: `pnpm dev:native` → `apps/native`.
 8. **Customize** — edit `crates/rust-core/src/tokens.rs` → `pnpm tokens:sync`; edit `voting.rs` → `cargo test -p rust-core`.
 
 Step-by-step architecture: [docs/SAMPLE_APP.md](./docs/SAMPLE_APP.md). Testing playbook (TDD, shared fixtures, BDD/E2E, 100% coverage): [docs/TESTING.md](./docs/TESTING.md).
@@ -106,15 +108,15 @@ graph TD
 
 ### Map to create-t3-turbo
 
-| create-t3-turbo              | create-TRAN                                                        |
-| :--------------------------- | :----------------------------------------------------------------- |
-| `apps/web`                   | `apps/web` (Vite + TanStack)                                       |
+| create-t3-turbo              | create-TRAN                                                               |
+| :--------------------------- | :------------------------------------------------------------------------ |
+| `apps/web`                   | `apps/web` (Vite + TanStack)                                              |
 | `apps/native` (Expo)         | `apps/native` (legacy interim) + `apps/ios` + `apps/android` (real **N**) |
-| `packages/api` (tRPC router) | `packages/api` (oRPC contract + Zod; Axum implements REST)         |
-| `packages/ui`                | Liquid Glass in `@tran/core` tokens (+ app-level Glass components) |
-| `packages/db`                | _not included_ (add your own data layer)                           |
-| `tooling/*`                  | `tooling/typescript`                                               |
-| Node API server              | `apps/api` (Rust / Axum) + `crates/rust-core`                      |
+| `packages/api` (tRPC router) | `packages/api` (oRPC contract + Zod; Axum implements REST)                |
+| `packages/ui`                | Liquid Glass in `@tran/core` tokens (+ app-level Glass components)        |
+| `packages/db`                | _not included_ (add your own data layer)                                  |
+| `tooling/*`                  | `tooling/typescript`                                                      |
+| Node API server              | `apps/api` (Rust / Axum) + `crates/rust-core`                             |
 
 ---
 
@@ -159,16 +161,19 @@ This gives tRPC-like ergonomics on the TypeScript side without a Rust oRPC runti
 
 ## Commands
 
-| Command            | Action                                                       |
-| :----------------- | :----------------------------------------------------------- |
-| `pnpm dev`         | Run apps via Nx                                              |
-| `pnpm dev:web`     | Web app                                                      |
-| `pnpm dev:api`     | Axum API                                                     |
-| `pnpm dev:native`  | Legacy Expo client (`apps/native`)                           |
-| `pnpm test`        | `cargo test` + Vitest                                        |
-| `pnpm typecheck`   | TypeScript                                                   |
-| `pnpm lint`        | Clippy                                                       |
-| `pnpm tokens:sync` | Regenerate tokens → TS/CSS, Swift, Kotlin, legacy RN stub    |
+| Command              | Action                                                    |
+| :------------------- | :-------------------------------------------------------- |
+| `pnpm dev`           | Run apps via Nx                                           |
+| `pnpm dev:web`       | Web app                                                   |
+| `pnpm dev:api`       | Axum API                                                  |
+| `pnpm dev:native`    | Legacy Expo client (`apps/native`)                        |
+| `pnpm test`          | `cargo test` + Vitest                                     |
+| `pnpm typecheck`     | TypeScript                                                |
+| `pnpm lint`          | Clippy                                                    |
+| `pnpm tokens:sync`   | Regenerate tokens → TS/CSS, Swift, Kotlin, legacy RN stub |
+| `pnpm ios:build`     | Build SwiftUI app for iOS Simulator (no signing)          |
+| `pnpm ios:project`   | Regenerate the Xcode project from `apps/ios/project.yml`  |
+| `pnpm android:build` | Build Compose debug APK via the committed Gradle wrapper  |
 
 Brand colors, typography, and light/dark semantics are defined in `crates/rust-core/src/tokens.rs` and emitted by `tran-tokens-codegen`. See [docs/DESIGN.md](./docs/DESIGN.md).
 

@@ -11,7 +11,7 @@ Platform-native iOS (`apps/ios`) and Android (`apps/android`) are the real **N**
 - [x] Document **N** = SwiftUI + Compose (not React Native as the stack definition).
 - [x] Scaffold `apps/ios` and `apps/android` with placeholder screens + `pnpm tokens:sync` → Swift/Kotlin `BrandTokens`.
 - [ ] Voting parity on native: offline rules (Rust FFI or shared logic) + API client matching `@tran/api`.
-- [ ] Xcode / Gradle CI smoke (build only — no device farm required).
+- [x] Xcode / Gradle CI smoke (build only — no device farm required) — `ios-smoke` + `android-smoke` jobs.
 - [ ] Migrate or remove `apps/native` after native apps match web demo features.
 - [ ] Optional: keep Expo under `apps/mobile-rn` if a JS mobile sketch is still wanted post-migration.
 
@@ -19,7 +19,7 @@ Platform-native iOS (`apps/ios`) and Android (`apps/android`) are the real **N**
 
 ## 1. TanStack Start — real or rename
 
-- [ ] **Decision:** adopt TanStack Start for `apps/web` *or* rebrand stack/docs as “Vite + React” (drop “Start” claims).
+- [ ] **Decision:** adopt TanStack Start for `apps/web` _or_ rebrand stack/docs as “Vite + React” (drop “Start” claims).
 - [ ] If Start: add file-based routes, SSR entry, and at least one loader/server function calling Axum.
 - [ ] If rename: remove unused `@tanstack/react-start` / router deps or use router without SSR claims.
 - [ ] Update `apps/api/src/routes/tran.rs`, `docs/API.md`, README, and root `package.json` description to match reality.
@@ -75,3 +75,4 @@ Platform-native iOS (`apps/ios`) and Android (`apps/android`) are the real **N**
 - [x] Playwright Gherkin E2E + CI job green on `dev` (`b2c9867`, [run 39120412501](https://github.com/bishalg/create-TRAN/actions/runs/39120412501)).
 - [x] [TESTING.md](./TESTING.md) playbook.
 - [x] Define **N** as Swift/Kotlin; scaffold `apps/ios` + `apps/android` + token codegen stubs.
+- [x] Native apps compile & run: shared `BrandPalette` codegen, Gradle wrapper, XcodeGen project, simulator/emulator-verified.
