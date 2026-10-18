@@ -5,7 +5,7 @@
 
 export const DEFAULT_VOTING_AGE = 18;
 
-const COUNTRY_VOTING_AGES: Record<string, number> = {
+export const COUNTRY_VOTING_AGES: Record<string, number> = {
   US: 18,
   IN: 18,
   NP: 18,

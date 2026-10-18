@@ -8,9 +8,18 @@ export interface HeaderProps {
   onLocaleChange: (locale: SupportedLocale) => void;
   theme: ThemeMode;
   onThemeToggle: () => void;
+  currentRole?: import('@tran/core').UserRole | null;
+  onSignOut?: () => void;
 }
 
-export function Header({ locale, onLocaleChange, theme, onThemeToggle }: HeaderProps) {
+export function Header({
+  locale,
+  onLocaleChange,
+  theme,
+  onThemeToggle,
+  currentRole,
+  onSignOut,
+}: HeaderProps) {
   return (
     <header className="header">
       <span className="brand">
@@ -41,6 +50,24 @@ export function Header({ locale, onLocaleChange, theme, onThemeToggle }: HeaderP
         >
           {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
         </button>
+
+        {currentRole && (
+          <span className="role-badge" data-testid="role-badge" style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '0.875rem', fontWeight: 600 }}>
+            {currentRole === 'citizen_voter' ? 'Citizen Voter' : 'Election Auditor'}
+          </span>
+        )}
+
+        {onSignOut && (
+          <button
+            type="button"
+            className="sign-out-button"
+            data-testid="sign-out-button"
+            onClick={onSignOut}
+            aria-label="Sign out"
+          >
+            Sign out
+          </button>
+        )}
       </div>
     </header>
   );

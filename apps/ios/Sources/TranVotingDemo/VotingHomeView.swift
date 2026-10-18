@@ -6,6 +6,7 @@ struct VotingHomeView: View {
     @State private var ageText = "20"
     @State private var countryCode = "NP"
     @State private var resultText = "Tap Check offline"
+    var onSignOut: (() -> Void)? = nil
 
     var body: some View {
         let background = useDark ? TranBrandTokens.Dark.background : TranBrandTokens.Light.background
@@ -16,38 +17,69 @@ struct VotingHomeView: View {
 
         ZStack {
             background.ignoresSafeArea()
-            VStack(alignment: .leading, spacing: 16) {
-                Text("TRAN / iOS")
-                    .font(.headline)
-                    .foregroundStyle(textPrimary)
-                Text("Offline voting (UniFFI → rust-core)")
-                    .font(.subheadline)
-                    .foregroundStyle(textPrimary.opacity(0.8))
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("TRAN / iOS")
+                                .font(.headline)
+                                .foregroundStyle(textPrimary)
+                            Text("Offline voting (UniFFI to rust-core)")
+                                .font(.subheadline)
+                                .foregroundStyle(textPrimary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer()
+                        if let onSignOut {
+                            Button("Sign out", action: onSignOut)
+                                .buttonStyle(.bordered)
+                                .tint(primary)
+                                .accessibilityIdentifier("sign-out-button")
+                        }
+                    }
 
-                HStack {
-                    TextField("Age", text: $ageText)
-                        .keyboardType(.numberPad)
-                        .textFieldStyle(.roundedBorder)
-                    TextField("Country", text: $countryCode)
-                        .textInputAutocapitalization(.characters)
-                        .textFieldStyle(.roundedBorder)
-                }
+                    VStack(spacing: 12) {
+                        TextField("Age", text: $ageText)
+                            .keyboardType(.numberPad)
+                            .padding(10)
+                            .background(.background.opacity(0.9))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(textPrimary.opacity(0.35)))
+                            .accessibilityIdentifier("age-field")
+                        TextField("Country", text: $countryCode)
+                            .textInputAutocapitalization(.characters)
+                            .padding(10)
+                            .background(.background.opacity(0.9))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(textPrimary.opacity(0.35)))
+                            .accessibilityIdentifier("country-field")
+                    }
 
-                Button("Check offline") {
-                    checkOffline(canVote: canVote, cannotVote: cannotVote)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(primary)
-
-                Text(resultText)
-                    .font(.body)
-                    .foregroundStyle(textPrimary)
-                    .accessibilityIdentifier("offline-result")
-
-                Toggle("Dark theme", isOn: $useDark)
+                    Button("Check offline") {
+                        checkOffline(canVote: canVote, cannotVote: cannotVote)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .frame(maxWidth: .infinity, minHeight: 44)
                     .tint(primary)
+                    .accessibilityIdentifier("check-button")
+
+                    Text(resultText)
+                        .font(.body)
+                        .foregroundStyle(textPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("offline-result")
+                        .accessibilityAddTraits(.updatesFrequently)
+
+                    Toggle("Dark theme", isOn: $useDark)
+                        .tint(primary)
+                        .padding(.vertical, 8)
+                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                        .accessibilityIdentifier("theme-toggle")
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(24)
             }
-            .padding(24)
         }
         .preferredColorScheme(useDark ? .dark : .light)
     }

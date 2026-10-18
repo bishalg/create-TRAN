@@ -26,6 +26,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.tran.voting.generated.BrandPalette
@@ -36,7 +41,9 @@ import java.time.LocalDate
 
 /** Voting demo — brand tokens + offline rust-core rules via UniFFI. */
 @Composable
-fun VotingHomeScreen() {
+fun VotingHomeScreen(
+    onSignOut: (() -> Unit)? = null
+) {
     var useDark by remember { mutableStateOf(true) }
     var ageText by remember { mutableStateOf("20") }
     var countryCode by remember { mutableStateOf("NP") }
@@ -64,36 +71,54 @@ fun VotingHomeScreen() {
                 .fillMaxSize()
                 .background(palette.background)
                 .safeDrawingPadding()
+                .semantics { testTagsAsResourceId = true }
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(
-                text = "TRAN / Android",
-                style = MaterialTheme.typography.titleLarge,
-                color = palette.textPrimary,
-            )
-            Text(
-                text = "Offline voting (UniFFI → rust-core)",
-                style = MaterialTheme.typography.bodyMedium,
-                color = palette.textPrimary.copy(alpha = 0.8f),
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "TRAN / Android",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = palette.textPrimary,
+                    )
+                    Text(
+                        text = "Offline voting (UniFFI → rust-core)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = palette.textPrimary.copy(alpha = 0.8f),
+                    )
+                }
+                if (onSignOut != null) {
+                    Button(
+                        modifier = Modifier.testTag("sign-out-button"),
+                        onClick = onSignOut
+                    ) {
+                        Text("Sign out")
+                    }
+                }
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = ageText,
                     onValueChange = { ageText = it },
                     label = { Text("Age") },
                     singleLine = true,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).testTag("age-field"),
                 )
                 OutlinedTextField(
                     value = countryCode,
                     onValueChange = { countryCode = it.uppercase() },
                     label = { Text("Country") },
                     singleLine = true,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).testTag("country-field"),
                 )
             }
             Button(
+                modifier = Modifier.testTag("check-button"),
                 onClick = {
                     resultText =
                         runOfflineCheck(ageText, countryCode, palette)
@@ -103,6 +128,9 @@ fun VotingHomeScreen() {
             }
             Text(
                 text = resultText,
+                modifier = Modifier
+                    .testTag("offline-result")
+                    .semantics { liveRegion = LiveRegionMode.Polite },
                 style = MaterialTheme.typography.bodyLarge,
                 color = palette.textPrimary,
             )
@@ -112,7 +140,11 @@ fun VotingHomeScreen() {
                     style = MaterialTheme.typography.bodyMedium,
                     color = palette.textPrimary,
                 )
-                Switch(checked = useDark, onCheckedChange = { useDark = it })
+                Switch(
+                    checked = useDark,
+                    onCheckedChange = { useDark = it },
+                    modifier = Modifier.testTag("theme-toggle"),
+                )
             }
         }
     }

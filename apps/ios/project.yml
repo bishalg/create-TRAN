@@ -58,15 +58,27 @@ targets:
         script: |
           /bin/bash "${SRCROOT}/scripts/build-tran-uniffi.sh"
         basedOnDependencyAnalysis: false
+  TranVotingDemoUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - Tests/TranVotingDemoUITests
+    dependencies:
+      - target: TranVotingDemo
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
   TranVotingDemo:
     build:
       targets:
         TranVotingDemo: all
         TranVotingDemoTests: [test]
+        TranVotingDemoUITests: [test]
     test:
       targets:
         - TranVotingDemoTests
+        - TranVotingDemoUITests
     run:
       config: Debug
     archive:

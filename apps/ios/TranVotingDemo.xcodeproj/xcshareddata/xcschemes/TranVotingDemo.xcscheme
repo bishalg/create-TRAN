@@ -35,6 +35,20 @@
                ReferencedContainer = "container:TranVotingDemo.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "45F96E6B78073F30096715F3"
+               BuildableName = "TranVotingDemoUITests.xctest"
+               BlueprintName = "TranVotingDemoUITests"
+               ReferencedContainer = "container:TranVotingDemo.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -61,6 +75,17 @@
                BlueprintIdentifier = "CFFD0EBF2B5A9831F520B6B1"
                BuildableName = "TranVotingDemoTests.xctest"
                BlueprintName = "TranVotingDemoTests"
+               ReferencedContainer = "container:TranVotingDemo.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "45F96E6B78073F30096715F3"
+               BuildableName = "TranVotingDemoUITests.xctest"
+               BlueprintName = "TranVotingDemoUITests"
                ReferencedContainer = "container:TranVotingDemo.xcodeproj">
             </BuildableReference>
          </TestableReference>

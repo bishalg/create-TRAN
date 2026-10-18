@@ -1,0 +1,57 @@
+# Verifies: REQ-NAT-002
+# Feature: offline voting eligibility (same journeys as e2e/features/vote-eligibility.feature)
+appId: com.tran.voting
+tags: [offline, smoke]
+---
+- launchApp:
+    clearState: true
+
+# Scenario: An adult in Nepal is eligible
+- tapOn:
+    id: age-field
+- eraseText: 10
+- inputText: '20'
+- tapOn:
+    id: country-field
+- eraseText: 10
+- inputText: NP
+- tapOn:
+    id: check-button
+- assertVisible:
+    id: offline-result
+    text: 'Age 20 meets the minimum voting age of 18 in NP.'
+
+# Scenario: A 16 year old can vote in Brazil but not in the US
+- tapOn:
+    id: age-field
+- eraseText: 10
+- inputText: '16'
+- tapOn:
+    id: country-field
+- eraseText: 10
+- inputText: BR
+- tapOn:
+    id: check-button
+- assertVisible:
+    id: offline-result
+    text: 'Age 16 meets the minimum voting age of 16 in BR.'
+- tapOn:
+    id: country-field
+- eraseText: 10
+- inputText: US
+- tapOn:
+    id: check-button
+- assertVisible:
+    id: offline-result
+    text: 'Age 16 is below the minimum voting age of 18 in US.'
+
+# Scenario: Invalid input is explained
+- tapOn:
+    id: age-field
+- eraseText: 10
+- inputText: abc
+- tapOn:
+    id: check-button
+- assertVisible:
+    id: offline-result
+    text: 'Enter.*age.*'

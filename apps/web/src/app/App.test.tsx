@@ -1,4 +1,4 @@
-// Verifies: REQ-WEB-001 REQ-WEB-002 REQ-WEB-003 REQ-WEB-006 REQ-A11Y-002 REQ-A11Y-003 REQ-A11Y-004 REQ-A11Y-006
+// Verifies: REQ-WEB-001 REQ-WEB-002 REQ-WEB-003 REQ-WEB-006 REQ-A11Y-002 REQ-A11Y-003 REQ-A11Y-004 REQ-A11Y-006 REQ-NAV-001 REQ-NAV-002 REQ-NAV-003 REQ-NAV-004 REQ-NAV-005
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -250,5 +250,56 @@ describe('App: server down', () => {
 
     expect(await screen.findByRole('note')).toBeVisible();
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+});
+
+describe('App: navigation and role branching', () => {
+  it('[REQ-NAV-001] [REQ-NAV-002] renders auth welcome when initial session is unauthenticated', async () => {
+    const api = createFakeApi();
+    vi.stubGlobal('fetch', api.fetchFn);
+    render(<App initialSession={{ status: 'unauthenticated' }} />);
+    await screen.findByText(/API (online|offline)/);
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Welcome to TRAN Voting' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Continue as Citizen Voter' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Continue as Election Auditor' })).toBeVisible();
+  });
+
+  it('[REQ-NAV-003] branches into Citizen Voter dashboard upon selection', async () => {
+    const api = createFakeApi();
+    vi.stubGlobal('fetch', api.fetchFn);
+    const user = userEvent.setup();
+    render(<App initialSession={{ status: 'unauthenticated' }} />);
+    await screen.findByText(/API (online|offline)/);
+
+    await user.click(screen.getByRole('button', { name: 'Continue as Citizen Voter' }));
+    expect(screen.getByLabelText('Your age')).toBeVisible();
+    expect(screen.getByTestId('role-badge')).toHaveTextContent('Citizen Voter');
+  });
+
+  it('[REQ-NAV-004] branches into Election Auditor dashboard upon selection', async () => {
+    const api = createFakeApi();
+    vi.stubGlobal('fetch', api.fetchFn);
+    const user = userEvent.setup();
+    render(<App initialSession={{ status: 'unauthenticated' }} />);
+    await screen.findByText(/API (online|offline)/);
+
+    await user.click(screen.getByRole('button', { name: 'Continue as Election Auditor' }));
+    expect(screen.getByRole('heading', { level: 2, name: 'Election Auditor Dashboard' })).toBeVisible();
+    expect(screen.getByTestId('role-badge')).toHaveTextContent('Election Auditor');
+    expect(screen.getByText('NP')).toBeVisible();
+
+    // Can switch back to Citizen Voter from Auditor dashboard
+    await user.click(screen.getByRole('button', { name: 'Switch to Citizen Voter' }));
+    expect(screen.getByLabelText('Your age')).toBeVisible();
+  });
+
+  it('[REQ-NAV-005] signing out returns to the auth welcome screen', async () => {
+    const { user } = await renderApp();
+    expect(screen.getByTestId('role-badge')).toHaveTextContent('Citizen Voter');
+
+    await user.click(screen.getByRole('button', { name: 'Sign out' }));
+    expect(screen.getByRole('heading', { level: 2, name: 'Welcome to TRAN Voting' })).toBeVisible();
+    expect(screen.queryByTestId('role-badge')).toBeNull();
   });
 });

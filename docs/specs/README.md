@@ -40,6 +40,7 @@ ID that no spec defines.
 | [003 Web app](./003-web-app.md)                     | Behaviour, theming, i18n, accessibility      | `REQ-WEB`, `REQ-A11Y` |
 | [004 SSR and SEO](./004-ssr-seo.md)                 | TanStack Start, metadata, social cards       | `REQ-SEO`             |
 | [005 Native apps](./005-native-apps.md)             | SwiftUI and Compose parity and accessibility | `REQ-NATIVE`          |
+| [006 Navigation & Auth Flow](./006-navigation-auth-flow.md) | Navigation Director, splash boot & branching | `REQ-NAV`             |
 
 ## Template
 

@@ -1,0 +1,3 @@
+# Shared by iOS and Android. Run: pnpm e2e:maestro:ios | pnpm e2e:maestro:android
+flows:
+  - flows/*.yaml

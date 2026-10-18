@@ -4,7 +4,7 @@ import SwiftUI
 struct TranVotingDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            VotingHomeView()
+            NavigationCoordinatorView()
         }
     }
 }
