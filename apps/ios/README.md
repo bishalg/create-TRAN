@@ -6,7 +6,8 @@ Platform-native **N** in TRAN: Swift + SwiftUI, sharing brand tokens with web an
 
 ```
 apps/ios/
-├── Package.swift
+├── project.yml                     # XcodeGen spec — source of truth
+├── TranVotingDemo.xcodeproj        # generated (committed) via `pnpm ios:project`
 └── Sources/TranVotingDemo/
     ├── TranVotingDemoApp.swift
     ├── VotingHomeView.swift
@@ -23,14 +24,21 @@ pnpm tokens:sync
 
 `BrandTokens.swift` is regenerated under `Sources/TranVotingDemo/Generated/`.
 
-## Run (template)
+## Run
 
-Open `Package.swift` in Xcode (File → Open) or:
+Open `TranVotingDemo.xcodeproj` in Xcode and run on an iOS 17+ simulator, or from the repo root:
 
 ```bash
-cd apps/ios
-swift build
+pnpm ios:build   # xcodebuild for iOS Simulator, no signing
 ```
+
+Regenerate the project after editing `project.yml`:
+
+```bash
+pnpm ios:project   # requires XcodeGen: brew install xcodegen
+```
+
+The generated project is committed, so opening and running works without XcodeGen installed.
 
 This scaffold is a **placeholder** voting-eligibility screen using shared colors. Wire Rust Core (FFI or API-only) and full offline rules in a follow-up.
 

@@ -29,6 +29,7 @@ struct VotingHomeView: View {
             }
             .padding(24)
         }
+        .preferredColorScheme(useDark ? .dark : .light)
     }
 
     private func eligibilityChip(title: String, color: Color) -> some View {
