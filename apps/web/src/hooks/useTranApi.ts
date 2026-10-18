@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  type CalculationRequest,
-  type CalculationResponse,
+  evaluateVoteEligibilityOffline,
+  type OfflineEligibilityResult,
   TranApiClient,
   type TranHealthReport,
   type TranStackInfo,
+  type VoteEligibilityOutput,
 } from '@tran/core';
 
 export interface UseTranApiState {
@@ -13,7 +14,8 @@ export interface UseTranApiState {
   isLoading: boolean;
   isOffline: boolean;
   error: string | null;
-  lastCalculation: CalculationResponse | null;
+  lastApiResult: VoteEligibilityOutput | null;
+  lastOfflineResult: OfflineEligibilityResult | null;
 }
 
 export function useTranApi(client: TranApiClient = new TranApiClient()) {
@@ -23,7 +25,8 @@ export function useTranApi(client: TranApiClient = new TranApiClient()) {
     isLoading: true,
     isOffline: false,
     error: null,
-    lastCalculation: null,
+    lastApiResult: null,
+    lastOfflineResult: null,
   });
 
   const fetchStatus = useCallback(async () => {
@@ -38,7 +41,6 @@ export function useTranApi(client: TranApiClient = new TranApiClient()) {
         isOffline: false,
       }));
     } catch (err) {
-      // Offline fallback: graceful degradation
       setState((prev) => ({
         ...prev,
         isLoading: false,
@@ -48,15 +50,25 @@ export function useTranApi(client: TranApiClient = new TranApiClient()) {
     }
   }, [client]);
 
-  const executeCompute = useCallback(
-    async (req: CalculationRequest): Promise<CalculationResponse | null> => {
+  const checkOffline = useCallback((age: number, countryCode: string) => {
+    const result = evaluateVoteEligibilityOffline({ age, countryCode });
+    setState((prev) => ({ ...prev, lastOfflineResult: result, error: null }));
+    return result;
+  }, []);
+
+  const checkViaApi = useCallback(
+    async (age: number, headers?: Record<string, string>) => {
       try {
-        const result = await client.compute(req);
-        setState((prev) => ({ ...prev, lastCalculation: result, error: null }));
+        const apiClient =
+          headers && Object.keys(headers).length > 0
+            ? new TranApiClient({ headers })
+            : client;
+        const result = await apiClient.checkVoteEligibility({ age });
+        setState((prev) => ({ ...prev, lastApiResult: result, error: null, isOffline: false }));
         return result;
       } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : 'Compute error';
-        setState((prev) => ({ ...prev, error: errorMsg }));
+        const errorMsg = err instanceof Error ? err.message : 'Eligibility check failed';
+        setState((prev) => ({ ...prev, error: errorMsg, isOffline: true }));
         return null;
       }
     },
@@ -70,6 +82,7 @@ export function useTranApi(client: TranApiClient = new TranApiClient()) {
   return {
     ...state,
     refetch: fetchStatus,
-    executeCompute,
+    checkOffline,
+    checkViaApi,
   };
 }

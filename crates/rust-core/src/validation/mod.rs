@@ -1,5 +1,9 @@
+mod voting;
+
 use crate::error::{CoreError, CoreResult};
 use crate::models::CalculationRequest;
+
+pub use voting::validate_vote_eligibility_request;
 
 pub fn validate_calculation_request(req: &CalculationRequest) -> CoreResult<()> {
     if req.operation.is_empty() {

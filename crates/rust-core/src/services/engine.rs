@@ -6,7 +6,13 @@ use crate::error::{CoreError, CoreResult};
 use crate::models::{
     CalculationRequest, CalculationResponse, StackComponentStatus, StackLayer, TranHealthReport,
 };
+use crate::models::VoteEligibilityRequest;
+use crate::models::VoteEligibilityResponse;
 use crate::validation::validate_calculation_request;
+use crate::validation::validate_vote_eligibility_request;
+use crate::voting::{
+    age_from_birthdate, can_vote_by_age, voting_age_for_country,
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct TranEngine;
@@ -41,6 +47,47 @@ impl TranEngine {
             result,
             computed_at: Utc::now(),
             execution_micros: elapsed,
+        })
+    }
+
+    pub fn evaluate_vote_eligibility(
+        &self,
+        request: VoteEligibilityRequest,
+        country_code: &str,
+        country_source: &str,
+        client_ip: &str,
+    ) -> CoreResult<VoteEligibilityResponse> {
+        validate_vote_eligibility_request(&request)?;
+
+        let today = Utc::now().date_naive();
+        let age = request
+            .birthdate
+            .map(|bd| age_from_birthdate(bd, today))
+            .unwrap_or(request.age);
+
+        let minimum_age = voting_age_for_country(country_code);
+        let eligible = can_vote_by_age(age, minimum_age);
+
+        let reason = if eligible {
+            format!(
+                "Age {age} meets the minimum voting age of {minimum_age} in {country_code}."
+            )
+        } else {
+            format!(
+                "Age {age} is below the minimum voting age of {minimum_age} in {country_code}."
+            )
+        };
+
+        Ok(VoteEligibilityResponse {
+            eligibility_id: Uuid::new_v4(),
+            eligible,
+            age,
+            minimum_age,
+            country_code: country_code.to_uppercase(),
+            country_source: country_source.to_string(),
+            client_ip: client_ip.to_string(),
+            reason,
+            evaluated_at: Utc::now(),
         })
     }
 

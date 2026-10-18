@@ -8,8 +8,10 @@ pub mod error;
 pub mod models;
 pub mod services;
 pub mod validation;
+pub mod voting;
 
 pub use error::{CoreError, CoreResult};
 pub use models::*;
 pub use services::*;
 pub use validation::*;
+pub use voting::*;

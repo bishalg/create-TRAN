@@ -1,3 +1,5 @@
+export type { VoteEligibilityInput, VoteEligibilityOutput } from '@tran/api';
+
 export type StackLayer = 'tanstackstart' | 'rustcore' | 'axumapi' | 'nativemobile';
 
 export interface StackComponentStatus {
@@ -15,24 +17,10 @@ export interface TranHealthReport {
   components: StackComponentStatus[];
 }
 
-export type MathOperation = 'add' | 'subtract' | 'multiply' | 'divide' | 'power';
-
-export interface CalculationRequest {
-  a: number;
-  b: number;
-  operation: MathOperation | string;
-}
-
-export interface CalculationResponse {
-  calculation_id: string;
-  result: number;
-  computed_at: string;
-  execution_micros: number;
-}
-
 export interface TranStackInfo {
   stack: string;
   description: string;
+  demo?: string;
   layers: {
     T: string;
     R: string;

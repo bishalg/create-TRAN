@@ -1,8 +1,9 @@
 import React, { type CSSProperties, type ReactNode } from 'react';
-import { liquidGlassTokens } from '@tran/core';
+import { liquidGlassTokens, type ThemeTokens } from '@tran/core';
 
 export interface GlassCardProps {
   children: ReactNode;
+  theme?: ThemeTokens;
   variant?: 'subtle' | 'standard' | 'prominent';
   className?: string;
   style?: CSSProperties;
@@ -16,15 +17,16 @@ export interface GlassCardProps {
 export const GlassCard: React.FC<GlassCardProps> = ({
   children,
   variant = 'standard',
+  theme = liquidGlassTokens,
   className = '',
   style = {},
   onClick,
 }) => {
-  const bg = liquidGlassTokens.glass.background[variant];
-  const border = liquidGlassTokens.glass.border.standard;
-  const blur = liquidGlassTokens.glass.blur.md;
-  const shadow = liquidGlassTokens.glass.shadow.ambient;
-  const radius = liquidGlassTokens.radii.lg;
+  const bg = theme.glass.background[variant];
+  const border = theme.glass.border.standard;
+  const blur = theme.glass.blur.md;
+  const shadow = theme.glass.shadow.ambient;
+  const radius = theme.radii.lg;
 
   const cardStyle: CSSProperties = {
     backgroundColor: bg,
@@ -34,7 +36,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({
     borderRadius: radius,
     boxShadow: shadow,
     padding: '1.5rem',
-    color: liquidGlassTokens.palette.text.primary,
+    color: theme.palette.text.primary,
     transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
     cursor: onClick ? 'pointer' : 'default',
     ...style,

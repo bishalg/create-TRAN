@@ -1,15 +1,22 @@
 {
   "app": {
-    "title": "TRAN Stack Monorepo",
-    "subtitle": "TanStack Start + Rust Core + Axum + Native Mobile in an Nx Monorepo",
+    "title": "Voting Eligibility",
+    "subtitle": "Offline rules in TypeScript, async checks via Axum + Rust Core",
     "status": "System Status",
     "healthy": "All Systems Operational",
-    "computing": "Computing via Rust Core...",
-    "computeButton": "Execute in Rust Engine",
-    "offlineNotice": "Offline mode active. Using cached state."
+    "checking": "Checking eligibility…",
+    "checkButton": "Check via API",
+    "checkOffline": "Check offline",
+    "offlineNotice": "API unreachable — using offline rules mirrored from Rust Core.",
+    "ageLabel": "Age (years)",
+    "countryLabel": "Country (offline)",
+    "eligibleYes": "Eligible to vote",
+    "eligibleNo": "Not eligible to vote",
+    "themeLight": "Light",
+    "themeDark": "Dark"
   },
   "layers": {
-    "tanstack": "TanStack Start",
+    "tanstack": "TanStack Web",
     "rust": "Rust Core",
     "axum": "Axum Backend",
     "native": "Native iOS & Android"

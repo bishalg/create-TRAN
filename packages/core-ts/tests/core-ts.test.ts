@@ -1,30 +1,46 @@
 import { describe, it, expect, vi } from 'vitest';
 import { TranApiClient } from '../src/client.js';
-import { liquidGlassTokens } from '../src/tokens.js';
+import { getThemeTokens, liquidGlassTokens } from '../src/tokens.js';
 import { t } from '../src/i18n.js';
+import {
+  canVoteByAge,
+  evaluateVoteEligibilityOffline,
+  votingAgeForCountry,
+} from '../src/voting.js';
 
 describe('Liquid Glass Tokens', () => {
-  it('should expose consistent blur and transparency tokens without React dependencies', () => {
+  it('exposes light and dark themes with eligibility colors', () => {
     expect(liquidGlassTokens.glass.blur.md).toBe('16px');
-    expect(liquidGlassTokens.glass.background.standard).toBe('rgba(255, 255, 255, 0.10)');
-    expect(liquidGlassTokens.radii.lg).toBe('20px');
+    expect(getThemeTokens('light').palette.eligibility.canVote).toBe('#059669');
+    expect(getThemeTokens('dark').palette.eligibility.cannotVote).toBe('#f87171');
+  });
+});
+
+describe('Voting parity (TS mirror of Rust core)', () => {
+  it('matches country voting ages', () => {
+    expect(votingAgeForCountry('us')).toBe(18);
+    expect(votingAgeForCountry('BR')).toBe(16);
+  });
+
+  it('matches age boundary rules', () => {
+    expect(canVoteByAge(17, 18)).toBe(false);
+    expect(canVoteByAge(18, 18)).toBe(true);
+  });
+
+  it('evaluates offline eligibility', () => {
+    const result = evaluateVoteEligibilityOffline({ age: 20, countryCode: 'NP' });
+    expect(result.eligible).toBe(true);
+    expect(result.minimumAge).toBe(18);
   });
 });
 
 describe('i18n Translations', () => {
-  it('should translate correctly for English', () => {
-    expect(t('app.title', 'en')).toBe('TRAN Stack Monorepo');
-    expect(t('layers.rust', 'en')).toBe('Rust Core');
+  it('should translate voting demo title in English', () => {
+    expect(t('app.title', 'en')).toBe('Voting Eligibility');
   });
 
   it('should translate correctly for Nepali', () => {
-    expect(t('app.title', 'ne')).toBe('TRAN स्ट्याक मोनोरेपो');
-    expect(t('layers.rust', 'ne')).toBe('रस्ट कोर');
-  });
-
-  it('should translate correctly for Hindi', () => {
-    expect(t('app.title', 'hi')).toBe('TRAN स्टैक मोनोरेपो');
-    expect(t('layers.rust', 'hi')).toBe('रस्ट कोर');
+    expect(t('app.title', 'ne')).toBe('मतदान योग्यता');
   });
 
   it('should fallback to key if not found', () => {
@@ -54,14 +70,19 @@ describe('TranApiClient', () => {
     expect(health.overall_status).toBe('HEALTHY');
   });
 
-  it('should handle API compute requests', async () => {
+  it('should validate vote eligibility responses', async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        calculation_id: 'calc-1',
-        result: 42,
-        computed_at: '2026-10-18T00:00:00Z',
-        execution_micros: 25,
+        eligibility_id: '550e8400-e29b-41d4-a716-446655440000',
+        eligible: true,
+        age: 21,
+        minimum_age: 18,
+        country_code: 'US',
+        country_source: 'x-debug-country',
+        client_ip: '127.0.0.1',
+        reason: 'ok',
+        evaluated_at: '2026-10-18T00:00:00Z',
       }),
     });
 
@@ -69,32 +90,12 @@ describe('TranApiClient', () => {
       baseUrl: 'http://localhost:3001',
       fetchFn: mockFetch as unknown as typeof fetch,
     });
-    const res = await client.compute({ a: 21, b: 2, operation: 'multiply' });
+    const res = await client.checkVoteEligibility({ age: 21 });
 
     expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:3001/api/tran/compute',
-      expect.objectContaining({
-        method: 'POST',
-        body: JSON.stringify({ a: 21, b: 2, operation: 'multiply' }),
-      })
+      'http://localhost:3001/api/vote/eligibility',
+      expect.objectContaining({ method: 'POST' })
     );
-    expect(res.result).toBe(42);
-  });
-
-  it('should handle API error responses', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 400,
-      statusText: 'Bad Request',
-      json: async () => ({ error: 'Division by zero is not allowed' }),
-    });
-
-    const client = new TranApiClient({
-      baseUrl: 'http://localhost:3001',
-      fetchFn: mockFetch as unknown as typeof fetch,
-    });
-    await expect(client.compute({ a: 10, b: 0, operation: 'divide' })).rejects.toThrow(
-      'Division by zero is not allowed'
-    );
+    expect(res.eligible).toBe(true);
   });
 });

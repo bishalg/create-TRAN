@@ -49,37 +49,21 @@ async fn test_tran_info_endpoint() {
     let json: Value = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(json["stack"], "TRAN");
-    assert_eq!(
-        json["layers"]["T"],
-        "TanStack Start (Web App with SSR, Router, Streaming)"
-    );
-    assert_eq!(
-        json["layers"]["R"],
-        "Rust Core (Shared logic, Domain, Validation, Algorithms)"
-    );
-    assert_eq!(
-        json["layers"]["A"],
-        "Axum (High-performance Async Web Backend)"
-    );
-    assert_eq!(
-        json["layers"]["N"],
-        "Native (React Native / Expo iOS & Android Mobile)"
-    );
+    assert_eq!(json["demo"], "voting-eligibility");
 }
 
 #[tokio::test]
-async fn test_compute_endpoint_valid() {
+async fn test_vote_eligibility_eligible() {
     let app = build_app(AppState::new());
 
     let response = app
         .oneshot(
             Request::builder()
                 .method("POST")
-                .uri("/api/tran/compute")
+                .uri("/api/vote/eligibility")
                 .header("content-type", "application/json")
-                .body(Body::from(
-                    r#"{"a": 15.0, "b": 3.0, "operation": "multiply"}"#,
-                ))
+                .header("x-debug-country", "US")
+                .body(Body::from(r#"{"age": 21}"#))
                 .unwrap(),
         )
         .await
@@ -90,32 +74,33 @@ async fn test_compute_endpoint_valid() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let json: Value = serde_json::from_slice(&body).unwrap();
 
-    assert_eq!(json["result"], 45.0);
+    assert_eq!(json["eligible"], true);
+    assert_eq!(json["minimum_age"], 18);
+    assert_eq!(json["country_code"], "US");
 }
 
 #[tokio::test]
-async fn test_compute_endpoint_divide_by_zero() {
+async fn test_vote_eligibility_too_young() {
     let app = build_app(AppState::new());
 
     let response = app
         .oneshot(
             Request::builder()
                 .method("POST")
-                .uri("/api/tran/compute")
+                .uri("/api/vote/eligibility")
                 .header("content-type", "application/json")
-                .body(Body::from(
-                    r#"{"a": 10.0, "b": 0.0, "operation": "divide"}"#,
-                ))
+                .header("x-debug-country", "IN")
+                .body(Body::from(r#"{"age": 16}"#))
                 .unwrap(),
         )
         .await
         .unwrap();
 
-    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let json: Value = serde_json::from_slice(&body).unwrap();
 
-    assert_eq!(json["success"], false);
-    assert_eq!(json["error"], "Division by zero is not allowed");
+    assert_eq!(json["eligible"], false);
+    assert_eq!(json["country_code"], "IN");
 }

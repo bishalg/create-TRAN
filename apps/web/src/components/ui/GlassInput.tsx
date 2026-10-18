@@ -1,9 +1,10 @@
 import React, { type CSSProperties, type InputHTMLAttributes } from 'react';
-import { liquidGlassTokens } from '@tran/core';
+import { liquidGlassTokens, type ThemeTokens } from '@tran/core';
 
 export interface GlassInputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  theme?: ThemeTokens;
 }
 
 /**
@@ -12,17 +13,18 @@ export interface GlassInputProps extends InputHTMLAttributes<HTMLInputElement> {
 export const GlassInput: React.FC<GlassInputProps> = ({
   label,
   error,
+  theme = liquidGlassTokens,
   className = '',
   style = {},
   ...props
 }) => {
   const inputStyle: CSSProperties = {
-    backgroundColor: liquidGlassTokens.glass.background.subtle,
-    backdropFilter: `blur(${liquidGlassTokens.glass.blur.sm})`,
-    WebkitBackdropFilter: `blur(${liquidGlassTokens.glass.blur.sm})`,
-    border: `1px solid ${error ? liquidGlassTokens.palette.danger : liquidGlassTokens.glass.border.standard}`,
-    borderRadius: liquidGlassTokens.radii.md,
-    color: liquidGlassTokens.palette.text.primary,
+    backgroundColor: theme.glass.background.subtle,
+    backdropFilter: `blur(${theme.glass.blur.sm})`,
+    WebkitBackdropFilter: `blur(${theme.glass.blur.sm})`,
+    border: `1px solid ${error ? theme.palette.danger : theme.glass.border.standard}`,
+    borderRadius: theme.radii.md,
+    color: theme.palette.text.primary,
     padding: '0.75rem 1rem',
     fontSize: '1rem',
     outline: 'none',
@@ -34,13 +36,13 @@ export const GlassInput: React.FC<GlassInputProps> = ({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', width: '100%' }}>
       {label && (
-        <label style={{ fontSize: '0.875rem', color: liquidGlassTokens.palette.text.secondary }}>
+        <label style={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
           {label}
         </label>
       )}
       <input className={`glass-input ${className}`} style={inputStyle} {...props} />
       {error && (
-        <span style={{ fontSize: '0.75rem', color: liquidGlassTokens.palette.danger }}>
+        <span style={{ fontSize: '0.75rem', color: theme.palette.danger }}>
           {error}
         </span>
       )}

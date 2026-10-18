@@ -6,70 +6,49 @@
 [![Nx](https://img.shields.io/badge/Orchestrated%20by-Nx-143055.svg)](https://nx.dev)
 [![Rust](https://img.shields.io/badge/Rust-1.80+-orange.svg)](https://www.rust-lang.org)
 
-> **GitHub template** for **TanStack + Rust Core + Axum + Native** in an Nx / pnpm monorepo.
+> **GitHub template** for **TanStack + Rust Core + Axum + Native** in an Nx / pnpm monorepo — with a cohesive **Voting Eligibility** sample app.
 
-The **TRAN** stack pairs modern React ergonomics with Rust performance across web, API, and mobile.
+Conventions are aligned with [create-t3-turbo](https://github.com/t3-oss/create-t3-turbo) (app boundaries, shared packages, tooling folder, clear README) while keeping the TRAN stack.
 
 ---
 
-## Use this template
-
-This repository is published as a **[GitHub template](https://github.com/bishalg/create-TRAN/generate)**. Prefer one of these paths:
-
-### 1. GitHub “Use this template” (recommended)
-
-1. Open [Use this template](https://github.com/bishalg/create-TRAN/generate)
-2. Create your new repository
-3. Clone it and install:
-
-```bash
-git clone https://github.com/<you>/<your-repo>.git
-cd <your-repo>
-pnpm install
-pnpm test
-pnpm dev
-```
-
-### 2. `create-tran` CLI
-
-Clones this template and applies project name / options:
-
-```bash
-npx create-tran my-app
-# or
-pnpm create tran my-app
-```
-
-Flags: `--pm pnpm|npm|bun|yarn`, `--no-native`, `--no-git`, `--template <url-or-path>`.
-
-### 3. Clone this repo directly
+## Quick start
 
 ```bash
 git clone https://github.com/bishalg/create-TRAN.git my-tran-app
 cd my-tran-app
+cp .env.example .env
 pnpm install
-pnpm test
-pnpm dev
+pnpm dev:api   # http://127.0.0.1:3001
+pnpm dev:web   # Vite web app
 ```
 
-**Requirements:** Node.js ≥ 20, [pnpm](https://pnpm.io) ≥ 9 (pinned via `packageManager`), Rust stable toolchain.
+Or use **[Use this template](https://github.com/bishalg/create-TRAN/generate)** / `npx create-tran my-app`.
+
+**Requirements:** Node.js ≥ 20, pnpm ≥ 9, Rust stable.
 
 ---
 
-## Why several `node_modules` folders?
+## Voting Eligibility demo
 
-This workspace uses **pnpm**, not npm/yarn classic.
+The template replaces a generic calculator with a small domain you can extend:
 
-After `pnpm install` you will see:
+1. **Offline (web + native)** — `packages/core-ts/src/voting.ts` mirrors `crates/rust-core/src/voting.rs` (`can_vote_by_age`, country minimum ages, optional birthdate → age).
+2. **API (async)** — `POST /api/vote/eligibility` uses Rust Core plus a stub geo resolver:
+   - `X-Forwarded-For` / `X-Real-IP` for client IP
+   - `X-Debug-Country` (e.g. `US`, `IN`, `NP`, `BR`) in development
+   - Loopback defaults to `US`; private ranges stub to `IN` for variety
 
-- a large root `node_modules/` (content-addressable store + links)
-- tiny `apps/*/node_modules` and `packages/*/node_modules` folders
+Web UI uses shared **light/dark** Liquid Glass tokens; green = eligible, red = not eligible.
 
-Those nested folders are **mostly symlinks** into the root store (often only tens of KB). They are **not** duplicate full installs. They are required for pnpm’s isolated linker and are already listed in `.gitignore`.
+### Try it
 
-Do **not** commit them. Do **not** delete only the nested ones and expect apps to resolve deps — run `pnpm install` from the repo root instead.
-
-Rust build output lives in `target/` (hundreds of MB) and is also gitignored. `Cargo.lock` **is** committed so API builds stay reproducible.
+```bash
+curl -s -X POST http://127.0.0.1:3001/api/vote/eligibility \
+  -H 'Content-Type: application/json' \
+  -H 'X-Debug-Country: NP' \
+  -d '{"age": 20}'
+```
 
 ---
 
@@ -77,48 +56,44 @@ Rust build output lives in `target/` (hundreds of MB) and is also gitignored. `C
 
 ```mermaid
 graph TD
-    subgraph Web ["apps/web (T)"]
-        UI[Liquid Glass Views]
-        Hook[Model / Controller Hooks]
-        Router[TanStack Router / Vite]
+    subgraph Web ["apps/web"]
+        WUI[Voting UI]
+    end
+    subgraph Mobile ["apps/native"]
+        NUI[Voting UI]
+    end
+    subgraph Backend ["apps/api Axum"]
+        VoteRoute["POST /api/vote/eligibility"]
+        Geo[Stub geo / headers]
+    end
+    subgraph Core ["crates/rust-core"]
+        Rules[Voting rules]
+    end
+    subgraph Shared ["packages"]
+        CoreTS["@tran/core tokens + offline mirror"]
+        APIPkg["@tran/api oRPC contract + Zod"]
     end
 
-    subgraph Mobile ["apps/native (N)"]
-        RNUI[Liquid Glass Mobile UI]
-        MobileNav[Native Navigation]
-    end
-
-    subgraph Backend ["apps/api (A - Axum)"]
-        RouterAxum[Axum Router & Tower Middleware]
-        Handlers[Route Handlers]
-        State[Shared Tokio AppState]
-    end
-
-    subgraph Core ["crates/rust-core (R)"]
-        Engine[TranEngine Computation]
-        Validation[Domain Validation]
-        Models[Shared Domain Models]
-    end
-
-    subgraph SharedTS ["packages/core-ts"]
-        Client[TranApiClient]
-        Tokens[Liquid Glass Tokens]
-        i18n[i18n en / ne / hi]
-    end
-
-    Web -->|HTTP / JSON| Backend
-    Mobile -->|HTTP / JSON| Backend
-    Backend -->|Native Rust Call| Core
-    Web -.-> SharedTS
-    Mobile -.-> SharedTS
+    Web -->|oRPC client / REST| Backend
+    Mobile -->|REST| Backend
+    Backend --> Rules
+    Web -.-> CoreTS
+    Mobile -.-> CoreTS
+    Web -.-> APIPkg
+    CoreTS --> APIPkg
 ```
 
-| Layer | Technology | Role |
-| :---- | :--------- | :--- |
-| **T** | TanStack + Vite React | Web app with shared hooks and Liquid Glass UI |
-| **R** | Rust Core | Shared domain calculations, models, validation |
-| **A** | Axum | Async API gateway (Tokio, Tower, Tracing) |
-| **N** | Expo / React Native | iOS and Android clients |
+### Map to create-t3-turbo
+
+| create-t3-turbo | create-TRAN |
+| :-------------- | :---------- |
+| `apps/web` | `apps/web` (Vite + TanStack) |
+| `apps/native` (Expo) | `apps/native` |
+| `packages/api` (tRPC router) | `packages/api` (oRPC contract + Zod; Axum implements REST) |
+| `packages/ui` | Liquid Glass in `@tran/core` tokens (+ app-level Glass components) |
+| `packages/db` | _not included_ (add your own data layer) |
+| `tooling/*` | `tooling/typescript` |
+| Node API server | `apps/api` (Rust / Axum) + `crates/rust-core` |
 
 ---
 
@@ -126,24 +101,32 @@ graph TD
 
 ```
 create-TRAN/
-├── .github/workflows/ci.yml
 ├── apps/
 │   ├── api/                 # Axum API
-│   ├── web/                 # Vite + React web app
-│   └── native/              # Expo native app
-├── crates/
-│   └── rust-core/           # Shared Rust domain engine
+│   ├── web/                 # Vite + React
+│   └── native/              # Expo
+├── crates/rust-core/        # Voting rules (source of truth)
 ├── packages/
-│   ├── core-ts/             # Shared TS SDK, i18n, tokens
-│   └── create-tran/         # Scaffolding CLI
-├── Cargo.toml               # Cargo workspace
-├── Cargo.lock               # Locked Rust deps (committed)
-├── nx.json
-├── package.json
-├── pnpm-workspace.yaml
-├── pnpm-lock.yaml
-└── LICENSE                  # MIT
+│   ├── api/                 # @tran/api — oRPC + Zod
+│   ├── core-ts/             # @tran/core — SDK, i18n, themes
+│   └── create-tran/         # CLI
+├── tooling/typescript/      # Shared tsconfig bases
+├── .env.example
+├── CONTRIBUTING.md
+└── Cargo.toml
 ```
+
+---
+
+## oRPC boundary
+
+Full oRPC on Axum is not wired in this template. Instead:
+
+- `@tran/api` defines an **oRPC contract** and **Zod** input/output schemas.
+- Axum returns JSON that matches those schemas.
+- Clients validate responses with Zod (`checkVoteEligibility` / `TranApiClient`).
+
+This gives tRPC-like ergonomics on the TypeScript side without a Rust oRPC runtime.
 
 ---
 
@@ -153,38 +136,26 @@ create-TRAN/
 | :------ | :----- |
 | `pnpm dev` | Run apps via Nx |
 | `pnpm dev:web` | Web app |
-| `pnpm dev:api` | Axum API (`cargo run -p api`) |
+| `pnpm dev:api` | Axum API |
 | `pnpm dev:native` | Expo |
-| `pnpm test` | Rust + TypeScript tests |
-| `pnpm test:rust` | Cargo workspace tests |
-| `pnpm test:ts` | Vitest |
-| `pnpm build` | Build all projects |
-| `pnpm lint` | Clippy (`-D warnings`) |
-| `pnpm typecheck` | TypeScript across packages |
+| `pnpm test` | `cargo test` + Vitest |
+| `pnpm typecheck` | TypeScript |
+| `pnpm lint` | Clippy |
 
 ---
 
-## Design system & i18n
+## Environment variables
 
-- **Liquid Glass** tokens live in `@tran/core` (no React dependency).
-- Locales: English (`en`), Nepali (`ne`), Hindi (`hi`) under `packages/core-ts/src/locales/`.
+See [`.env.example`](./.env.example):
 
-```typescript
-import { t } from '@tran/core';
-
-t('app.title', 'en'); // "TRAN Stack Monorepo"
-t('app.title', 'ne'); // "TRAN स्ट्याक मोनोरेपो"
-t('app.title', 'hi'); // "TRAN स्टैक मोनोरेपो"
-```
+- `PORT` / `HOST` — Axum bind address (default `3001`)
+- `VITE_TRAN_API_URL` / `EXPO_PUBLIC_TRAN_API_URL` — client API base URL
 
 ---
 
-## Contributing / forking
+## Contributing
 
-- MIT licensed — fork, use, and ship freely; keep the license notice.
-- Keep `node_modules/`, `target/`, `dist/`, and `.env*` out of git (see `.gitignore`).
-- Prefer `pnpm` at the repo root; lockfiles (`pnpm-lock.yaml`, `Cargo.lock`) should stay committed.
-- Open PRs against `dev` unless releasing via `main`.
+See [CONTRIBUTING.md](./CONTRIBUTING.md). PRs welcome on `dev`.
 
 ---
 
