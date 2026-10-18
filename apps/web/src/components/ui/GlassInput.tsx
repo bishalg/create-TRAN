@@ -40,7 +40,10 @@ export const GlassInput: React.FC<GlassInputProps> = ({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', width: '100%' }}>
       {label && (
-        <label htmlFor={inputId} style={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
+        <label
+          htmlFor={inputId}
+          style={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}
+        >
           {label}
         </label>
       )}

@@ -85,9 +85,7 @@ export async function generateTranProject(options: CliOptions): Promise<void> {
   assertTargetAvailable(options.targetDir);
 
   const templateUrl =
-    options.templateUrl ||
-    process.env.CREATE_TRAN_TEMPLATE_URL ||
-    DEFAULT_TEMPLATE_REPO;
+    options.templateUrl || process.env.CREATE_TRAN_TEMPLATE_URL || DEFAULT_TEMPLATE_REPO;
 
   const parent = path.dirname(options.targetDir);
   if (!fs.existsSync(parent)) {

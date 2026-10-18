@@ -1,11 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  type SupportedLocale,
-  type ThemeMode,
-  getThemeTokens,
-  parseAgeInput,
-  t,
-} from '@tran/core';
+import { type SupportedLocale, type ThemeMode, getThemeTokens, parseAgeInput, t } from '@tran/core';
 import { GlassCard } from './components/ui/GlassCard.js';
 import { GlassInput } from './components/ui/GlassInput.js';
 import { SkeletonView } from './components/ui/SkeletonView.js';
@@ -125,7 +119,14 @@ export const App: React.FC = () => {
       />
 
       <main style={{ maxWidth: '960px', margin: '0 auto', width: '100%', padding: '2rem 1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginBottom: '1rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '0.5rem',
+            marginBottom: '1rem',
+          }}
+        >
           {(['dark', 'light'] as ThemeMode[]).map((mode) => (
             <button
               key={mode}
@@ -185,7 +186,9 @@ export const App: React.FC = () => {
           }}
         >
           <GlassCard variant="prominent" theme={theme} labelledBy="offline-heading">
-            <h2 id="offline-heading" style={{ marginTop: 0 }}>{t('app.sectionOffline', locale)}</h2>
+            <h2 id="offline-heading" style={{ marginTop: 0 }}>
+              {t('app.sectionOffline', locale)}
+            </h2>
             <p style={{ fontSize: '0.85rem', color: theme.palette.text.secondary, marginTop: 0 }}>
               <code>evaluateVoteEligibilityOffline</code> · mirrors{' '}
               <code>crates/rust-core/src/voting.rs</code>
@@ -237,7 +240,9 @@ export const App: React.FC = () => {
           </GlassCard>
 
           <GlassCard variant="standard" theme={theme} labelledBy="api-heading">
-            <h2 id="api-heading" style={{ marginTop: 0 }}>{t('app.sectionApi', locale)}</h2>
+            <h2 id="api-heading" style={{ marginTop: 0 }}>
+              {t('app.sectionApi', locale)}
+            </h2>
             <p style={{ fontSize: '0.85rem', color: theme.palette.text.secondary, marginTop: 0 }}>
               {t('app.apiCountryHint', locale)}
             </p>
@@ -284,12 +289,16 @@ export const App: React.FC = () => {
           </GlassCard>
 
           <GlassCard variant="subtle" theme={theme} labelledBy="status-heading">
-            <h2 id="status-heading" style={{ marginTop: 0 }}>{t('app.status', locale)}</h2>
+            <h2 id="status-heading" style={{ marginTop: 0 }}>
+              {t('app.status', locale)}
+            </h2>
             {isLoading ? (
               <SkeletonView count={3} height="28px" />
             ) : health ? (
               <div>
-                <div style={{ color: theme.palette.success, fontWeight: 600, marginBottom: '0.75rem' }}>
+                <div
+                  style={{ color: theme.palette.success, fontWeight: 600, marginBottom: '0.75rem' }}
+                >
                   ● {health.overall_status}
                 </div>
                 {health.components.map((comp) => (

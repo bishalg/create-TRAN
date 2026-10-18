@@ -85,9 +85,7 @@ export class TranApiClient {
     return this.request<TranStackInfo>('/api/tran/info');
   }
 
-  public async checkVoteEligibility(
-    input: VoteEligibilityInput
-  ): Promise<VoteEligibilityOutput> {
+  public async checkVoteEligibility(input: VoteEligibilityInput): Promise<VoteEligibilityOutput> {
     return checkVoteEligibility(input, {
       baseUrl: this.baseUrl,
       fetchFn: this.fetchFn,

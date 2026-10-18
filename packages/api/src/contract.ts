@@ -1,8 +1,5 @@
 import { oc } from '@orpc/contract';
-import {
-  VoteEligibilityInputSchema,
-  VoteEligibilityOutputSchema,
-} from './schemas/vote.js';
+import { VoteEligibilityInputSchema, VoteEligibilityOutputSchema } from './schemas/vote.js';
 
 /**
  * Type-safe API contract. Axum implements the REST route; responses are validated

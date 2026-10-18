@@ -92,7 +92,8 @@ export function useTranApi({ client: injected, baseUrl }: UseTranApiOptions = {}
   const checkViaApi = useCallback(
     async (age: number, headers?: Record<string, string>) => {
       try {
-        const scoped = headers && Object.keys(headers).length > 0 ? client.withHeaders(headers) : client;
+        const scoped =
+          headers && Object.keys(headers).length > 0 ? client.withHeaders(headers) : client;
         const result = await scoped.checkVoteEligibility({ age });
         setState((prev) => ({ ...prev, lastApiResult: result, error: null, isOffline: false }));
         return result;

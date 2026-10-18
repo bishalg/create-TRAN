@@ -107,7 +107,9 @@ describe('native useTranApi', () => {
 
 describe('native resolveApiBaseUrl', () => {
   it('uses the env value when set and the loopback default otherwise', () => {
-    expect(resolveApiBaseUrl({ EXPO_PUBLIC_TRAN_API_URL: 'https://x.test' })).toBe('https://x.test');
+    expect(resolveApiBaseUrl({ EXPO_PUBLIC_TRAN_API_URL: 'https://x.test' })).toBe(
+      'https://x.test'
+    );
     expect(resolveApiBaseUrl({ EXPO_PUBLIC_TRAN_API_URL: '' })).toBe(DEFAULT_API_URL);
     expect(resolveApiBaseUrl()).toBe(DEFAULT_API_URL);
   });

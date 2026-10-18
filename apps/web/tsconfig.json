@@ -5,7 +5,8 @@
     "moduleResolution": "bundler",
     "module": "ESNext",
     "outDir": "./dist",
-    "noEmit": true
+    "noEmit": true,
+    "types": ["vite/client", "@testing-library/jest-dom"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "tests/**/*"]
 }

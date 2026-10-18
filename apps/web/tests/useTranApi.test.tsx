@@ -57,7 +57,10 @@ describe('useTranApi: startup', () => {
 
   it('accepts an injected client (dependency injection for tests)', async () => {
     const api = createFakeApi();
-    const client = new TranApiClient({ baseUrl: BASE, fetchFn: api.fetchFn as unknown as typeof fetch });
+    const client = new TranApiClient({
+      baseUrl: BASE,
+      fetchFn: api.fetchFn as unknown as typeof fetch,
+    });
     const { result } = renderHook(() => useTranApi({ client }));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(api.callsTo('/api/health')).toHaveLength(1);
@@ -151,7 +154,9 @@ describe('useTranApi: checkOffline', () => {
 
 describe('resolveApiBaseUrl', () => {
   it('uses the env value when set and the loopback default otherwise', () => {
-    expect(resolveApiBaseUrl({ VITE_TRAN_API_URL: 'https://api.example.com' })).toBe('https://api.example.com');
+    expect(resolveApiBaseUrl({ VITE_TRAN_API_URL: 'https://api.example.com' })).toBe(
+      'https://api.example.com'
+    );
     expect(resolveApiBaseUrl({ VITE_TRAN_API_URL: '' })).toBe(DEFAULT_API_URL);
     expect(resolveApiBaseUrl()).toBe(DEFAULT_API_URL);
   });

@@ -22,7 +22,11 @@ describe('GlassCard', () => {
     expect(onClick).toHaveBeenCalledOnce();
     expect(screen.getByText('body')).toHaveStyle({ cursor: 'pointer' });
 
-    rerender(<GlassCard className="x" style={{ margin: 3 }}>body</GlassCard>);
+    rerender(
+      <GlassCard className="x" style={{ margin: 3 }}>
+        body
+      </GlassCard>
+    );
     expect(screen.getByText('body')).toHaveStyle({ cursor: 'default' });
     expect(screen.getByText('body')).toHaveClass('glass-card', 'x');
   });
@@ -56,7 +60,9 @@ describe('SkeletonView', () => {
   it('renders one block by default and N blocks when counted', () => {
     const { container, rerender } = render(<SkeletonView />);
     expect(container.querySelectorAll('.skeleton-pulse')).toHaveLength(1);
-    rerender(<SkeletonView count={3} height={10} width={50} borderRadius="2px" style={{ opacity: 1 }} />);
+    rerender(
+      <SkeletonView count={3} height={10} width={50} borderRadius="2px" style={{ opacity: 1 }} />
+    );
     expect(container.querySelectorAll('.skeleton-pulse')).toHaveLength(3);
   });
 });

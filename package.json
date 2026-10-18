@@ -12,12 +12,18 @@
     "build": "nx run-many -t build",
     "test": "pnpm run test:rust && pnpm run test:ts",
     "test:rust": "cargo test",
-    "test:ts": "pnpm --filter @tran/api build && pnpm --filter @tran/core build && vitest run",
+    "test:ts": "pnpm run build:libs && vitest run",
     "typecheck": "nx run-many -t typecheck",
-    "lint": "cargo clippy --workspace -- -D warnings",
+    "lint": "cargo clippy --workspace --all-targets -- -D warnings",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\"",
-    "tokens:sync": "cargo run -p tran-tokens-codegen"
+    "tokens:sync": "cargo run -p tran-tokens-codegen",
+    "build:libs": "pnpm --filter @tran/api build && pnpm --filter @tran/core build",
+    "test:coverage": "pnpm run test:rust:coverage && pnpm run test:ts:coverage",
+    "test:ts:coverage": "pnpm run build:libs && vitest run --coverage",
+    "test:rust:coverage": "cargo llvm-cov --workspace --ignore-filename-regex 'tran-tokens-codegen|main.rs' --fail-under-lines 100 --fail-under-regions 100",
+    "test:e2e": "pnpm --filter e2e test",
+    "test:all": "pnpm run test:coverage && pnpm run test:e2e"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

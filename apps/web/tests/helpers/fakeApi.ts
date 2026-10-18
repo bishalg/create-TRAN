@@ -6,8 +6,20 @@ export const healthReport = {
   timestamp: '2026-10-18T00:00:00Z',
   overall_status: 'HEALTHY',
   components: [
-    { layer: 'rustcore', name: 'Rust Domain Core', version: '0.1.0', healthy: true, uptime_seconds: 1 },
-    { layer: 'axumapi', name: 'Axum Microservice', version: '0.8.0', healthy: true, uptime_seconds: 1 },
+    {
+      layer: 'rustcore',
+      name: 'Rust Domain Core',
+      version: '0.1.0',
+      healthy: true,
+      uptime_seconds: 1,
+    },
+    {
+      layer: 'axumapi',
+      name: 'Axum Microservice',
+      version: '0.8.0',
+      healthy: true,
+      uptime_seconds: 1,
+    },
   ],
 };
 

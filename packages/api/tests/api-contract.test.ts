@@ -79,7 +79,9 @@ describe('@tran/api client edge cases', () => {
 
   it('throws TranApiError carrying status and the server message', async () => {
     const fetchFn = failing(400, async () => ({ success: false, error: 'bad age' }));
-    const err = await checkVoteEligibility({ age: 21 }, { fetchFn: fetchFn as never }).catch((e) => e);
+    const err = await checkVoteEligibility({ age: 21 }, { fetchFn: fetchFn as never }).catch(
+      (e) => e
+    );
     expect(err).toBeInstanceOf(TranApiError);
     expect(err).toMatchObject({ status: 400, message: 'bad age', name: 'TranApiError' });
   });
@@ -89,7 +91,11 @@ describe('@tran/api client edge cases', () => {
     const notJson = failing(502, async () => {
       throw new SyntaxError('x');
     });
-    await expect(checkVoteEligibility({ age: 21 }, { fetchFn: noMessage as never })).rejects.toThrow('HTTP 500');
-    await expect(checkVoteEligibility({ age: 21 }, { fetchFn: notJson as never })).rejects.toThrow('HTTP 502');
+    await expect(
+      checkVoteEligibility({ age: 21 }, { fetchFn: noMessage as never })
+    ).rejects.toThrow('HTTP 500');
+    await expect(checkVoteEligibility({ age: 21 }, { fetchFn: notJson as never })).rejects.toThrow(
+      'HTTP 502'
+    );
   });
 });

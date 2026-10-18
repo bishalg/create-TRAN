@@ -14,8 +14,7 @@ async function renderApp(opts: Parameters<typeof createFakeApi>[0] = {}) {
   return { api, user };
 }
 
-const offlineCard = () =>
-  screen.getByRole('region', { name: /offline \(rust rules mirror\)/i });
+const offlineCard = () => screen.getByRole('region', { name: /offline \(rust rules mirror\)/i });
 const apiCard = () => screen.getByRole('region', { name: /api \(country from ip stub\)/i });
 
 async function fill(user: ReturnType<typeof userEvent.setup>, input: HTMLElement, value: string) {
@@ -88,18 +87,21 @@ describe('App: offline check', () => {
     expect(card.getByText(/BR · min age 16/)).toBeVisible();
   });
 
-  it.each([['', 'empty'], ['abc', 'non-numeric'], ['-3', 'negative'], ['200', 'too old'], ['21.5', 'fractional']])(
-    'shows a visible error for an invalid age (%j: %s)',
-    async (value) => {
-      const { user } = await renderApp();
-      const card = within(offlineCard());
-      await fill(user, card.getByLabelText('Age (years)'), value);
-      await user.click(card.getByRole('button', { name: 'Check offline' }));
+  it.each([
+    ['', 'empty'],
+    ['abc', 'non-numeric'],
+    ['-3', 'negative'],
+    ['200', 'too old'],
+    ['21.5', 'fractional'],
+  ])('shows a visible error for an invalid age (%j: %s)', async (value) => {
+    const { user } = await renderApp();
+    const card = within(offlineCard());
+    await fill(user, card.getByLabelText('Age (years)'), value);
+    await user.click(card.getByRole('button', { name: 'Check offline' }));
 
-      expect(await screen.findByRole('alert')).toBeVisible();
-      expect(card.queryByText(/to vote/)).toBeNull();
-    }
-  );
+    expect(await screen.findByRole('alert')).toBeVisible();
+    expect(card.queryByText(/to vote/)).toBeNull();
+  });
 
   it('shows a visible error for a malformed country code', async () => {
     const { user } = await renderApp();

@@ -113,7 +113,9 @@ describe('TranApiClient.checkVoteEligibility', () => {
   });
 
   it('rejects a response that violates the contract', async () => {
-    const fetchFn = vi.fn().mockResolvedValue(jsonResponse({ ...validEligibility, eligible: 'yes' }));
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ ...validEligibility, eligible: 'yes' }));
     await expect(clientWith(fetchFn).checkVoteEligibility({ age: 21 })).rejects.toThrow();
   });
 
@@ -121,7 +123,10 @@ describe('TranApiClient.checkVoteEligibility', () => {
     const fetchFn = vi
       .fn()
       .mockResolvedValue(
-        jsonResponse({ success: false, error: 'Country code must be two ASCII letters' }, { status: 400 })
+        jsonResponse(
+          { success: false, error: 'Country code must be two ASCII letters' },
+          { status: 400 }
+        )
       );
     await expect(clientWith(fetchFn).checkVoteEligibility({ age: 21 })).rejects.toThrow(
       'Country code must be two ASCII letters'
@@ -143,7 +148,9 @@ describe('TranApiError (HTTP failure vs unreachable server)', () => {
   });
 
   it('is also used by generic GET failures', async () => {
-    const fetchFn = vi.fn().mockResolvedValue(jsonResponse({}, { status: 503, statusText: 'Down' }));
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({}, { status: 503, statusText: 'Down' }));
     const err = await clientWith(fetchFn)
       .getHealth()
       .catch((e: unknown) => e);

@@ -8,13 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {
-  getThemeTokens,
-  parseAgeInput,
-  t,
-  type SupportedLocale,
-  type ThemeMode,
-} from '@tran/core';
+import { getThemeTokens, parseAgeInput, t, type SupportedLocale, type ThemeMode } from '@tran/core';
 import { GlassCard } from '../components/GlassCard.js';
 import { GlassInput } from '../components/GlassInput.js';
 import { SkeletonView } from '../components/SkeletonView.js';
@@ -101,10 +95,7 @@ export const HomeScreen: React.FC = () => {
               <TouchableOpacity
                 key={loc}
                 onPress={() => setLocale(loc)}
-                style={[
-                  styles.localeBtn,
-                  locale === loc && { borderColor: theme.palette.primary },
-                ]}
+                style={[styles.localeBtn, locale === loc && { borderColor: theme.palette.primary }]}
               >
                 <Text
                   style={{
@@ -134,7 +125,9 @@ export const HomeScreen: React.FC = () => {
           ))}
         </View>
 
-        <Text style={[styles.title, { color: theme.palette.text.primary }]}>{t('app.title', locale)}</Text>
+        <Text style={[styles.title, { color: theme.palette.text.primary }]}>
+          {t('app.title', locale)}
+        </Text>
         <Text style={[styles.subtitle, { color: theme.palette.text.secondary }]}>
           {t('app.subtitle', locale)}
         </Text>
