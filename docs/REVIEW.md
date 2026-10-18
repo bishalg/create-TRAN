@@ -10,11 +10,11 @@ This page records an independent review of the TRAN template, **verified against
 
 ## Executive summary
 
-create-TRAN is a credible **hello-world monorepo** for shared business rules (Rust), an Axum API, a Vite web demo, and an Expo native sketch. The **domain layer, HTTP handlers, fixture-driven parity, and test pyramid** are template-quality (~8/10 for Rust, API, and testing discipline).
+create-TRAN is a credible **hello-world monorepo** for shared business rules (Rust), an Axum API, a Vite web demo, Swift/Kotlin native scaffolds, and a legacy Expo sketch. The **domain layer, HTTP handlers, fixture-driven parity, and test pyramid** are template-quality (~8/10 for Rust, API, and testing discipline).
 
-The main gap is **honesty at the stack boundary**: the web app is not TanStack Start (no SSR, routing, or server functions in source), and the native app is under-scaffolded (missing assets, non-standard entry, no CI smoke). Marketing strings in `/api/tran/info`, health reports, and README still describe capabilities the code does not implement.
+The main gap is **honesty at the stack boundary**: the web app is not TanStack Start (no SSR, routing, or server functions in source). **N** in TRAN is **platform-native mobile** (Swift + Kotlin), not React Native — `apps/native` is interim only. Native apps are early scaffolds (tokens + placeholder UI; no voting parity or CI build yet). Marketing strings for **T** and health reports still overclaim in places.
 
-**Agreed direction:** fix truth-in-labeling first (real TanStack Start or rename), then make native bootable with CI smoke, then harden the Rust↔TypeScript contract and production-safe header handling.
+**Agreed direction:** real Swift/Kotlin apps with voting parity and CI smoke; sunset or relocate legacy Expo; fix TanStack Start labeling or implement it; harden Rust↔TypeScript contract and production-safe header handling.
 
 ---
 
@@ -48,7 +48,7 @@ The main gap is **honesty at the stack boundary**: the web app is not TanStack S
 | **T** | TanStack Start (web) | **D** | Dependency present; runtime is Vite SPA. No file routes, loaders, or SSR. |
 | **R** | Rust core | **A** | Single source of truth, injectable time, validation, fixtures, tests. |
 | **A** | Axum API | **B+** | Clean handlers, unified errors, good HTTP tests; geo/debug and health are template stubs. |
-| **N** | Native (Expo) | **D−** | Screen/hook exist; assets and entry likely block `expo start`; no CI; old SDK vs web React 19. |
+| **N** | Native (Swift + Kotlin) | **C−** | `apps/ios` / `apps/android` scaffolds + token codegen; no API/offline parity yet. Legacy Expo (`apps/native`) still **D−**. |
 
 **Testing & CI (cross-cutting):** **A−** after the October 2026 push — 100% coverage gates, parity fixtures, Playwright Gherkin on real API + web. Not a substitute for mutation testing, native E2E, or TS lint.
 
@@ -57,7 +57,7 @@ The main gap is **honesty at the stack boundary**: the web app is not TanStack S
 ## Agreed priorities (reviewer order)
 
 1. **Make TanStack Start real** — file routes, data loading against Axum, at least one server function — **or** rename the stack and fix `/api/tran/info` and docs so they match a Vite SPA.
-2. **Upgrade native and prove boot** — add `assets/`, correct Expo entry, align React where feasible, **`expo` export or start smoke in CI** (also reduces audit surface).
+2. **Ship platform-native N** — voting parity on Swift/Compose, Gradle/Xcode CI smoke; migrate off legacy Expo (`apps/native`) when redundant.
 3. **Rust → TypeScript contract** — codegen (ts-rs, utoipa, specta) or **live contract tests** that hit Axum and validate with Zod.
 4. **Production-safe headers** — honour `X-Debug-Country` only when `APP_ENV=development` (wire `AppConfig.environment`); trusted-proxy allowlist for `X-Forwarded-For`.
 5. **Clean-ups** — shared `useTranApi` package, one styling approach, TS linter (Biome/ESLint), mutation testing, decide on Nx (affected + cache vs plain pnpm).

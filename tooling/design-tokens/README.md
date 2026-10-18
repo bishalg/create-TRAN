@@ -6,12 +6,14 @@ Brand colors, typography, spacing, and Liquid Glass semantics are defined in **R
 
 The `tran-tokens-codegen` binary emits platform artifacts:
 
-| Output                                       | Purpose                                          |
-| -------------------------------------------- | ------------------------------------------------ |
-| `packages/core-ts/src/generated/tokens.json` | JSON snapshot for tooling                        |
-| `packages/core-ts/src/generated/tokens.ts`   | Typed theme API for `@tran/core`                 |
-| `apps/web/src/styles/generated/theme.css`    | CSS custom properties (`:root` / `[data-theme]`) |
-| `apps/native/src/generated/brandTokens.ts`   | RN re-export stub (same contract as web)         |
+| Output | Purpose |
+| --- | --- |
+| `packages/core-ts/src/generated/tokens.json` | JSON snapshot for tooling |
+| `packages/core-ts/src/generated/tokens.ts` | Typed theme API for `@tran/core` |
+| `apps/web/src/styles/generated/theme.css` | CSS custom properties (`:root` / `[data-theme]`) |
+| `apps/native/src/generated/brandTokens.ts` | Legacy RN re-export stub |
+| `apps/ios/Sources/TranVotingDemo/Generated/BrandTokens.swift` | SwiftUI semantic colors (light/dark) |
+| `apps/android/app/src/main/kotlin/com/tran/voting/generated/BrandTokens.kt` | Compose `Color` tokens |
 
 ## Commands
 
@@ -21,11 +23,8 @@ pnpm tokens:sync
 nx run rust-core:sync-tokens
 ```
 
-## Future native generators (not implemented)
+## Native mobile (**N**)
 
-When SwiftUI and Jetpack Compose apps land in this template, add generators here:
+TRAN **N** is **Swift (iOS)** and **Kotlin (Android)**, not React Native. Edit only `tokens.rs` and re-run sync; do not hand-edit files under `*/generated/` or `Generated/`.
 
-- `swift/BrandColors.swift` — semantic colors from Rust hex + light/dark pairs
-- `kotlin/BrandTokens.kt` — Compose `Color` + `MaterialTheme` extensions
-
-Until then, edit only `tokens.rs` and re-run sync; do not hand-edit files under `*/generated/`.
+Future work: fuller glass/blur tokens on native, typography from snapshot, and CI build smoke for both apps.

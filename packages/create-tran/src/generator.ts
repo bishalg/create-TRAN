@@ -35,9 +35,11 @@ function customizeProject(options: CliOptions): void {
   }
 
   if (!options.includeNative) {
-    const nativeDir = path.join(options.targetDir, 'apps', 'native');
-    if (fs.existsSync(nativeDir)) {
-      fs.rmSync(nativeDir, { recursive: true, force: true });
+    for (const app of ['native', 'ios', 'android']) {
+      const appDir = path.join(options.targetDir, 'apps', app);
+      if (fs.existsSync(appDir)) {
+        fs.rmSync(appDir, { recursive: true, force: true });
+      }
     }
   }
 

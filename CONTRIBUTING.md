@@ -7,7 +7,9 @@ Thanks for improving the TRAN template. This repo follows conventions inspired b
 | Path                   | Role                                                        |
 | :--------------------- | :---------------------------------------------------------- |
 | `apps/web`             | TanStack + Vite web client                                  |
-| `apps/native`          | Expo mobile client                                          |
+| `apps/ios`             | SwiftUI iOS client (**N** in TRAN)                          |
+| `apps/android`         | Jetpack Compose Android client (**N** in TRAN)                |
+| `apps/native`          | Legacy Expo / RN sketch (interim — not the stack definition of **N**) |
 | `apps/api`             | Axum HTTP API (Rust)                                        |
 | `crates/rust-core`     | Domain rules (source of truth)                              |
 | `packages/core-ts`     | Shared TS SDK, tokens, i18n, offline rule mirror            |

@@ -52,7 +52,7 @@ curl -s http://127.0.0.1:3001/api/tran/info | jq
     "T": "TanStack Start (Web App with SSR, Router, Streaming)",
     "R": "Rust Core (Shared logic, Domain, Validation, Algorithms)",
     "A": "Axum (High-performance Async Web Backend)",
-    "N": "Native (React Native / Expo iOS & Android Mobile)"
+    "N": "Native mobile — SwiftUI (iOS) and Jetpack Compose (Android); apps/ios + apps/android"
   },
   "version": "0.1.0"
 }

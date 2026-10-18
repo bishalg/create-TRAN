@@ -1,6 +1,6 @@
 # Sample app walkthrough
 
-End-to-end map of the **Voting Eligibility** template: Rust rules, Axum API, shared tokens, and web/native clients.
+End-to-end map of the **Voting Eligibility** template: Rust rules, Axum API, shared tokens, web, platform-native mobile, and the legacy Expo client.
 
 ## Architecture (one screen)
 
@@ -8,7 +8,9 @@ End-to-end map of the **Voting Eligibility** template: Rust rules, Axum API, sha
 flowchart LR
   subgraph clients [Clients]
     Web[apps/web]
-    Native[apps/native]
+    IOS[apps/ios SwiftUI]
+    Android[apps/android Compose]
+    LegacyRN[apps/native Expo interim]
   end
   subgraph shared [packages]
     CoreTS["@tran/core offline + tokens + client"]
@@ -24,10 +26,12 @@ flowchart LR
   end
 
   Web --> CoreTS
-  Native --> CoreTS
+  LegacyRN --> CoreTS
   CoreTS --> APIPkg
   Web -->|REST| Axum
-  Native -->|REST| Axum
+  IOS -->|REST planned| Axum
+  Android -->|REST planned| Axum
+  LegacyRN -->|REST| Axum
   Axum --> Engine
   Engine --> Voting
   Tokens -->|pnpm tokens:sync| CoreTS
@@ -50,8 +54,10 @@ Native: `apps/native/src/hooks/useTranApi.ts`
 3. Regenerated artifacts include:
    - `packages/core-ts/src/generated/*`
    - `apps/web/src/styles/generated/theme.css`
-   - `apps/native/src/generated/brandTokens.ts`
-4. Web uses CSS variables via `theme.css`; React uses `getThemeTokens('light' | 'dark')`.
+   - `apps/native/src/generated/brandTokens.ts` (legacy RN stub)
+   - `apps/ios/.../Generated/BrandTokens.swift`
+   - `apps/android/.../generated/BrandTokens.kt`
+4. Web uses CSS variables via `theme.css`; React uses `getThemeTokens('light' | 'dark')`; native apps import generated Swift/Kotlin tokens.
 
 See [DESIGN.md](./DESIGN.md).
 
@@ -75,7 +81,8 @@ cp .env.example .env
 pnpm install
 pnpm dev:api    # :3001
 pnpm dev:web    # Vite
-pnpm dev:native # Expo
+pnpm dev:native # legacy Expo (apps/native)
+# Platform-native N: open apps/ios in Xcode or apps/android in Android Studio
 ```
 
 1. Open web — try **Offline** with country `NP` and age `20`, then **API** with `X-Debug-Country` from the country field.
@@ -93,4 +100,6 @@ See [TESTING.md](./TESTING.md) for the TDD / BDD / E2E / coverage playbook.
 | Geo stub       | `apps/api/src/geo.rs`                    |
 | oRPC/Zod       | `packages/api/src/`                      |
 | Web demo UI    | `apps/web/src/App.tsx`                   |
-| Native demo UI | `apps/native/src/screens/HomeScreen.tsx` |
+| iOS demo UI | `apps/ios/Sources/TranVotingDemo/VotingHomeView.swift` |
+| Android demo UI | `apps/android/.../ui/VotingHomeScreen.kt` |
+| Legacy RN demo UI | `apps/native/src/screens/HomeScreen.tsx` |

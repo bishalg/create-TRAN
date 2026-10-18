@@ -4,6 +4,19 @@ Actionable backlog aligned with the [external architecture review](./REVIEW.md) 
 
 ---
 
+## 0. Native mobile (Swift + Kotlin) — **N** in TRAN
+
+Platform-native iOS (`apps/ios`) and Android (`apps/android`) are the real **N**. `apps/native` (Expo/RN) is **legacy interim** only.
+
+- [x] Document **N** = SwiftUI + Compose (not React Native as the stack definition).
+- [x] Scaffold `apps/ios` and `apps/android` with placeholder screens + `pnpm tokens:sync` → Swift/Kotlin `BrandTokens`.
+- [ ] Voting parity on native: offline rules (Rust FFI or shared logic) + API client matching `@tran/api`.
+- [ ] Xcode / Gradle CI smoke (build only — no device farm required).
+- [ ] Migrate or remove `apps/native` after native apps match web demo features.
+- [ ] Optional: keep Expo under `apps/mobile-rn` if a JS mobile sketch is still wanted post-migration.
+
+---
+
 ## 1. TanStack Start — real or rename
 
 - [ ] **Decision:** adopt TanStack Start for `apps/web` *or* rebrand stack/docs as “Vite + React” (drop “Start” claims).
@@ -14,13 +27,13 @@ Actionable backlog aligned with the [external architecture review](./REVIEW.md) 
 
 ---
 
-## 2. Native — boot, upgrade, CI smoke
+## 2. Legacy Expo (`apps/native`) — boot or sunset
 
 - [ ] Add `apps/native/assets/` (`icon.png`, `splash.png`, `adaptive-icon.png`, `favicon.png`) per `app.json`.
 - [ ] Fix entry: `expo/AppEntry` pattern or `index.js` with `registerRootComponent` (stop using raw `src/App.tsx` as `main` unless documented).
-- [ ] Manually verify `pnpm dev:native` / `expo start` on iOS simulator or Android emulator.
+- [ ] Manually verify `pnpm dev:native` / `expo start` on iOS simulator or Android emulator **only if** keeping interim RN.
 - [ ] Plan Expo SDK upgrade path (review cited Expo 58 / RN 0.88 / React 19 — align with web when stable).
-- [ ] CI job: `expo export` or minimal `tsc` + `expo doctor` smoke on `apps/native`.
+- [ ] CI job: `expo export` or minimal `tsc` + `expo doctor` smoke on `apps/native` (optional while interim).
 - [ ] Re-run `pnpm audit --filter native` after upgrade; document acceptable residual risk.
 
 ---
@@ -61,3 +74,4 @@ Actionable backlog aligned with the [external architecture review](./REVIEW.md) 
 - [x] Parity fixtures + 100% Rust/TS coverage gates (`a0283cb`, `b89b2c6`).
 - [x] Playwright Gherkin E2E + CI job green on `dev` (`b2c9867`, [run 39120412501](https://github.com/bishalg/create-TRAN/actions/runs/39120412501)).
 - [x] [TESTING.md](./TESTING.md) playbook.
+- [x] Define **N** as Swift/Kotlin; scaffold `apps/ios` + `apps/android` + token codegen stubs.
