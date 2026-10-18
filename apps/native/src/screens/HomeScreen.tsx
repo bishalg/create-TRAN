@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -8,64 +8,75 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {
-  evaluateVoteEligibilityOffline,
-  getThemeTokens,
-  liquidGlassTokens,
-  t,
-  type SupportedLocale,
-  type ThemeMode,
-  TranApiClient,
-  type TranHealthReport,
-  type VoteEligibilityOutput,
-} from '@tran/core';
+import { getThemeTokens, t, type SupportedLocale, type ThemeMode } from '@tran/core';
 import { GlassCard } from '../components/GlassCard.js';
 import { GlassInput } from '../components/GlassInput.js';
 import { SkeletonView } from '../components/SkeletonView.js';
+import { useTranApi } from '../hooks/useTranApi.js';
+
+function EligibilityBlock({
+  result,
+  theme,
+  locale,
+  extra,
+}: {
+  result: { eligible: boolean; reason: string };
+  theme: ReturnType<typeof getThemeTokens>;
+  locale: SupportedLocale;
+  extra?: string;
+}) {
+  const color = result.eligible
+    ? theme.palette.eligibility.canVote
+    : theme.palette.eligibility.cannotVote;
+
+  return (
+    <View style={[styles.resultBox, { borderColor: color, backgroundColor: `${color}22` }]}>
+      <Text style={{ color, fontWeight: '700' }}>
+        {result.eligible ? t('app.eligibleYes', locale) : t('app.eligibleNo', locale)}
+      </Text>
+      <Text style={{ color: theme.palette.text.secondary, marginTop: 4 }}>{result.reason}</Text>
+      {extra ? (
+        <Text style={{ color: theme.palette.text.muted, marginTop: 4, fontSize: 12 }}>{extra}</Text>
+      ) : null}
+    </View>
+  );
+}
 
 export const HomeScreen: React.FC = () => {
   const [locale, setLocale] = useState<SupportedLocale>('en');
   const [themeMode, setThemeMode] = useState<ThemeMode>('dark');
-  const [health, setHealth] = useState<TranHealthReport | null>(null);
-  const [loading, setLoading] = useState(true);
   const [age, setAge] = useState('20');
   const [country, setCountry] = useState('NP');
-  const [apiResult, setApiResult] = useState<VoteEligibilityOutput | null>(null);
+  const [apiCountry, setApiCountry] = useState('NP');
 
   const theme = getThemeTokens(themeMode);
-  const client = new TranApiClient({ baseUrl: 'http://localhost:3001' });
+  const {
+    health,
+    isLoading,
+    isOffline,
+    error,
+    lastApiResult,
+    lastOfflineResult,
+    checkOffline,
+    checkViaApi,
+  } = useTranApi();
 
-  useEffect(() => {
-    client
-      .getHealth()
-      .then((h) => setHealth(h))
-      .catch(() => undefined)
-      .finally(() => setLoading(false));
-  }, []);
-
-  const offline = evaluateVoteEligibilityOffline({
-    age: parseInt(age, 10) || 0,
-    countryCode: country,
-  });
-
-  const display = apiResult ?? offline;
-  const eligibilityColor = display.eligible
-    ? theme.palette.eligibility.canVote
-    : theme.palette.eligibility.cannotVote;
+  const handleOffline = () => {
+    const parsed = parseInt(age, 10);
+    if (!Number.isNaN(parsed)) checkOffline(parsed, country);
+  };
 
   const handleApi = async () => {
     const parsed = parseInt(age, 10);
-    if (Number.isNaN(parsed)) return;
-    try {
-      const res = await client.checkVoteEligibility({ age: parsed });
-      setApiResult(res);
-    } catch {
-      setApiResult(null);
+    if (!Number.isNaN(parsed)) {
+      await checkViaApi(parsed, { 'X-Debug-Country': apiCountry });
     }
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: themeMode === 'dark' ? '#0b0f19' : '#f1f5f9' }]}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeMode === 'dark' ? '#0b0f19' : '#f1f5f9' }]}
+    >
       <StatusBar barStyle={themeMode === 'dark' ? 'light-content' : 'dark-content'} />
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.headerRow}>
@@ -75,9 +86,18 @@ export const HomeScreen: React.FC = () => {
               <TouchableOpacity
                 key={loc}
                 onPress={() => setLocale(loc)}
-                style={[styles.localeBtn, locale === loc && styles.localeBtnActive]}
+                style={[
+                  styles.localeBtn,
+                  locale === loc && { borderColor: theme.palette.primary },
+                ]}
               >
-                <Text style={[styles.localeText, locale === loc && styles.localeTextActive]}>
+                <Text
+                  style={{
+                    color: locale === loc ? theme.palette.primary : theme.palette.text.secondary,
+                    fontSize: 12,
+                    fontWeight: locale === loc ? '600' : '400',
+                  }}
+                >
                   {loc.toUpperCase()}
                 </Text>
               </TouchableOpacity>
@@ -88,7 +108,11 @@ export const HomeScreen: React.FC = () => {
         <View style={styles.themeRow}>
           {(['dark', 'light'] as ThemeMode[]).map((mode) => (
             <TouchableOpacity key={mode} onPress={() => setThemeMode(mode)}>
-              <Text style={{ color: themeMode === mode ? theme.palette.primary : theme.palette.text.secondary }}>
+              <Text
+                style={{
+                  color: themeMode === mode ? theme.palette.primary : theme.palette.text.secondary,
+                }}
+              >
                 {mode === 'light' ? t('app.themeLight', locale) : t('app.themeDark', locale)}
               </Text>
             </TouchableOpacity>
@@ -96,10 +120,20 @@ export const HomeScreen: React.FC = () => {
         </View>
 
         <Text style={[styles.title, { color: theme.palette.text.primary }]}>{t('app.title', locale)}</Text>
-        <Text style={[styles.subtitle, { color: theme.palette.text.secondary }]}>{t('app.subtitle', locale)}</Text>
+        <Text style={[styles.subtitle, { color: theme.palette.text.secondary }]}>
+          {t('app.subtitle', locale)}
+        </Text>
+
+        {isOffline && (
+          <Text style={[styles.offlineBanner, { color: theme.palette.warning }]}>
+            {t('app.offlineNotice', locale)}
+          </Text>
+        )}
 
         <GlassCard variant="prominent" style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>{t('app.checkOffline', locale)}</Text>
+          <Text style={[styles.sectionTitle, { color: theme.palette.text.primary }]}>
+            {t('app.sectionOffline', locale)}
+          </Text>
           <View style={styles.inputRow}>
             <View style={{ flex: 1 }}>
               <GlassInput
@@ -111,30 +145,76 @@ export const HomeScreen: React.FC = () => {
             </View>
             <View style={{ width: 12 }} />
             <View style={{ flex: 1 }}>
-              <GlassInput label={t('app.countryLabel', locale)} value={country} onChangeText={setCountry} />
+              <GlassInput
+                label={t('app.countryLabel', locale)}
+                value={country}
+                onChangeText={(v) => setCountry(v.toUpperCase())}
+              />
             </View>
           </View>
+          <TouchableOpacity
+            style={[styles.actionBtn, { backgroundColor: theme.palette.primary }]}
+            onPress={handleOffline}
+          >
+            <Text style={styles.actionBtnText}>{t('app.checkOffline', locale)}</Text>
+          </TouchableOpacity>
+          {lastOfflineResult && (
+            <EligibilityBlock result={lastOfflineResult} theme={theme} locale={locale} />
+          )}
+        </GlassCard>
 
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: theme.palette.primary }]} onPress={handleApi}>
+        <GlassCard variant="standard" style={styles.sectionCard}>
+          <Text style={[styles.sectionTitle, { color: theme.palette.text.primary }]}>
+            {t('app.sectionApi', locale)}
+          </Text>
+          <Text style={{ color: theme.palette.text.secondary, fontSize: 13, marginBottom: 8 }}>
+            {t('app.apiCountryHint', locale)}
+          </Text>
+          <View style={styles.inputRow}>
+            <View style={{ flex: 1 }}>
+              <GlassInput
+                label={t('app.ageLabel', locale)}
+                value={age}
+                onChangeText={setAge}
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={{ width: 12 }} />
+            <View style={{ flex: 1 }}>
+              <GlassInput
+                label={t('app.countryApiLabel', locale)}
+                value={apiCountry}
+                onChangeText={(v) => setApiCountry(v.toUpperCase())}
+              />
+            </View>
+          </View>
+          <TouchableOpacity
+            style={[styles.actionBtn, { backgroundColor: theme.palette.accent }]}
+            onPress={handleApi}
+          >
             <Text style={styles.actionBtnText}>{t('app.checkButton', locale)}</Text>
           </TouchableOpacity>
-
-          <View style={[styles.resultBox, { borderColor: eligibilityColor, backgroundColor: `${eligibilityColor}22` }]}>
-            <Text style={{ color: eligibilityColor, fontWeight: '700' }}>
-              {display.eligible ? t('app.eligibleYes', locale) : t('app.eligibleNo', locale)}
-            </Text>
-            <Text style={{ color: theme.palette.text.secondary, marginTop: 4 }}>{display.reason}</Text>
-          </View>
+          {lastApiResult && (
+            <EligibilityBlock
+              result={lastApiResult}
+              theme={theme}
+              locale={locale}
+              extra={`${lastApiResult.country_code} · min ${lastApiResult.minimum_age} · IP ${lastApiResult.client_ip}`}
+            />
+          )}
+          {error ? <Text style={{ color: theme.palette.danger, marginTop: 8 }}>{error}</Text> : null}
         </GlassCard>
 
         <GlassCard variant="subtle" style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>{t('app.status', locale)}</Text>
-          {loading ? (
+          <Text style={[styles.sectionTitle, { color: theme.palette.text.primary }]}>
+            {t('app.status', locale)}
+          </Text>
+          {isLoading ? (
             <SkeletonView count={3} height={24} />
           ) : health ? (
-            <Text style={{ color: liquidGlassTokens.palette.success }}>● {health.overall_status}</Text>
+            <Text style={{ color: theme.palette.success }}>● {health.overall_status}</Text>
           ) : (
-            <Text style={{ color: theme.palette.warning }}>{t('app.offlineNotice', locale)}</Text>
+            <Text style={{ color: theme.palette.text.secondary }}>API standby</Text>
           )}
         </GlassCard>
       </ScrollView>
@@ -159,18 +239,13 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: liquidGlassTokens.glass.border.subtle,
+    borderColor: 'rgba(255,255,255,0.15)',
   },
-  localeBtnActive: {
-    borderColor: liquidGlassTokens.palette.primary,
-    backgroundColor: 'rgba(56, 189, 248, 0.15)',
-  },
-  localeText: { color: liquidGlassTokens.palette.text.secondary, fontSize: 12 },
-  localeTextActive: { color: liquidGlassTokens.palette.primary, fontWeight: '600' },
   title: { fontSize: 26, fontWeight: '800', marginBottom: 6 },
   subtitle: { fontSize: 14, marginBottom: 20 },
+  offlineBanner: { fontSize: 13, marginBottom: 12 },
   sectionCard: { marginBottom: 20 },
-  sectionTitle: { color: liquidGlassTokens.palette.text.primary, fontSize: 16, fontWeight: '700', marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: 12 },
   inputRow: { flexDirection: 'row', marginBottom: 12 },
   actionBtn: { paddingVertical: 12, borderRadius: 12, alignItems: 'center', marginTop: 8 },
   actionBtnText: { color: '#0b0f19', fontWeight: '700', fontSize: 15 },

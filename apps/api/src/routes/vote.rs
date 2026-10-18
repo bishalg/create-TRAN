@@ -1,3 +1,5 @@
+//! `POST /api/vote/eligibility` — delegates to `rust_core::TranEngine` (see `docs/SAMPLE_APP.md`).
+
 use axum::extract::State;
 use axum::http::HeaderMap;
 use axum::Json;

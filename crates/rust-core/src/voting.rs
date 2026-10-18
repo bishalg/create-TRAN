@@ -1,4 +1,5 @@
 //! Voting eligibility rules — source of truth for web/native offline mirrors.
+//! After edits: `cargo test -p rust-core` and sync `packages/core-ts/src/voting.ts`.
 
 use chrono::{Datelike, NaiveDate};
 

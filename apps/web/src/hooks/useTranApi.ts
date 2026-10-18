@@ -18,7 +18,16 @@ export interface UseTranApiState {
   lastOfflineResult: OfflineEligibilityResult | null;
 }
 
-export function useTranApi(client: TranApiClient = new TranApiClient()) {
+const defaultApiBase =
+  typeof import.meta !== 'undefined' &&
+  import.meta.env?.VITE_TRAN_API_URL &&
+  String(import.meta.env.VITE_TRAN_API_URL).length > 0
+    ? String(import.meta.env.VITE_TRAN_API_URL)
+    : 'http://127.0.0.1:3001';
+
+export function useTranApi(
+  client: TranApiClient = new TranApiClient({ baseUrl: defaultApiBase })
+) {
   const [state, setState] = useState<UseTranApiState>({
     health: null,
     info: null,

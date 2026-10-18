@@ -1,3 +1,5 @@
+//! HTTP route modules — see `docs/API.md` for request/response samples.
+
 pub mod health;
 pub mod tran;
 pub mod vote;

@@ -50,6 +50,23 @@ curl -s -X POST http://127.0.0.1:3001/api/vote/eligibility \
   -d '{"age": 20}'
 ```
 
+Full endpoint reference: [docs/API.md](./docs/API.md).
+
+---
+
+## Sample app walkthrough (< 5 minutes)
+
+1. **Install** — `cp .env.example .env`, then `pnpm install`.
+2. **API** — `pnpm dev:api` → health at `http://127.0.0.1:3001/api/health`.
+3. **Web** — `pnpm dev:web` → open the demo UI.
+4. **Offline** — in **Offline (Rust rules mirror)**, set age `20` and country `NP`, tap **Check offline** (uses `evaluateVoteEligibilityOffline` from `@tran/core`).
+5. **API** — in **API (country from IP stub)**, set age and **Debug country**, tap **Check via API** (`checkVoteEligibility` + Zod validation against Axum).
+6. **Theme** — toggle light/dark; eligibility cards use shared tokens from `getThemeTokens()` and `theme.css`.
+7. **Native (optional)** — `pnpm dev:native`; same offline vs API sections on `HomeScreen`.
+8. **Customize** — edit `crates/rust-core/src/tokens.rs` → `pnpm tokens:sync`; edit `voting.rs` → `cargo test -p rust-core`.
+
+Step-by-step architecture: [docs/SAMPLE_APP.md](./docs/SAMPLE_APP.md).
+
 ---
 
 ## Architecture
@@ -111,6 +128,10 @@ create-TRAN/
 │   ├── core-ts/             # @tran/core — SDK, i18n, themes
 │   └── create-tran/         # CLI
 ├── tooling/typescript/      # Shared tsconfig bases
+├── docs/
+│   ├── API.md               # curl + JSON samples
+│   ├── DESIGN.md            # token pipeline
+│   └── SAMPLE_APP.md        # E2E walkthrough
 ├── .env.example
 ├── CONTRIBUTING.md
 └── Cargo.toml

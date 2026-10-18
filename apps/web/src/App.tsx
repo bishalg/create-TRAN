@@ -11,11 +11,59 @@ import { SkeletonView } from './components/ui/SkeletonView.js';
 import { Header } from './components/layout/Header.js';
 import { useTranApi } from './hooks/useTranApi.js';
 
+type EligibilityDisplay = {
+  eligible: boolean;
+  reason: string;
+  country_code?: string;
+  minimum_age?: number;
+  client_ip?: string;
+};
+
+function EligibilityResultCard({
+  result,
+  theme,
+  locale,
+  source,
+}: {
+  result: EligibilityDisplay;
+  theme: ReturnType<typeof getThemeTokens>;
+  locale: SupportedLocale;
+  source: 'offline' | 'api';
+}) {
+  const color = result.eligible
+    ? theme.palette.eligibility.canVote
+    : theme.palette.eligibility.cannotVote;
+
+  return (
+    <div
+      style={{
+        marginTop: '1.25rem',
+        padding: '1rem',
+        borderRadius: theme.radii.md,
+        border: `1px solid ${color}`,
+        backgroundColor: `${color}18`,
+      }}
+    >
+      <div style={{ fontWeight: 700, color }}>
+        {result.eligible ? t('app.eligibleYes', locale) : t('app.eligibleNo', locale)}
+      </div>
+      <p style={{ margin: '0.5rem 0 0', fontSize: '0.9rem' }}>{result.reason}</p>
+      {result.country_code != null && result.minimum_age != null && (
+        <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: theme.palette.text.muted }}>
+          {result.country_code} · min age {result.minimum_age}
+          {source === 'api' && result.client_ip ? ` · IP ${result.client_ip}` : ''}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export const App: React.FC = () => {
   const [locale, setLocale] = useState<SupportedLocale>('en');
   const [themeMode, setThemeMode] = useState<ThemeMode>('dark');
   const [age, setAge] = useState('21');
   const [country, setCountry] = useState('US');
+  const [apiCountry, setApiCountry] = useState('US');
 
   const theme = useMemo(() => getThemeTokens(themeMode), [themeMode]);
 
@@ -34,13 +82,6 @@ export const App: React.FC = () => {
     checkViaApi,
   } = useTranApi();
 
-  const displayResult = lastApiResult ?? lastOfflineResult;
-  const eligibilityColor = displayResult
-    ? displayResult.eligible
-      ? theme.palette.eligibility.canVote
-      : theme.palette.eligibility.cannotVote
-    : theme.palette.eligibility.neutral;
-
   const handleOffline = () => {
     const parsed = parseInt(age, 10);
     if (!Number.isNaN(parsed)) checkOffline(parsed, country);
@@ -49,12 +90,13 @@ export const App: React.FC = () => {
   const handleApi = async () => {
     const parsed = parseInt(age, 10);
     if (!Number.isNaN(parsed)) {
-      await checkViaApi(parsed, { 'X-Debug-Country': country });
+      await checkViaApi(parsed, { 'X-Debug-Country': apiCountry });
     }
   };
 
   return (
     <div
+      className="tran-app"
       style={{
         minHeight: '100vh',
         display: 'flex',
@@ -116,9 +158,19 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '1.25rem',
+          }}
+        >
           <GlassCard variant="prominent" theme={theme}>
-            <h2 style={{ marginTop: 0 }}>{t('app.checkOffline', locale)}</h2>
+            <h2 style={{ marginTop: 0 }}>{t('app.sectionOffline', locale)}</h2>
+            <p style={{ fontSize: '0.85rem', color: theme.palette.text.secondary, marginTop: 0 }}>
+              <code>evaluateVoteEligibilityOffline</code> · mirrors{' '}
+              <code>crates/rust-core/src/voting.rs</code>
+            </p>
             <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
               <GlassInput
                 label={t('app.ageLabel', locale)}
@@ -146,53 +198,70 @@ export const App: React.FC = () => {
                 color: themeMode === 'dark' ? '#0f172a' : '#fff',
                 fontWeight: 700,
                 cursor: 'pointer',
-                marginBottom: '0.75rem',
               }}
             >
               {t('app.checkOffline', locale)}
             </button>
+            {lastOfflineResult && (
+              <EligibilityResultCard
+                result={{
+                  eligible: lastOfflineResult.eligible,
+                  reason: lastOfflineResult.reason,
+                  country_code: lastOfflineResult.countryCode,
+                  minimum_age: lastOfflineResult.minimumAge,
+                }}
+                theme={theme}
+                locale={locale}
+                source="offline"
+              />
+            )}
+          </GlassCard>
+
+          <GlassCard variant="standard" theme={theme}>
+            <h2 style={{ marginTop: 0 }}>{t('app.sectionApi', locale)}</h2>
+            <p style={{ fontSize: '0.85rem', color: theme.palette.text.secondary, marginTop: 0 }}>
+              {t('app.apiCountryHint', locale)}
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
+              <GlassInput
+                label={t('app.ageLabel', locale)}
+                type="number"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                theme={theme}
+              />
+              <GlassInput
+                label={t('app.countryApiLabel', locale)}
+                value={apiCountry}
+                onChange={(e) => setApiCountry(e.target.value.toUpperCase())}
+                theme={theme}
+              />
+            </div>
             <button
               type="button"
               onClick={handleApi}
+              disabled={isLoading}
               style={{
                 width: '100%',
                 padding: '0.85rem',
                 borderRadius: theme.radii.md,
                 border: `1px solid ${theme.glass.border.standard}`,
-                background: 'transparent',
-                color: theme.palette.text.primary,
+                background: theme.palette.accent,
+                color: themeMode === 'dark' ? '#0f172a' : '#fff',
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
             >
               {t('app.checkButton', locale)}
             </button>
-
-            {displayResult && (
-              <div
-                style={{
-                  marginTop: '1.25rem',
-                  padding: '1rem',
-                  borderRadius: theme.radii.md,
-                  border: `1px solid ${eligibilityColor}`,
-                  backgroundColor: `${eligibilityColor}18`,
-                }}
-              >
-                <div style={{ fontWeight: 700, color: eligibilityColor }}>
-                  {displayResult.eligible
-                    ? t('app.eligibleYes', locale)
-                    : t('app.eligibleNo', locale)}
-                </div>
-                <p style={{ margin: '0.5rem 0 0', fontSize: '0.9rem' }}>{displayResult.reason}</p>
-                {'country_code' in displayResult && (
-                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: theme.palette.text.muted }}>
-                    {displayResult.country_code} · min age {displayResult.minimum_age}
-                    {lastApiResult ? ` · IP ${lastApiResult.client_ip}` : ''}
-                  </p>
-                )}
-              </div>
+            {lastApiResult && (
+              <EligibilityResultCard
+                result={lastApiResult}
+                theme={theme}
+                locale={locale}
+                source="api"
+              />
             )}
-
             {error && (
               <p style={{ color: theme.palette.danger, fontSize: '0.85rem', marginTop: '0.75rem' }}>
                 {error}
@@ -200,7 +269,7 @@ export const App: React.FC = () => {
             )}
           </GlassCard>
 
-          <GlassCard variant="standard" theme={theme}>
+          <GlassCard variant="subtle" theme={theme}>
             <h2 style={{ marginTop: 0 }}>{t('app.status', locale)}</h2>
             {isLoading ? (
               <SkeletonView count={3} height="28px" />
