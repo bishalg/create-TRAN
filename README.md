@@ -141,6 +141,9 @@ This gives tRPC-like ergonomics on the TypeScript side without a Rust oRPC runti
 | `pnpm test` | `cargo test` + Vitest |
 | `pnpm typecheck` | TypeScript |
 | `pnpm lint` | Clippy |
+| `pnpm tokens:sync` | Regenerate design tokens from `rust-core` into web/native/TS |
+
+Brand colors, typography, and light/dark semantics are defined in `crates/rust-core/src/tokens.rs` and emitted by `tran-tokens-codegen`. See [docs/DESIGN.md](./docs/DESIGN.md).
 
 ---
 
