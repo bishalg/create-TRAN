@@ -8,40 +8,54 @@ import androidx.compose.ui.graphics.Color
 private fun tranColor(hex: String): Color {
     val raw = hex.removePrefix("#")
     val value = raw.toLong(16)
-    return when (raw.length) {
+    val argb = when (raw.length) {
         3 -> {
             val r = ((value shr 8) and 0xF) * 17
             val g = ((value shr 4) and 0xF) * 17
             val b = (value and 0xF) * 17
-            Color(0xFF000000L or (r shl 16) or (g shl 8) or b)
+            (0xFFL shl 24) or (r shl 16) or (g shl 8) or b
         }
-        6 -> Color(0xFF000000L or value)
-        8 -> Color(value)
-        else -> Color.Black
+        6 -> 0xFF000000L or value
+        8 -> ((value and 0xFF) shl 24) or ((value shr 8) and 0xFFFFFF)
+        else -> 0xFF000000L
     }
+    return Color(argb.toInt())
+}
+
+/** Semantic palette implemented by [TranBrandTokens.Light] and [TranBrandTokens.Dark]. */
+interface BrandPalette {
+    val primary: Color
+    val accent: Color
+    val success: Color
+    val danger: Color
+    val surface: Color
+    val background: Color
+    val eligibilityCanVote: Color
+    val eligibilityCannotVote: Color
+    val textPrimary: Color
 }
 
 object TranBrandTokens {
-    object Light {
-        val primary = tranColor("#0284c7")
-        val accent = tranColor("#4f46e5")
-        val success = tranColor("#059669")
-        val danger = tranColor("#dc2626")
-        val surface = tranColor("#e2e8f0")
-        val background = tranColor("#f8fafc")
-        val eligibilityCanVote = tranColor("#059669")
-        val eligibilityCannotVote = tranColor("#dc2626")
-        val textPrimary = tranColor("#0f172a")
+    object Light : BrandPalette {
+        override val primary = tranColor("#0284c7")
+        override val accent = tranColor("#4f46e5")
+        override val success = tranColor("#059669")
+        override val danger = tranColor("#dc2626")
+        override val surface = tranColor("#e2e8f0")
+        override val background = tranColor("#f8fafc")
+        override val eligibilityCanVote = tranColor("#059669")
+        override val eligibilityCannotVote = tranColor("#dc2626")
+        override val textPrimary = tranColor("#0f172a")
     }
-    object Dark {
-        val primary = tranColor("#38bdf8")
-        val accent = tranColor("#818cf8")
-        val success = tranColor("#34d399")
-        val danger = tranColor("#f87171")
-        val surface = tranColor("#1e293b")
-        val background = tranColor("#0b0f19")
-        val eligibilityCanVote = tranColor("#34d399")
-        val eligibilityCannotVote = tranColor("#f87171")
-        val textPrimary = tranColor("#f8fafc")
+    object Dark : BrandPalette {
+        override val primary = tranColor("#38bdf8")
+        override val accent = tranColor("#818cf8")
+        override val success = tranColor("#34d399")
+        override val danger = tranColor("#f87171")
+        override val surface = tranColor("#1e293b")
+        override val background = tranColor("#0b0f19")
+        override val eligibilityCanVote = tranColor("#34d399")
+        override val eligibilityCannotVote = tranColor("#f87171")
+        override val textPrimary = tranColor("#f8fafc")
     }
 }

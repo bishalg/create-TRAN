@@ -22,6 +22,17 @@ out/
 target/
 **/*.rs.bk
 
+# Android / Gradle (apps/android)
+.gradle/
+.kotlin/
+local.properties
+
+# Swift / Xcode (apps/ios)
+.build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+
 # Expo & React Native
 .expo/
 .expo-shared/
