@@ -1,13 +1,13 @@
 # Sample app walkthrough
 
-End-to-end map of the **Voting Eligibility** template: Rust rules, Axum API, shared tokens, web, platform-native mobile, and the legacy Expo client.
+End-to-end map of the **Voting Eligibility** template: Rust rules, Axum API, shared tokens, Vite web, platform-native mobile (UniFFI), and the legacy Expo client.
 
 ## Architecture (one screen)
 
 ```mermaid
 flowchart LR
   subgraph clients [Clients]
-    Web[apps/web]
+    Web[apps/web Vite SPA]
     IOS[apps/ios SwiftUI]
     Android[apps/android Compose]
     LegacyRN[apps/native Expo interim]
@@ -15,6 +15,9 @@ flowchart LR
   subgraph shared [packages]
     CoreTS["@tran/core offline + tokens + client"]
     APIPkg["@tran/api Zod + checkVoteEligibility"]
+  end
+  subgraph ffi [crates/tran-uniffi]
+    Uni[UniFFI exports]
   end
   subgraph backend [apps/api]
     Axum[Axum routes]
@@ -29,8 +32,9 @@ flowchart LR
   LegacyRN --> CoreTS
   CoreTS --> APIPkg
   Web -->|REST| Axum
-  IOS -->|REST planned| Axum
-  Android -->|REST planned| Axum
+  IOS -.->|offline| Uni
+  Android -.->|offline| Uni
+  Uni --> Engine
   LegacyRN -->|REST| Axum
   Axum --> Engine
   Engine --> Voting
@@ -39,13 +43,20 @@ flowchart LR
 
 ## Offline vs API
 
-| Path        | Where rules run                                                        | Country source                       |
-| :---------- | :--------------------------------------------------------------------- | :----------------------------------- |
-| **Offline** | `evaluateVoteEligibilityOffline` in `@tran/core` (mirrors `voting.rs`) | User picks country in the UI         |
-| **API**     | `TranEngine::evaluate_vote_eligibility` in Rust                        | Stub geo from IP + `X-Debug-Country` |
+| Path | Where rules run | Country source |
+| :-- | :-- | :-- |
+| **Offline (web / Expo)** | `evaluateVoteEligibilityOffline` in `@tran/core` (mirrors `voting.rs`) | User picks country in the UI |
+| **Offline (iOS / Android)** | `evaluate_vote_eligibility_offline` in `crates/tran-uniffi` → `TranEngine` | User picks country in native UI |
+| **API** | `TranEngine::evaluate_vote_eligibility` in Rust | Stub geo from IP + `X-Debug-Country` |
 
-Web: `apps/web/src/hooks/useTranApi.ts`  
-Native: `apps/native/src/hooks/useTranApi.ts`
+Web hook: `apps/web/src/shared/api/useTranApi.ts`  
+Legacy native: `apps/native/src/hooks/useTranApi.ts`
+
+Regenerate FFI after changing `tran-uniffi` or exported signatures:
+
+```bash
+pnpm uniffi:generate
+```
 
 ## Change brand colors (design tokens)
 
@@ -63,10 +74,11 @@ See [DESIGN.md](./DESIGN.md).
 
 ## Change voting rules (test-first)
 
-1. Add/adjust a case in `fixtures/vote-eligibility.json` — Rust and TS tests go red.
+1. Add/adjust a case in `fixtures/vote-eligibility.json` — Rust, TS, and UniFFI tests go red.
 2. Edit `crates/rust-core/src/voting.rs` (source of truth); `cargo test -p rust-core`.
 3. Mirror logic in `packages/core-ts/src/voting.ts`; `pnpm test:ts`.
-4. API handlers call the engine — no duplicate business logic in Axum.
+4. UniFFI re-exports engine paths — run `cargo test -p tran-uniffi` (parity fixtures).
+5. API handlers call the engine — no duplicate business logic in Axum.
 
 ## API layer
 
@@ -74,15 +86,17 @@ Axum does not run an oRPC server. `@tran/api` defines the contract; handlers ret
 
 Details and curl samples: [API.md](./API.md).
 
-## Local run (three processes)
+## Local run
 
 ```bash
 cp .env.example .env
 pnpm install
 pnpm dev:api    # :3001
-pnpm dev:web    # Vite
+pnpm dev:web    # Vite :3000
 pnpm dev:native # legacy Expo (apps/native)
 # Platform-native N:
+pnpm tokens:sync
+pnpm uniffi:generate   # after FFI / voting export changes
 pnpm ios:build                          # SwiftUI → iOS Simulator build
 open apps/ios/TranVotingDemo.xcodeproj  # or run from Xcode
 pnpm android:build                      # Compose → debug APK
@@ -90,20 +104,22 @@ cd apps/android && ./gradlew installDebug  # install on emulator/device
 ```
 
 1. Open web — try **Offline** with country `NP` and age `20`, then **API** with `X-Debug-Country` from the country field.
-2. Toggle light/dark — eligibility cards use `palette.eligibility.canVote` / `cannotVote`.
-3. Status card shows `GET /api/health` via `TranApiClient.getHealth()`.
+2. Toggle light/dark — eligibility cards use token semantics (`canVote` / `cannotVote`).
+3. Status footer shows `GET /api/health` via `TranApiClient.getHealth()`.
+4. On iOS/Android — offline eligibility uses UniFFI (same fixture table as Rust core).
 
 See [TESTING.md](./TESTING.md) for the TDD / BDD / E2E / coverage playbook.
 
 ## Key files
 
-| Concern           | Location                                               |
-| :---------------- | :----------------------------------------------------- |
-| Routes            | `apps/api/src/routes/mod.rs`                           |
-| Vote handler      | `apps/api/src/routes/vote.rs`                          |
-| Geo stub          | `apps/api/src/geo.rs`                                  |
-| oRPC/Zod          | `packages/api/src/`                                    |
-| Web demo UI       | `apps/web/src/App.tsx`                                 |
-| iOS demo UI       | `apps/ios/Sources/TranVotingDemo/VotingHomeView.swift` |
-| Android demo UI   | `apps/android/.../ui/VotingHomeScreen.kt`              |
-| Legacy RN demo UI | `apps/native/src/screens/HomeScreen.tsx`               |
+| Concern | Location |
+| :-- | :-- |
+| Routes | `apps/api/src/routes/mod.rs` |
+| Vote handler | `apps/api/src/routes/vote.rs` |
+| Geo stub | `apps/api/src/geo.rs` |
+| oRPC/Zod | `packages/api/src/` |
+| Web demo UI | `apps/web/src/features/eligibility/EligibilityPage.tsx` |
+| UniFFI crate | `crates/tran-uniffi/src/lib.rs` |
+| iOS demo UI | `apps/ios/Sources/TranVotingDemo/VotingHomeView.swift` |
+| Android demo UI | `apps/android/.../ui/VotingHomeScreen.kt` |
+| Legacy RN demo UI | `apps/native/src/screens/HomeScreen.tsx` |

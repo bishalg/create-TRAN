@@ -30,6 +30,12 @@ Native (**N**) apps consume generated platform files:
 
 The legacy Expo client re-exports `@tran/core` via `apps/native/src/generated/brandTokens.ts`.
 
+## UniFFI (native offline)
+
+Voting rules on iOS/Android do **not** duplicate tokens in Swift/Kotlin — only brand palettes are codegen’d here.
+Offline eligibility calls `crates/tran-uniffi`, which wraps `TranEngine` in `rust-core`. Regenerate bindings with
+`pnpm uniffi:generate` after changing exported FFI.
+
 ## Why Rust-first?
 
-One type-safe contract feeds hex/RGB-friendly JSON, TypeScript, CSS variables, and future Swift/Kotlin outputs without copy-paste across `DESIGN.md` and each platform.
+One type-safe contract feeds hex/RGB-friendly JSON, TypeScript, CSS variables, Swift/Kotlin brand tokens, and UniFFI-backed native logic without copy-paste across platforms.

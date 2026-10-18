@@ -9,6 +9,7 @@ easy to copy. Every layer below has one reference file. Copy its shape, not its 
 | :------------------ | :----------------------- | :---------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------ |
 | Rule unit tests     | `cargo test`             | `crates/rust-core/src/voting.rs` (`mod tests`)                                                                          | Pure functions, boundaries (17/18, leap day)      |
 | **Golden fixtures** | `cargo test` + `vitest`  | `fixtures/vote-eligibility.json` → `crates/rust-core/tests/parity_fixtures.rs`, `packages/core-ts/tests/parity.test.ts` | Rust and TypeScript give **identical** answers    |
+| UniFFI parity       | `cargo test -p tran-uniffi` | `crates/tran-uniffi/tests/parity_fixtures.rs` + `src/lib.rs` unit tests                                            | Native FFI surface matches the same fixture table |
 | HTTP integration    | `tower::oneshot`         | `apps/api/tests/api_test.rs`                                                                                            | Routes, headers, status codes, one error envelope |
 | Real socket smoke   | tokio `TcpListener`      | `apps/api/tests/server_test.rs`                                                                                         | `run_server` really serves                        |
 | Client / contract   | vitest + fake `fetch`    | `packages/core-ts/tests/client.test.ts`                                                                                 | Timeouts, error mapping, Zod contract             |
@@ -46,7 +47,9 @@ First E2E run needs `pnpm --filter e2e exec playwright install chromium`.
 - **Fakes over mocks.** `apps/web/tests/helpers/fakeApi.ts` reuses the shared rules so it cannot disagree
   with the real thing.
 - **Delete dead branches** instead of excluding them from coverage. Excluded files must say why
-  (`vitest.config.ts`): generated code, bootstrap, type-only files, and the unrelated scaffolder CLI.
+  (`vitest.config.ts`, root `package.json` `test:rust:coverage`): generated code, bootstrap, type-only files,
+  the scaffolder CLI, token codegen binaries, and **`crates/tran-uniffi`** (UniFFI macro regions; behaviour is
+  gated by parity fixtures + unit tests in that crate).
 - **Make bugs reproducible first.** The `useTranApi` refetch loop and the missing CORS header both passed every
   old test; they now have a failing-first test (hook test, `cors_preflight_…`, and the E2E API scenario).
 

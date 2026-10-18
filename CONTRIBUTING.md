@@ -6,12 +6,13 @@ Thanks for improving the TRAN template. This repo follows conventions inspired b
 
 | Path                   | Role                                                                  |
 | :--------------------- | :-------------------------------------------------------------------- |
-| `apps/web`             | TanStack + Vite web client                                            |
+| `apps/web`             | Vite + React SPA (TanStack Start deps present, not wired yet)         |
 | `apps/ios`             | SwiftUI iOS client (**N** in TRAN)                                    |
 | `apps/android`         | Jetpack Compose Android client (**N** in TRAN)                        |
 | `apps/native`          | Legacy Expo / RN sketch (interim — not the stack definition of **N**) |
 | `apps/api`             | Axum HTTP API (Rust)                                                  |
-| `crates/rust-core`     | Domain rules (source of truth)                                        |
+| `crates/rust-core`     | Domain rules + design tokens (source of truth)                        |
+| `crates/tran-uniffi`   | UniFFI exports for iOS/Android offline voting                         |
 | `packages/core-ts`     | Shared TS SDK, tokens, i18n, offline rule mirror                      |
 | `packages/api`         | oRPC contract + Zod schemas + typed client                            |
 | `packages/create-tran` | Scaffolding CLI                                                       |
@@ -26,10 +27,13 @@ pnpm install
 pnpm dev:api    # Axum on :3001
 pnpm dev:web
 pnpm test       # cargo test + vitest
+pnpm test:all   # coverage gates + E2E (CI)
 pnpm typecheck
+pnpm tokens:sync
+pnpm uniffi:generate   # after changing tran-uniffi exports
 ```
 
-Work test-first; the full playbook is in [docs/TESTING.md](./docs/TESTING.md). Coverage is gated at 100% (`pnpm test:coverage`) and user-visible behaviour needs a Gherkin scenario in `e2e/features/` (`pnpm test:e2e`).
+Work test-first; the full playbook is in [docs/TESTING.md](./docs/TESTING.md). Coverage is gated at 100% (`pnpm test:coverage`) and user-visible behaviour needs a Gherkin scenario in `e2e/features/` (`pnpm test:e2e`). Change `fixtures/vote-eligibility.json` first for rule changes — Rust, TypeScript, and UniFFI parity tests consume it.
 
 TypeScript offline rules in `packages/core-ts/src/voting.ts` must stay aligned with `crates/rust-core/src/voting.rs`; the shared `fixtures/vote-eligibility.json` enforces it.
 

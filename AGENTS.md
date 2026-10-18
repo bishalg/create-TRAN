@@ -3,8 +3,9 @@
 This is a **template**: keep the sample tiny, exemplary and fully tested.
 
 - Read [docs/TESTING.md](docs/TESTING.md) first. Work test-first (red → green → refactor).
-- Business rules live in `crates/rust-core` and are mirrored in `packages/core-ts`. Change
-  `fixtures/vote-eligibility.json` first; both test suites consume it.
+- Business rules live in `crates/rust-core` and are mirrored in `packages/core-ts`. Native offline
+  voting uses `crates/tran-uniffi` (`pnpm uniffi:generate` after export changes). Change
+  `fixtures/vote-eligibility.json` first; Rust, TypeScript, and UniFFI parity tests consume it.
 - Coverage is a gate: 100% for Rust (`pnpm test:rust:coverage`) and sample TypeScript
   (`pnpm test:ts:coverage`). Do not lower thresholds or add excludes without a reason in `vitest.config.ts`.
 - **N** in TRAN means **iOS (SwiftUI)** and **Android (Compose)** under `apps/ios` and `apps/android`, not React Native. `apps/native` is legacy interim.

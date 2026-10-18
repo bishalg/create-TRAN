@@ -101,3 +101,83 @@ pub fn evaluate_vote_eligibility_offline(
         reason: response.reason,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rust_core::CoreError;
+
+    #[test]
+    fn validation_error_detail_is_exposed() {
+        let err = TranValidationError::ValidationError {
+            detail: "bad field".into(),
+        };
+        assert_eq!(err.detail(), "bad field");
+    }
+
+    #[test]
+    fn from_core_preserves_validation_errors() {
+        let err = TranValidationError::from_core(CoreError::ValidationError("age".into()));
+        assert_eq!(err.detail(), "age");
+    }
+
+    #[test]
+    fn from_core_stringifies_non_validation_core_errors() {
+        let err = TranValidationError::from_core(CoreError::NotFound("gone".into()));
+        assert!(err.detail().contains("gone"));
+    }
+
+    #[test]
+    fn invalid_reference_date_is_rejected() {
+        let err = evaluate_vote_eligibility_offline(18, None, "US".into(), "not-a-date".into())
+            .expect_err("reference must be ISO");
+        assert_eq!(err.detail(), "reference_date must be ISO YYYY-MM-DD");
+    }
+
+    #[test]
+    fn invalid_birthdate_is_rejected() {
+        let err = evaluate_vote_eligibility_offline(
+            18,
+            Some("2026/10/18".into()),
+            "US".into(),
+            "2026-10-18".into(),
+        )
+        .expect_err("birthdate must be ISO");
+        assert_eq!(err.detail(), "birthdate must be ISO YYYY-MM-DD");
+    }
+
+    #[test]
+    fn empty_birthdate_string_is_ignored() {
+        let res = evaluate_vote_eligibility_offline(
+            25,
+            Some(String::new()),
+            "US".into(),
+            "2026-10-18".into(),
+        )
+        .expect("eligible adult");
+        assert!(res.eligible);
+        assert_eq!(res.age, 25);
+    }
+
+    #[test]
+    fn age_from_birthdate_offline_clamps_unparseable_dates() {
+        assert_eq!(
+            age_from_birthdate_offline("not-a-date".into(), "also-bad".into()),
+            0,
+        );
+        assert_eq!(
+            age_from_birthdate_offline("not-iso".into(), "2026-10-18".into()),
+            age_from_birthdate(
+                NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
+                NaiveDate::from_ymd_opt(2026, 10, 18).unwrap(),
+            ),
+        );
+        assert_eq!(
+            age_from_birthdate_offline("2000-06-15".into(), "bad".into()),
+            age_from_birthdate(
+                NaiveDate::from_ymd_opt(2000, 6, 15).unwrap(),
+                NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
+            ),
+        );
+    }
+}

@@ -12,7 +12,7 @@ This page records an independent review of the TRAN template, **verified against
 
 create-TRAN is a credible **hello-world monorepo** for shared business rules (Rust), an Axum API, a Vite web demo, Swift/Kotlin native scaffolds, and a legacy Expo sketch. The **domain layer, HTTP handlers, fixture-driven parity, and test pyramid** are template-quality (~8/10 for Rust, API, and testing discipline).
 
-The main gap is **honesty at the stack boundary**: the web app is not TanStack Start (no SSR, routing, or server functions in source). **N** in TRAN is **platform-native mobile** (Swift + Kotlin), not React Native — `apps/native` is interim only. Native apps are early scaffolds (tokens + placeholder UI; no voting parity or CI build yet). Marketing strings for **T** and health reports still overclaim in places.
+The main gap is **honesty at the stack boundary**: the web app is not TanStack Start (no SSR, routing, or server functions in source). **N** in TRAN is **platform-native mobile** (Swift + Kotlin), not React Native — `apps/native` is interim only. Native apps now ship offline voting via UniFFI + fixture parity; Xcode/Gradle CI smoke jobs exist. HTTP clients on native are still open. Marketing strings for **T** (and some health metadata) still overclaim in places outside the refreshed docs/API.
 
 **Agreed direction:** real Swift/Kotlin apps with voting parity and CI smoke; sunset or relocate legacy Expo; fix TanStack Start labeling or implement it; harden Rust↔TypeScript contract and production-safe header handling.
 
@@ -35,7 +35,7 @@ The main gap is **honesty at the stack boundary**: the web app is not TanStack S
 | Health endpoint always `HEALTHY`, hard-coded versions | **Yes** | `crates/rust-core/src/services/engine.rs` `generate_health_report` — all layers `healthy: true`, fixed version strings, claims web/native health server cannot observe. Handler returns engine report (`apps/api/src/routes/health.rs`). |
 | Nx is thin `run-commands` wrappers | **Yes** | e.g. `apps/web/project.json` — each target runs `pnpm run …`. No `nx affected` in CI; coverage/e2e use root `pnpm` scripts directly. |
 | CI E2E “never ran” | **Wrong** (stale) | GitHub Actions run [**39120412501**](https://github.com/bishalg/create-TRAN/actions/runs/39120412501) on `dev` @ `b2c9867`: Rust, TS, and **E2E + BDD (10 scenarios)** all passed. |
-| CI never builds/starts native | **Yes** | `.github/workflows/ci.yml` — no native job. |
+| CI never builds/starts native | **Stale** | `ios-smoke` + `android-smoke` jobs build simulator/debug APK on `dev` (see run 39123041565). |
 | `useTranApi` duplicated web/native | **Yes** | `apps/web/src/hooks/useTranApi.ts` vs `apps/native/src/hooks/useTranApi.ts` — same logic; env resolution differs (`import.meta.env` vs `process.env`). `fakeApi.ts` duplicated in both `tests/helpers/`. |
 | Inline styling / dual styling systems | **Partial** | `App.tsx` has **26** `style={{…}}` blocks; generated `theme.css` exists alongside inline tokens — reviewer’s direction is fair. |
 

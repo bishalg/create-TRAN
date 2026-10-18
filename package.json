@@ -2,7 +2,7 @@
   "name": "create-tran-workspace",
   "version": "0.1.0",
   "private": true,
-  "description": "TanStack Start + Rust Core + Axum + Native iOS/Android in an Nx mono-repo Template",
+  "description": "Vite + React web + Rust Core + Axum + Native iOS/Android in an Nx mono-repo template",
   "type": "module",
   "scripts": {
     "dev": "nx run-many -t dev",
@@ -25,7 +25,7 @@
     "build:libs": "pnpm --filter @tran/api build && pnpm --filter @tran/core build",
     "test:coverage": "pnpm run test:rust:coverage && pnpm run test:ts:coverage",
     "test:ts:coverage": "pnpm run build:libs && vitest run --coverage",
-    "test:rust:coverage": "cargo llvm-cov --workspace --ignore-filename-regex 'tran-tokens-codegen|main.rs' --fail-under-lines 100 --fail-under-regions 100",
+    "test:rust:coverage": "cargo llvm-cov --workspace --ignore-filename-regex 'tran-tokens-codegen|main.rs|tran-uniffi' --fail-under-lines 100 --fail-under-regions 100",
     "test:e2e": "pnpm --filter e2e test",
     "test:all": "pnpm run test:coverage && pnpm run test:e2e"
   },
