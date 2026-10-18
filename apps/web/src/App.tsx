@@ -1,328 +1,135 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { type SupportedLocale, type ThemeMode, getThemeTokens, parseAgeInput, t } from '@tran/core';
-import { GlassCard } from './components/ui/GlassCard.js';
-import { GlassInput } from './components/ui/GlassInput.js';
-import { SkeletonView } from './components/ui/SkeletonView.js';
-import { Header } from './components/layout/Header.js';
+import { type FormEvent, useEffect, useState } from 'react';
+import { type SupportedLocale, type ThemeMode, parseAgeInput, t } from '@tran/core';
+import { Field } from './components/Field.js';
+import { Header } from './components/Header.js';
+import { type CheckMode, ModeSwitch } from './components/ModeSwitch.js';
+import { type EligibilityView, ResultCard } from './components/ResultCard.js';
+import { type ApiState, StatusFooter } from './components/StatusFooter.js';
 import { useTranApi } from './hooks/useTranApi.js';
+import { initialTheme } from './lib/theme.js';
 
-type EligibilityDisplay = {
-  eligible: boolean;
-  reason: string;
-  country_code?: string;
-  minimum_age?: number;
-  client_ip?: string;
-};
-
-function EligibilityResultCard({
-  result,
-  theme,
-  locale,
-  source,
-}: {
-  result: EligibilityDisplay;
-  theme: ReturnType<typeof getThemeTokens>;
-  locale: SupportedLocale;
-  source: 'offline' | 'api';
-}) {
-  const color = result.eligible
-    ? theme.palette.eligibility.canVote
-    : theme.palette.eligibility.cannotVote;
-
-  return (
-    <div
-      style={{
-        marginTop: '1.25rem',
-        padding: '1rem',
-        borderRadius: theme.radii.md,
-        border: `1px solid ${color}`,
-        backgroundColor: `${color}18`,
-      }}
-    >
-      <div style={{ fontWeight: 700, color }}>
-        {result.eligible ? t('app.eligibleYes', locale) : t('app.eligibleNo', locale)}
-      </div>
-      <p style={{ margin: '0.5rem 0 0', fontSize: '0.9rem' }}>{result.reason}</p>
-      {result.country_code != null && result.minimum_age != null && (
-        <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: theme.palette.text.muted }}>
-          {result.country_code} · min age {result.minimum_age}
-          {source === 'api' && result.client_ip ? ` · IP ${result.client_ip}` : ''}
-        </p>
-      )}
-    </div>
-  );
-}
-
-export const App: React.FC = () => {
+export function App() {
   const [locale, setLocale] = useState<SupportedLocale>('en');
-  const [themeMode, setThemeMode] = useState<ThemeMode>('dark');
+  const [theme, setTheme] = useState<ThemeMode>(initialTheme);
+  const [mode, setMode] = useState<CheckMode>('device');
   const [age, setAge] = useState('21');
   const [country, setCountry] = useState('US');
-  const [apiCountry, setApiCountry] = useState('US');
-
-  const theme = useMemo(() => getThemeTokens(themeMode), [themeMode]);
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = themeMode;
-  }, [themeMode]);
-
-  const {
-    health,
-    isLoading,
-    isOffline,
-    error,
-    lastApiResult,
-    lastOfflineResult,
-    checkOffline,
-    checkViaApi,
-  } = useTranApi();
-
   const [inputError, setInputError] = useState<string | null>(null);
 
-  const readAge = (): number | null => {
-    const parsed = parseAgeInput(age);
-    setInputError(parsed === null ? t('app.ageInvalid', locale) : null);
-    return parsed;
+  const api = useTranApi();
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
+
+  const onSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    const parsedAge = parseAgeInput(age);
+    setInputError(parsedAge === null ? t('app.ageInvalid', locale) : null);
+    if (parsedAge === null) return;
+
+    if (mode === 'device') api.checkOffline(parsedAge, country);
+    else await api.checkViaApi(parsedAge, { 'X-Debug-Country': country });
   };
 
-  const handleOffline = () => {
-    const parsed = readAge();
-    if (parsed !== null) checkOffline(parsed, country);
-  };
-
-  const handleApi = async () => {
-    const parsed = readAge();
-    if (parsed !== null) await checkViaApi(parsed, { 'X-Debug-Country': apiCountry });
-  };
-
-  // Unreachable servers are announced by the banner; everything else is an actionable error.
-  const alertMessage = inputError ?? (isOffline ? null : error);
+  const result = toView(mode, api.lastOfflineResult, api.lastApiResult);
+  // An unreachable server is explained by the notice; every other error is actionable.
+  const alertMessage = inputError ?? (api.isOffline ? null : api.error);
+  const apiState: ApiState = api.isLoading ? 'checking' : api.isOffline ? 'offline' : 'online';
 
   return (
-    <div
-      className="tran-app"
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        background:
-          themeMode === 'dark'
-            ? 'linear-gradient(180deg, #0b0f19 0%, #111827 100%)'
-            : 'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)',
-        color: theme.palette.text.primary,
-      }}
-    >
+    <div className="app">
       <Header
-        currentLocale={locale}
+        locale={locale}
         onLocaleChange={setLocale}
-        breadcrumbs={[t('app.title', locale), 'Demo']}
+        theme={theme}
+        onThemeToggle={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       />
 
-      <main style={{ maxWidth: '960px', margin: '0 auto', width: '100%', padding: '2rem 1rem' }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '0.5rem',
-            marginBottom: '1rem',
-          }}
-        >
-          {(['dark', 'light'] as ThemeMode[]).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => setThemeMode(mode)}
-              style={{
-                padding: '0.35rem 0.75rem',
-                borderRadius: theme.radii.pill,
-                border: `1px solid ${theme.glass.border.standard}`,
-                background: themeMode === mode ? theme.palette.primaryGlow : 'transparent',
-                color: theme.palette.text.primary,
-                cursor: 'pointer',
-              }}
-            >
-              {mode === 'light' ? t('app.themeLight', locale) : t('app.themeDark', locale)}
-            </button>
-          ))}
-        </div>
-
-        <section style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 800, margin: '0.25rem 0' }}>
-            {t('app.title', locale)}
-          </h1>
-          <p style={{ color: theme.palette.text.secondary }}>{t('app.subtitle', locale)}</p>
+      <main className="shell">
+        <section className="hero">
+          <h1>{t('app.title', locale)}</h1>
+          <p>{t('app.subtitle2', locale)}</p>
         </section>
 
-        {isOffline && (
-          <div
-            style={{
-              padding: '0.75rem 1rem',
-              borderRadius: theme.radii.md,
-              backgroundColor: `${theme.palette.warning}22`,
-              border: `1px solid ${theme.palette.warning}`,
-              color: theme.palette.warning,
-              marginBottom: '1.5rem',
-              textAlign: 'center',
-            }}
-          >
+        {api.isOffline && (
+          <p className="notice" role="note">
             {t('app.offlineNotice', locale)}
-          </div>
+          </p>
         )}
 
-        {alertMessage && (
-          <p
-            role="alert"
-            style={{ color: theme.palette.danger, textAlign: 'center', marginBottom: '1rem' }}
+        <form
+          className="card"
+          aria-label={t('app.formLabel', locale)}
+          onSubmit={onSubmit}
+          noValidate
+        >
+          <ModeSwitch mode={mode} onChange={setMode} locale={locale} />
+
+          <div className="fields">
+            <Field
+              label={t('app.ageField', locale)}
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder={t('app.agePlaceholder', locale)}
+              aria-invalid={inputError ? true : undefined}
+            />
+            <Field
+              label={t('app.countryField', locale)}
+              value={country}
+              onChange={(e) => setCountry(e.target.value.toUpperCase())}
+              maxLength={2}
+              autoCapitalize="characters"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder={t('app.countryPlaceholder', locale)}
+              hint={t(mode === 'server' ? 'app.serverHint' : 'app.countryHint', locale)}
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="button"
+            disabled={api.isChecking}
+            aria-busy={api.isChecking}
           >
+            {t(api.isChecking ? 'app.submitting' : 'app.submit', locale)}
+          </button>
+        </form>
+
+        {alertMessage && (
+          <p className="error" role="alert">
             {alertMessage}
           </p>
         )}
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '1.25rem',
-          }}
-        >
-          <GlassCard variant="prominent" theme={theme} labelledBy="offline-heading">
-            <h2 id="offline-heading" style={{ marginTop: 0 }}>
-              {t('app.sectionOffline', locale)}
-            </h2>
-            <p style={{ fontSize: '0.85rem', color: theme.palette.text.secondary, marginTop: 0 }}>
-              <code>evaluateVoteEligibilityOffline</code> · mirrors{' '}
-              <code>crates/rust-core/src/voting.rs</code>
-            </p>
-            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
-              <GlassInput
-                label={t('app.ageLabel', locale)}
-                type="number"
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
-                theme={theme}
-              />
-              <GlassInput
-                label={t('app.countryLabel', locale)}
-                value={country}
-                onChange={(e) => setCountry(e.target.value.toUpperCase())}
-                theme={theme}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={handleOffline}
-              style={{
-                width: '100%',
-                padding: '0.85rem',
-                borderRadius: theme.radii.md,
-                border: 'none',
-                background: theme.palette.primary,
-                color: themeMode === 'dark' ? '#0f172a' : '#fff',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              {t('app.checkOffline', locale)}
-            </button>
-            {lastOfflineResult && (
-              <EligibilityResultCard
-                result={{
-                  eligible: lastOfflineResult.eligible,
-                  reason: lastOfflineResult.reason,
-                  country_code: lastOfflineResult.countryCode,
-                  minimum_age: lastOfflineResult.minimumAge,
-                }}
-                theme={theme}
-                locale={locale}
-                source="offline"
-              />
-            )}
-          </GlassCard>
-
-          <GlassCard variant="standard" theme={theme} labelledBy="api-heading">
-            <h2 id="api-heading" style={{ marginTop: 0 }}>
-              {t('app.sectionApi', locale)}
-            </h2>
-            <p style={{ fontSize: '0.85rem', color: theme.palette.text.secondary, marginTop: 0 }}>
-              {t('app.apiCountryHint', locale)}
-            </p>
-            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
-              <GlassInput
-                label={t('app.ageLabel', locale)}
-                type="number"
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
-                theme={theme}
-              />
-              <GlassInput
-                label={t('app.countryApiLabel', locale)}
-                value={apiCountry}
-                onChange={(e) => setApiCountry(e.target.value.toUpperCase())}
-                theme={theme}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={handleApi}
-              disabled={isLoading}
-              style={{
-                width: '100%',
-                padding: '0.85rem',
-                borderRadius: theme.radii.md,
-                border: `1px solid ${theme.glass.border.standard}`,
-                background: theme.palette.accent,
-                color: themeMode === 'dark' ? '#0f172a' : '#fff',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              {t('app.checkButton', locale)}
-            </button>
-            {lastApiResult && (
-              <EligibilityResultCard
-                result={lastApiResult}
-                theme={theme}
-                locale={locale}
-                source="api"
-              />
-            )}
-          </GlassCard>
-
-          <GlassCard variant="subtle" theme={theme} labelledBy="status-heading">
-            <h2 id="status-heading" style={{ marginTop: 0 }}>
-              {t('app.status', locale)}
-            </h2>
-            {isLoading ? (
-              <SkeletonView count={3} height="28px" />
-            ) : health ? (
-              <div>
-                <div
-                  style={{ color: theme.palette.success, fontWeight: 600, marginBottom: '0.75rem' }}
-                >
-                  ● {health.overall_status}
-                </div>
-                {health.components.map((comp) => (
-                  <div
-                    key={comp.name}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: '0.85rem',
-                      padding: '0.4rem 0',
-                      color: theme.palette.text.secondary,
-                    }}
-                  >
-                    <span>{comp.name}</span>
-                    <span>v{comp.version}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p style={{ color: theme.palette.text.secondary }}>API standby</p>
-            )}
-          </GlassCard>
+        <div className="result-slot" role="status">
+          {result && <ResultCard result={result} locale={locale} />}
         </div>
       </main>
+
+      <StatusFooter state={apiState} version={api.info?.version} locale={locale} />
     </div>
   );
-};
+}
+
+function toView(
+  mode: CheckMode,
+  offline: ReturnType<typeof useTranApi>['lastOfflineResult'],
+  server: ReturnType<typeof useTranApi>['lastApiResult']
+): EligibilityView | null {
+  if (mode === 'device') {
+    return offline && { ...offline, source: 'device' };
+  }
+  return (
+    server && {
+      eligible: server.eligible,
+      reason: server.reason,
+      countryCode: server.country_code,
+      minimumAge: server.minimum_age,
+      source: 'server',
+    }
+  );
+}

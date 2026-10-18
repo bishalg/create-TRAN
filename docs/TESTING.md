@@ -41,6 +41,7 @@ First E2E run needs `pnpm --filter e2e exec playwright install chromium`.
 - **One error shape.** Every API failure is `{ "success": false, "error": "…" }` (bad JSON, bad header, rules).
   Clients map it to `TranApiError`; only _network_ failures (`isNetworkError`) mean "offline".
 - **Validate at the edge, once, in both languages with the same messages** (they are in the fixture).
+- **Accessibility is a test, not a hope.** The axe scenario fails on contrast or missing labels; see [UI.md](./UI.md).
 - **Query by role/label** in UI tests (`getByRole`, `getByLabel`). If you can't, the UI isn't accessible: fix the UI.
 - **Fakes over mocks.** `apps/web/tests/helpers/fakeApi.ts` reuses the shared rules so it cannot disagree
   with the real thing.

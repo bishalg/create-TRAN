@@ -13,6 +13,8 @@ export interface UseTranApiState {
   health: TranHealthReport | null;
   info: TranStackInfo | null;
   isLoading: boolean;
+  /** True while a server eligibility check is in flight. */
+  isChecking: boolean;
   /** True only when the server could not be reached; a 4xx rejection is NOT "offline". */
   isOffline: boolean;
   error: string | null;
@@ -50,6 +52,7 @@ export function useTranApi({ client: injected, baseUrl }: UseTranApiOptions = {}
     health: null,
     info: null,
     isLoading: true,
+    isChecking: false,
     isOffline: false,
     error: null,
     lastApiResult: null,
@@ -88,15 +91,23 @@ export function useTranApi({ client: injected, baseUrl }: UseTranApiOptions = {}
 
   const checkViaApi = useCallback(
     async (age: number, headers?: Record<string, string>) => {
+      setState((prev) => ({ ...prev, isChecking: true }));
       try {
         const scoped =
           headers && Object.keys(headers).length > 0 ? client.withHeaders(headers) : client;
         const result = await scoped.checkVoteEligibility({ age });
-        setState((prev) => ({ ...prev, lastApiResult: result, error: null, isOffline: false }));
+        setState((prev) => ({
+          ...prev,
+          lastApiResult: result,
+          isChecking: false,
+          error: null,
+          isOffline: false,
+        }));
         return result;
       } catch (err) {
         setState((prev) => ({
           ...prev,
+          isChecking: false,
           error: messageOf(err, 'Eligibility check failed'),
           isOffline: isNetworkError(err) ? true : prev.isOffline,
         }));

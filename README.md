@@ -41,7 +41,7 @@ The template replaces a generic calculator with a small domain you can extend:
    - `X-Debug-Country` (e.g. `US`, `IN`, `NP`, `BR`) in development
    - Loopback defaults to `US`; private ranges stub to `IN` for variety
 
-Web UI uses shared **light/dark** Liquid Glass tokens; green = eligible, red = not eligible.
+The web UI follows the OS light/dark preference, uses only the shared design tokens (no hard-coded colours), and is checked for accessibility in CI.
 
 ### Try it
 
@@ -61,9 +61,9 @@ Full endpoint reference: [docs/API.md](./docs/API.md).
 1. **Install** — `cp .env.example .env`, then `pnpm install`.
 2. **API** — `pnpm dev:api` → health at `http://127.0.0.1:3001/api/health`.
 3. **Web** — `pnpm dev:web` → open the demo UI.
-4. **Offline** — in **Offline (Rust rules mirror)**, set age `20` and country `NP`, tap **Check offline** (uses `evaluateVoteEligibilityOffline` from `@tran/core`).
-5. **API** — in **API (country from IP stub)**, set age and **Debug country**, tap **Check via API** (`checkVoteEligibility` + Zod validation against Axum).
-6. **Theme** — toggle light/dark; eligibility cards use shared tokens from `getThemeTokens()` and `theme.css`.
+4. **On this device** — keep **On this device** selected, enter age `20` and country `NP`, press **Check eligibility** (uses `evaluateVoteEligibilityOffline` from `@tran/core`).
+5. **Ask the server** — choose **Ask the server** and check again (`checkVoteEligibility` + Zod validation against Axum; the country is sent as the dev-only `X-Debug-Country` header).
+6. **Theme** — use the sun/moon button; every colour comes from `getThemeTokens()` / the generated `theme.css`.
 7. **Native (optional)** — SwiftUI (`apps/ios/TranVotingDemo.xcodeproj`) and Compose (`apps/android`) demos: tokens via `pnpm tokens:sync`, offline rules via UniFFI (`pnpm uniffi:generate`). Legacy Expo sketch: `pnpm dev:native` → `apps/native`.
 8. **Customize** — edit `crates/rust-core/src/tokens.rs` → `pnpm tokens:sync`; edit `voting.rs` → `cargo test -p rust-core`.
 
@@ -113,7 +113,7 @@ graph TD
 | `apps/web`                   | `apps/web` (Vite + TanStack)                                              |
 | `apps/native` (Expo)         | `apps/native` (legacy interim) + `apps/ios` + `apps/android` (real **N**) |
 | `packages/api` (tRPC router) | `packages/api` (oRPC contract + Zod; Axum implements REST)                |
-| `packages/ui`                | Liquid Glass in `@tran/core` tokens (+ app-level Glass components)        |
+| `packages/ui`                | Design tokens in `@tran/core`; web styles live in `apps/web/src/styles`   |
 | `packages/db`                | _not included_ (add your own data layer)                                  |
 | `tooling/*`                  | `tooling/typescript`                                                      |
 | Node API server              | `apps/api` (Rust / Axum) + `crates/rust-core`                             |

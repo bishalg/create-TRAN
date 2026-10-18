@@ -199,3 +199,40 @@ describe('useTranApi: defaults and non-Error failures', () => {
     expect(api.callsTo('/api/vote/eligibility')).toHaveLength(1);
   });
 });
+
+describe('useTranApi: isChecking', () => {
+  it('is true while an API check is in flight and false afterwards (success)', async () => {
+    const { api, result } = setup();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    const healthy = createFakeApi();
+    api.fetchFn.mockImplementation(async (...args: Parameters<typeof healthy.fetchFn>) => {
+      await gate;
+      return healthy.fetchFn(...args);
+    });
+
+    let pending!: Promise<unknown>;
+    act(() => {
+      pending = result.current.checkViaApi(30);
+    });
+    expect(result.current.isChecking).toBe(true);
+
+    release();
+    await act(async () => {
+      await pending;
+    });
+    expect(result.current.isChecking).toBe(false);
+  });
+
+  it('is reset after a failed check too', async () => {
+    const { api, result } = setup();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    api.fetchFn.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    await act(async () => {
+      await result.current.checkViaApi(30);
+    });
+    expect(result.current.isChecking).toBe(false);
+  });
+});
