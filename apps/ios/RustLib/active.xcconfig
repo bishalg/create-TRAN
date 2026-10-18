@@ -1,0 +1,1 @@
+RUST_UNIFFI_LIB_DIR = $(SRCROOT)/RustLib/aarch64-apple-ios-sim

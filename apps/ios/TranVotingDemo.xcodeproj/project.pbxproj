@@ -7,25 +7,69 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3D08EBFB3CBC04C780A05C6C /* VoteEligibilityParityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2416105BFC37987133B79587 /* VoteEligibilityParityTests.swift */; };
+		4064B4A0E18C8AA31EE28915 /* tran_uniffi.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2AF051840CF2BCD45F86C7 /* tran_uniffi.swift */; };
 		5B2A7551A748CF4934519148 /* TranVotingDemoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50205EBE0EB7A80BE144F622 /* TranVotingDemoApp.swift */; };
 		5DD2E1C9E78542434F8F0DDC /* BrandTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6884D38FE0697CF8F8DE543A /* BrandTokens.swift */; };
 		6FE3541F44F7EAD42246B0D6 /* VotingHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D67D27EB3D5D770789B21FDF /* VotingHomeView.swift */; };
+		DCED7FF96DAF77F43564EB88 /* tran_uniffi.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2AF051840CF2BCD45F86C7 /* tran_uniffi.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		E87BCCE908069D436E80BE7C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6BF885F6928569DED4FBD371 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7DAC5840E4B928717A977CDC;
+			remoteInfo = TranVotingDemo;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		03B9BA7A9AF77630313E2D4C /* TranVotingDemoTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TranVotingDemoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2416105BFC37987133B79587 /* VoteEligibilityParityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoteEligibilityParityTests.swift; sourceTree = "<group>"; };
+		3540F3A0BA2FD3D74BC4C9E0 /* tran_uniffiFFI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tran_uniffiFFI.h; sourceTree = "<group>"; };
 		50205EBE0EB7A80BE144F622 /* TranVotingDemoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranVotingDemoApp.swift; sourceTree = "<group>"; };
 		6884D38FE0697CF8F8DE543A /* BrandTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandTokens.swift; sourceTree = "<group>"; };
+		A5237C4D67B511E3F7EDD2E9 /* active.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = active.xcconfig; sourceTree = "<group>"; };
 		D67D27EB3D5D770789B21FDF /* VotingHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VotingHomeView.swift; sourceTree = "<group>"; };
+		EF2AF051840CF2BCD45F86C7 /* tran_uniffi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = tran_uniffi.swift; sourceTree = "<group>"; };
 		F21974D5F6A0ED5EE34F605E /* TranVotingDemo.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TranVotingDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FBC16B5C9AA459E81F099892 /* tran_uniffiFFI.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = tran_uniffiFFI.modulemap; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		20AEE1ADA3976A70ADC04398 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				5A10610A4FE9FD79FD5ED948 /* TranVotingDemoTests */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
 		37B7EEEBFF5C7E739EF2F07D /* Generated */ = {
 			isa = PBXGroup;
 			children = (
 				6884D38FE0697CF8F8DE543A /* BrandTokens.swift */,
+				90B4A4F083D2BDC84DB95B57 /* UniFFI */,
 			);
 			path = Generated;
+			sourceTree = "<group>";
+		};
+		3BEB977D878E506CC5F5C549 /* RustLib */ = {
+			isa = PBXGroup;
+			children = (
+				A5237C4D67B511E3F7EDD2E9 /* active.xcconfig */,
+			);
+			path = RustLib;
+			sourceTree = "<group>";
+		};
+		5A10610A4FE9FD79FD5ED948 /* TranVotingDemoTests */ = {
+			isa = PBXGroup;
+			children = (
+				2416105BFC37987133B79587 /* VoteEligibilityParityTests.swift */,
+			);
+			path = TranVotingDemoTests;
 			sourceTree = "<group>";
 		};
 		785FAD02E535F70E025ACBAE /* Sources */ = {
@@ -34,6 +78,16 @@
 				ABD69185A24504EF0F47B4D5 /* TranVotingDemo */,
 			);
 			path = Sources;
+			sourceTree = "<group>";
+		};
+		90B4A4F083D2BDC84DB95B57 /* UniFFI */ = {
+			isa = PBXGroup;
+			children = (
+				EF2AF051840CF2BCD45F86C7 /* tran_uniffi.swift */,
+				3540F3A0BA2FD3D74BC4C9E0 /* tran_uniffiFFI.h */,
+				FBC16B5C9AA459E81F099892 /* tran_uniffiFFI.modulemap */,
+			);
+			path = UniFFI;
 			sourceTree = "<group>";
 		};
 		ABD69185A24504EF0F47B4D5 /* TranVotingDemo */ = {
@@ -49,7 +103,9 @@
 		BE10B4A2F38CCE2C68948CAB = {
 			isa = PBXGroup;
 			children = (
+				3BEB977D878E506CC5F5C549 /* RustLib */,
 				785FAD02E535F70E025ACBAE /* Sources */,
+				20AEE1ADA3976A70ADC04398 /* Tests */,
 				F7EC1EB68DAF03281450973A /* Products */,
 			);
 			sourceTree = "<group>";
@@ -58,6 +114,7 @@
 			isa = PBXGroup;
 			children = (
 				F21974D5F6A0ED5EE34F605E /* TranVotingDemo.app */,
+				03B9BA7A9AF77630313E2D4C /* TranVotingDemoTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -69,6 +126,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2E663A9A7AA31ACD1F1681D1 /* Build configuration list for PBXNativeTarget "TranVotingDemo" */;
 			buildPhases = (
+				45ACA0E81776F7A8A949F44B /* Build tran-uniffi (Rust) */,
 				D86E83DA57DAE2B8480961CB /* Sources */,
 			);
 			buildRules = (
@@ -81,6 +139,25 @@
 			productName = TranVotingDemo;
 			productReference = F21974D5F6A0ED5EE34F605E /* TranVotingDemo.app */;
 			productType = "com.apple.product-type.application";
+		};
+		CFFD0EBF2B5A9831F520B6B1 /* TranVotingDemoTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 11D1C7FB35542DF9E5443514 /* Build configuration list for PBXNativeTarget "TranVotingDemoTests" */;
+			buildPhases = (
+				9504307840A8D0FCD0CE2114 /* Build tran-uniffi (Rust) */,
+				CCD12655F758F7F423900337 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				1156AFDB0635147961FABFD6 /* PBXTargetDependency */,
+			);
+			name = TranVotingDemoTests;
+			packageProductDependencies = (
+			);
+			productName = TranVotingDemoTests;
+			productReference = 03B9BA7A9AF77630313E2D4C /* TranVotingDemoTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -108,11 +185,62 @@
 			projectRoot = "";
 			targets = (
 				7DAC5840E4B928717A977CDC /* TranVotingDemo */,
+				CFFD0EBF2B5A9831F520B6B1 /* TranVotingDemoTests */,
 			);
 		};
 /* End PBXProject section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		45ACA0E81776F7A8A949F44B /* Build tran-uniffi (Rust) */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build tran-uniffi (Rust)";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/bin/bash \"${SRCROOT}/scripts/build-tran-uniffi.sh\"\n";
+		};
+		9504307840A8D0FCD0CE2114 /* Build tran-uniffi (Rust) */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build tran-uniffi (Rust)";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/bin/bash \"${SRCROOT}/scripts/build-tran-uniffi.sh\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
+		CCD12655F758F7F423900337 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3D08EBFB3CBC04C780A05C6C /* VoteEligibilityParityTests.swift in Sources */,
+				4064B4A0E18C8AA31EE28915 /* tran_uniffi.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D86E83DA57DAE2B8480961CB /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -120,14 +248,24 @@
 				5DD2E1C9E78542434F8F0DDC /* BrandTokens.swift in Sources */,
 				5B2A7551A748CF4934519148 /* TranVotingDemoApp.swift in Sources */,
 				6FE3541F44F7EAD42246B0D6 /* VotingHomeView.swift in Sources */,
+				DCED7FF96DAF77F43564EB88 /* tran_uniffi.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		1156AFDB0635147961FABFD6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7DAC5840E4B928717A977CDC /* TranVotingDemo */;
+			targetProxy = E87BCCE908069D436E80BE7C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
 		07A4F8E4176D2DCDD5D1F4ED /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A5237C4D67B511E3F7EDD2E9 /* active.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -186,6 +324,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -196,9 +335,17 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(RUST_UNIFFI_LIB_DIR)",
+				);
 				MARKETING_VERSION = 0.1.0;
+				OTHER_LDFLAGS = (
+					"-ltran_uniffi",
+					"-lc++",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.tran.voting;
 				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = Sources/TranVotingDemo/Generated/UniFFI/tran_uniffiFFI.h;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -206,6 +353,7 @@
 		};
 		3E617712EC33C9E4E20908E6 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A5237C4D67B511E3F7EDD2E9 /* active.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -271,6 +419,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -281,17 +430,86 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(RUST_UNIFFI_LIB_DIR)",
+				);
 				MARKETING_VERSION = 0.1.0;
+				OTHER_LDFLAGS = (
+					"-ltran_uniffi",
+					"-lc++",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.tran.voting;
 				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = Sources/TranVotingDemo/Generated/UniFFI/tran_uniffiFFI.h;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		F5BF4AA2077E2E802E250E42 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(RUST_UNIFFI_LIB_DIR)",
+				);
+				OTHER_LDFLAGS = (
+					"-ltran_uniffi",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.tran.TranVotingDemoTests;
+				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = Sources/TranVotingDemo/Generated/UniFFI/tran_uniffiFFI.h;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TranVotingDemo.app/TranVotingDemo";
+			};
+			name = Debug;
+		};
+		FEF56C3D44678C7ACCF1A39A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(RUST_UNIFFI_LIB_DIR)",
+				);
+				OTHER_LDFLAGS = (
+					"-ltran_uniffi",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.tran.TranVotingDemoTests;
+				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = Sources/TranVotingDemo/Generated/UniFFI/tran_uniffiFFI.h;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TranVotingDemo.app/TranVotingDemo";
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		11D1C7FB35542DF9E5443514 /* Build configuration list for PBXNativeTarget "TranVotingDemoTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F5BF4AA2077E2E802E250E42 /* Debug */,
+				FEF56C3D44678C7ACCF1A39A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		2E663A9A7AA31ACD1F1681D1 /* Build configuration list for PBXNativeTarget "TranVotingDemo" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

@@ -1,0 +1,6 @@
+[package]
+# Must match the cdylib name in Cargo.toml `[lib] name`.
+library = "tran_uniffi"
+
+[bindings]
+# Generated Swift/Kotlin are checked in under apps/ios and apps/android.

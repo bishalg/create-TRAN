@@ -4,6 +4,9 @@ options:
   deploymentTarget:
     iOS: '17.0'
   createIntermediateGroups: true
+configFiles:
+  Debug: RustLib/active.xcconfig
+  Release: RustLib/active.xcconfig
 targets:
   TranVotingDemo:
     type: application
@@ -21,11 +24,50 @@ targets:
         MARKETING_VERSION: '0.1.0'
         CURRENT_PROJECT_VERSION: '1'
         TARGETED_DEVICE_FAMILY: '1,2'
+        LIBRARY_SEARCH_PATHS:
+          - $(RUST_UNIFFI_LIB_DIR)
+        OTHER_LDFLAGS:
+          - -ltran_uniffi
+          - -lc++
+        SWIFT_OBJC_BRIDGING_HEADER: Sources/TranVotingDemo/Generated/UniFFI/tran_uniffiFFI.h
+        CLANG_ENABLE_MODULES: YES
+    preBuildScripts:
+      - name: Build tran-uniffi (Rust)
+        script: |
+          /bin/bash "${SRCROOT}/scripts/build-tran-uniffi.sh"
+        basedOnDependencyAnalysis: false
+  TranVotingDemoTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Tests/TranVotingDemoTests
+      - Sources/TranVotingDemo/Generated/UniFFI
+    dependencies:
+      - target: TranVotingDemo
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        LIBRARY_SEARCH_PATHS:
+          - $(RUST_UNIFFI_LIB_DIR)
+        OTHER_LDFLAGS:
+          - -ltran_uniffi
+          - -lc++
+        SWIFT_OBJC_BRIDGING_HEADER: Sources/TranVotingDemo/Generated/UniFFI/tran_uniffiFFI.h
+        CLANG_ENABLE_MODULES: YES
+    preBuildScripts:
+      - name: Build tran-uniffi (Rust)
+        script: |
+          /bin/bash "${SRCROOT}/scripts/build-tran-uniffi.sh"
+        basedOnDependencyAnalysis: false
 schemes:
   TranVotingDemo:
     build:
       targets:
         TranVotingDemo: all
+        TranVotingDemoTests: [test]
+    test:
+      targets:
+        - TranVotingDemoTests
     run:
       config: Debug
     archive:

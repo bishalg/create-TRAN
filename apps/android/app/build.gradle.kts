@@ -36,4 +36,15 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
+    implementation("net.java.dev.jna:jna:5.15.0@aar")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("net.java.dev.jna:jna:5.15.0")
+    testImplementation("org.json:json:20240303")
+}
+
+tasks.withType<Test> {
+    val repoRoot = rootProject.projectDir.parentFile.parentFile
+    val libDir = repoRoot.resolve("target/release").absolutePath
+    environment("UNIFFI_LIB_DIR", libDir)
+    environment("REPO_ROOT", repoRoot.absolutePath)
 }

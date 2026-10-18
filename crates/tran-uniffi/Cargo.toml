@@ -1,0 +1,32 @@
+[package]
+name = "tran-uniffi"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "UniFFI bridge: rust-core voting rules → Swift + Kotlin"
+publish = false
+
+[lib]
+crate-type = ["lib", "cdylib", "staticlib"]
+name = "tran_uniffi"
+
+[dependencies]
+rust-core = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+uniffi = { workspace = true }
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bin/uniffi-bindgen.rs"
+required-features = ["bindgen"]
+
+[dev-dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[features]
+default = []
+bindgen = ["uniffi/cli"]

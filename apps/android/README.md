@@ -1,43 +1,61 @@
 # TRAN Android (Kotlin + Compose)
 
-Platform-native **N** in TRAN: Kotlin + Jetpack Compose, sharing brand tokens with Rust via `pnpm tokens:sync`.
+Platform-native **N** in TRAN: Kotlin + Jetpack Compose, sharing brand tokens and **offline voting rules** with Rust via UniFFI.
+
+## What works today
+
+| Feature | Status |
+| :-- | :-- |
+| Design tokens (`BrandTokens.kt`) | `pnpm tokens:sync` |
+| Offline vote eligibility (JVM unit tests) | Host `libtran_uniffi.dylib` + JNA; golden `fixtures/vote-eligibility.json` |
+| Offline UI button | Calls UniFFI when native library is present |
+| On-device `.so` / emulator JNI | **Not automated yet** — build Rust for Android ABIs before expecting UI on hardware |
+| HTTP API (OkHttp) | Not wired yet |
 
 ## Layout
 
 ```
 apps/android/
-├── app/
-│   └── src/main/kotlin/com/tran/voting/
-│       ├── MainActivity.kt
-│       ├── ui/VotingHomeScreen.kt
-│       └── generated/BrandTokens.kt   # @generated — do not edit
-├── gradle/wrapper/                    # committed Gradle 8.14.3 wrapper
-├── gradlew
+├── app/src/main/kotlin/com/tran/voting/
+│   ├── ui/VotingHomeScreen.kt
+│   ├── generated/BrandTokens.kt
+│   └── uniffi/…/tran_uniffi.kt   # @generated — pnpm uniffi:generate
+├── app/src/test/…/VoteEligibilityParityTest.kt
 ├── build.gradle.kts
-└── settings.gradle.kts
+└── gradlew
 ```
 
 ## Tokens
-
-Edit `crates/rust-core/src/tokens.rs`, then from the repo root:
 
 ```bash
 pnpm tokens:sync
 ```
 
-Generated tokens expose a shared `BrandPalette` interface implemented by `TranBrandTokens.Light` and `TranBrandTokens.Dark`.
+## Unit tests (host JVM)
 
-## Run
-
-Requires JDK 17 and the Android SDK (`ANDROID_HOME` or `local.properties`). Open `apps/android` in Android Studio and sync Gradle, or from the repo root:
+Build the macOS/Linux host library, then:
 
 ```bash
-pnpm android:build                            # → app/build/outputs/apk/debug/
-cd apps/android && ./gradlew installDebug     # install on a running emulator/device
+cd apps/android
+./gradlew testDebugUnitTest
 ```
 
-This scaffold is a **placeholder** screen using shared semantic colors. Add API/offline voting parity with `@tran/core` equivalents via Kotlin or Rust FFI later.
+Gradle sets `REPO_ROOT` and `UNIFFI_LIB_DIR` to `../../target/release` so tests load `libtran_uniffi` and read `fixtures/vote-eligibility.json`.
 
-## Legacy Expo client
+## Run on device / emulator
 
-`apps/native` remains an interim React Native sketch. Prefer this Compose app for production **N**; see [docs/ROADMAP.md](../../docs/ROADMAP.md).
+Open `apps/android` in Android Studio. **Offline Check** requires `libtran_uniffi.so` under `app/src/main/jniLibs/<abi>/` (future: `cargo-ndk` script in ROADMAP).
+
+## Regenerate Kotlin bindings
+
+```bash
+pnpm uniffi:generate
+```
+
+## Follow-ups
+
+- Gradle pre-build + `cargo-ndk` for `jniLibs`
+- CI `./gradlew test` on Ubuntu/macOS
+- OkHttp client matching Axum error envelope
+
+Legacy Expo: `apps/native` — see [docs/ROADMAP.md](../../docs/ROADMAP.md).

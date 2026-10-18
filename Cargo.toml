@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "crates/rust-core",
     "crates/tran-tokens-codegen",
+    "crates/tran-uniffi",
     "apps/api",
 ]
 
@@ -32,6 +33,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 thiserror = "2.0"
 chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.10", features = ["v4", "serde"] }
+uniffi = { version = "0.32", features = ["build"] }
 
 # Internal Workspace Crates
 rust-core = { path = "crates/rust-core" }

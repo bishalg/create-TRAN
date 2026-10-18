@@ -64,7 +64,7 @@ Full endpoint reference: [docs/API.md](./docs/API.md).
 4. **Offline** — in **Offline (Rust rules mirror)**, set age `20` and country `NP`, tap **Check offline** (uses `evaluateVoteEligibilityOffline` from `@tran/core`).
 5. **API** — in **API (country from IP stub)**, set age and **Debug country**, tap **Check via API** (`checkVoteEligibility` + Zod validation against Axum).
 6. **Theme** — toggle light/dark; eligibility cards use shared tokens from `getThemeTokens()` and `theme.css`.
-7. **Native (optional)** — SwiftUI demo in `apps/ios` (`pnpm ios:build`, or open `TranVotingDemo.xcodeproj`) and Jetpack Compose demo in `apps/android` (`pnpm android:build`); both consume tokens via `pnpm tokens:sync`. Legacy Expo sketch: `pnpm dev:native` → `apps/native`.
+7. **Native (optional)** — SwiftUI (`apps/ios/TranVotingDemo.xcodeproj`) and Compose (`apps/android`) demos: tokens via `pnpm tokens:sync`, offline rules via UniFFI (`pnpm uniffi:generate`). Legacy Expo sketch: `pnpm dev:native` → `apps/native`.
 8. **Customize** — edit `crates/rust-core/src/tokens.rs` → `pnpm tokens:sync`; edit `voting.rs` → `cargo test -p rust-core`.
 
 Step-by-step architecture: [docs/SAMPLE_APP.md](./docs/SAMPLE_APP.md). Testing playbook (TDD, shared fixtures, BDD/E2E, 100% coverage): [docs/TESTING.md](./docs/TESTING.md).

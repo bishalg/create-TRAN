@@ -8,6 +8,10 @@ repository.workspace = true
 description = "Codegen CLI: rust-core design tokens → TS, CSS, and native stubs"
 publish = false
 
+[lib]
+name = "tran_tokens_codegen"
+path = "src/lib.rs"
+
 [[bin]]
 name = "tran-tokens-codegen"
 path = "src/main.rs"

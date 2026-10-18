@@ -48,7 +48,7 @@ The main gap is **honesty at the stack boundary**: the web app is not TanStack S
 | **T** | TanStack Start (web) | **D** | Dependency present; runtime is Vite SPA. No file routes, loaders, or SSR. |
 | **R** | Rust core | **A** | Single source of truth, injectable time, validation, fixtures, tests. |
 | **A** | Axum API | **B+** | Clean handlers, unified errors, good HTTP tests; geo/debug and health are template stubs. |
-| **N** | Native (Swift + Kotlin) | **C−** | `apps/ios` / `apps/android` scaffolds + token codegen; no API/offline parity yet. Legacy Expo (`apps/native`) still **D−**. |
+| **N** | Native (Swift + Kotlin) | **B−** | UniFFI (`crates/tran-uniffi`) exposes offline `evaluate_vote_eligibility_offline`; iOS/Android parity tests consume `fixtures/vote-eligibility.json`. Tokens + demo UI wired; no HTTP client or CI xcodebuild/gradle yet. Legacy Expo (`apps/native`) still **D−**. |
 
 **Testing & CI (cross-cutting):** **A−** after the October 2026 push — 100% coverage gates, parity fixtures, Playwright Gherkin on real API + web. Not a substitute for mutation testing, native E2E, or TS lint.
 

@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
@@ -28,14 +30,19 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.tran.voting.generated.BrandPalette
 import com.tran.voting.generated.TranBrandTokens
+import uniffi.tran_uniffi.TranValidationException
+import uniffi.tran_uniffi.evaluateVoteEligibilityOffline
+import java.time.LocalDate
 
-/** Voting-eligibility demo — consumes generated brand tokens from rust-core. */
+/** Voting demo — brand tokens + offline rust-core rules via UniFFI. */
 @Composable
 fun VotingHomeScreen() {
     var useDark by remember { mutableStateOf(true) }
+    var ageText by remember { mutableStateOf("20") }
+    var countryCode by remember { mutableStateOf("NP") }
+    var resultText by remember { mutableStateOf("Tap Check offline") }
     val palette: BrandPalette = if (useDark) TranBrandTokens.Dark else TranBrandTokens.Light
 
-    // Keep system-bar icons legible when the in-app theme diverges from the system setting.
     val view = LocalView.current
     LaunchedEffect(useDark) {
         val window = (view.context as Activity).window
@@ -66,14 +73,39 @@ fun VotingHomeScreen() {
                 color = palette.textPrimary,
             )
             Text(
-                text = "Voting eligibility (native scaffold)",
+                text = "Offline voting (UniFFI → rust-core)",
                 style = MaterialTheme.typography.bodyMedium,
                 color = palette.textPrimary.copy(alpha = 0.8f),
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                eligibilityChip("Eligible", palette.eligibilityCanVote)
-                eligibilityChip("Not eligible", palette.eligibilityCannotVote)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = ageText,
+                    onValueChange = { ageText = it },
+                    label = { Text("Age") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                )
+                OutlinedTextField(
+                    value = countryCode,
+                    onValueChange = { countryCode = it.uppercase() },
+                    label = { Text("Country") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                )
             }
+            Button(
+                onClick = {
+                    resultText =
+                        runOfflineCheck(ageText, countryCode, palette)
+                },
+            ) {
+                Text("Check offline")
+            }
+            Text(
+                text = resultText,
+                style = MaterialTheme.typography.bodyLarge,
+                color = palette.textPrimary,
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     text = "Dark theme",
@@ -83,6 +115,23 @@ fun VotingHomeScreen() {
                 Switch(checked = useDark, onCheckedChange = { useDark = it })
             }
         }
+    }
+}
+
+private fun runOfflineCheck(
+    ageText: String,
+    countryCode: String,
+    palette: BrandPalette,
+): String {
+    val age = ageText.toUShortOrNull() ?: return "Enter a valid age"
+    if (countryCode.length != 2) return "Country must be two letters"
+    val reference = LocalDate.now().toString()
+    return try {
+        val res = evaluateVoteEligibilityOffline(age, null, countryCode, reference)
+        val _chip = if (res.eligible) palette.eligibilityCanVote else palette.eligibilityCannotVote
+        res.reason
+    } catch (e: TranValidationException.ValidationException) {
+        e.detail
     }
 }
 

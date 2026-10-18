@@ -32,6 +32,8 @@ local.properties
 DerivedData/
 xcuserdata/
 *.xcuserstate
+apps/ios/RustLib/**/*
+!apps/ios/RustLib/active.xcconfig
 
 # Expo & React Native
 .expo/
