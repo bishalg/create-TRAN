@@ -17,18 +17,66 @@
     { "age": 16, "minimumAge": 16, "expected": true }
   ],
   "ageFromBirthdate": [
-    { "name": "day before birthday", "birthdate": "2000-06-15", "reference": "2026-06-14", "expected": 25 },
+    {
+      "name": "day before birthday",
+      "birthdate": "2000-06-15",
+      "reference": "2026-06-14",
+      "expected": 25
+    },
     { "name": "on birthday", "birthdate": "2000-06-15", "reference": "2026-06-15", "expected": 26 },
-    { "name": "day after birthday", "birthdate": "2000-06-15", "reference": "2026-06-16", "expected": 26 },
-    { "name": "earlier month, later day", "birthdate": "2000-06-15", "reference": "2026-05-30", "expected": 25 },
-    { "name": "later month, earlier day", "birthdate": "2000-06-15", "reference": "2026-07-01", "expected": 26 },
+    {
+      "name": "day after birthday",
+      "birthdate": "2000-06-15",
+      "reference": "2026-06-16",
+      "expected": 26
+    },
+    {
+      "name": "earlier month, later day",
+      "birthdate": "2000-06-15",
+      "reference": "2026-05-30",
+      "expected": 25
+    },
+    {
+      "name": "later month, earlier day",
+      "birthdate": "2000-06-15",
+      "reference": "2026-07-01",
+      "expected": 26
+    },
     { "name": "born today", "birthdate": "2026-10-18", "reference": "2026-10-18", "expected": 0 },
-    { "name": "leap-day birthday, non-leap day before Mar 1", "birthdate": "2004-02-29", "reference": "2022-02-28", "expected": 17 },
-    { "name": "leap-day birthday, Mar 1 counts as passed", "birthdate": "2004-02-29", "reference": "2022-03-01", "expected": 18 },
-    { "name": "leap-day birthday, real leap day", "birthdate": "2004-02-29", "reference": "2024-02-29", "expected": 20 },
-    { "name": "birthdate after reference clamps to 0", "birthdate": "2030-01-01", "reference": "2026-10-18", "expected": 0 }
+    {
+      "name": "leap-day birthday, non-leap day before Mar 1",
+      "birthdate": "2004-02-29",
+      "reference": "2022-02-28",
+      "expected": 17
+    },
+    {
+      "name": "leap-day birthday, Mar 1 counts as passed",
+      "birthdate": "2004-02-29",
+      "reference": "2022-03-01",
+      "expected": 18
+    },
+    {
+      "name": "leap-day birthday, real leap day",
+      "birthdate": "2004-02-29",
+      "reference": "2024-02-29",
+      "expected": 20
+    },
+    {
+      "name": "birthdate after reference clamps to 0",
+      "birthdate": "2030-01-01",
+      "reference": "2026-10-18",
+      "expected": 0
+    }
   ],
-  "invalidBirthdates": ["2000-02-30", "2001-02-29", "2000-13-01", "2000-00-10", "20000101", "not-a-date", ""],
+  "invalidBirthdates": [
+    "2000-02-30",
+    "2001-02-29",
+    "2000-13-01",
+    "2000-00-10",
+    "20000101",
+    "not-a-date",
+    ""
+  ],
   "invalidCountryCodes": ["", "U", "USA", "U1", "1S", " ", "U S"],
   "evaluations": [
     {

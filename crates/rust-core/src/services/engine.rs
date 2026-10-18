@@ -1,29 +1,12 @@
 use chrono::{NaiveDate, Utc};
-use std::time::Instant;
 use uuid::Uuid;
 
-use crate::error::{CoreError, CoreResult};
+use crate::error::CoreResult;
 use crate::models::VoteEligibilityRequest;
 use crate::models::VoteEligibilityResponse;
-use crate::models::{
-    CalculationRequest, CalculationResponse, StackComponentStatus, StackLayer, TranHealthReport,
-};
-use crate::validation::validate_calculation_request;
+use crate::models::{StackComponentStatus, StackLayer, TranHealthReport};
 use crate::validation::{validate_country_code, validate_vote_eligibility_request};
 use crate::voting::{age_from_birthdate, can_vote_by_age, voting_age_for_country};
-
-fn apply_operation(operation: &str, a: f64, b: f64) -> CoreResult<f64> {
-    match operation {
-        "add" => Ok(a + b),
-        "subtract" => Ok(a - b),
-        "multiply" => Ok(a * b),
-        "divide" => Ok(a / b),
-        "power" => Ok(a.powf(b)),
-        other => Err(CoreError::ExecutionError(format!(
-            "Unreachable operation {other}"
-        ))),
-    }
-}
 
 #[derive(Debug, Default, Clone)]
 pub struct TranEngine;
@@ -31,22 +14,6 @@ pub struct TranEngine;
 impl TranEngine {
     pub fn new() -> Self {
         Self
-    }
-
-    pub fn compute(&self, request: CalculationRequest) -> CoreResult<CalculationResponse> {
-        validate_calculation_request(&request)?;
-
-        let start = Instant::now();
-        let result = apply_operation(&request.operation, request.a, request.b)?;
-
-        let elapsed = start.elapsed().as_micros() as u64;
-
-        Ok(CalculationResponse {
-            calculation_id: Uuid::new_v4(),
-            result,
-            computed_at: Utc::now(),
-            execution_micros: elapsed,
-        })
     }
 
     /// Evaluates eligibility using the current UTC date. Prefer
@@ -145,18 +112,5 @@ impl TranEngine {
             overall_status: "HEALTHY".to_string(),
             components,
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn apply_operation_rejects_operations_validation_should_have_caught() {
-        assert!(matches!(
-            apply_operation("modulo", 1.0, 2.0),
-            Err(CoreError::ExecutionError(_))
-        ));
     }
 }

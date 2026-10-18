@@ -5,7 +5,7 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "Shared Rust Core domain logic, models, and calculation engine for the TRAN stack"
+description = "Shared Rust Core domain logic, models, and eligibility engine for the TRAN stack"
 
 [dependencies]
 serde = { workspace = true }

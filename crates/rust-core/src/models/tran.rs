@@ -47,18 +47,3 @@ pub struct TranHealthReport {
     pub overall_status: String,
     pub components: Vec<StackComponentStatus>,
 }
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct CalculationRequest {
-    pub a: f64,
-    pub b: f64,
-    pub operation: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct CalculationResponse {
-    pub calculation_id: Uuid,
-    pub result: f64,
-    pub computed_at: DateTime<Utc>,
-    pub execution_micros: u64,
-}

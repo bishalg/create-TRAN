@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use rust_core::{
     age_from_birthdate, can_vote_by_age, validate_vote_eligibility_request, voting_age_for_country,
-    CalculationRequest, CoreError, StackLayer, TranEngine, VoteEligibilityRequest,
+    CoreError, StackLayer, TranEngine, VoteEligibilityRequest,
 };
 
 #[test]
@@ -58,73 +58,11 @@ fn test_validation_invalid_age() {
 }
 
 #[test]
-fn test_engine_multiply_computation() {
-    let engine = TranEngine::new();
-    let req = CalculationRequest {
-        a: 6.0,
-        b: 7.0,
-        operation: "multiply".to_string(),
-    };
-    let res = engine.compute(req).expect("multiply");
-    assert_eq!(res.result, 42.0);
-}
-
-#[test]
 fn test_engine_generate_health_report() {
     let engine = TranEngine::new();
     let report = engine.generate_health_report(120);
     assert_eq!(report.overall_status, "HEALTHY");
     assert_eq!(report.components.len(), 4);
-}
-
-fn calc(operation: &str, a: f64, b: f64) -> CalculationRequest {
-    CalculationRequest {
-        a,
-        b,
-        operation: operation.to_string(),
-    }
-}
-
-#[test]
-fn compute_supports_every_documented_operation() {
-    let engine = TranEngine::new();
-    let cases = [
-        ("add", 2.0, 3.0, 5.0),
-        ("subtract", 2.0, 3.0, -1.0),
-        ("multiply", 2.0, 3.0, 6.0),
-        ("divide", 6.0, 3.0, 2.0),
-        ("power", 2.0, 10.0, 1024.0),
-    ];
-    for (op, a, b, expected) in cases {
-        let res = engine
-            .compute(calc(op, a, b))
-            .unwrap_or_else(|e| panic!("{op}: {e}"));
-        assert_eq!(res.result, expected, "{op}");
-    }
-}
-
-#[test]
-fn compute_rejects_invalid_requests_with_validation_errors() {
-    let engine = TranEngine::new();
-    let bad = [
-        calc("divide", 1.0, 0.0),
-        calc("power", -8.0, 0.5),
-        calc("", 1.0, 1.0),
-        calc("modulo", 1.0, 1.0),
-    ];
-    for req in bad {
-        let op = req.operation.clone();
-        assert!(
-            matches!(engine.compute(req), Err(CoreError::ValidationError(_))),
-            "{op:?} should be rejected"
-        );
-    }
-}
-
-#[test]
-fn compute_allows_negative_base_with_integer_power() {
-    let res = TranEngine::new().compute(calc("power", -2.0, 3.0)).unwrap();
-    assert_eq!(res.result, -8.0);
 }
 
 #[test]

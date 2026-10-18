@@ -28,6 +28,11 @@ async fn serve_answers_http_over_a_real_socket() {
 
 #[tokio::test]
 async fn run_server_starts_on_the_configured_address() {
+    // An active subscriber makes the `tracing::info!` startup log execute, as it does in production.
+    let _ = tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .with_test_writer()
+        .try_init();
     let config = AppConfig::from_lookup(|key| match key {
         "HOST" => Some("127.0.0.1".into()),
         "PORT" => Some("0".into()),

@@ -16,10 +16,11 @@ pub fn build_app(state: AppState) -> Router {
 }
 
 /// Binds the configured address and serves until the process stops.
-pub async fn run_server(config: AppConfig) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let listener = tokio::net::TcpListener::bind(&config.socket_addr()).await?;
-    tracing::info!("Server listening on http://{}", config.socket_addr());
-    Ok(serve(listener, build_app(AppState::new())).await?)
+pub async fn run_server(config: AppConfig) -> std::io::Result<()> {
+    let addr = config.socket_addr();
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    tracing::info!(%addr, "Server listening");
+    serve(listener, build_app(AppState::new())).await
 }
 
 /// Serves `app` on an already-bound listener (tests bind port 0 and read the address back).
