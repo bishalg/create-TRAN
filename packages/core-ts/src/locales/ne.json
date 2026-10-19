@@ -57,6 +57,30 @@
     "axum": "Axum ब्याकएन्ड",
     "native": "नेटिभ iOS र Android"
   },
+  "native": {
+    "brandTitle": "TRAN",
+    "iosHeader": "TRAN / iOS",
+    "androidHeader": "TRAN / Android",
+    "voterSubtitle": "अफलाइन मतदान (UniFFI → rust-core)",
+    "signOut": "साइन आउट",
+    "ageLabel": "उमेर",
+    "agePlaceholder": "उमेर लेख्नुहोस्",
+    "countryLabel": "देश",
+    "countryPlaceholder": "दुई अक्षर",
+    "checkOffline": "अफलाइन जाँच",
+    "resultPlaceholder": "अफलाइन जाँच थिच्नुहोस्",
+    "invalidAgeAndCountry": "उमेर र देश लेख्नुहोस्",
+    "invalidAge": "मान्य उमेर लेख्नुहोस्",
+    "invalidCountry": "देश दुई अक्षरको हुनुपर्छ",
+    "auditorTitle": "निर्वाचन अडिटर",
+    "auditorSubtitle": "विश्वव्यापी नियम र समानता प्रमाणीकरण",
+    "auditorRulesTitle": "प्रमाणित देश न्यूनतम उमेर",
+    "years": "%1$d वर्ष",
+    "welcomeTitle": "TRAN मतदान",
+    "welcomeSubtitle": "जारी राख्न आफ्नो भूमिका छान्नुहोस्:",
+    "continueAsVoter": "नागरिक मतदाताको रूपमा जारी राख्नुहोस्",
+    "continueAsAuditor": "निर्वाचन अडिटरको रूपमा जारी राख्नुहोस्"
+  },
   "actions": {
     "refresh": "डाटा रिफ्रेस",
     "retry": "पुन: प्रयास"

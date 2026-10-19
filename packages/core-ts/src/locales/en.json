@@ -57,6 +57,30 @@
     "axum": "Axum Backend",
     "native": "Native iOS & Android"
   },
+  "native": {
+    "brandTitle": "TRAN",
+    "iosHeader": "TRAN / iOS",
+    "androidHeader": "TRAN / Android",
+    "voterSubtitle": "Offline voting (UniFFI → rust-core)",
+    "signOut": "Sign out",
+    "ageLabel": "Age",
+    "agePlaceholder": "Enter age",
+    "countryLabel": "Country",
+    "countryPlaceholder": "Two letters",
+    "checkOffline": "Check offline",
+    "resultPlaceholder": "Tap Check offline",
+    "invalidAgeAndCountry": "Enter age and country",
+    "invalidAge": "Enter a valid age",
+    "invalidCountry": "Country must be two letters",
+    "auditorTitle": "Election Auditor",
+    "auditorSubtitle": "Global Rules & Parity Verification",
+    "auditorRulesTitle": "Verified Country Minimum Ages",
+    "years": "%1$d years",
+    "welcomeTitle": "TRAN Voting",
+    "welcomeSubtitle": "Choose your access role to continue:",
+    "continueAsVoter": "Continue as Citizen Voter",
+    "continueAsAuditor": "Continue as Election Auditor"
+  },
   "actions": {
     "refresh": "Refresh Data",
     "retry": "Retry Connection"

@@ -42,8 +42,6 @@ enum TranTheme: String, CaseIterable, Identifiable {
     case sepia
 
     var id: String { rawValue }
-
-    var label: String { rawValue.capitalized }
 }
 
 struct TranPalette {

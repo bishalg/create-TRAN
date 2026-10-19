@@ -30,9 +30,7 @@ enum class TranTheme(val id: String) {
     LIGHT("light"),
     DARK("dark"),
     BLACK("black"),
-    SEPIA("sepia");
-
-    val label: String get() = id.replaceFirstChar { it.uppercase() }
+    SEPIA("sepia")
 }
 
 /** Semantic palette implemented by every theme; screens receive a palette, never a theme name. */
