@@ -36,21 +36,40 @@ pub struct TypographyTokens {
     pub font_size_md: String,
     pub font_size_lg: String,
     pub font_size_xl: String,
+    pub font_size_display: String,
+    pub line_height_display: String,
+    pub font_size_title: String,
+    pub line_height_title: String,
+    pub font_size_body: String,
+    pub line_height_body: String,
+    pub font_size_caption: String,
+    pub line_height_caption: String,
     pub font_weight_normal: u16,
     pub font_weight_semibold: u16,
     pub font_weight_bold: u16,
     pub line_height_tight: String,
     pub line_height_normal: String,
+    pub shell_max_width: String,
+    pub breakpoint_narrow: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct SpacingTokens {
+    /// Micro gap (2px at 16px root) for tight inline controls.
+    pub xxs: String,
     pub xs: String,
     pub sm: String,
+    /// Between `sm` and `md` — matches legacy web `--space-3` (0.75rem).
+    pub base: String,
     pub md: String,
     pub lg: String,
     pub xl: String,
-    pub xxl: String,
+    #[serde(rename = "2xl")]
+    pub two_xl: String,
+    /// Minimum touch target (44 CSS px at 16px root).
+    pub touch: String,
+    /// Small motion offset (~6px at 16px root).
+    pub nudge: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -59,6 +78,8 @@ pub struct RadiiTokens {
     pub md: String,
     pub lg: String,
     pub pill: String,
+    pub border_width: String,
+    pub outline_width: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -152,25 +173,41 @@ pub fn default_design_tokens() -> BrandDesignTokens {
             font_size_md: "1rem".into(),
             font_size_lg: "1.25rem".into(),
             font_size_xl: "2.5rem".into(),
+            font_size_display: "clamp(1.75rem, 6vw, 2.25rem)".into(),
+            line_height_display: "1.15".into(),
+            font_size_title: "1.25rem".into(),
+            line_height_title: "1.3".into(),
+            font_size_body: "1rem".into(),
+            line_height_body: "1.5".into(),
+            font_size_caption: "0.8rem".into(),
+            line_height_caption: "1.4".into(),
             font_weight_normal: 400,
             font_weight_semibold: 600,
             font_weight_bold: 800,
             line_height_tight: "1.25".into(),
             line_height_normal: "1.5".into(),
+            shell_max_width: "34rem".into(),
+            breakpoint_narrow: "30rem".into(),
         },
         spacing: SpacingTokens {
+            xxs: "0.125rem".into(),
             xs: "0.25rem".into(),
             sm: "0.5rem".into(),
+            base: "0.75rem".into(),
             md: "1rem".into(),
             lg: "1.5rem".into(),
             xl: "2rem".into(),
-            xxl: "3rem".into(),
+            two_xl: "3rem".into(),
+            touch: "2.75rem".into(),
+            nudge: "0.375rem".into(),
         },
         radii: RadiiTokens {
-            sm: "8px".into(),
+            sm: "10px".into(),
             md: "14px".into(),
             lg: "20px".into(),
             pill: "9999px".into(),
+            border_width: "1px".into(),
+            outline_width: "2px".into(),
         },
         glass: GlassStructureTokens {
             blur: GlassBlurTokens {
@@ -458,5 +495,16 @@ mod tests {
     #[test]
     fn get_brand_tokens_is_the_default_token_set() {
         assert_eq!(get_brand_tokens(), default_design_tokens());
+    }
+
+    // Verifies: REQ-WEB-010, REQ-WEB-011
+    #[test]
+    fn spacing_and_typography_semantics_match_web_contract() {
+        let tokens = default_design_tokens();
+        assert_eq!(tokens.spacing.base, "0.75rem");
+        assert_eq!(tokens.spacing.two_xl, "3rem");
+        assert_eq!(tokens.typography.font_size_body, "1rem");
+        assert_eq!(tokens.typography.line_height_caption, "1.4");
+        assert_eq!(tokens.radii.sm, "10px");
     }
 }

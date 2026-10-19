@@ -57,6 +57,26 @@ All user-visible strings MUST come from the dictionaries; `en`, `ne` and `hi` MU
 Colours MUST come from the generated `--tran-*` variables (or `color-mix()` of them). Shared typography atoms (`TranText`) MUST map variants to those variables via CSS, not ad-hoc hex in components.
 **Verified by:** `TranText.test.tsx`, `TranStack.test.tsx`, [docs/ATOMIC.md](../ATOMIC.md).
 
+### REQ-WEB-010 [verified] Spacing and radii from rust-core
+
+Web layout spacing and corner radii MUST use `--tran-spacing-*` and `--tran-radius-*` from `pnpm tokens:sync`. Local `--space-*` / `--radius-*` literals in `app.css` are forbidden.
+**Verified by:** `tokens-guard.test.ts`, atom tests.
+
+### REQ-WEB-011 [verified] Typography semantics in tokens
+
+Title, body, caption, and display type MUST resolve to rust-core typography token fields (size and line-height), not hard-coded rem/px in components.
+**Verified by:** `TranText.test.tsx`, `tokens-guard.test.ts`.
+
+### REQ-WEB-012 [verified] Atomic layout and controls
+
+Feature code MUST use shared atoms (`TranStack`, `TranInline`, `TranBox`, `TranSurface`, `TranButton`, `TranTable`, `Field`) for spacing, surfaces, buttons, and tables — no raw semantic HTML tags or `style={{}}` outside `shared/ui`.
+**Verified by:** atom tests, ESLint in CI, component tests.
+
+### REQ-WEB-013 [verified] Lint enforcement
+
+`apps/web` ESLint MUST fail on inline `style`, hex/px literals in JSX, and banned semantic tags outside `shared/ui`.
+**Verified by:** ESLint config wired into `pnpm lint` and CI.
+
 ## Accessibility (target: WCAG 2.2 level AA)
 
 ### REQ-A11Y-001 [verified] No automated violations

@@ -1,4 +1,6 @@
 import { type SupportedLocale, t } from '@tran/core';
+import { TranLabel } from '../../shared/ui/TranLabel.js';
+import { TranText } from '../../shared/ui/TranText.js';
 import type { CheckMode } from './toView.js';
 
 const OPTIONS: { value: CheckMode; title: string; hint: string }[] = [
@@ -18,7 +20,7 @@ export function ModeSwitch({ mode, onChange, locale }: ModeSwitchProps) {
     <fieldset className="choice-group">
       <legend>{t('app.modeLegend', locale)}</legend>
       {OPTIONS.map(({ value, title, hint }) => (
-        <label key={value} className="choice">
+        <TranLabel key={value} className="choice">
           <input
             type="radio"
             name="check-mode"
@@ -26,9 +28,13 @@ export function ModeSwitch({ mode, onChange, locale }: ModeSwitchProps) {
             checked={mode === value}
             onChange={() => onChange(value)}
           />
-          <span className="choice-title">{t(title, locale)}</span>
-          <span className="choice-hint">{t(hint, locale)}</span>
-        </label>
+          <TranText variant="body" as="span" className="choice-title">
+            {t(title, locale)}
+          </TranText>
+          <TranText variant="caption" as="span" className="choice-hint">
+            {t(hint, locale)}
+          </TranText>
+        </TranLabel>
       ))}
     </fieldset>
   );

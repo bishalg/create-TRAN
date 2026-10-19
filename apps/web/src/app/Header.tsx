@@ -1,4 +1,6 @@
 import { type SupportedLocale, type ThemeMode, t } from '@tran/core';
+import { TranButton } from '../shared/ui/TranButton.js';
+import { TranText } from '../shared/ui/TranText.js';
 import { MoonIcon, SunIcon } from '../shared/ui/icons.js';
 
 const LOCALES: SupportedLocale[] = ['en', 'ne', 'hi'];
@@ -22,60 +24,60 @@ export function Header({
 }: HeaderProps) {
   return (
     <header className="header">
-      <span className="brand">
-        <span className="brand-mark" aria-hidden="true">
+      <TranText variant="body" as="span" className="brand">
+        <div className="brand-mark" aria-hidden="true">
           T
-        </span>
-        <span className="brand-name">TRAN</span>
-      </span>
+        </div>
+        <TranText variant="body" as="div" className="brand-name">
+          TRAN
+        </TranText>
+      </TranText>
 
       <div className="header-actions">
         <div className="segmented" role="group" aria-label={t('app.languageLabel', locale)}>
           {LOCALES.map((code) => (
-            <button
+            <TranButton
               key={code}
               type="button"
+              variant="secondary"
+              size="md"
+              className="segmented-item"
               aria-pressed={code === locale}
               onClick={() => onLocaleChange(code)}
             >
               {code.toUpperCase()}
-            </button>
+            </TranButton>
           ))}
         </div>
-        <button
+        <TranButton
           type="button"
+          variant="secondary"
+          size="md"
           className="icon-button"
           aria-label={t(theme === 'dark' ? 'app.themeToLight' : 'app.themeToDark', locale)}
           onClick={onThemeToggle}
         >
           {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-        </button>
+        </TranButton>
 
         {currentRole && (
-          <span
-            className="role-badge"
-            data-testid="role-badge"
-            style={{
-              padding: '4px 8px',
-              borderRadius: '4px',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-            }}
-          >
+          <TranText variant="caption" as="span" className="role-badge" data-testid="role-badge">
             {currentRole === 'citizen_voter' ? 'Citizen Voter' : 'Election Auditor'}
-          </span>
+          </TranText>
         )}
 
         {onSignOut && (
-          <button
+          <TranButton
             type="button"
+            variant="secondary"
+            size="md"
             className="sign-out-button"
             data-testid="sign-out-button"
             onClick={onSignOut}
             aria-label="Sign out"
           >
             Sign out
-          </button>
+          </TranButton>
         )}
       </div>
     </header>

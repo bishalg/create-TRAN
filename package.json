@@ -14,7 +14,7 @@
     "test:rust": "cargo test",
     "test:ts": "pnpm run build:libs && vitest run",
     "typecheck": "nx run-many -t typecheck",
-    "lint": "cargo clippy --workspace --all-targets -- -D warnings",
+    "lint": "cargo clippy --workspace --all-targets -- -D warnings && pnpm --filter web lint",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\"",
     "tokens:sync": "cargo run -p tran-tokens-codegen",
@@ -28,7 +28,7 @@
     "test:rust:coverage": "cargo llvm-cov --workspace --ignore-filename-regex 'tran-tokens-codegen|main.rs|tran-uniffi' --fail-under-lines 100 --fail-under-regions 100",
     "test:e2e": "pnpm --filter e2e test",
     "spec:check": "node tooling/spec-check/spec-check.mjs",
-    "test:all": "pnpm run test:coverage && pnpm run test:e2e",
+    "test:all": "pnpm run lint && pnpm run test:coverage && pnpm run test:e2e",
     "check:quick": "pnpm spec:check && pnpm format:check && pnpm typecheck && pnpm lint",
     "hooks:install": "git config core.hooksPath .githooks && echo '✓ Git hooks installed (.githooks)'",
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true"

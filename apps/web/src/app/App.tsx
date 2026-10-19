@@ -60,7 +60,7 @@ export function App({ initialSession }: AppProps = {}) {
 
       <main className="shell">
         <section className="hero">
-          <TranText variant="title" as="h1">
+          <TranText variant="display" as="h1">
             {t('app.title', locale)}
           </TranText>
           <TranText variant="muted">{t('app.subtitle2', locale)}</TranText>

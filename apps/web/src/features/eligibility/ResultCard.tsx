@@ -19,9 +19,9 @@ export function ResultCard({
 }) {
   return (
     <article className="result" data-eligible={result.eligible}>
-      <span className="result-badge" aria-hidden="true">
+      <div className="result-badge" aria-hidden="true">
         {result.eligible ? <CheckIcon /> : <CrossIcon />}
-      </span>
+      </div>
       <div>
         <TranText variant="title">
           {t(result.eligible ? 'app.eligibleYes' : 'app.eligibleNo', locale)}

@@ -67,6 +67,9 @@ jobs:
       - name: Typecheck
         run: pnpm run typecheck
 
+      - name: ESLint (apps/web atoms enforcement)
+        run: pnpm --filter web lint
+
       - name: Typecheck E2E
         run: pnpm --filter e2e typecheck
 

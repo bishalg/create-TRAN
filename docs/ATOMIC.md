@@ -1,35 +1,43 @@
 # Atomic UI (web)
 
-TRAN’s web sample uses a thin **atom layer** under `apps/web/src/shared/ui/`, inspired by AstroFusion’s **AFText** pattern: one typography primitive whose variants map to **design tokens only**, not ad-hoc hex or Tailwind color names.
+TRAN’s web sample uses a thin **atom layer** under `apps/web/src/shared/ui/`. Variants map to **`--tran-*` tokens** from `pnpm tokens:sync` — never ad-hoc hex, px, or `style={{}}` in feature code.
 
-## TranText
+## Atom table
 
-| Variant   | Default element | Token-backed role                          |
-| :-------- | :-------------- | :----------------------------------------- |
-| `title`   | `h2`            | Primary heading weight/size (`--fg`)       |
-| `body`    | `p`             | Default copy (`--fg`)                      |
-| `caption` | `span`          | Secondary size (`--fg-muted`)              |
-| `muted`   | `p`             | De-emphasized copy (`--fg-muted`)          |
-| `success` | `p`             | Positive semantic (`--tran-color-success`) |
-| `danger`  | `p`             | Error semantic (`--tran-color-danger`)     |
+| Atom                              | Role                   | Key props                                                                                                                                |
+| :-------------------------------- | :--------------------- | :--------------------------------------------------------------------------------------------------------------------------------------- |
+| `TranText`                        | Typography & semantics | `variant`: `display` \| `title` \| `body` \| `caption` \| `muted` \| `success` \| `danger`; `as`: `h1`–`h3`, `p`, `span`, `label`, `div` |
+| `TranStack`                       | Vertical flex          | `gap`: `xs` \| `sm` \| `md` \| `lg` \| `xl` → `data-gap`                                                                                 |
+| `TranInline`                      | Horizontal flex        | same `gap` union → `data-gap`                                                                                                            |
+| `TranBox`                         | Padding wrapper        | `padding`: `none` \| `sm` \| `md` \| `lg`                                                                                                |
+| `TranSurface`                     | Bordered panel         | `surface`, `radius`, `padding` unions → `data-*`                                                                                         |
+| `TranButton`                      | Actions                | `variant`: `primary` \| `secondary`; `size`: `md` \| `lg`; min touch via `--tran-spacing-touch`                                          |
+| `TranTable` / `TranTh` / `TranTd` | Tabular data           | class + ref forwarding only                                                                                                              |
+| `TranLabel`                       | Radio/checkbox tiles   | native `<label>` for associated controls                                                                                                 |
+| `Field`                           | Labelled input         | `label`, optional `hint` via `TranText`                                                                                                  |
 
-Use the optional **`as`** prop when semantics differ from the default (e.g. hero `as="h1"`, alert `as="p"` with `role="alert"`).
+Styles live in `apps/web/src/styles/app.css` on `.tran-*` selectors and `[data-variant]` / `[data-gap]` hooks. Generated colours and scales live in `apps/web/src/styles/generated/theme.css`.
 
-Styles live in `apps/web/src/styles/app.css` on `.tran-text[data-variant=…]` and reference `--tran-*` variables from `theme.css` (generated from Rust). Do **not** invent new colours in components.
+## DO
 
-## TranStack
+- Change brand spacing, type, and radii in `crates/rust-core/src/tokens.rs`, then `pnpm tokens:sync`.
+- Forward `className`, `ref`, and native props from atoms.
+- Cite requirements in tests: `// Verifies: REQ-WEB-…`.
 
-Optional vertical flex helper with `gap` mapped to `--tran-spacing-*` or `--space-*` aliases — same token pipeline as layout elsewhere in the web app.
+## DON'T
+
+- Add `style={{…}}` in components (ESLint fails the build).
+- Use raw `<h1>`, `<p>`, `<button>`, `<table>`, etc. outside `shared/ui`.
+- Hand-edit files under `*/generated/*`.
+
+## Checklist (new UI)
+
+1. Is there an existing atom variant? If not, add atom + test first.
+2. Does `app.css` use only `var(--tran-*)` (no raw `px`/`rem` in rules)?
+3. `pnpm --filter web lint` and `pnpm test:ts:coverage` green.
 
 ## Native (**N**)
 
-iOS (SwiftUI) and Android (Compose) will get parallel wrappers (`TranText`-style) that read generated `BrandTokens` — not implemented in this template slice yet. Keep variant names aligned so docs and specs stay cross-platform.
+iOS (SwiftUI) and Android (Compose) will mirror these **names** (`TranText`, `TranButton`, …) on generated `BrandTokens` — not duplicated in this slice yet.
 
-## When to add atoms
-
-- Shared typography, spacing, or feedback that appears in more than one feature.
-- Anything that must stay in sync with `crates/rust-core/src/tokens.rs` after `pnpm tokens:sync`.
-
-Prefer feature-local markup for one-off layout; promote to `shared/ui` when a second screen needs the same contract.
-
-See also [docs/DESIGN.md](./DESIGN.md) and [docs/PRODUCTION_LESSONS.md](./PRODUCTION_LESSONS.md).
+See [DESIGN.md](./DESIGN.md) and [ADR-0017](./adr/0017-web-atomic-enforcement.md).
