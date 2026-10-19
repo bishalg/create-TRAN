@@ -59,7 +59,7 @@ One small domain you can extend:
 
 Golden cases live in `fixtures/vote-eligibility.json` (Rust, TypeScript, and UniFFI parity tests).
 
-The web UI follows OS light/dark, uses **design tokens only** (generated CSS + `getThemeTokens()`), **TranText** atoms for typography ([docs/ATOMIC.md](./docs/ATOMIC.md)), locale switching, and accessibility checks in CI (axe + BDD).
+The web UI uses **design tokens only** (generated CSS), **Tran\* atoms** instead of raw markup ([docs/ATOMIC.md](./docs/ATOMIC.md)), a four-theme registry from Rust (light, dark, black, sepia; remembered and applied before first paint), three languages (en, ne, hi) from one module-based dictionary in [`locales/`](./locales) shared by web, iOS and Android ([spec 008](./docs/specs/008-localization.md)), and accessibility checks in CI (axe on every theme + BDD).
 
 Both native apps share the same rules, theme registry, strings and tokens, and ship executable accessibility checks: XCUITest audits on every theme (`pnpm ios:test`), Compose instrumentation for labels, live regions, 44 pt/48 dp targets, max text scaling and contrast (`pnpm android:test`), plus Maestro smoke flows (`pnpm e2e:maestro`).
 
@@ -248,11 +248,15 @@ This gives tRPC-like ergonomics on the TypeScript side without a Rust oRPC runti
 | `pnpm test:all`        | Coverage + E2E (what CI runs for tests)                    |
 | `pnpm typecheck`       | TypeScript                                                 |
 | `pnpm lint`            | Clippy                                                     |
-| `pnpm tokens:sync`     | Regenerate tokens → TS/CSS, Swift, Kotlin, legacy RN stub  |
+| `pnpm tokens:sync`     | Regenerate tokens + strings → TS/CSS, Swift, Kotlin        |
+| `pnpm i18n:sync`       | Same codegen, after editing `locales/`                     |
 | `pnpm uniffi:generate` | Regenerate Swift/Kotlin bindings from `crates/tran-uniffi` |
 | `pnpm ios:build`       | Build SwiftUI app for iOS Simulator (no signing)           |
 | `pnpm ios:project`     | Regenerate Xcode project from `apps/ios/project.yml`       |
 | `pnpm android:build`   | Build Compose debug APK                                    |
+| `pnpm ios:test`        | Unit + XCUITest accessibility suite (simulator)            |
+| `pnpm android:test`    | Compose accessibility suite (emulator/device)              |
+| `pnpm e2e:maestro`     | Maestro smoke flows on a running simulator/emulator        |
 | `pnpm check:quick`     | Quick local check (specs, formatting, types, linter)       |
 | `pnpm hooks:install`   | Configure Git hooks path to `.githooks`                    |
 
