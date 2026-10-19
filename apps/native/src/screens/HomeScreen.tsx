@@ -27,7 +27,7 @@ function EligibilityBlock({
   locale,
   extra,
 }: {
-  result: { eligible: boolean; reason: string };
+  result: { eligible: boolean; age: number; minimumAge: number; countryCode: string };
   theme: ReturnType<typeof getThemeTokens>;
   locale: SupportedLocale;
   extra?: string;
@@ -44,7 +44,13 @@ function EligibilityBlock({
           locale
         )}
       </Text>
-      <Text style={{ color: theme.palette.text.secondary, marginTop: 4 }}>{result.reason}</Text>
+      <Text style={{ color: theme.palette.text.secondary, marginTop: 4 }}>
+        {t(
+          result.eligible ? 'eligibility.result.reasonMeets' : 'eligibility.result.reasonBelow',
+          locale,
+          { age: result.age, minimumAge: result.minimumAge, country: result.countryCode }
+        )}
+      </Text>
       {extra ? (
         <Text style={{ color: theme.palette.text.muted, marginTop: 4, fontSize: 12 }}>{extra}</Text>
       ) : null}
@@ -216,7 +222,12 @@ export const HomeScreen: React.FC = () => {
           </TouchableOpacity>
           {lastApiResult && (
             <EligibilityBlock
-              result={lastApiResult}
+              result={{
+                eligible: lastApiResult.eligible,
+                age: lastApiResult.age,
+                minimumAge: lastApiResult.minimum_age,
+                countryCode: lastApiResult.country_code,
+              }}
               theme={theme}
               locale={locale}
               extra={t('eligibility.result.meta', locale, {
