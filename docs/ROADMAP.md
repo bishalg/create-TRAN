@@ -6,15 +6,14 @@ Actionable backlog aligned with the [external architecture review](./REVIEW.md) 
 
 ## 0. Native mobile (Swift + Kotlin) — **N** in TRAN
 
-Platform-native iOS (`apps/ios`) and Android (`apps/android`) are the real **N**. `apps/native` (Expo/RN) is **legacy interim** only.
+Platform-native iOS (`apps/ios`) and Android (`apps/android`) are the real **N**. The former Expo/RN sketch was removed (tag `archive/react-native-demo`).
 
 - [x] Document **N** = SwiftUI + Compose (not React Native as the stack definition).
 - [x] Scaffold `apps/ios` and `apps/android` with placeholder screens + `pnpm tokens:sync` → Swift/Kotlin `BrandTokens`.
 - [x] Voting parity on native: offline rules via `crates/tran-uniffi` + fixture parity tests (`94f2e3b`).
 - [ ] Native HTTP client matching `@tran/api` (URLSession / OkHttp + Zod-equivalent validation).
 - [x] Xcode / Gradle CI smoke (build only — no device farm required) — `ios-smoke` + `android-smoke` jobs.
-- [ ] Migrate or remove `apps/native` after native apps match web demo features.
-- [ ] Optional: keep Expo under `apps/mobile-rn` if a JS mobile sketch is still wanted post-migration.
+- [x] Remove `apps/native` (done; see section 2).
 
 ---
 
@@ -29,14 +28,10 @@ Platform-native iOS (`apps/ios`) and Android (`apps/android`) are the real **N**
 
 ---
 
-## 2. Legacy Expo (`apps/native`) — boot or sunset
+## 2. Legacy Expo (`apps/native`) — sunset
 
-- [ ] Add `apps/native/assets/` (`icon.png`, `splash.png`, `adaptive-icon.png`, `favicon.png`) per `app.json`.
-- [ ] Fix entry: `expo/AppEntry` pattern or `index.js` with `registerRootComponent` (stop using raw `src/App.tsx` as `main` unless documented).
-- [ ] Manually verify `pnpm dev:native` / `expo start` on iOS simulator or Android emulator **only if** keeping interim RN.
-- [ ] Plan Expo SDK upgrade path (review cited Expo 58 / RN 0.88 / React 19 — align with web when stable).
-- [ ] CI job: `expo export` or minimal `tsc` + `expo doctor` smoke on `apps/native` (optional while interim).
-- [ ] Re-run `pnpm audit --filter native` after upgrade; document acceptable residual risk.
+- [x] Removed. The React Native sketch is preserved at the git tag `archive/react-native-demo`
+      (`git checkout archive/react-native-demo`); "N" means `apps/ios` + `apps/android` only.
 
 ---
 

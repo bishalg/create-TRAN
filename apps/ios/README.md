@@ -72,4 +72,3 @@ pnpm tokens:sync
 
 - CI: `xcodebuild test` on macOS runners
 - Ship `libtran_uniffi` for device + API screen
-- Remove legacy Expo sketch when redundant — see [docs/ROADMAP.md](../../docs/ROADMAP.md)

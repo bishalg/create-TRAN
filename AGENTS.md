@@ -8,7 +8,7 @@ This is a **template**: keep the sample tiny, exemplary and fully tested.
   `fixtures/vote-eligibility.json` first; Rust, TypeScript, and UniFFI parity tests consume it.
 - Coverage is a gate: 100% for Rust (`pnpm test:rust:coverage`) and sample TypeScript
   (`pnpm test:ts:coverage`). Do not lower thresholds or add excludes without a reason in `vitest.config.ts`.
-- **N** in TRAN means **iOS (SwiftUI)** and **Android (Compose)** under `apps/ios` and `apps/android`, not React Native. `apps/native` is legacy interim.
+- **N** in TRAN means **iOS (SwiftUI)** and **Android (Compose)** under `apps/ios` and `apps/android`, not React Native. The old React Native sketch was removed; retrieve it with `git checkout archive/react-native-demo`.
 - Design tokens: edit `crates/rust-core/src/tokens.rs`, then `pnpm tokens:sync` (TS, CSS, Swift, Kotlin).
 - Web UI: token-bound atoms in `apps/web/src/shared/ui/` only (no inline `style` / raw semantic tags in features; see [docs/ATOMIC.md](docs/ATOMIC.md)).
 - New user-visible behaviour needs a Gherkin scenario in `e2e/features/`.
