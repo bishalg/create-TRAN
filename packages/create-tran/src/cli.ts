@@ -16,7 +16,7 @@ Options:
   --pm, --package-manager <name>  Package manager (pnpm, npm, bun, yarn) [default: pnpm]
   --template <url-or-path>        Template git URL or local path
   --no-git                        Skip git repository initialization
-  --no-native                     Exclude mobile apps (iOS, Android, legacy Expo)
+  --no-native                     Exclude mobile apps (iOS, Android)
   -v, --version                   Show version
   -h, --help                      Show this help message
 

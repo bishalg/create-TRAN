@@ -5,8 +5,6 @@
     <string name="eligibility_age_label">तपाईंको उमेर</string>
     <string name="eligibility_age_placeholder">उमेर लेख्नुहोस्</string>
     <string name="eligibility_check_offline">अफलाइन जाँच</string>
-    <string name="eligibility_country_api_hint">X-Debug-Country पठाउँछ; प्रोडक्शनमा IP जियो।</string>
-    <string name="eligibility_country_api_label">डिबग देश (API)</string>
     <string name="eligibility_country_example">जस्तै NP</string>
     <string name="eligibility_country_hint">दुई अक्षर, जस्तै US, NP वा BR।</string>
     <string name="eligibility_country_label">देश कोड</string>
@@ -21,17 +19,13 @@
     <string name="eligibility_offline_notice">API उपलब्ध छैन — Rust Core सँग मिल्दो अफलाइन नियम।</string>
     <string name="eligibility_result_country">देश</string>
     <string name="eligibility_result_label">नतिजा</string>
-    <string name="eligibility_result_meta">%1$s · न्यूनतम %2$s · IP %3$s</string>
     <string name="eligibility_result_minimum_age">न्यूनतम उमेर</string>
     <string name="eligibility_result_placeholder">अफलाइन जाँच थिच्नुहोस्</string>
     <string name="eligibility_result_reason_below">उमेर %1$s न्यूनतम मतदान उमेर %2$s भन्दा कम छ (%3$s)।</string>
     <string name="eligibility_result_reason_meets">उमेर %1$s ले न्यूनतम मतदान उमेर %2$s पूरा गर्छ (%3$s)।</string>
     <string name="eligibility_result_source_device">यही उपकरणमा जाँच गरियो</string>
     <string name="eligibility_result_source_server">सर्भरबाट जाँच गरियो</string>
-    <string name="eligibility_section_api">API (IP बाट देश)</string>
-    <string name="eligibility_section_offline">अफलाइन (Rust नियम)</string>
     <string name="eligibility_submit">योग्यता जाँच्नुहोस्</string>
-    <string name="eligibility_submit_api">API बाट जाँच</string>
     <string name="eligibility_submitting">जाँच हुँदैछ…</string>
     <string name="eligibility_subtitle">अफलाइन मतदान (UniFFI → rust-core)</string>
     <string name="eligibility_verdict_eligible">मतदान गर्न योग्य</string>

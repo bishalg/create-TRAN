@@ -20,16 +20,9 @@
     "example": "e.g. NP",
     "placeholder": "Two letters",
     "hint": "Two letters, like US, NP or BR.",
-    "serverHint": "Sent to the server as the X-Debug-Country header (development only).",
-    "apiHint": "Sends X-Debug-Country with your pick; production would use geo from IP.",
-    "apiLabel": "Debug country (API header)"
-  },
-  "section": {
-    "offline": "Offline (Rust rules mirror)",
-    "api": "API (country from IP stub)"
+    "serverHint": "Sent to the server as the X-Debug-Country header (development only)."
   },
   "submit": "Check eligibility",
-  "submitApi": "Check via API",
   "submitting": "Checking…",
   "checkOffline": "Check offline",
   "offlineNotice": "API unreachable — using offline rules mirrored from Rust Core.",
@@ -44,7 +37,6 @@
     "sourceDevice": "Checked on this device",
     "sourceServer": "Checked by the server",
     "placeholder": "Tap Check offline",
-    "meta": "{country} · min {minimumAge} · IP {clientIp}",
     "reasonMeets": "Age {age} meets the minimum voting age of {minimumAge} in {country}.",
     "reasonBelow": "Age {age} is below the minimum voting age of {minimumAge} in {country}."
   }

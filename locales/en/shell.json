@@ -2,7 +2,6 @@
   "title": "Voting Eligibility",
   "subtitle": "Check the minimum voting age for a country.",
   "skipToContent": "Skip to content",
-  "stack": "Offline rules in TypeScript, async checks via Axum + Rust Core",
   "header": "TRAN / {platform}",
   "language": {
     "label": "Language"
@@ -15,10 +14,8 @@
     "sepia": "Sepia"
   },
   "status": {
-    "title": "System Status",
     "online": "API online",
     "offline": "API offline",
-    "checking": "Checking API…",
-    "standby": "API standby"
+    "checking": "Checking API…"
   }
 }

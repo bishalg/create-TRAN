@@ -8,7 +8,7 @@ Cross-platform mobile could mean React Native or native.
 
 ## Decision
 
-iOS is SwiftUI, Android is Jetpack Compose; both bind the Rust core through UniFFI. `apps/native` (Expo) is legacy.
+iOS is SwiftUI, Android is Jetpack Compose; both bind the Rust core through UniFFI. The earlier Expo sketch was removed (tag `archive/react-native-demo`).
 
 ## Consequences
 

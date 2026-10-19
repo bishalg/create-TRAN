@@ -2,17 +2,11 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    projects: [
-      'packages/api',
-      'packages/core-ts',
-      'packages/create-tran',
-      'apps/web',
-      'apps/native',
-    ],
+    projects: ['packages/api', 'packages/core-ts', 'packages/create-tran', 'apps/web'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
-      include: ['packages/*/src/**', 'apps/web/src/**', 'apps/native/src/hooks/**'],
+      include: ['packages/*/src/**', 'apps/web/src/**'],
       exclude: [
         '**/*.test.{ts,tsx}',
         '**/generated/**', // emitted by `pnpm tokens:sync`, verified by the CI drift check

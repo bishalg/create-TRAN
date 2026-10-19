@@ -4,21 +4,20 @@ Thanks for improving the TRAN template. This repo follows conventions inspired b
 
 ## Monorepo layout
 
-| Path                   | Role                                                                  |
-| :--------------------- | :-------------------------------------------------------------------- |
-| `apps/web`             | Vite + React SPA (TanStack Start deps present, not wired yet)         |
-| `apps/ios`             | SwiftUI iOS client (**N** in TRAN)                                    |
-| `apps/android`         | Jetpack Compose Android client (**N** in TRAN)                        |
-| `apps/native`          | Legacy Expo / RN sketch (interim — not the stack definition of **N**) |
-| `apps/api`             | Axum HTTP API (Rust)                                                  |
-| `crates/rust-core`     | Domain rules + design tokens (source of truth)                        |
-| `crates/tran-uniffi`   | UniFFI exports for iOS/Android offline voting                         |
-| `packages/core-ts`     | Shared TS SDK, tokens, i18n, offline rule mirror                      |
-| `packages/api`         | oRPC contract + Zod schemas + typed client                            |
-| `packages/create-tran` | Scaffolding CLI                                                       |
-| `tooling/typescript`   | Shared `tsconfig` bases                                               |
-| `e2e`                  | Playwright + Gherkin (BDD) against the real API and web app           |
-| `fixtures`             | Golden cases shared by Rust and TypeScript tests                      |
+| Path                   | Role                                                          |
+| :--------------------- | :------------------------------------------------------------ |
+| `apps/web`             | Vite + React SPA (TanStack Start deps present, not wired yet) |
+| `apps/ios`             | SwiftUI iOS client (**N** in TRAN)                            |
+| `apps/android`         | Jetpack Compose Android client (**N** in TRAN)                |
+| `apps/api`             | Axum HTTP API (Rust)                                          |
+| `crates/rust-core`     | Domain rules + design tokens (source of truth)                |
+| `crates/tran-uniffi`   | UniFFI exports for iOS/Android offline voting                 |
+| `packages/core-ts`     | Shared TS SDK, tokens, i18n, offline rule mirror              |
+| `packages/api`         | oRPC contract + Zod schemas + typed client                    |
+| `packages/create-tran` | Scaffolding CLI                                               |
+| `tooling/typescript`   | Shared `tsconfig` bases                                       |
+| `e2e`                  | Playwright + Gherkin (BDD) against the real API and web app   |
+| `fixtures`             | Golden cases shared by Rust and TypeScript tests              |
 
 ## Development
 

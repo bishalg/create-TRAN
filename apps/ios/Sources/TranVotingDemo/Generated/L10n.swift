@@ -40,8 +40,6 @@ enum L10n {
         static var ageLabel: String { String(localized: "eligibility.age.label", table: "Eligibility") }
         static var agePlaceholder: String { String(localized: "eligibility.age.placeholder", table: "Eligibility") }
         static var checkOffline: String { String(localized: "eligibility.checkOffline", table: "Eligibility") }
-        static var countryApiHint: String { String(localized: "eligibility.country.apiHint", table: "Eligibility") }
-        static var countryApiLabel: String { String(localized: "eligibility.country.apiLabel", table: "Eligibility") }
         static var countryExample: String { String(localized: "eligibility.country.example", table: "Eligibility") }
         static var countryHint: String { String(localized: "eligibility.country.hint", table: "Eligibility") }
         static var countryLabel: String { String(localized: "eligibility.country.label", table: "Eligibility") }
@@ -56,9 +54,6 @@ enum L10n {
         static var offlineNotice: String { String(localized: "eligibility.offlineNotice", table: "Eligibility") }
         static var resultCountry: String { String(localized: "eligibility.result.country", table: "Eligibility") }
         static var resultLabel: String { String(localized: "eligibility.result.label", table: "Eligibility") }
-        static func resultMeta(_ country: String, _ minimumAge: String, _ clientIp: String) -> String {
-            String(format: String(localized: "eligibility.result.meta", table: "Eligibility"), country, minimumAge, clientIp)
-        }
         static var resultMinimumAge: String { String(localized: "eligibility.result.minimumAge", table: "Eligibility") }
         static var resultPlaceholder: String { String(localized: "eligibility.result.placeholder", table: "Eligibility") }
         static func resultReasonBelow(_ age: String, _ minimumAge: String, _ country: String) -> String {
@@ -69,10 +64,7 @@ enum L10n {
         }
         static var resultSourceDevice: String { String(localized: "eligibility.result.sourceDevice", table: "Eligibility") }
         static var resultSourceServer: String { String(localized: "eligibility.result.sourceServer", table: "Eligibility") }
-        static var sectionApi: String { String(localized: "eligibility.section.api", table: "Eligibility") }
-        static var sectionOffline: String { String(localized: "eligibility.section.offline", table: "Eligibility") }
         static var submit: String { String(localized: "eligibility.submit", table: "Eligibility") }
-        static var submitApi: String { String(localized: "eligibility.submitApi", table: "Eligibility") }
         static var submitting: String { String(localized: "eligibility.submitting", table: "Eligibility") }
         static var subtitle: String { String(localized: "eligibility.subtitle", table: "Eligibility") }
         static var verdictEligible: String { String(localized: "eligibility.verdict.eligible", table: "Eligibility") }
@@ -92,12 +84,9 @@ enum L10n {
         }
         static var languageLabel: String { String(localized: "shell.language.label", table: "Shell") }
         static var skipToContent: String { String(localized: "shell.skipToContent", table: "Shell") }
-        static var stack: String { String(localized: "shell.stack", table: "Shell") }
         static var statusChecking: String { String(localized: "shell.status.checking", table: "Shell") }
         static var statusOffline: String { String(localized: "shell.status.offline", table: "Shell") }
         static var statusOnline: String { String(localized: "shell.status.online", table: "Shell") }
-        static var statusStandby: String { String(localized: "shell.status.standby", table: "Shell") }
-        static var statusTitle: String { String(localized: "shell.status.title", table: "Shell") }
         static var subtitle: String { String(localized: "shell.subtitle", table: "Shell") }
         static var themeBlack: String { String(localized: "shell.theme.black", table: "Shell") }
         static var themeDark: String { String(localized: "shell.theme.dark", table: "Shell") }

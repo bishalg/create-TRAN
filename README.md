@@ -14,12 +14,12 @@ Conventions are aligned with [create-t3-turbo](https://github.com/t3-oss/create-
 
 ## What TRAN means (honest)
 
-| Letter | Layer          | In this repo today                                                                                                                                                                                            |
-| :----: | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **T**  | TanStack (web) | **Vite + React SPA** (`apps/web`). `@tanstack/react-start` / router packages are listed but **not imported** — no SSR, file routes, or server functions yet. See [docs/REVIEW.md](./docs/REVIEW.md).          |
-| **R**  | Rust core      | `crates/rust-core` — voting rules, validation, design tokens (source of truth).                                                                                                                               |
-| **A**  | Axum           | `apps/api` — REST handlers, stub geo, unified error envelope.                                                                                                                                                 |
-| **N**  | Native mobile  | **SwiftUI** (`apps/ios`) + **Jetpack Compose** (`apps/android`). Offline voting via **UniFFI** (`crates/tran-uniffi`). `apps/native` is a **legacy Expo / RN sketch** (interim), not the definition of **N**. |
+| Letter | Layer          | In this repo today                                                                                                                                                                                                         |
+| :----: | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **T**  | TanStack (web) | **Vite + React SPA** (`apps/web`). `@tanstack/react-start` / router packages are listed but **not imported** — no SSR, file routes, or server functions yet. See [docs/REVIEW.md](./docs/REVIEW.md).                       |
+| **R**  | Rust core      | `crates/rust-core` — voting rules, validation, design tokens (source of truth).                                                                                                                                            |
+| **A**  | Axum           | `apps/api` — REST handlers, stub geo, unified error envelope.                                                                                                                                                              |
+| **N**  | Native mobile  | **SwiftUI** (`apps/ios`) + **Jetpack Compose** (`apps/android`). Offline voting via **UniFFI** (`crates/tran-uniffi`). The old React Native sketch was removed; retrieve it with `git checkout archive/react-native-demo`. |
 
 ---
 
@@ -46,10 +46,10 @@ Or use **[Use this template](https://github.com/bishalg/create-TRAN/generate)** 
 
 One small domain you can extend:
 
-| Path        | Web                                                                    | Native (**N**)                                                | Legacy Expo           |
-| :---------- | :--------------------------------------------------------------------- | :------------------------------------------------------------ | :-------------------- |
-| **Offline** | `evaluateVoteEligibilityOffline` in `@tran/core` (mirrors `voting.rs`) | `evaluate_vote_eligibility_offline` via UniFFI → `TranEngine` | Same TS mirror as web |
-| **API**     | `checkVoteEligibility` / `TranApiClient` + Zod                         | Not wired yet (stretch: URLSession / OkHttp)                  | REST like web         |
+| Path        | Web                                                                    | Native (**N**)                                                |
+| :---------- | :--------------------------------------------------------------------- | :------------------------------------------------------------ |
+| **Offline** | `evaluateVoteEligibilityOffline` in `@tran/core` (mirrors `voting.rs`) | `evaluate_vote_eligibility_offline` via UniFFI → `TranEngine` |
+| **API**     | `checkVoteEligibility` / `TranApiClient` + Zod                         | Not wired yet (stretch: URLSession / OkHttp)                  |
 
 **API (async)** — `POST /api/vote/eligibility` uses Rust Core plus a stub geo resolver:
 
@@ -59,7 +59,7 @@ One small domain you can extend:
 
 Golden cases live in `fixtures/vote-eligibility.json` (Rust, TypeScript, and UniFFI parity tests).
 
-The web UI follows OS light/dark, uses **design tokens only** (generated CSS + `getThemeTokens()`), **TranText** atoms for typography ([docs/ATOMIC.md](./docs/ATOMIC.md)), locale switching, and accessibility checks in CI (axe + BDD).
+The web UI uses **design tokens only** (generated CSS), **Tran\* atoms** instead of raw markup ([docs/ATOMIC.md](./docs/ATOMIC.md)), a four-theme registry from Rust (light, dark, black, sepia; remembered and applied before first paint), three languages (en, ne, hi) from one module-based dictionary in [`locales/`](./locales) shared by web, iOS and Android ([spec 008](./docs/specs/008-localization.md)), and accessibility checks in CI (axe on every theme + BDD).
 
 Both native apps share the same rules, theme registry, strings and tokens, and ship executable accessibility checks: XCUITest audits on every theme (`pnpm ios:test`), Compose instrumentation for labels, live regions, 44 pt/48 dp targets, max text scaling and contrast (`pnpm android:test`), plus Maestro smoke flows (`pnpm e2e:maestro`).
 
@@ -84,7 +84,7 @@ Full endpoint reference: [docs/API.md](./docs/API.md).
 4. **On this device** — **On this device**, age `20`, country `NP`, **Check eligibility** (`evaluateVoteEligibilityOffline`).
 5. **Ask the server** — **Ask the server** (`checkVoteEligibility`; country sent as `X-Debug-Country`).
 6. **Theme / locale** — header controls; colours from `theme.css` / tokens.
-7. **Native (optional)** — `pnpm tokens:sync` then `pnpm uniffi:generate` after FFI changes; open iOS Xcode project or build Android APK (`pnpm ios:build`, `pnpm android:build`). Legacy: `pnpm dev:native` → `apps/native`.
+7. **Native (optional)** — `pnpm tokens:sync` then `pnpm uniffi:generate` after FFI changes; open iOS Xcode project or build Android APK (`pnpm ios:build`, `pnpm android:build`).
 8. **Customize** — `crates/rust-core/src/tokens.rs` → `pnpm tokens:sync`; `voting.rs` → edit fixture first → `cargo test -p rust-core`.
 
 More detail: [docs/SAMPLE_APP.md](./docs/SAMPLE_APP.md). Testing: [docs/TESTING.md](./docs/TESTING.md). UI/a11y notes: [docs/UI.md](./docs/UI.md).
@@ -100,9 +100,6 @@ graph TD
     end
     subgraph Mobile ["apps/ios + apps/android"]
         NUI[SwiftUI / Compose]
-    end
-    subgraph LegacyRN ["apps/native (interim Expo)"]
-        RNUI[RN sketch]
     end
     subgraph FFI ["crates/tran-uniffi"]
         UniFFI[UniFFI exports]
@@ -121,8 +118,6 @@ graph TD
 
     Web -->|REST + Zod| Backend
     Web -.-> CoreTS
-    LegacyRN -->|REST| Backend
-    LegacyRN -.-> CoreTS
     Mobile -.->|offline| UniFFI
     UniFFI --> Rules
     Backend --> Rules
@@ -132,15 +127,15 @@ graph TD
 
 ### Map to create-t3-turbo
 
-| create-t3-turbo              | create-TRAN                                                               |
-| :--------------------------- | :------------------------------------------------------------------------ |
-| `apps/web`                   | `apps/web` (Vite + React; TanStack Start not wired yet)                   |
-| `apps/native` (Expo)         | `apps/native` (legacy interim) + `apps/ios` + `apps/android` (real **N**) |
-| `packages/api` (tRPC router) | `packages/api` (oRPC contract + Zod; Axum implements REST)                |
-| `packages/ui`                | Design tokens in `@tran/core`; web styles in `apps/web/src/styles`        |
-| `packages/db`                | _not included_ (add your own data layer)                                  |
-| `tooling/*`                  | `tooling/typescript`                                                      |
-| Node API server              | `apps/api` (Rust / Axum) + `crates/rust-core`                             |
+| create-t3-turbo              | create-TRAN                                                        |
+| :--------------------------- | :----------------------------------------------------------------- |
+| `apps/web`                   | `apps/web` (Vite + React; TanStack Start not wired yet)            |
+| `apps/native` (Expo)         | `apps/ios` + `apps/android` (real **N**)                           |
+| `packages/api` (tRPC router) | `packages/api` (oRPC contract + Zod; Axum implements REST)         |
+| `packages/ui`                | Design tokens in `@tran/core`; web styles in `apps/web/src/styles` |
+| `packages/db`                | _not included_ (add your own data layer)                           |
+| `tooling/*`                  | `tooling/typescript`                                               |
+| Node API server              | `apps/api` (Rust / Axum) + `crates/rust-core`                      |
 
 ---
 
@@ -153,7 +148,6 @@ create-TRAN/
 │   ├── web/                 # Vite + React SPA
 │   ├── ios/                 # SwiftUI (platform-native N)
 │   ├── android/             # Jetpack Compose (platform-native N)
-│   └── native/              # Legacy Expo / RN (interim)
 ├── crates/
 │   ├── rust-core/           # Voting rules + tokens (source of truth)
 │   ├── tran-uniffi/         # UniFFI surface for iOS/Android offline voting
@@ -248,18 +242,21 @@ This gives tRPC-like ergonomics on the TypeScript side without a Rust oRPC runti
 | `pnpm dev`             | Run apps via Nx                                            |
 | `pnpm dev:web`         | Vite web app                                               |
 | `pnpm dev:api`         | Axum API                                                   |
-| `pnpm dev:native`      | Legacy Expo client (`apps/native`)                         |
 | `pnpm test`            | `cargo test` + Vitest (fast)                               |
 | `pnpm test:coverage`   | Rust + TS with **100% coverage gates**                     |
 | `pnpm test:e2e`        | Playwright Gherkin (starts API + web)                      |
 | `pnpm test:all`        | Coverage + E2E (what CI runs for tests)                    |
 | `pnpm typecheck`       | TypeScript                                                 |
 | `pnpm lint`            | Clippy                                                     |
-| `pnpm tokens:sync`     | Regenerate tokens → TS/CSS, Swift, Kotlin, legacy RN stub  |
+| `pnpm tokens:sync`     | Regenerate tokens + strings → TS/CSS, Swift, Kotlin        |
+| `pnpm i18n:sync`       | Same codegen, after editing `locales/`                     |
 | `pnpm uniffi:generate` | Regenerate Swift/Kotlin bindings from `crates/tran-uniffi` |
 | `pnpm ios:build`       | Build SwiftUI app for iOS Simulator (no signing)           |
 | `pnpm ios:project`     | Regenerate Xcode project from `apps/ios/project.yml`       |
 | `pnpm android:build`   | Build Compose debug APK                                    |
+| `pnpm ios:test`        | Unit + XCUITest accessibility suite (simulator)            |
+| `pnpm android:test`    | Compose accessibility suite (emulator/device)              |
+| `pnpm e2e:maestro`     | Maestro smoke flows on a running simulator/emulator        |
 | `pnpm check:quick`     | Quick local check (specs, formatting, types, linter)       |
 | `pnpm hooks:install`   | Configure Git hooks path to `.githooks`                    |
 

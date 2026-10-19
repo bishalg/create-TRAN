@@ -1,5 +1,7 @@
 # create-TRAN — External Architecture Review (Synthesized)
 
+> **Historical snapshot.** Written while `apps/native` (Expo) still existed; it has since been removed (tag `archive/react-native-demo`). References below describe that earlier state.
+
 **Review date:** October 2026  
 **Repo snapshot:** `dev` @ `b2c9867`  
 **Overall score (reviewer):** ~6/10 — strong **R** + **A** + testing; **T** and **N** lag marketing.

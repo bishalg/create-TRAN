@@ -67,28 +67,6 @@
         }
       }
     },
-    "shell.stack": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Offline rules in TypeScript, async checks via Axum + Rust Core"
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ऑफ़लाइन नियम TypeScript में, API जाँच Axum + Rust Core से"
-          }
-        },
-        "ne": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "अफलाइन नियम TypeScript मा, API जाँच Axum + Rust Core बाट"
-          }
-        }
-      }
-    },
     "shell.status.checking": {
       "localizations": {
         "en": {
@@ -151,50 +129,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "API सञ्चालनमा"
-          }
-        }
-      }
-    },
-    "shell.status.standby": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "API standby"
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "API प्रतीक्षा में"
-          }
-        },
-        "ne": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "API प्रतीक्षामा"
-          }
-        }
-      }
-    },
-    "shell.status.title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "System Status"
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "सिस्टम स्थिति"
-          }
-        },
-        "ne": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "प्रणाली स्थिति"
           }
         }
       }

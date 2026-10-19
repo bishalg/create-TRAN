@@ -30,8 +30,6 @@ Native (**N**) apps consume generated platform files:
 - `apps/ios/Sources/TranVotingDemo/Generated/BrandTokens.swift`
 - `apps/android/app/src/main/kotlin/com/tran/voting/generated/BrandTokens.kt`
 
-The legacy Expo client re-exports `@tran/core` via `apps/native/src/generated/brandTokens.ts`.
-
 ## UniFFI (native offline)
 
 Voting rules on iOS/Android do **not** duplicate tokens in Swift/Kotlin — only brand palettes are codegen’d here.

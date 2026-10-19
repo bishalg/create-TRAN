@@ -1,6 +1,6 @@
 # Sample app walkthrough
 
-End-to-end map of the **Voting Eligibility** template: Rust rules, Axum API, shared tokens, Vite web, platform-native mobile (UniFFI), and the legacy Expo client.
+End-to-end map of the **Voting Eligibility** template: Rust rules, Axum API, shared tokens, Vite web, platform-native mobile (UniFFI).
 
 ## Architecture (one screen)
 
@@ -10,7 +10,6 @@ flowchart LR
     Web[apps/web Vite SPA]
     IOS[apps/ios SwiftUI]
     Android[apps/android Compose]
-    LegacyRN[apps/native Expo interim]
   end
   subgraph shared [packages]
     CoreTS["@tran/core offline + tokens + client"]
@@ -45,12 +44,11 @@ flowchart LR
 
 | Path                        | Where rules run                                                            | Country source                       |
 | :-------------------------- | :------------------------------------------------------------------------- | :----------------------------------- |
-| **Offline (web / Expo)**    | `evaluateVoteEligibilityOffline` in `@tran/core` (mirrors `voting.rs`)     | User picks country in the UI         |
+| **Offline (web)**           | `evaluateVoteEligibilityOffline` in `@tran/core` (mirrors `voting.rs`)     | User picks country in the UI         |
 | **Offline (iOS / Android)** | `evaluate_vote_eligibility_offline` in `crates/tran-uniffi` → `TranEngine` | User picks country in native UI      |
 | **API**                     | `TranEngine::evaluate_vote_eligibility` in Rust                            | Stub geo from IP + `X-Debug-Country` |
 
-Web hook: `apps/web/src/shared/api/useTranApi.ts`  
-Legacy native: `apps/native/src/hooks/useTranApi.ts`
+Web hook: `apps/web/src/shared/api/useTranApi.ts`
 
 Regenerate FFI after changing `tran-uniffi` or exported signatures:
 
@@ -65,7 +63,6 @@ pnpm uniffi:generate
 3. Regenerated artifacts include:
    - `packages/core-ts/src/generated/*`
    - `apps/web/src/styles/generated/theme.css`
-   - `apps/native/src/generated/brandTokens.ts` (legacy RN stub)
    - `apps/ios/.../Generated/BrandTokens.swift`
    - `apps/android/.../generated/BrandTokens.kt`
 4. Web uses CSS variables via `theme.css`; React uses `getThemeTokens('light' | 'dark')`; native apps import generated Swift/Kotlin tokens.
@@ -93,7 +90,6 @@ cp .env.example .env
 pnpm install
 pnpm dev:api    # :3001
 pnpm dev:web    # Vite :3000
-pnpm dev:native # legacy Expo (apps/native)
 # Platform-native N:
 pnpm tokens:sync
 pnpm uniffi:generate   # after FFI / voting export changes
@@ -112,14 +108,13 @@ See [TESTING.md](./TESTING.md) for the TDD / BDD / E2E / coverage playbook.
 
 ## Key files
 
-| Concern           | Location                                                |
-| :---------------- | :------------------------------------------------------ |
-| Routes            | `apps/api/src/routes/mod.rs`                            |
-| Vote handler      | `apps/api/src/routes/vote.rs`                           |
-| Geo stub          | `apps/api/src/geo.rs`                                   |
-| oRPC/Zod          | `packages/api/src/`                                     |
-| Web demo UI       | `apps/web/src/features/eligibility/EligibilityPage.tsx` |
-| UniFFI crate      | `crates/tran-uniffi/src/lib.rs`                         |
-| iOS demo UI       | `apps/ios/Sources/TranVotingDemo/VotingHomeView.swift`  |
-| Android demo UI   | `apps/android/.../ui/VotingHomeScreen.kt`               |
-| Legacy RN demo UI | `apps/native/src/screens/HomeScreen.tsx`                |
+| Concern         | Location                                                |
+| :-------------- | :------------------------------------------------------ |
+| Routes          | `apps/api/src/routes/mod.rs`                            |
+| Vote handler    | `apps/api/src/routes/vote.rs`                           |
+| Geo stub        | `apps/api/src/geo.rs`                                   |
+| oRPC/Zod        | `packages/api/src/`                                     |
+| Web demo UI     | `apps/web/src/features/eligibility/EligibilityPage.tsx` |
+| UniFFI crate    | `crates/tran-uniffi/src/lib.rs`                         |
+| iOS demo UI     | `apps/ios/Sources/TranVotingDemo/VotingHomeView.swift`  |
+| Android demo UI | `apps/android/.../ui/VotingHomeScreen.kt`               |

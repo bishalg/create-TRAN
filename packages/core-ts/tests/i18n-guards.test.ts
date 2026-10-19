@@ -130,13 +130,6 @@ function collectViolations(): { file: string; text: string }[] {
     }
   }
 
-  for (const file of listFiles(path.join(root, 'apps/native/src'), ['.tsx'])) {
-    if (file.includes('.test.')) continue;
-    for (const text of jsxLiterals(readFileSync(file, 'utf8'), file)) {
-      if (!allowed(relative(file), text)) violations.push({ file: relative(file), text });
-    }
-  }
-
   const swiftCalls =
     /\b(?:Text|Button|Picker|Label|TextField)\(\s*"([^"\\]*)"|NSLocalizedString\(\s*"([^"\\]*)"|\.accessibility(?:Label|Value)\(\s*(?:Text\()?"([^"\\]*)"/g;
   for (const file of listFiles(path.join(root, 'apps/ios/Sources/TranVotingDemo'), ['.swift'])) {
@@ -170,10 +163,7 @@ function collectViolations(): { file: string; text: string }[] {
 function usedKeys(): Set<string> {
   const used = new Set<string>();
 
-  for (const file of [
-    ...listFiles(path.join(root, 'apps/web/src'), ['.ts', '.tsx']),
-    ...listFiles(path.join(root, 'apps/native/src'), ['.ts', '.tsx']),
-  ]) {
+  for (const file of [...listFiles(path.join(root, 'apps/web/src'), ['.ts', '.tsx'])]) {
     const source = readFileSync(file, 'utf8');
     for (const match of source.matchAll(/['"`]([a-z][a-zA-Z]*(?:\.[a-zA-Z]+)+)['"`]/g)) {
       if (KEYS.has(match[1]!)) used.add(match[1]!);
@@ -217,7 +207,7 @@ function usedKeys(): Set<string> {
 }
 
 describe('user-visible copy comes from locales/', () => {
-  it('has no hardcoded literals in web, RN, iOS, Android or the manifest', () => {
+  it('has no hardcoded literals in web, iOS, Android or the manifest', () => {
     const violations = collectViolations();
     const report = violations
       .map((violation) => `${violation.file}: "${violation.text}"`)

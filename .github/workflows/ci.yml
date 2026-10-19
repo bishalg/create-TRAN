@@ -39,7 +39,6 @@ jobs:
           git diff --exit-code -- \
             packages/core-ts/src/generated \
             apps/web/src/styles/generated \
-            apps/native/src/generated \
             apps/ios/Sources/TranVotingDemo/Generated \
             apps/android/app/src/main/kotlin/com/tran/voting/generated \
             apps/android/app/src/main/res
