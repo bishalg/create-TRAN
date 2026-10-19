@@ -97,6 +97,18 @@ Then('the document language is {string}', async ({ page }, lang: string) => {
   await expect(page.locator('html')).toHaveAttribute('lang', lang);
 });
 
+Then('the page heading says {string}', async ({ page }, text: string) => {
+  await expect(page.getByRole('heading', { level: 1, name: text, exact: true })).toBeVisible();
+});
+
+Then('the age field is labelled {string}', async ({ page }, label: string) => {
+  await expect(page.getByLabel(label)).toBeVisible();
+});
+
+Then('the submit button says {string}', async ({ page }, name: string) => {
+  await expect(page.getByRole('button', { name, exact: true })).toBeVisible();
+});
+
 Then('the age field has focus', async ({ page }) => {
   await expect(page.getByLabel('Your age')).toBeFocused();
 });

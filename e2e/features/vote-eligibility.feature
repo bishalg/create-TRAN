@@ -1,4 +1,4 @@
-# Verifies: REQ-WEB-001 REQ-WEB-003 REQ-WEB-004 REQ-WEB-007 REQ-WEB-014 REQ-A11Y-001 REQ-A11Y-003 REQ-A11Y-004 REQ-A11Y-005 REQ-A11Y-006
+# Verifies: REQ-WEB-001 REQ-WEB-003 REQ-WEB-004 REQ-WEB-007 REQ-WEB-014 REQ-A11Y-001 REQ-A11Y-003 REQ-A11Y-004 REQ-A11Y-005 REQ-A11Y-006 REQ-I18N-002 REQ-I18N-006
 Feature: Voting eligibility
   As a visitor
   I want to know whether I am old enough to vote in a country
@@ -74,9 +74,18 @@ Feature: Voting eligibility
     When I check on this device with age "30" and country "US"
     Then the "Result" live region says "Eligible to vote"
 
-  Scenario: Switching language updates the document language
+  Scenario: Switching the language localizes the whole interface
     When I switch the language to "NE"
     Then the document language is "ne"
+    And the page heading says "मतदान योग्यता"
+    And the age field is labelled "तपाईंको उमेर"
+    And the submit button says "योग्यता जाँच्नुहोस्"
+    When I switch the language to "HI"
+    Then the document language is "hi"
+    And the page heading says "मतदान पात्रता"
+    When I switch the language to "EN"
+    Then the document language is "en"
+    And the page heading says "Voting Eligibility"
 
   Scenario: Invalid input moves focus to the age field
     When I check on this device with age "abc" and country "US"
