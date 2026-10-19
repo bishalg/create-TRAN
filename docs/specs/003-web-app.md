@@ -55,7 +55,7 @@ All user-visible strings MUST come from the dictionaries; `en`, `ne` and `hi` MU
 ### REQ-WEB-009 [verified] Tokens only
 
 Colours MUST come from the generated `--tran-*` variables (or `color-mix()` of them). Shared typography atoms (`TranText`) MUST map variants to those variables via CSS, not ad-hoc hex in components.
-**Verified by:** `TranText.test.tsx`, [docs/ATOMIC.md](../ATOMIC.md).
+**Verified by:** `TranText.test.tsx`, `TranStack.test.tsx`, [docs/ATOMIC.md](../ATOMIC.md).
 
 ## Accessibility (target: WCAG 2.2 level AA)
 
