@@ -19,9 +19,12 @@
 		671618319C87AF8BBD872989 /* Errors.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B390E496B5F1AF4FB4F92F21 /* Errors.xcstrings */; };
 		6FE3541F44F7EAD42246B0D6 /* VotingHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D67D27EB3D5D770789B21FDF /* VotingHomeView.swift */; };
 		716AB97BB83BAFE29808C866 /* Auth.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F8C57904C226928C1009850D /* Auth.xcstrings */; };
+		79A802B80645147C7D970211 /* TranMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10BA7AEEF263598B8C38A9B8 /* TranMotion.swift */; };
 		8BB20B45D9FEB4BFA71F57D9 /* Shell.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 4F832E35AE5EDE8C70E518BF /* Shell.xcstrings */; };
 		A3B9B607F8FAB9B2688590A9 /* NavigationDirector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 312E02DE098663B7CE24DEEA /* NavigationDirector.swift */; };
 		BC74160BB1E1B371BB4D663B /* Auditor.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F12124FF6470EDFA0A353BF5 /* Auditor.xcstrings */; };
+		C85B94757DD630DBC497EC52 /* TranMotionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67E4D3E701D250552E7DA222 /* TranMotionTests.swift */; };
+		CC995C0D46F539DCC39C8BC4 /* TranMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10BA7AEEF263598B8C38A9B8 /* TranMotion.swift */; };
 		DCED7FF96DAF77F43564EB88 /* tran_uniffi.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2AF051840CF2BCD45F86C7 /* tran_uniffi.swift */; };
 		E06715EB17C0CF5EC9358484 /* NavigationCoordinatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E48F532295512AFE483F2438 /* NavigationCoordinatorView.swift */; };
 		F23C19D070B4D46967F1F757 /* AuthWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E88174C22C857E2C4A32A1C /* AuthWelcomeView.swift */; };
@@ -46,6 +49,7 @@
 
 /* Begin PBXFileReference section */
 		03B9BA7A9AF77630313E2D4C /* TranVotingDemoTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TranVotingDemoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		10BA7AEEF263598B8C38A9B8 /* TranMotion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranMotion.swift; sourceTree = "<group>"; };
 		2416105BFC37987133B79587 /* VoteEligibilityParityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoteEligibilityParityTests.swift; sourceTree = "<group>"; };
 		312E02DE098663B7CE24DEEA /* NavigationDirector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationDirector.swift; sourceTree = "<group>"; };
 		3540F3A0BA2FD3D74BC4C9E0 /* tran_uniffiFFI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tran_uniffiFFI.h; sourceTree = "<group>"; };
@@ -53,6 +57,7 @@
 		47217D862BDF4F5BACE65574 /* L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = L10n.swift; sourceTree = "<group>"; };
 		4F832E35AE5EDE8C70E518BF /* Shell.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Shell.xcstrings; sourceTree = "<group>"; };
 		50205EBE0EB7A80BE144F622 /* TranVotingDemoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranVotingDemoApp.swift; sourceTree = "<group>"; };
+		67E4D3E701D250552E7DA222 /* TranMotionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranMotionTests.swift; sourceTree = "<group>"; };
 		6884D38FE0697CF8F8DE543A /* BrandTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandTokens.swift; sourceTree = "<group>"; };
 		7C6A6C2C513D02BF5CA544BA /* AuditorHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuditorHomeView.swift; sourceTree = "<group>"; };
 		8E88174C22C857E2C4A32A1C /* AuthWelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthWelcomeView.swift; sourceTree = "<group>"; };
@@ -106,6 +111,7 @@
 		5A10610A4FE9FD79FD5ED948 /* TranVotingDemoTests */ = {
 			isa = PBXGroup;
 			children = (
+				67E4D3E701D250552E7DA222 /* TranMotionTests.swift */,
 				2416105BFC37987133B79587 /* VoteEligibilityParityTests.swift */,
 			);
 			path = TranVotingDemoTests;
@@ -136,6 +142,7 @@
 				8E88174C22C857E2C4A32A1C /* AuthWelcomeView.swift */,
 				E48F532295512AFE483F2438 /* NavigationCoordinatorView.swift */,
 				312E02DE098663B7CE24DEEA /* NavigationDirector.swift */,
+				10BA7AEEF263598B8C38A9B8 /* TranMotion.swift */,
 				50205EBE0EB7A80BE144F622 /* TranVotingDemoApp.swift */,
 				D67D27EB3D5D770789B21FDF /* VotingHomeView.swift */,
 				37B7EEEBFF5C7E739EF2F07D /* Generated */,
@@ -336,6 +343,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				79A802B80645147C7D970211 /* TranMotion.swift in Sources */,
+				C85B94757DD630DBC497EC52 /* TranMotionTests.swift in Sources */,
 				3D08EBFB3CBC04C780A05C6C /* VoteEligibilityParityTests.swift in Sources */,
 				4064B4A0E18C8AA31EE28915 /* tran_uniffi.swift in Sources */,
 			);
@@ -351,6 +360,7 @@
 				033C5EFE87867769BC85393E /* L10n.swift in Sources */,
 				E06715EB17C0CF5EC9358484 /* NavigationCoordinatorView.swift in Sources */,
 				A3B9B607F8FAB9B2688590A9 /* NavigationDirector.swift in Sources */,
+				CC995C0D46F539DCC39C8BC4 /* TranMotion.swift in Sources */,
 				5B2A7551A748CF4934519148 /* TranVotingDemoApp.swift in Sources */,
 				6FE3541F44F7EAD42246B0D6 /* VotingHomeView.swift in Sources */,
 				DCED7FF96DAF77F43564EB88 /* tran_uniffi.swift in Sources */,

@@ -48,6 +48,7 @@ targets:
     sources:
       - Tests/TranVotingDemoTests
       - Sources/TranVotingDemo/Generated/UniFFI
+      - Sources/TranVotingDemo/TranMotion.swift
     dependencies:
       - target: TranVotingDemo
     settings:

@@ -26,6 +26,7 @@ target/
 .gradle/
 .kotlin/
 local.properties
+apps/android/app/src/main/jniLibs/
 
 # Swift / Xcode (apps/ios)
 .build/

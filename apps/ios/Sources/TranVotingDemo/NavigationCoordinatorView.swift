@@ -8,6 +8,7 @@ struct NavigationCoordinatorView: View {
     @State private var isBootstrapping: Bool
     /// Any theme in the rust-core registry can be selected — no light/dark boolean.
     @State private var theme: TranTheme = .dark
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var palette: TranPalette { TranBrandTokens.palette(for: theme) }
 
@@ -46,7 +47,7 @@ struct NavigationCoordinatorView: View {
                 .onAppear {
                     // Central director resolves session and transitions
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        withAnimation {
+                        withAnimation(TranMotion.animation(reduceMotion: reduceMotion)) {
                             isBootstrapping = false
                         }
                     }
@@ -55,19 +56,19 @@ struct NavigationCoordinatorView: View {
                 switch NavigationDirector.resolveDestination(session: session) {
                 case .splash, .authWelcome:
                     AuthWelcomeView(palette: palette) { selectedRole in
-                        withAnimation {
+                        withAnimation(TranMotion.animation(reduceMotion: reduceMotion)) {
                             session = .authenticated(role: selectedRole)
                         }
                     }
                 case .voterDashboard:
                     VotingHomeView(palette: palette, theme: $theme, onSignOut: {
-                        withAnimation {
+                        withAnimation(TranMotion.animation(reduceMotion: reduceMotion)) {
                             session = .unauthenticated
                         }
                     })
                 case .auditorDashboard:
                     AuditorHomeView(palette: palette) {
-                        withAnimation {
+                        withAnimation(TranMotion.animation(reduceMotion: reduceMotion)) {
                             session = .unauthenticated
                         }
                     }
