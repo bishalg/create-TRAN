@@ -14,9 +14,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
+import com.tran.voting.R
 import com.tran.voting.generated.BrandPalette
 
 /**
@@ -40,12 +42,12 @@ fun AuthWelcomeScreen(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                text = "TRAN Voting",
+                text = stringResource(R.string.native_welcome_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = palette.textPrimary
             )
             Text(
-                text = "Select your access role to continue:",
+                text = stringResource(R.string.native_welcome_subtitle),
                 style = MaterialTheme.typography.bodyLarge,
                 color = palette.textPrimary.copy(alpha = 0.8f)
             )
@@ -58,7 +60,7 @@ fun AuthWelcomeScreen(
                     .testTag("voter-branch-button"),
                 onClick = { onSelectRole(UserRole.CITIZEN_VOTER) }
             ) {
-                Text("Continue as Citizen Voter")
+                Text(stringResource(R.string.native_continue_as_voter))
             }
 
             OutlinedButton(
@@ -67,7 +69,7 @@ fun AuthWelcomeScreen(
                     .testTag("auditor-branch-button"),
                 onClick = { onSelectRole(UserRole.ELECTION_AUDITOR) }
             ) {
-                Text("Continue as Election Auditor")
+                Text(stringResource(R.string.native_continue_as_auditor))
             }
         }
     }

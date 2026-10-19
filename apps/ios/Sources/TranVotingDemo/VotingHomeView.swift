@@ -1,12 +1,13 @@
 import SwiftUI
 
 /// Voting demo — brand tokens + offline rust-core rules via UniFFI.
+/// Copy comes from the shared dictionaries through the generated String Catalog.
 struct VotingHomeView: View {
     let palette: TranPalette
     @Binding var theme: TranTheme
     @State private var ageText = "20"
     @State private var countryCode = "NP"
-    @State private var resultText = "Tap Check offline"
+    @State private var resultText = NSLocalizedString("native.resultPlaceholder", comment: "")
     var onSignOut: (() -> Void)? = nil
 
     var body: some View {
@@ -16,17 +17,17 @@ struct VotingHomeView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("TRAN / iOS")
+                            Text("native.iosHeader")
                                 .font(.headline)
                                 .foregroundStyle(palette.textPrimary)
-                            Text("Offline voting (UniFFI to rust-core)")
+                            Text("native.voterSubtitle")
                                 .font(.subheadline)
                                 .foregroundStyle(palette.textPrimary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         Spacer()
                         if let onSignOut {
-                            Button("Sign out", action: onSignOut)
+                            Button("native.signOut", action: onSignOut)
                                 .buttonStyle(.bordered)
                                 .tint(palette.primary)
                                 .accessibilityIdentifier("sign-out-button")
@@ -35,10 +36,10 @@ struct VotingHomeView: View {
 
                     VStack(alignment: .leading, spacing: 12) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Age")
+                            Text("native.ageLabel")
                                 .font(.subheadline)
                                 .foregroundStyle(palette.textPrimary)
-                            TextField("", text: $ageText, prompt: Text("Enter age").foregroundStyle(palette.textPrimary))
+                            TextField("", text: $ageText, prompt: Text("native.agePlaceholder").foregroundStyle(palette.textPrimary))
                                 .keyboardType(.numberPad)
                                 .padding(10)
                                 .background(palette.surface)
@@ -47,10 +48,10 @@ struct VotingHomeView: View {
                                 .accessibilityIdentifier("age-field")
                         }
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Country")
+                            Text("native.countryLabel")
                                 .font(.subheadline)
                                 .foregroundStyle(palette.textPrimary)
-                            TextField("", text: $countryCode, prompt: Text("Two letters").foregroundStyle(palette.textPrimary))
+                            TextField("", text: $countryCode, prompt: Text("native.countryPlaceholder").foregroundStyle(palette.textPrimary))
                                 .textInputAutocapitalization(.characters)
                                 .padding(10)
                                 .background(palette.surface)
@@ -60,7 +61,7 @@ struct VotingHomeView: View {
                         }
                     }
 
-                    Button("Check offline") {
+                    Button("native.checkOffline") {
                         checkOffline(
                             canVote: palette.eligibilityCanVote,
                             cannotVote: palette.eligibilityCannotVote
@@ -80,10 +81,10 @@ struct VotingHomeView: View {
                         .accessibilityAddTraits(.updatesFrequently)
 
                     // Theme choices come from the rust-core registry: every case renders here,
-                    // so adding a palette in tokens.rs surfaces via `pnpm tokens:sync`.
-                    Picker("Theme", selection: $theme) {
+                    // with its label from the shared dictionaries (`app.themes.<mode>`).
+                    Picker("app.themeLabel", selection: $theme) {
                         ForEach(TranTheme.allCases) { mode in
-                            Text(mode.label).tag(mode)
+                            Text(NSLocalizedString("app.themes.\(mode.rawValue)", comment: "")).tag(mode)
                         }
                     }
                     .pickerStyle(.segmented)
@@ -99,7 +100,7 @@ struct VotingHomeView: View {
 
     private func checkOffline(canVote: Color, cannotVote: Color) {
         guard let age = UInt16(ageText), !countryCode.isEmpty else {
-            resultText = "Enter age and country"
+            resultText = NSLocalizedString("native.invalidAgeAndCountry", comment: "")
             return
         }
         let formatter = DateFormatter()

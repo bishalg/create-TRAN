@@ -23,18 +23,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
+import com.tran.voting.R
 import com.tran.voting.generated.BrandPalette
 import com.tran.voting.generated.TranTheme
+import com.tran.voting.generated.labelRes
 import uniffi.tran_uniffi.TranValidationException
 import uniffi.tran_uniffi.evaluateVoteEligibilityOffline
 import java.time.LocalDate
 
-/** Voting demo — brand tokens + offline rust-core rules via UniFFI. */
+/** Voting demo — brand tokens + offline rust-core rules via UniFFI. Copy comes from generated `strings.xml`. */
 @Composable
 fun VotingHomeScreen(
     palette: BrandPalette,
@@ -44,7 +47,10 @@ fun VotingHomeScreen(
 ) {
     var ageText by remember { mutableStateOf("20") }
     var countryCode by remember { mutableStateOf("NP") }
-    var resultText by remember { mutableStateOf("Tap Check offline") }
+    val resultPlaceholder = stringResource(R.string.native_result_placeholder)
+    var resultText by remember { mutableStateOf(resultPlaceholder) }
+    val invalidAge = stringResource(R.string.native_invalid_age)
+    val invalidCountry = stringResource(R.string.native_invalid_country)
 
     Column(
         modifier = Modifier
@@ -62,12 +68,12 @@ fun VotingHomeScreen(
         ) {
             Column {
                 Text(
-                    text = "TRAN / Android",
+                    text = stringResource(R.string.native_android_header),
                     style = MaterialTheme.typography.titleLarge,
                     color = palette.textPrimary,
                 )
                 Text(
-                    text = "Offline voting (UniFFI → rust-core)",
+                    text = stringResource(R.string.native_voter_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = palette.textPrimary.copy(alpha = 0.8f),
                 )
@@ -77,7 +83,7 @@ fun VotingHomeScreen(
                     modifier = Modifier.testTag("sign-out-button"),
                     onClick = onSignOut
                 ) {
-                    Text("Sign out")
+                    Text(stringResource(R.string.native_sign_out))
                 }
             }
         }
@@ -85,14 +91,14 @@ fun VotingHomeScreen(
             OutlinedTextField(
                 value = ageText,
                 onValueChange = { ageText = it },
-                label = { Text("Age") },
+                label = { Text(stringResource(R.string.native_age_label)) },
                 singleLine = true,
                 modifier = Modifier.weight(1f).testTag("age-field"),
             )
             OutlinedTextField(
                 value = countryCode,
                 onValueChange = { countryCode = it.uppercase() },
-                label = { Text("Country") },
+                label = { Text(stringResource(R.string.native_country_label)) },
                 singleLine = true,
                 modifier = Modifier.weight(1f).testTag("country-field"),
             )
@@ -101,10 +107,10 @@ fun VotingHomeScreen(
             modifier = Modifier.testTag("check-button"),
             onClick = {
                 resultText =
-                    runOfflineCheck(ageText, countryCode, palette)
+                    runOfflineCheck(ageText, countryCode, palette, invalidAge, invalidCountry)
             },
         ) {
-            Text("Check offline")
+            Text(stringResource(R.string.native_check_offline))
         }
         Text(
             text = resultText,
@@ -115,7 +121,7 @@ fun VotingHomeScreen(
             color = palette.textPrimary,
         )
         // Theme choices come from the rust-core registry: every palette renders here after
-        // `pnpm tokens:sync`, so adding a theme needs no change in this screen.
+        // `pnpm tokens:sync`, with its label from the shared dictionaries (`app.themes.*`).
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -126,7 +132,7 @@ fun VotingHomeScreen(
                 FilterChip(
                     selected = mode == theme,
                     onClick = { onThemeChange(mode) },
-                    label = { Text(mode.label) },
+                    label = { Text(stringResource(mode.labelRes)) },
                 )
             }
         }
@@ -137,9 +143,11 @@ private fun runOfflineCheck(
     ageText: String,
     countryCode: String,
     palette: BrandPalette,
+    invalidAge: String,
+    invalidCountry: String,
 ): String {
-    val age = ageText.toUShortOrNull() ?: return "Enter a valid age"
-    if (countryCode.length != 2) return "Country must be two letters"
+    val age = ageText.toUShortOrNull() ?: return invalidAge
+    if (countryCode.length != 2) return invalidCountry
     val reference = LocalDate.now().toString()
     return try {
         val res = evaluateVoteEligibilityOffline(age, null, countryCode, reference)

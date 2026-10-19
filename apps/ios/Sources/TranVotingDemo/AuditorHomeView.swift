@@ -23,22 +23,22 @@ struct AuditorHomeView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Election Auditor")
+                            Text("native.auditorTitle")
                                 .font(.title2.weight(.bold))
                                 .foregroundStyle(palette.textPrimary)
-                            Text("Global Rules & Parity Verification")
+                            Text("native.auditorSubtitle")
                                 .font(.subheadline)
                                 .foregroundStyle(palette.textPrimary.opacity(0.8))
                         }
                         Spacer()
-                        Button("Sign out", action: onSignOut)
+                        Button("native.signOut", action: onSignOut)
                             .buttonStyle(.bordered)
                             .tint(palette.primary)
                             .accessibilityIdentifier("sign-out-button")
                     }
 
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Verified Country Minimum Ages")
+                        Text("native.auditorRulesTitle")
                             .font(.headline)
                             .foregroundStyle(palette.textPrimary)
 
@@ -48,7 +48,7 @@ struct AuditorHomeView: View {
                                     .fontWeight(.bold)
                                     .foregroundStyle(palette.textPrimary)
                                 Spacer()
-                                Text("\(item.1) years")
+                                Text(String(format: NSLocalizedString("native.years", comment: ""), item.1))
                                     .foregroundStyle(palette.textPrimary.opacity(0.9))
                             }
                             .padding(.vertical, 8)

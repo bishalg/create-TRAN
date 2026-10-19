@@ -11,10 +11,10 @@ struct AuthWelcomeView: View {
             palette.background.ignoresSafeArea()
             VStack(spacing: 28) {
                 VStack(spacing: 8) {
-                    Text("TRAN Voting")
+                    Text("native.welcomeTitle")
                         .font(.largeTitle.weight(.bold))
                         .foregroundStyle(palette.textPrimary)
-                    Text("Choose your access role to continue:")
+                    Text("native.welcomeSubtitle")
                         .font(.body)
                         .foregroundStyle(palette.textPrimary.opacity(0.8))
                 }
@@ -23,7 +23,7 @@ struct AuthWelcomeView: View {
                     Button(action: { onSelectRole(.citizenVoter) }) {
                         HStack {
                             Image(systemName: "person.fill")
-                            Text("Continue as Citizen Voter")
+                            Text("native.continueAsVoter")
                                 .fontWeight(.semibold)
                         }
                         .frame(maxWidth: .infinity, minHeight: 48)
@@ -35,7 +35,7 @@ struct AuthWelcomeView: View {
                     Button(action: { onSelectRole(.electionAuditor) }) {
                         HStack {
                             Image(systemName: "checkmark.shield.fill")
-                            Text("Continue as Election Auditor")
+                            Text("native.continueAsAuditor")
                                 .fontWeight(.semibold)
                         }
                         .frame(maxWidth: .infinity, minHeight: 48)
