@@ -22,7 +22,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 import com.tran.voting.generated.BrandPalette
-import com.tran.voting.generated.TranBrandTokens
 
 /**
  * Auditor dashboard screen displaying the global voting rules matrix.
@@ -31,10 +30,9 @@ import com.tran.voting.generated.TranBrandTokens
  */
 @Composable
 fun AuditorScreen(
-    useDark: Boolean = true,
+    palette: BrandPalette,
     onSignOut: () -> Unit
 ) {
-    val palette: BrandPalette = if (useDark) TranBrandTokens.Dark else TranBrandTokens.Light
     val rules = listOf(
         "BR" to 16,
         "NP" to 18,

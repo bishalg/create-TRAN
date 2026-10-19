@@ -18,7 +18,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 import com.tran.voting.generated.BrandPalette
-import com.tran.voting.generated.TranBrandTokens
 
 /**
  * Welcome screen presenting the two branching navigation options.
@@ -27,11 +26,9 @@ import com.tran.voting.generated.TranBrandTokens
  */
 @Composable
 fun AuthWelcomeScreen(
-    useDark: Boolean = true,
+    palette: BrandPalette,
     onSelectRole: (UserRole) -> Unit
 ) {
-    val palette: BrandPalette = if (useDark) TranBrandTokens.Dark else TranBrandTokens.Light
-
     Column(
         modifier = Modifier
             .fillMaxSize()

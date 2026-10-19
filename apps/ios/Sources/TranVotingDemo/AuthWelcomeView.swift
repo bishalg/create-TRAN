@@ -3,24 +3,20 @@ import SwiftUI
 /// Welcome and role-selection screen providing the two branching navigation options.
 /// Verifies: REQ-NAV-002 REQ-NAV-003 REQ-NAV-004
 struct AuthWelcomeView: View {
-    let useDark: Bool
+    let palette: TranPalette
     let onSelectRole: (UserRole) -> Void
 
     var body: some View {
-        let background = useDark ? TranBrandTokens.Dark.background : TranBrandTokens.Light.background
-        let textPrimary = useDark ? TranBrandTokens.Dark.textPrimary : TranBrandTokens.Light.textPrimary
-        let primary = useDark ? TranBrandTokens.Dark.primary : TranBrandTokens.Light.primary
-
         ZStack {
-            background.ignoresSafeArea()
+            palette.background.ignoresSafeArea()
             VStack(spacing: 28) {
                 VStack(spacing: 8) {
                     Text("TRAN Voting")
                         .font(.largeTitle.weight(.bold))
-                        .foregroundStyle(textPrimary)
+                        .foregroundStyle(palette.textPrimary)
                     Text("Choose your access role to continue:")
                         .font(.body)
-                        .foregroundStyle(textPrimary.opacity(0.8))
+                        .foregroundStyle(palette.textPrimary.opacity(0.8))
                 }
 
                 VStack(spacing: 16) {
@@ -33,7 +29,7 @@ struct AuthWelcomeView: View {
                         .frame(maxWidth: .infinity, minHeight: 48)
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(primary)
+                    .tint(palette.primary)
                     .accessibilityIdentifier("voter-branch-button")
 
                     Button(action: { onSelectRole(.electionAuditor) }) {
@@ -45,7 +41,7 @@ struct AuthWelcomeView: View {
                         .frame(maxWidth: .infinity, minHeight: 48)
                     }
                     .buttonStyle(.bordered)
-                    .tint(primary)
+                    .tint(palette.primary)
                     .accessibilityIdentifier("auditor-branch-button")
                 }
             }

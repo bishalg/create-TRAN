@@ -3,7 +3,7 @@ import SwiftUI
 /// Auditor dashboard displaying the global voting rules matrix.
 /// Verifies: REQ-NAV-004 REQ-NAV-005
 struct AuditorHomeView: View {
-    let useDark: Bool
+    let palette: TranPalette
     let onSignOut: () -> Void
 
     private let countryRules: [(String, Int)] = [
@@ -17,50 +17,46 @@ struct AuditorHomeView: View {
     ]
 
     var body: some View {
-        let background = useDark ? TranBrandTokens.Dark.background : TranBrandTokens.Light.background
-        let textPrimary = useDark ? TranBrandTokens.Dark.textPrimary : TranBrandTokens.Light.textPrimary
-        let primary = useDark ? TranBrandTokens.Dark.primary : TranBrandTokens.Light.primary
-
         ZStack {
-            background.ignoresSafeArea()
+            palette.background.ignoresSafeArea()
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Election Auditor")
                                 .font(.title2.weight(.bold))
-                                .foregroundStyle(textPrimary)
+                                .foregroundStyle(palette.textPrimary)
                             Text("Global Rules & Parity Verification")
                                 .font(.subheadline)
-                                .foregroundStyle(textPrimary.opacity(0.8))
+                                .foregroundStyle(palette.textPrimary.opacity(0.8))
                         }
                         Spacer()
                         Button("Sign out", action: onSignOut)
                             .buttonStyle(.bordered)
-                            .tint(primary)
+                            .tint(palette.primary)
                             .accessibilityIdentifier("sign-out-button")
                     }
 
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Verified Country Minimum Ages")
                             .font(.headline)
-                            .foregroundStyle(textPrimary)
+                            .foregroundStyle(palette.textPrimary)
 
                         ForEach(countryRules, id: \.0) { item in
                             HStack {
                                 Text(item.0)
                                     .fontWeight(.bold)
-                                    .foregroundStyle(textPrimary)
+                                    .foregroundStyle(palette.textPrimary)
                                 Spacer()
                                 Text("\(item.1) years")
-                                    .foregroundStyle(textPrimary.opacity(0.9))
+                                    .foregroundStyle(palette.textPrimary.opacity(0.9))
                             }
                             .padding(.vertical, 8)
                             Divider()
                         }
                     }
                     .padding(16)
-                    .background(Color.white.opacity(0.06))
+                    .background(palette.surface.opacity(0.4))
                     .cornerRadius(12)
                 }
                 .padding(20)

@@ -50,16 +50,18 @@ final class VotingUITests: XCTestCase {
     func testControlsAreAtLeast44PointsAndLabelled() {
         let check = app.descendants(matching: .any)["check-button"]
         XCTAssertGreaterThanOrEqual(check.frame.height, 44, "check-button is too short to tap")
-        let themeRow = app.descendants(matching: .any).matching(identifier: "theme-toggle").element(boundBy: 0)
-        XCTAssertTrue(themeRow.waitForExistence(timeout: 2))
-        XCTAssertGreaterThanOrEqual(themeRow.frame.height, 44, "theme-toggle is too short to tap")
+        let themePicker = app.descendants(matching: .any).matching(identifier: "theme-picker").element(boundBy: 0)
+        XCTAssertTrue(themePicker.waitForExistence(timeout: 2))
+        XCTAssertGreaterThanOrEqual(themePicker.frame.height, 44, "theme-picker is too short to tap")
         XCTAssertTrue(app.buttons["Check offline"].exists, "button needs a spoken label")
-        XCTAssertTrue(themeRow.label.contains("Dark theme"), "toggle needs a spoken label")
+        XCTAssertTrue(app.buttons["Sepia"].exists, "every registry theme needs a spoken label")
     }
 
-    func testAccessibilityAuditPassesInBothThemes() throws {
+    func testAccessibilityAuditPassesAcrossThemes() throws {
         try app.performAccessibilityAudit()
-        app.descendants(matching: .any)["theme-toggle"].tap()
+        app.buttons["Sepia"].tap()
+        try app.performAccessibilityAudit()
+        app.buttons["Black"].tap()
         try app.performAccessibilityAudit()
     }
 
