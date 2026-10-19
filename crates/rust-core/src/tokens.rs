@@ -193,7 +193,7 @@ impl BrandDesignTokens {
 pub fn default_design_tokens() -> BrandDesignTokens {
     BrandDesignTokens {
         typography: TypographyTokens {
-            font_family_sans: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif"
+            font_family_sans: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Noto Sans Devanagari', 'Nirmala UI', 'Kohinoor Devanagari', sans-serif"
                 .into(),
             font_size_sm: "0.875rem".into(),
             font_size_md: "1rem".into(),

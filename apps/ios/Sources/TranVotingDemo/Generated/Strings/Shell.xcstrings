@@ -45,6 +45,28 @@
         }
       }
     },
+    "shell.skipToContent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip to content"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मुख्य सामग्री पर जाएँ"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मुख्य सामग्रीमा जानुहोस्"
+          }
+        }
+      }
+    },
     "shell.stack": {
       "localizations": {
         "en": {

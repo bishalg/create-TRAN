@@ -3,6 +3,7 @@
 <resources>
     <string name="shell_header">TRAN / %1$s</string>
     <string name="shell_language_label">भाषा</string>
+    <string name="shell_skip_to_content">मुख्य सामग्रीमा जानुहोस्</string>
     <string name="shell_stack">अफलाइन नियम TypeScript मा, API जाँच Axum + Rust Core बाट</string>
     <string name="shell_status_checking">API जाँच हुँदैछ…</string>
     <string name="shell_status_offline">API अफलाइन</string>

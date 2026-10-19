@@ -14,9 +14,9 @@ struct VotingHomeView: View {
         ZStack {
             palette.background.ignoresSafeArea()
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: TranSpace.md) {
                     HStack {
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: TranSpace.xs) {
                             Text(L10n.Shell.header("iOS"))
                                 .font(.headline)
                                 .foregroundStyle(palette.textPrimary)
@@ -34,29 +34,29 @@ struct VotingHomeView: View {
                         }
                     }
 
-                    VStack(alignment: .leading, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: TranSpace.base) {
+                        VStack(alignment: .leading, spacing: TranSpace.xs) {
                             Text(L10n.Eligibility.ageLabel)
                                 .font(.subheadline)
                                 .foregroundStyle(palette.textPrimary)
                             TextField("", text: $ageText, prompt: Text(L10n.Eligibility.agePlaceholder).foregroundStyle(palette.textPrimary))
                                 .keyboardType(.numberPad)
-                                .padding(10)
+                                .padding(TranSpace.base)
                                 .background(palette.surface)
                                 .foregroundStyle(palette.textPrimary)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .clipShape(RoundedRectangle(cornerRadius: TranRadius.sm))
                                 .accessibilityIdentifier("age-field")
                         }
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: TranSpace.xs) {
                             Text(L10n.Eligibility.countryLabel)
                                 .font(.subheadline)
                                 .foregroundStyle(palette.textPrimary)
                             TextField("", text: $countryCode, prompt: Text(L10n.Eligibility.countryPlaceholder).foregroundStyle(palette.textPrimary))
                                 .textInputAutocapitalization(.characters)
-                                .padding(10)
+                                .padding(TranSpace.base)
                                 .background(palette.surface)
                                 .foregroundStyle(palette.textPrimary)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .clipShape(RoundedRectangle(cornerRadius: TranRadius.sm))
                                 .accessibilityIdentifier("country-field")
                         }
                     }
@@ -69,7 +69,7 @@ struct VotingHomeView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
-                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .frame(maxWidth: .infinity, minHeight: TranSpace.touch)
                     .tint(palette.primary)
                     .accessibilityIdentifier("check-button")
 
@@ -89,11 +89,11 @@ struct VotingHomeView: View {
                     }
                     .pickerStyle(.segmented)
                     .controlSize(.large)
-                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .frame(maxWidth: .infinity, minHeight: TranSpace.touch)
                     .accessibilityIdentifier("theme-picker")
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(24)
+                .padding(TranSpace.lg)
             }
         }
     }

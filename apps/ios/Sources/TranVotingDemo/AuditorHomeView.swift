@@ -20,9 +20,9 @@ struct AuditorHomeView: View {
         ZStack {
             palette.background.ignoresSafeArea()
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: TranSpace.lg) {
                     HStack {
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: TranSpace.xs) {
                             Text(L10n.Common.roleElectionAuditor)
                                 .font(.title2.weight(.bold))
                                 .foregroundStyle(palette.textPrimary)
@@ -37,7 +37,7 @@ struct AuditorHomeView: View {
                             .accessibilityIdentifier("sign-out-button")
                     }
 
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: TranSpace.base) {
                         Text(L10n.Auditor.rulesTitle)
                             .font(.headline)
                             .foregroundStyle(palette.textPrimary)
@@ -55,11 +55,11 @@ struct AuditorHomeView: View {
                             Divider()
                         }
                     }
-                    .padding(16)
+                    .padding(TranSpace.md)
                     .background(palette.surface.opacity(0.4))
-                    .cornerRadius(12)
+                    .cornerRadius(TranRadius.md)
                 }
-                .padding(20)
+                .padding(TranSpace.lg)
             }
         }
     }

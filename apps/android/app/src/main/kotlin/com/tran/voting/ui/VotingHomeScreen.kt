@@ -26,7 +26,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
-import androidx.compose.ui.unit.dp
+import com.tran.voting.generated.TranSpace
 import com.tran.voting.generated.BrandPalette
 import com.tran.voting.generated.TranStrings
 import com.tran.voting.generated.TranTheme
@@ -59,8 +59,8 @@ fun VotingHomeScreen(
             .background(palette.background)
             .safeDrawingPadding()
             .semantics { testTagsAsResourceId = true }
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(TranSpace.lg),
+        verticalArrangement = Arrangement.spacedBy(TranSpace.md),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -88,7 +88,7 @@ fun VotingHomeScreen(
                 }
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(TranSpace.sm)) {
             OutlinedTextField(
                 value = ageText,
                 onValueChange = { ageText = it },
@@ -126,7 +126,7 @@ fun VotingHomeScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("theme-picker"),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(TranSpace.sm),
         ) {
             TranTheme.entries.forEach { mode ->
                 FilterChip(

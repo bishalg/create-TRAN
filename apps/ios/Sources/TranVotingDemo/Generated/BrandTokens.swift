@@ -121,3 +121,24 @@ enum TranBrandTokens {
         themes[theme] ?? dark
     }
 }
+
+/// Spacing scale from rust-core (`tokens.rs`), in points. Feature code never uses numeric literals.
+enum TranSpace {
+    static let xxs: CGFloat = 2
+    static let xs: CGFloat = 4
+    static let sm: CGFloat = 8
+    static let base: CGFloat = 12
+    static let md: CGFloat = 16
+    static let lg: CGFloat = 24
+    static let xl: CGFloat = 32
+    static let xxl: CGFloat = 48
+    static let touch: CGFloat = 44
+    static let nudge: CGFloat = 6
+}
+
+/// Corner radii from rust-core, in points.
+enum TranRadius {
+    static let sm: CGFloat = 10
+    static let md: CGFloat = 14
+    static let lg: CGFloat = 20
+}

@@ -3,6 +3,7 @@
 <resources>
     <string name="shell_header">TRAN / %1$s</string>
     <string name="shell_language_label">Language</string>
+    <string name="shell_skip_to_content">Skip to content</string>
     <string name="shell_stack">Offline rules in TypeScript, async checks via Axum + Rust Core</string>
     <string name="shell_status_checking">Checking API…</string>
     <string name="shell_status_offline">API offline</string>

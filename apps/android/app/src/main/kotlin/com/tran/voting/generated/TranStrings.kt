@@ -143,6 +143,8 @@ object TranStrings {
         @StringRes
         val languageLabel: Int = R.string.shell_language_label // shell.language.label
         @StringRes
+        val skipToContent: Int = R.string.shell_skip_to_content // shell.skipToContent
+        @StringRes
         val stack: Int = R.string.shell_stack // shell.stack
         @StringRes
         val statusChecking: Int = R.string.shell_status_checking // shell.status.checking

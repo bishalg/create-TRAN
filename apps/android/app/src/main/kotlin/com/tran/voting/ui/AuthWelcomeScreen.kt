@@ -17,7 +17,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
-import androidx.compose.ui.unit.dp
+import com.tran.voting.generated.TranSpace
 import com.tran.voting.generated.BrandPalette
 import com.tran.voting.generated.TranStrings
 
@@ -37,10 +37,10 @@ fun AuthWelcomeScreen(
             .background(palette.background)
             .safeDrawingPadding()
             .semantics { testTagsAsResourceId = true }
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+            .padding(TranSpace.lg),
+        verticalArrangement = Arrangement.spacedBy(TranSpace.lg)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(TranSpace.sm)) {
             Text(
                 text = stringResource(TranStrings.Auth.welcomeTitle),
                 style = MaterialTheme.typography.headlineLarge,
@@ -53,7 +53,7 @@ fun AuthWelcomeScreen(
             )
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(TranSpace.md)) {
             Button(
                 modifier = Modifier
                     .fillMaxWidth()

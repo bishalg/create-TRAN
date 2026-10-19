@@ -31,9 +31,9 @@ struct NavigationCoordinatorView: View {
                 // Screen 0: Launch / Splash Screen (Navigation Director boots)
                 ZStack {
                     palette.background.ignoresSafeArea()
-                    VStack(spacing: 16) {
+                    VStack(spacing: TranSpace.md) {
                         Image(systemName: "hand.raised.fill")
-                            .font(.system(size: 64))
+                            .font(.largeTitle)
                             .foregroundStyle(palette.primary)
                         Text(L10n.Common.brand)
                             .font(.largeTitle.weight(.bold))

@@ -21,7 +21,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
-import androidx.compose.ui.unit.dp
+import com.tran.voting.generated.TranSpace
 import com.tran.voting.generated.BrandPalette
 import com.tran.voting.generated.TranStrings
 
@@ -51,8 +51,8 @@ fun AuditorScreen(
             .background(palette.background)
             .safeDrawingPadding()
             .semantics { testTagsAsResourceId = true }
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .padding(TranSpace.lg),
+        verticalArrangement = Arrangement.spacedBy(TranSpace.lg)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -87,13 +87,13 @@ fun AuditorScreen(
 
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(TranSpace.sm)
         ) {
             items(rules) { (country, age) ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                        .padding(vertical = TranSpace.xs),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(

@@ -9,8 +9,8 @@ struct AuthWelcomeView: View {
     var body: some View {
         ZStack {
             palette.background.ignoresSafeArea()
-            VStack(spacing: 28) {
-                VStack(spacing: 8) {
+            VStack(spacing: TranSpace.lg) {
+                VStack(spacing: TranSpace.sm) {
                     Text(L10n.Auth.welcomeTitle)
                         .font(.largeTitle.weight(.bold))
                         .foregroundStyle(palette.textPrimary)
@@ -19,14 +19,14 @@ struct AuthWelcomeView: View {
                         .foregroundStyle(palette.textPrimary.opacity(0.8))
                 }
 
-                VStack(spacing: 16) {
+                VStack(spacing: TranSpace.md) {
                     Button(action: { onSelectRole(.citizenVoter) }) {
                         HStack {
                             Image(systemName: "person.fill")
                             Text(L10n.Auth.continueAsVoter)
                                 .fontWeight(.semibold)
                         }
-                        .frame(maxWidth: .infinity, minHeight: 48)
+                        .frame(maxWidth: .infinity, minHeight: TranSpace.touch)
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(palette.primary)
@@ -38,14 +38,14 @@ struct AuthWelcomeView: View {
                             Text(L10n.Auth.continueAsAuditor)
                                 .fontWeight(.semibold)
                         }
-                        .frame(maxWidth: .infinity, minHeight: 48)
+                        .frame(maxWidth: .infinity, minHeight: TranSpace.touch)
                     }
                     .buttonStyle(.bordered)
                     .tint(palette.primary)
                     .accessibilityIdentifier("auditor-branch-button")
                 }
             }
-            .padding(24)
+            .padding(TranSpace.lg)
         }
     }
 }

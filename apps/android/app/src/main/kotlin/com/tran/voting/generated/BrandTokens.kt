@@ -7,6 +7,8 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
 private fun tranColor(hex: String): Color {
     val raw = hex.removePrefix("#")
@@ -127,3 +129,24 @@ fun tranColorScheme(palette: BrandPalette): ColorScheme =
             onBackground = palette.textPrimary,
         )
     }
+
+/** Spacing scale from rust-core (`tokens.rs`), in dp. Feature code never uses numeric literals. */
+object TranSpace {
+    val xxs: Dp = 2.dp
+    val xs: Dp = 4.dp
+    val sm: Dp = 8.dp
+    val base: Dp = 12.dp
+    val md: Dp = 16.dp
+    val lg: Dp = 24.dp
+    val xl: Dp = 32.dp
+    val xxl: Dp = 48.dp
+    val touch: Dp = 44.dp
+    val nudge: Dp = 6.dp
+}
+
+/** Corner radii from rust-core, in dp. */
+object TranRadius {
+    val sm: Dp = 10.dp
+    val md: Dp = 14.dp
+    val lg: Dp = 20.dp
+}

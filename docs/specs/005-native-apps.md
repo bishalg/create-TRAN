@@ -48,6 +48,13 @@ dictionaries (see [008](008-localization.md) and
 Catalogs under `apps/ios/.../Generated/Strings/` with typed `L10n` accessors, and
 `res/values{,-ne,-hi}/strings_<module>.xml` with typed `TranStrings` accessors — matching the
 dictionaries key-for-key and value-for-value, with English as the base language and the
-fallback. Rust-core verdict text (the engine `reason`) is out of scope until the engine emits
-locale-aware messages.
+fallback. The core's English `reason`/`detail` is never shown: the verdict sentence is built from facts
+(see REQ-I18N-007).
 **Verified by:** [`packages/core-ts/tests/native-strings.test.ts`](../../packages/core-ts/tests/native-strings.test.ts).
+
+### REQ-NAT-009 [verified] Native layout uses generated tokens only
+
+Spacing, radii and sizes in iOS and Android feature code MUST come from the generated `TranSpace` / `TranRadius`
+scales (emitted from `crates/rust-core/src/tokens.rs` by `pnpm tokens:sync`), and colours from the palette. Numeric
+`spacing:`/`.padding(n)`/`n.dp`/`n.sp`, `Color(0x…)` and fixed `.system(size:)` fonts MUST NOT appear in feature code.
+**Verified by:** [`native-tokens.test.ts`](../../packages/core-ts/tests/native-tokens.test.ts).

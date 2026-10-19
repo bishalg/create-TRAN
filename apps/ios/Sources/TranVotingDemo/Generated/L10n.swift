@@ -91,6 +91,7 @@ enum L10n {
             String(format: String(localized: "shell.header", table: "Shell"), platform)
         }
         static var languageLabel: String { String(localized: "shell.language.label", table: "Shell") }
+        static var skipToContent: String { String(localized: "shell.skipToContent", table: "Shell") }
         static var stack: String { String(localized: "shell.stack", table: "Shell") }
         static var statusChecking: String { String(localized: "shell.status.checking", table: "Shell") }
         static var statusOffline: String { String(localized: "shell.status.offline", table: "Shell") }
