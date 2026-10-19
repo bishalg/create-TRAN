@@ -20,7 +20,7 @@ export interface AppProps {
 }
 
 export function App({ initialSession }: AppProps = {}) {
-  const { locale, setLocale, theme, toggleTheme } = usePreferences();
+  const { locale, setLocale, theme, setTheme } = usePreferences();
   const api = useTranApi();
   const apiState: ApiState = api.isLoading ? 'checking' : api.isOffline ? 'offline' : 'online';
 
@@ -53,7 +53,7 @@ export function App({ initialSession }: AppProps = {}) {
         locale={locale}
         onLocaleChange={setLocale}
         theme={theme}
-        onThemeToggle={toggleTheme}
+        onThemeChange={setTheme}
         currentRole={currentRole}
         onSignOut={currentRole ? handleSignOut : undefined}
       />

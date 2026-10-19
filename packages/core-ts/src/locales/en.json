@@ -41,8 +41,13 @@
     "statusOnline": "API online",
     "statusOffline": "API offline",
     "statusChecking": "Checking API…",
-    "themeToLight": "Switch to light theme",
-    "themeToDark": "Switch to dark theme",
+    "themeLabel": "Theme",
+    "themes": {
+      "light": "Light",
+      "dark": "Dark",
+      "black": "Black",
+      "sepia": "Sepia"
+    },
     "languageLabel": "Language",
     "resultLabel": "Result"
   },

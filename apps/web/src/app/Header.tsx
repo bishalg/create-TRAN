@@ -1,7 +1,6 @@
-import { type SupportedLocale, type ThemeMode, t } from '@tran/core';
+import { type SupportedLocale, type ThemeMode, t, themeNames } from '@tran/core';
 import { TranButton } from '../shared/ui/TranButton.js';
 import { TranText } from '../shared/ui/TranText.js';
-import { MoonIcon, SunIcon } from '../shared/ui/icons.js';
 
 const LOCALES: SupportedLocale[] = ['en', 'ne', 'hi'];
 
@@ -9,7 +8,7 @@ export interface HeaderProps {
   locale: SupportedLocale;
   onLocaleChange: (locale: SupportedLocale) => void;
   theme: ThemeMode;
-  onThemeToggle: () => void;
+  onThemeChange: (theme: ThemeMode) => void;
   currentRole?: import('@tran/core').UserRole | null;
   onSignOut?: () => void;
 }
@@ -18,7 +17,7 @@ export function Header({
   locale,
   onLocaleChange,
   theme,
-  onThemeToggle,
+  onThemeChange,
   currentRole,
   onSignOut,
 }: HeaderProps) {
@@ -49,16 +48,21 @@ export function Header({
             </TranButton>
           ))}
         </div>
-        <TranButton
-          type="button"
-          variant="secondary"
-          size="md"
-          className="icon-button"
-          aria-label={t(theme === 'dark' ? 'app.themeToLight' : 'app.themeToDark', locale)}
-          onClick={onThemeToggle}
-        >
-          {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-        </TranButton>
+        <div className="segmented" role="group" aria-label={t('app.themeLabel', locale)}>
+          {themeNames.map((mode) => (
+            <TranButton
+              key={mode}
+              type="button"
+              variant="secondary"
+              size="md"
+              className="segmented-item"
+              aria-pressed={mode === theme}
+              onClick={() => onThemeChange(mode)}
+            >
+              {t(`app.themes.${mode}`, locale)}
+            </TranButton>
+          ))}
+        </div>
 
         {currentRole && (
           <TranText variant="caption" as="span" className="role-badge" data-testid="role-badge">

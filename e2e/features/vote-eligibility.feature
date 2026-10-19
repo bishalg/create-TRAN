@@ -1,4 +1,4 @@
-# Verifies: REQ-WEB-001 REQ-WEB-003 REQ-WEB-004 REQ-A11Y-001 REQ-A11Y-003 REQ-A11Y-004 REQ-A11Y-005 REQ-A11Y-006
+# Verifies: REQ-WEB-001 REQ-WEB-003 REQ-WEB-004 REQ-WEB-007 REQ-WEB-014 REQ-A11Y-001 REQ-A11Y-003 REQ-A11Y-004 REQ-A11Y-005 REQ-A11Y-006
 Feature: Voting eligibility
   As a visitor
   I want to know whether I am old enough to vote in a country
@@ -52,9 +52,22 @@ Feature: Voting eligibility
   Scenario: The footer shows the API is online
     Then the API status is "API online"
 
-  Scenario: The page can be used in the light theme
-    When I switch to the "light" theme
-    Then the page uses the "light" theme
+  Scenario Outline: Every theme in the registry applies its colour scheme
+    When I switch to the "<theme>" theme
+    Then the page uses the "<theme>" theme
+    And the page reports the "<scheme>" colour scheme
+
+    Examples:
+      | theme | scheme |
+      | light | light  |
+      | dark  | dark   |
+      | black | dark   |
+      | sepia | light  |
+
+  Scenario: A theme choice is remembered and applied before first paint
+    When I switch to the "sepia" theme
+    And I reload the page with the app code blocked
+    Then the page uses the "sepia" theme
 
   Scenario: Results are announced to screen readers
     Then an empty "Result" live region is already on the page
@@ -82,6 +95,8 @@ Feature: Voting eligibility
       | theme |
       | dark  |
       | light |
+      | black |
+      | sepia |
 
   Scenario: The layout never scrolls sideways on a phone
     Given I use a phone-sized screen

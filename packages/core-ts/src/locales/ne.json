@@ -41,8 +41,13 @@
     "statusOnline": "API सञ्चालनमा",
     "statusOffline": "API अफलाइन",
     "statusChecking": "API जाँच हुँदैछ…",
-    "themeToLight": "उज्यालो थिममा जानुहोस्",
-    "themeToDark": "अँध्यारो थिममा जानुहोस्",
+    "themeLabel": "थिम",
+    "themes": {
+      "light": "उज्यालो",
+      "dark": "अँध्यारो",
+      "black": "कालो",
+      "sepia": "सेपिया"
+    },
     "languageLabel": "भाषा",
     "resultLabel": "नतिजा"
   },

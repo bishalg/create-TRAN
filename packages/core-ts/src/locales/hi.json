@@ -41,8 +41,13 @@
     "statusOnline": "API चालू है",
     "statusOffline": "API ऑफ़लाइन",
     "statusChecking": "API जाँची जा रही है…",
-    "themeToLight": "लाइट थीम पर जाएँ",
-    "themeToDark": "डार्क थीम पर जाएँ",
+    "themeLabel": "थीम",
+    "themes": {
+      "light": "लाइट",
+      "dark": "डार्क",
+      "black": "काला",
+      "sepia": "सेपिया"
+    },
     "languageLabel": "भाषा",
     "resultLabel": "परिणाम"
   },

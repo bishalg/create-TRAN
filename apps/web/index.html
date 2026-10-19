@@ -10,6 +10,20 @@
     />
     <meta property="og:title" content="Voting Eligibility · TRAN" />
     <meta property="og:description" content="Rust rules shared by web, iOS and Android." />
+    <script>
+      // Applies the remembered theme before first paint (no flash of the wrong theme).
+      // Keep the storage key in sync with THEME_STORAGE_KEY in src/shared/lib/theme.ts.
+      (() => {
+        let stored = null;
+        try {
+          stored = localStorage.getItem('tran.theme');
+        } catch {
+          stored = null; // Storage can be blocked.
+        }
+        document.documentElement.dataset.theme =
+          stored || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

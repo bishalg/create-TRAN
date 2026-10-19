@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { SupportedLocale, ThemeMode } from '@tran/core';
-import { initialTheme } from '../shared/lib/theme.js';
+import { initialTheme, persistTheme } from '../shared/lib/theme.js';
 
 /** UI preferences that live on <html>: colour theme and document language. */
 export function usePreferences() {
   const [locale, setLocale] = useState<SupportedLocale>('en');
-  const [theme, setTheme] = useState<ThemeMode>(initialTheme);
+  const [theme, setThemeState] = useState<ThemeMode>(initialTheme);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -16,10 +16,16 @@ export function usePreferences() {
     document.documentElement.lang = locale;
   }, [locale]);
 
+  // Any registered theme can be selected — no light/dark toggle.
+  const setTheme = useCallback((next: ThemeMode) => {
+    setThemeState(next);
+    persistTheme(next);
+  }, []);
+
   return {
     locale,
     setLocale,
     theme,
-    toggleTheme: () => setTheme((current) => (current === 'dark' ? 'light' : 'dark')),
+    setTheme,
   };
 }

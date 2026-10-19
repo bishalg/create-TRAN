@@ -14,18 +14,14 @@
   --field: color-mix(in srgb, var(--tran-color-surface) 35%, var(--tran-color-background));
   --border: var(--tran-glass-border-standard);
   --ring: var(--tran-color-primary);
-  --btn-bg: var(--tran-color-primary);
+  /*
+   * Buttons mix the theme's own primary with its own text colour, so every
+   * palette (present and future) keeps the background token readable on the
+   * fill. No per-theme overrides — one derived rule for all themes.
+   */
+  --btn-bg: color-mix(in srgb, var(--tran-color-primary) 82%, var(--tran-color-text-primary));
   --btn-fg: var(--tran-color-background);
   --shadow: var(--tran-glass-shadow-ambient);
-}
-
-[data-theme='light'] {
-  /* Darker fill so white button text keeps >= 4.5:1 contrast. */
-  --btn-bg: color-mix(in srgb, var(--tran-color-primary) 80%, black);
-  --btn-fg: var(--tran-color-text-primary);
-  --card: var(--tran-color-background);
-  --field: var(--tran-color-background);
-  --shadow: var(--tran-glass-shadow-raised);
 }
 
 *,
@@ -100,6 +96,7 @@ input {
 
 .header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--tran-spacing-base);
@@ -128,7 +125,9 @@ input {
 
 .header-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--tran-spacing-sm);
 }
 
@@ -139,11 +138,6 @@ input {
   border: var(--tran-border-width) solid var(--border);
   border-radius: var(--tran-radius-sm);
   background: var(--field);
-}
-
-.tran-button.icon-button svg {
-  width: var(--tran-font-size-md);
-  height: var(--tran-font-size-md);
 }
 
 /* ── Hero ───────────────────────────────────────────────────────────────── */
@@ -375,18 +369,6 @@ input {
 .segmented .tran-button.segmented-item[aria-pressed='true'] {
   background: var(--btn-bg);
   color: var(--btn-fg);
-}
-
-.tran-button.icon-button {
-  display: grid;
-  place-items: center;
-  width: var(--tran-spacing-touch);
-  height: var(--tran-spacing-touch);
-  padding: 0;
-  border: var(--tran-border-width) solid var(--border);
-  border-radius: var(--tran-radius-sm);
-  background: var(--field);
-  color: var(--fg);
 }
 
 .tran-button.sign-out-button {
@@ -656,7 +638,8 @@ input {
   background: var(--tran-color-danger);
 }
 
-@media (max-width: var(--tran-breakpoint-narrow)) {
+/* Custom properties are invalid in media queries: keep equal to --tran-breakpoint-narrow (guarded by tokens-guard.test.ts). */
+@media (max-width: 30rem) {
   .shell {
     padding-top: var(--tran-spacing-md);
   }

@@ -1,18 +1,18 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { Header } from './Header.js';
 
 describe('Header', () => {
-  it('marks the current locale, reports changes and labels the theme action', async () => {
+  it('marks the current locale, reports changes and marks the current theme', async () => {
     const onLocaleChange = vi.fn();
-    const onThemeToggle = vi.fn();
+    const onThemeChange = vi.fn();
     render(
       <Header
         locale="hi"
         onLocaleChange={onLocaleChange}
         theme="dark"
-        onThemeToggle={onThemeToggle}
+        onThemeChange={onThemeChange}
       />
     );
 
@@ -20,12 +20,26 @@ describe('Header', () => {
     await userEvent.click(screen.getByRole('button', { name: 'EN' }));
     expect(onLocaleChange).toHaveBeenCalledWith('en');
 
-    await userEvent.click(screen.getByRole('button', { name: 'लाइट थीम पर जाएँ' }));
-    expect(onThemeToggle).toHaveBeenCalledOnce();
+    const themes = screen.getByRole('group', { name: 'थीम' });
+    expect(within(themes).getByRole('button', { name: 'डार्क' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+    await userEvent.click(within(themes).getByRole('button', { name: 'सेपिया' }));
+    expect(onThemeChange).toHaveBeenCalledWith('sepia');
   });
 
-  it('offers the dark theme when the page is light', () => {
-    render(<Header locale="en" onLocaleChange={() => {}} theme="light" onThemeToggle={() => {}} />);
-    expect(screen.getByRole('button', { name: 'Switch to dark theme' })).toBeVisible();
+  it('renders one choice per generated theme, in registry order', () => {
+    render(<Header locale="en" onLocaleChange={() => {}} theme="light" onThemeChange={() => {}} />);
+    const themes = screen.getByRole('group', { name: 'Theme' });
+    expect(
+      within(themes)
+        .getAllByRole('button')
+        .map((button) => button.textContent)
+    ).toEqual(['Light', 'Dark', 'Black', 'Sepia']);
+    expect(within(themes).getByRole('button', { name: 'Light' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
   });
 });
