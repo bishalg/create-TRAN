@@ -1,8 +1,20 @@
-import { type SupportedLocale, type ThemeMode, t, themeNames } from '@tran/core';
+import {
+  type SupportedLocale,
+  type ThemeMode,
+  type TranStringKey,
+  TRAN_LOCALES,
+  t,
+  themeNames,
+} from '@tran/core';
 import { TranButton } from '../shared/ui/TranButton.js';
 import { TranText } from '../shared/ui/TranText.js';
 
-const LOCALES: SupportedLocale[] = ['en', 'ne', 'hi'];
+const THEME_KEYS: Record<ThemeMode, TranStringKey> = {
+  light: 'shell.theme.light',
+  dark: 'shell.theme.dark',
+  black: 'shell.theme.black',
+  sepia: 'shell.theme.sepia',
+};
 
 export interface HeaderProps {
   locale: SupportedLocale;
@@ -28,13 +40,13 @@ export function Header({
           T
         </div>
         <TranText variant="body" as="div" className="brand-name">
-          TRAN
+          {t('common.brand', locale)}
         </TranText>
       </TranText>
 
       <div className="header-actions">
-        <div className="segmented" role="group" aria-label={t('app.languageLabel', locale)}>
-          {LOCALES.map((code) => (
+        <div className="segmented" role="group" aria-label={t('shell.language.label', locale)}>
+          {TRAN_LOCALES.map((code) => (
             <TranButton
               key={code}
               type="button"
@@ -48,7 +60,7 @@ export function Header({
             </TranButton>
           ))}
         </div>
-        <div className="segmented" role="group" aria-label={t('app.themeLabel', locale)}>
+        <div className="segmented" role="group" aria-label={t('shell.theme.label', locale)}>
           {themeNames.map((mode) => (
             <TranButton
               key={mode}
@@ -59,14 +71,19 @@ export function Header({
               aria-pressed={mode === theme}
               onClick={() => onThemeChange(mode)}
             >
-              {t(`app.themes.${mode}`, locale)}
+              {t(THEME_KEYS[mode], locale)}
             </TranButton>
           ))}
         </div>
 
         {currentRole && (
           <TranText variant="caption" as="span" className="role-badge" data-testid="role-badge">
-            {currentRole === 'citizen_voter' ? 'Citizen Voter' : 'Election Auditor'}
+            {t(
+              currentRole === 'citizen_voter'
+                ? 'common.role.citizenVoter'
+                : 'common.role.electionAuditor',
+              locale
+            )}
           </TranText>
         )}
 
@@ -78,9 +95,9 @@ export function Header({
             className="sign-out-button"
             data-testid="sign-out-button"
             onClick={onSignOut}
-            aria-label="Sign out"
+            aria-label={t('common.signOut', locale)}
           >
-            Sign out
+            {t('common.signOut', locale)}
           </TranButton>
         )}
       </div>

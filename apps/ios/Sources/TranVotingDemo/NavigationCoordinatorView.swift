@@ -35,7 +35,7 @@ struct NavigationCoordinatorView: View {
                         Image(systemName: "hand.raised.fill")
                             .font(.system(size: 64))
                             .foregroundStyle(palette.primary)
-                        Text("native.brandTitle")
+                        Text(L10n.Common.brand)
                             .font(.largeTitle.weight(.bold))
                             .foregroundStyle(palette.textPrimary)
                         ProgressView()

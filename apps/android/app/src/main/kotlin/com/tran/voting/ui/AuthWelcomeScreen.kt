@@ -18,8 +18,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
-import com.tran.voting.R
 import com.tran.voting.generated.BrandPalette
+import com.tran.voting.generated.TranStrings
 
 /**
  * Welcome screen presenting the two branching navigation options.
@@ -42,12 +42,12 @@ fun AuthWelcomeScreen(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                text = stringResource(R.string.native_welcome_title),
+                text = stringResource(TranStrings.Auth.welcomeTitle),
                 style = MaterialTheme.typography.headlineLarge,
                 color = palette.textPrimary
             )
             Text(
-                text = stringResource(R.string.native_welcome_subtitle),
+                text = stringResource(TranStrings.Auth.welcomeSubtitle),
                 style = MaterialTheme.typography.bodyLarge,
                 color = palette.textPrimary.copy(alpha = 0.8f)
             )
@@ -60,7 +60,7 @@ fun AuthWelcomeScreen(
                     .testTag("voter-branch-button"),
                 onClick = { onSelectRole(UserRole.CITIZEN_VOTER) }
             ) {
-                Text(stringResource(R.string.native_continue_as_voter))
+                Text(stringResource(TranStrings.Auth.continueAsVoter))
             }
 
             OutlinedButton(
@@ -69,7 +69,7 @@ fun AuthWelcomeScreen(
                     .testTag("auditor-branch-button"),
                 onClick = { onSelectRole(UserRole.ELECTION_AUDITOR) }
             ) {
-                Text(stringResource(R.string.native_continue_as_auditor))
+                Text(stringResource(TranStrings.Auth.continueAsAuditor))
             }
         }
     }

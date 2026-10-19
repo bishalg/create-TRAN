@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -20,8 +19,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -29,15 +26,15 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
-import com.tran.voting.R
 import com.tran.voting.generated.BrandPalette
+import com.tran.voting.generated.TranStrings
 import com.tran.voting.generated.TranTheme
 import com.tran.voting.generated.labelRes
 import uniffi.tran_uniffi.TranValidationException
 import uniffi.tran_uniffi.evaluateVoteEligibilityOffline
 import java.time.LocalDate
 
-/** Voting demo — brand tokens + offline rust-core rules via UniFFI. Copy comes from generated `strings.xml`. */
+/** Voting demo — brand tokens + offline rust-core rules via UniFFI. Copy comes from the shared dictionaries through generated `TranStrings` accessors. */
 @Composable
 fun VotingHomeScreen(
     palette: BrandPalette,
@@ -47,10 +44,10 @@ fun VotingHomeScreen(
 ) {
     var ageText by remember { mutableStateOf("20") }
     var countryCode by remember { mutableStateOf("NP") }
-    val resultPlaceholder = stringResource(R.string.native_result_placeholder)
+    val resultPlaceholder = stringResource(TranStrings.Eligibility.resultPlaceholder)
     var resultText by remember { mutableStateOf(resultPlaceholder) }
-    val invalidAge = stringResource(R.string.native_invalid_age)
-    val invalidCountry = stringResource(R.string.native_invalid_country)
+    val invalidAge = stringResource(TranStrings.Errors.ageInvalid)
+    val invalidCountry = stringResource(TranStrings.Errors.countryInvalid)
 
     Column(
         modifier = Modifier
@@ -68,12 +65,12 @@ fun VotingHomeScreen(
         ) {
             Column {
                 Text(
-                    text = stringResource(R.string.native_android_header),
+                    text = stringResource(TranStrings.Shell.header, "Android"),
                     style = MaterialTheme.typography.titleLarge,
                     color = palette.textPrimary,
                 )
                 Text(
-                    text = stringResource(R.string.native_voter_subtitle),
+                    text = stringResource(TranStrings.Eligibility.subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = palette.textPrimary.copy(alpha = 0.8f),
                 )
@@ -83,7 +80,7 @@ fun VotingHomeScreen(
                     modifier = Modifier.testTag("sign-out-button"),
                     onClick = onSignOut
                 ) {
-                    Text(stringResource(R.string.native_sign_out))
+                    Text(stringResource(TranStrings.Common.signOut))
                 }
             }
         }
@@ -91,14 +88,14 @@ fun VotingHomeScreen(
             OutlinedTextField(
                 value = ageText,
                 onValueChange = { ageText = it },
-                label = { Text(stringResource(R.string.native_age_label)) },
+                label = { Text(stringResource(TranStrings.Eligibility.ageLabel)) },
                 singleLine = true,
                 modifier = Modifier.weight(1f).testTag("age-field"),
             )
             OutlinedTextField(
                 value = countryCode,
                 onValueChange = { countryCode = it.uppercase() },
-                label = { Text(stringResource(R.string.native_country_label)) },
+                label = { Text(stringResource(TranStrings.Eligibility.countryLabel)) },
                 singleLine = true,
                 modifier = Modifier.weight(1f).testTag("country-field"),
             )
@@ -106,11 +103,10 @@ fun VotingHomeScreen(
         Button(
             modifier = Modifier.testTag("check-button"),
             onClick = {
-                resultText =
-                    runOfflineCheck(ageText, countryCode, palette, invalidAge, invalidCountry)
+                resultText = runOfflineCheck(ageText, countryCode, invalidAge, invalidCountry)
             },
         ) {
-            Text(stringResource(R.string.native_check_offline))
+            Text(stringResource(TranStrings.Eligibility.checkOffline))
         }
         Text(
             text = resultText,
@@ -121,7 +117,7 @@ fun VotingHomeScreen(
             color = palette.textPrimary,
         )
         // Theme choices come from the rust-core registry: every palette renders here after
-        // `pnpm tokens:sync`, with its label from the shared dictionaries (`app.themes.*`).
+        // `pnpm tokens:sync`, with its label from the shared dictionaries (`shell.theme.*`).
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -142,7 +138,6 @@ fun VotingHomeScreen(
 private fun runOfflineCheck(
     ageText: String,
     countryCode: String,
-    palette: BrandPalette,
     invalidAge: String,
     invalidCountry: String,
 ): String {
@@ -150,23 +145,8 @@ private fun runOfflineCheck(
     if (countryCode.length != 2) return invalidCountry
     val reference = LocalDate.now().toString()
     return try {
-        val res = evaluateVoteEligibilityOffline(age, null, countryCode, reference)
-        val _chip = if (res.eligible) palette.eligibilityCanVote else palette.eligibilityCannotVote
-        res.reason
+        evaluateVoteEligibilityOffline(age, null, countryCode, reference).reason
     } catch (e: TranValidationException.ValidationException) {
         e.detail
     }
-}
-
-@Composable
-private fun eligibilityChip(label: String, color: Color) {
-    Text(
-        text = label,
-        modifier = Modifier
-            .clip(RoundedCornerShape(999.dp))
-            .background(color.copy(alpha = 0.2f))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        style = MaterialTheme.typography.labelMedium,
-        color = color,
-    )
 }

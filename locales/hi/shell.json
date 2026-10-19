@@ -1,0 +1,23 @@
+{
+  "title": "मतदान पात्रता",
+  "subtitle": "किसी देश की न्यूनतम मतदान आयु जाँचें।",
+  "stack": "ऑफ़लाइन नियम TypeScript में, API जाँच Axum + Rust Core से",
+  "header": "TRAN / {platform}",
+  "language": {
+    "label": "भाषा"
+  },
+  "theme": {
+    "label": "थीम",
+    "light": "लाइट",
+    "dark": "डार्क",
+    "black": "काला",
+    "sepia": "सेपिया"
+  },
+  "status": {
+    "title": "सिस्टम स्थिति",
+    "online": "API चालू है",
+    "offline": "API ऑफ़लाइन",
+    "checking": "API जाँची जा रही है…",
+    "standby": "API प्रतीक्षा में"
+  }
+}

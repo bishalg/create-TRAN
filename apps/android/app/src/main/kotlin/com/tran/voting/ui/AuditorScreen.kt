@@ -22,8 +22,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
-import com.tran.voting.R
 import com.tran.voting.generated.BrandPalette
+import com.tran.voting.generated.TranStrings
 
 /**
  * Auditor dashboard screen displaying the global voting rules matrix.
@@ -61,12 +61,12 @@ fun AuditorScreen(
         ) {
             Column {
                 Text(
-                    text = stringResource(R.string.native_auditor_title),
+                    text = stringResource(TranStrings.Common.roleElectionAuditor),
                     style = MaterialTheme.typography.titleLarge,
                     color = palette.textPrimary
                 )
                 Text(
-                    text = stringResource(R.string.native_auditor_subtitle),
+                    text = stringResource(TranStrings.Auditor.subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = palette.textPrimary.copy(alpha = 0.8f)
                 )
@@ -75,12 +75,12 @@ fun AuditorScreen(
                 modifier = Modifier.testTag("sign-out-button"),
                 onClick = onSignOut
             ) {
-                Text(stringResource(R.string.native_sign_out))
+                Text(stringResource(TranStrings.Common.signOut))
             }
         }
 
         Text(
-            text = stringResource(R.string.native_auditor_rules_title),
+            text = stringResource(TranStrings.Auditor.rulesTitle),
             style = MaterialTheme.typography.titleMedium,
             color = palette.textPrimary
         )
@@ -102,7 +102,7 @@ fun AuditorScreen(
                         color = palette.textPrimary
                     )
                     Text(
-                        text = stringResource(R.string.native_years, age),
+                        text = stringResource(TranStrings.Auditor.years, age),
                         style = MaterialTheme.typography.bodyLarge,
                         color = palette.textPrimary.copy(alpha = 0.9f)
                     )

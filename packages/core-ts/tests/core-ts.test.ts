@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { TranApiClient } from '../src/client.js';
 import { getThemeTokens, liquidGlassTokens } from '../src/tokens.js';
-import { t } from '../src/i18n.js';
+import { locales, t, translate } from '../src/i18n.js';
 import {
   canVoteByAge,
   evaluateVoteEligibilityOffline,
@@ -36,15 +36,15 @@ describe('Voting parity (TS mirror of Rust core)', () => {
 
 describe('i18n Translations', () => {
   it('should translate voting demo title in English', () => {
-    expect(t('app.title', 'en')).toBe('Voting Eligibility');
+    expect(t('shell.title', 'en')).toBe('Voting Eligibility');
   });
 
   it('should translate correctly for Nepali', () => {
-    expect(t('app.title', 'ne')).toBe('मतदान योग्यता');
+    expect(t('shell.title', 'ne')).toBe('मतदान योग्यता');
   });
 
   it('should fallback to key if not found', () => {
-    expect(t('non.existent.key', 'en')).toBe('non.existent.key');
+    expect(translate(locales, 'non.existent.key', 'en')).toBe('non.existent.key');
   });
 });
 

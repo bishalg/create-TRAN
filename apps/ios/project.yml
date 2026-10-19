@@ -4,7 +4,8 @@ options:
   deploymentTarget:
     iOS: '17.0'
   createIntermediateGroups: true
-  # Locales carried by Generated/Localizable.xcstrings; keep in sync with the shared dictionaries.
+  # Locales carried by Generated/Strings/*.xcstrings; keep in sync with locales/ (the
+  # native-strings parity test fails until this list matches the locale directories).
   developmentLanguage: en
   knownRegions:
     - en

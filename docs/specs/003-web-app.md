@@ -49,8 +49,11 @@ and MUST be applied before first paint so there is no flash of the wrong theme.
 
 ### REQ-WEB-008 [verified] Translations
 
-All user-visible strings MUST come from the dictionaries; `en`, `ne` and `hi` MUST have identical key sets and no empty values.
-**Verified by:** `i18n.test.ts`.
+All user-visible strings MUST come from the shared `locales/` dictionaries (see
+[008](008-localization.md)); English is the base language and fallback, every locale MUST have
+an identical key set with no empty values, and hardcoded copy MUST fail the guard tests.
+**Verified by:** [`i18n.test.ts`](../../packages/core-ts/tests/i18n.test.ts),
+[`i18n-guards.test.ts`](../../packages/core-ts/tests/i18n-guards.test.ts).
 
 ### REQ-WEB-009 [verified] Tokens only
 

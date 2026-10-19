@@ -18,6 +18,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\"",
     "tokens:sync": "cargo run -p tran-tokens-codegen",
+    "i18n:sync": "cargo run -p tran-tokens-codegen",
     "uniffi:generate": "bash scripts/uniffi-generate.sh",
     "ios:project": "xcodegen generate --spec apps/ios/project.yml --project apps/ios",
     "ios:build": "xcodebuild -project apps/ios/TranVotingDemo.xcodeproj -scheme TranVotingDemo -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO",

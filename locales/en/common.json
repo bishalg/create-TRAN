@@ -1,0 +1,9 @@
+{
+  "brand": "TRAN",
+  "appName": "TRAN Voting",
+  "signOut": "Sign out",
+  "role": {
+    "citizenVoter": "Citizen Voter",
+    "electionAuditor": "Election Auditor"
+  }
+}

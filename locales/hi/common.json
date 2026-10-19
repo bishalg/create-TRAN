@@ -1,0 +1,9 @@
+{
+  "brand": "TRAN",
+  "appName": "TRAN वोटिंग",
+  "signOut": "साइन आउट",
+  "role": {
+    "citizenVoter": "नागरिक मतदाता",
+    "electionAuditor": "चुनाव ऑडिटर"
+  }
+}

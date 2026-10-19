@@ -1,0 +1,94 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "errors.ageAndCountry": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter age and country"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आयु और देश दर्ज करें"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "उमेर र देश लेख्नुहोस्"
+          }
+        }
+      }
+    },
+    "errors.ageInvalid": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter a valid age"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मान्य आयु दर्ज करें"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मान्य उमेर लेख्नुहोस्"
+          }
+        }
+      }
+    },
+    "errors.ageOutOfRange": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter a whole-number age between 0 and 150."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "0 से 150 के बीच पूरी संख्या में आयु दर्ज करें।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "० देखि १५० बीचको पूर्ण संख्या उमेर राख्नुहोस्।"
+          }
+        }
+      }
+    },
+    "errors.countryInvalid": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Country must be two letters"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "देश दो अक्षरों का होना चाहिए"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "देश दुई अक्षरको हुनुपर्छ"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

@@ -42,9 +42,12 @@ tokens; screens MUST receive a palette and MUST NOT branch on a light/dark boole
 
 ### REQ-NAT-008 [verified] Native copy comes from the shared dictionaries
 
-iOS and Android string resources MUST be generated from the shared
-`packages/core-ts/src/locales` dictionaries: an iOS String Catalog
-(`Localizable.xcstrings`) and Android `strings.xml` for `en`, `ne` and `hi`, matching the
-dictionaries key-for-key and value-for-value. Rust-core verdict text (the engine `reason`)
-is out of scope until the engine emits locale-aware messages.
+iOS and Android string resources MUST be generated from the shared root `locales/`
+dictionaries (see [008](008-localization.md) and
+[ADR-0020](../adr/0020-localization-modules-and-english-fallback.md)): per-module String
+Catalogs under `apps/ios/.../Generated/Strings/` with typed `L10n` accessors, and
+`res/values{,-ne,-hi}/strings_<module>.xml` with typed `TranStrings` accessors — matching the
+dictionaries key-for-key and value-for-value, with English as the base language and the
+fallback. Rust-core verdict text (the engine `reason`) is out of scope until the engine emits
+locale-aware messages.
 **Verified by:** [`packages/core-ts/tests/native-strings.test.ts`](../../packages/core-ts/tests/native-strings.test.ts).

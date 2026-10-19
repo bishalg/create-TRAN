@@ -1,0 +1,94 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "auth.continueAsAuditor": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue as Election Auditor"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "चुनाव ऑडिटर के रूप में जारी रखें"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "निर्वाचन अडिटरको रूपमा जारी राख्नुहोस्"
+          }
+        }
+      }
+    },
+    "auth.continueAsVoter": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue as Citizen Voter"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नागरिक मतदाता के रूप में जारी रखें"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नागरिक मतदाताको रूपमा जारी राख्नुहोस्"
+          }
+        }
+      }
+    },
+    "auth.welcome.subtitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select your role to continue into the application:"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जारी रखने के लिए अपनी भूमिका चुनें:"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जारी राख्न आफ्नो भूमिका छान्नुहोस्:"
+          }
+        }
+      }
+    },
+    "auth.welcome.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome to TRAN Voting"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRAN वोटिंग में आपका स्वागत है"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRAN मतदानमा स्वागत छ"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

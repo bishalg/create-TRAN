@@ -23,7 +23,7 @@ export function EligibilityPage({ api, locale }: EligibilityPageProps) {
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
     const parsedAge = parseAgeInput(age);
-    setInputError(parsedAge === null ? t('app.ageInvalid', locale) : null);
+    setInputError(parsedAge === null ? t('errors.ageOutOfRange', locale) : null);
     if (parsedAge === null) {
       ageField.current?.focus();
       return;
@@ -41,39 +41,47 @@ export function EligibilityPage({ api, locale }: EligibilityPageProps) {
     <>
       {api.isOffline && (
         <TranText variant="body" className="notice" role="note">
-          {t('app.offlineNotice', locale)}
+          {t('eligibility.offlineNotice', locale)}
         </TranText>
       )}
 
-      <form className="card" aria-label={t('app.formLabel', locale)} onSubmit={onSubmit} noValidate>
+      <form
+        className="card"
+        aria-label={t('eligibility.form.label', locale)}
+        onSubmit={onSubmit}
+        noValidate
+      >
         <ModeSwitch mode={mode} onChange={setMode} locale={locale} />
 
         <div className="fields">
           <Field
             ref={ageField}
-            label={t('app.ageField', locale)}
+            label={t('eligibility.age.label', locale)}
             value={age}
             onChange={(e) => setAge(e.target.value)}
             inputMode="numeric"
             autoComplete="off"
-            placeholder={t('app.agePlaceholder', locale)}
+            placeholder={t('eligibility.age.example', locale)}
             aria-invalid={inputError ? true : undefined}
           />
           <Field
-            label={t('app.countryField', locale)}
+            label={t('eligibility.country.label', locale)}
             value={country}
             onChange={(e) => setCountry(e.target.value.toUpperCase())}
             maxLength={2}
             autoCapitalize="characters"
             autoComplete="off"
             spellCheck={false}
-            placeholder={t('app.countryPlaceholder', locale)}
-            hint={t(mode === 'server' ? 'app.serverHint' : 'app.countryHint', locale)}
+            placeholder={t('eligibility.country.example', locale)}
+            hint={t(
+              mode === 'server' ? 'eligibility.country.serverHint' : 'eligibility.country.hint',
+              locale
+            )}
           />
         </div>
 
         <TranButton type="submit" disabled={api.isChecking} aria-busy={api.isChecking}>
-          {t(api.isChecking ? 'app.submitting' : 'app.submit', locale)}
+          {t(api.isChecking ? 'eligibility.submitting' : 'eligibility.submit', locale)}
         </TranButton>
       </form>
 
@@ -84,7 +92,7 @@ export function EligibilityPage({ api, locale }: EligibilityPageProps) {
       )}
 
       {/* Always mounted: screen readers only announce changes inside a region that already exists. */}
-      <div className="result-slot" role="status" aria-label={t('app.resultLabel', locale)}>
+      <div className="result-slot" role="status" aria-label={t('eligibility.result.label', locale)}>
         {result && <ResultCard result={result} locale={locale} />}
       </div>
     </>

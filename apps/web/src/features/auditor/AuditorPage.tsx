@@ -1,4 +1,4 @@
-import { COUNTRY_VOTING_AGES } from '@tran/core';
+import { COUNTRY_VOTING_AGES, type SupportedLocale, t } from '@tran/core';
 import { TranBox } from '../../shared/ui/TranBox.js';
 import { TranButton } from '../../shared/ui/TranButton.js';
 import { TranStack } from '../../shared/ui/TranStack.js';
@@ -6,35 +6,34 @@ import { TranTable, TranTd, TranTh } from '../../shared/ui/TranTable.js';
 import { TranText } from '../../shared/ui/TranText.js';
 
 export interface AuditorPageProps {
+  locale: SupportedLocale;
   onBackToVoter: () => void;
 }
 
-export function AuditorPage({ onBackToVoter }: AuditorPageProps) {
+export function AuditorPage({ locale, onBackToVoter }: AuditorPageProps) {
   const entries = Object.entries(COUNTRY_VOTING_AGES);
 
   return (
     <div className="auditor-page card">
       <TranText variant="title" as="h2">
-        Election Auditor Dashboard
+        {t('auditor.title', locale)}
       </TranText>
-      <TranText variant="body">
-        Global voting age rules verified against rust-core parity fixtures.
-      </TranText>
+      <TranText variant="body">{t('auditor.subtitle', locale)}</TranText>
       <TranBox className="auditor-table-wrap" padding="none">
         <TranTable>
           <thead>
             <tr>
-              <TranTh>Country Code</TranTh>
-              <TranTh>Minimum Voting Age</TranTh>
-              <TranTh>Rule Source</TranTh>
+              <TranTh>{t('auditor.table.countryCode', locale)}</TranTh>
+              <TranTh>{t('auditor.table.minimumAge', locale)}</TranTh>
+              <TranTh>{t('auditor.table.ruleSource', locale)}</TranTh>
             </tr>
           </thead>
           <tbody>
             {entries.map(([country, minAge]) => (
               <tr key={country}>
                 <TranTd>{country}</TranTd>
-                <TranTd>{minAge} years</TranTd>
-                <TranTd>rust-core verified</TranTd>
+                <TranTd>{t('auditor.years', locale, { years: minAge })}</TranTd>
+                <TranTd>{t('auditor.table.verified', locale)}</TranTd>
               </tr>
             ))}
           </tbody>
@@ -42,7 +41,7 @@ export function AuditorPage({ onBackToVoter }: AuditorPageProps) {
       </TranBox>
       <TranStack gap="lg">
         <TranButton type="button" onClick={onBackToVoter}>
-          Switch to Citizen Voter
+          {t('auditor.backToVoter', locale)}
         </TranButton>
       </TranStack>
     </div>

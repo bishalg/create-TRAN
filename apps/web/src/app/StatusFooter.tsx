@@ -1,12 +1,12 @@
-import { type SupportedLocale, t } from '@tran/core';
+import { type SupportedLocale, type TranStringKey, t } from '@tran/core';
 import { TranText } from '../shared/ui/TranText.js';
 
 export type ApiState = 'checking' | 'online' | 'offline';
 
-const LABEL: Record<ApiState, string> = {
-  checking: 'app.statusChecking',
-  online: 'app.statusOnline',
-  offline: 'app.statusOffline',
+const LABEL: Record<ApiState, TranStringKey> = {
+  checking: 'shell.status.checking',
+  online: 'shell.status.online',
+  offline: 'shell.status.offline',
 };
 
 export interface StatusFooterProps {

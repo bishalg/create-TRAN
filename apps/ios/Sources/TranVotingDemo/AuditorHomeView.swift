@@ -23,22 +23,22 @@ struct AuditorHomeView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("native.auditorTitle")
+                            Text(L10n.Common.roleElectionAuditor)
                                 .font(.title2.weight(.bold))
                                 .foregroundStyle(palette.textPrimary)
-                            Text("native.auditorSubtitle")
+                            Text(L10n.Auditor.subtitle)
                                 .font(.subheadline)
                                 .foregroundStyle(palette.textPrimary.opacity(0.8))
                         }
                         Spacer()
-                        Button("native.signOut", action: onSignOut)
+                        Button(L10n.Common.signOut, action: onSignOut)
                             .buttonStyle(.bordered)
                             .tint(palette.primary)
                             .accessibilityIdentifier("sign-out-button")
                     }
 
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("native.auditorRulesTitle")
+                        Text(L10n.Auditor.rulesTitle)
                             .font(.headline)
                             .foregroundStyle(palette.textPrimary)
 
@@ -48,7 +48,7 @@ struct AuditorHomeView: View {
                                     .fontWeight(.bold)
                                     .foregroundStyle(palette.textPrimary)
                                 Spacer()
-                                Text(String(format: NSLocalizedString("native.years", comment: ""), item.1))
+                                Text(L10n.Auditor.years(String(item.1)))
                                     .foregroundStyle(palette.textPrimary.opacity(0.9))
                             }
                             .padding(.vertical, 8)

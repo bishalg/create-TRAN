@@ -7,7 +7,7 @@ struct VotingHomeView: View {
     @Binding var theme: TranTheme
     @State private var ageText = "20"
     @State private var countryCode = "NP"
-    @State private var resultText = NSLocalizedString("native.resultPlaceholder", comment: "")
+    @State private var resultText = L10n.Eligibility.resultPlaceholder
     var onSignOut: (() -> Void)? = nil
 
     var body: some View {
@@ -17,17 +17,17 @@ struct VotingHomeView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("native.iosHeader")
+                            Text(L10n.Shell.header("iOS"))
                                 .font(.headline)
                                 .foregroundStyle(palette.textPrimary)
-                            Text("native.voterSubtitle")
+                            Text(L10n.Eligibility.subtitle)
                                 .font(.subheadline)
                                 .foregroundStyle(palette.textPrimary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         Spacer()
                         if let onSignOut {
-                            Button("native.signOut", action: onSignOut)
+                            Button(L10n.Common.signOut, action: onSignOut)
                                 .buttonStyle(.bordered)
                                 .tint(palette.primary)
                                 .accessibilityIdentifier("sign-out-button")
@@ -36,10 +36,10 @@ struct VotingHomeView: View {
 
                     VStack(alignment: .leading, spacing: 12) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("native.ageLabel")
+                            Text(L10n.Eligibility.ageLabel)
                                 .font(.subheadline)
                                 .foregroundStyle(palette.textPrimary)
-                            TextField("", text: $ageText, prompt: Text("native.agePlaceholder").foregroundStyle(palette.textPrimary))
+                            TextField("", text: $ageText, prompt: Text(L10n.Eligibility.agePlaceholder).foregroundStyle(palette.textPrimary))
                                 .keyboardType(.numberPad)
                                 .padding(10)
                                 .background(palette.surface)
@@ -48,10 +48,10 @@ struct VotingHomeView: View {
                                 .accessibilityIdentifier("age-field")
                         }
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("native.countryLabel")
+                            Text(L10n.Eligibility.countryLabel)
                                 .font(.subheadline)
                                 .foregroundStyle(palette.textPrimary)
-                            TextField("", text: $countryCode, prompt: Text("native.countryPlaceholder").foregroundStyle(palette.textPrimary))
+                            TextField("", text: $countryCode, prompt: Text(L10n.Eligibility.countryPlaceholder).foregroundStyle(palette.textPrimary))
                                 .textInputAutocapitalization(.characters)
                                 .padding(10)
                                 .background(palette.surface)
@@ -61,7 +61,7 @@ struct VotingHomeView: View {
                         }
                     }
 
-                    Button("native.checkOffline") {
+                    Button(L10n.Eligibility.checkOffline) {
                         checkOffline(
                             canVote: palette.eligibilityCanVote,
                             cannotVote: palette.eligibilityCannotVote
@@ -81,10 +81,10 @@ struct VotingHomeView: View {
                         .accessibilityAddTraits(.updatesFrequently)
 
                     // Theme choices come from the rust-core registry: every case renders here,
-                    // with its label from the shared dictionaries (`app.themes.<mode>`).
-                    Picker("app.themeLabel", selection: $theme) {
+                    // with its label from the shared dictionaries (`shell.theme.<mode>`).
+                    Picker(L10n.Shell.themeLabel, selection: $theme) {
                         ForEach(TranTheme.allCases) { mode in
-                            Text(NSLocalizedString("app.themes.\(mode.rawValue)", comment: "")).tag(mode)
+                            Text(mode.label).tag(mode)
                         }
                     }
                     .pickerStyle(.segmented)
@@ -100,7 +100,7 @@ struct VotingHomeView: View {
 
     private func checkOffline(canVote: Color, cannotVote: Color) {
         guard let age = UInt16(ageText), !countryCode.isEmpty else {
-            resultText = NSLocalizedString("native.invalidAgeAndCountry", comment: "")
+            resultText = L10n.Errors.ageAndCountry
             return
         }
         let formatter = DateFormatter()

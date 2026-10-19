@@ -8,7 +8,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { getThemeTokens, parseAgeInput, t, type SupportedLocale, type ThemeMode } from '@tran/core';
+import {
+  getThemeTokens,
+  parseAgeInput,
+  t,
+  TRAN_LOCALES,
+  type SupportedLocale,
+  type ThemeMode,
+} from '@tran/core';
 import { GlassCard } from '../components/GlassCard.js';
 import { GlassInput } from '../components/GlassInput.js';
 import { SkeletonView } from '../components/SkeletonView.js';
@@ -32,7 +39,10 @@ function EligibilityBlock({
   return (
     <View style={[styles.resultBox, { borderColor: color, backgroundColor: `${color}22` }]}>
       <Text style={{ color, fontWeight: '700' }}>
-        {result.eligible ? t('app.eligibleYes', locale) : t('app.eligibleNo', locale)}
+        {t(
+          result.eligible ? 'eligibility.verdict.eligible' : 'eligibility.verdict.ineligible',
+          locale
+        )}
       </Text>
       <Text style={{ color: theme.palette.text.secondary, marginTop: 4 }}>{result.reason}</Text>
       {extra ? (
@@ -65,7 +75,7 @@ export const HomeScreen: React.FC = () => {
 
   const readAge = (): number | null => {
     const parsed = parseAgeInput(age);
-    setInputError(parsed === null ? t('app.ageInvalid', locale) : null);
+    setInputError(parsed === null ? t('errors.ageOutOfRange', locale) : null);
     return parsed;
   };
 
@@ -89,9 +99,11 @@ export const HomeScreen: React.FC = () => {
       <StatusBar barStyle={themeMode === 'dark' ? 'light-content' : 'dark-content'} />
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.headerRow}>
-          <Text style={[styles.breadcrumb, { color: theme.palette.primary }]}>TRAN / Mobile</Text>
+          <Text style={[styles.breadcrumb, { color: theme.palette.primary }]}>
+            {t('shell.header', locale, { platform: 'Mobile' })}
+          </Text>
           <View style={styles.localeRow}>
-            {(['en', 'ne', 'hi'] as SupportedLocale[]).map((loc) => (
+            {TRAN_LOCALES.map((loc) => (
               <TouchableOpacity
                 key={loc}
                 onPress={() => setLocale(loc)}
@@ -119,33 +131,33 @@ export const HomeScreen: React.FC = () => {
                   color: themeMode === mode ? theme.palette.primary : theme.palette.text.secondary,
                 }}
               >
-                {mode === 'light' ? t('app.themeLight', locale) : t('app.themeDark', locale)}
+                {t(mode === 'light' ? 'shell.theme.light' : 'shell.theme.dark', locale)}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
         <Text style={[styles.title, { color: theme.palette.text.primary }]}>
-          {t('app.title', locale)}
+          {t('shell.title', locale)}
         </Text>
         <Text style={[styles.subtitle, { color: theme.palette.text.secondary }]}>
-          {t('app.subtitle', locale)}
+          {t('shell.stack', locale)}
         </Text>
 
         {isOffline && (
           <Text style={[styles.offlineBanner, { color: theme.palette.warning }]}>
-            {t('app.offlineNotice', locale)}
+            {t('eligibility.offlineNotice', locale)}
           </Text>
         )}
 
         <GlassCard variant="prominent" style={styles.sectionCard}>
           <Text style={[styles.sectionTitle, { color: theme.palette.text.primary }]}>
-            {t('app.sectionOffline', locale)}
+            {t('eligibility.section.offline', locale)}
           </Text>
           <View style={styles.inputRow}>
             <View style={{ flex: 1 }}>
               <GlassInput
-                label={t('app.ageLabel', locale)}
+                label={t('eligibility.age.label', locale)}
                 value={age}
                 onChangeText={setAge}
                 keyboardType="numeric"
@@ -154,7 +166,7 @@ export const HomeScreen: React.FC = () => {
             <View style={{ width: 12 }} />
             <View style={{ flex: 1 }}>
               <GlassInput
-                label={t('app.countryLabel', locale)}
+                label={t('eligibility.country.label', locale)}
                 value={country}
                 onChangeText={(v) => setCountry(v.toUpperCase())}
               />
@@ -164,7 +176,7 @@ export const HomeScreen: React.FC = () => {
             style={[styles.actionBtn, { backgroundColor: theme.palette.primary }]}
             onPress={handleOffline}
           >
-            <Text style={styles.actionBtnText}>{t('app.checkOffline', locale)}</Text>
+            <Text style={styles.actionBtnText}>{t('eligibility.checkOffline', locale)}</Text>
           </TouchableOpacity>
           {lastOfflineResult && (
             <EligibilityBlock result={lastOfflineResult} theme={theme} locale={locale} />
@@ -173,15 +185,15 @@ export const HomeScreen: React.FC = () => {
 
         <GlassCard variant="standard" style={styles.sectionCard}>
           <Text style={[styles.sectionTitle, { color: theme.palette.text.primary }]}>
-            {t('app.sectionApi', locale)}
+            {t('eligibility.section.api', locale)}
           </Text>
           <Text style={{ color: theme.palette.text.secondary, fontSize: 13, marginBottom: 8 }}>
-            {t('app.apiCountryHint', locale)}
+            {t('eligibility.country.apiHint', locale)}
           </Text>
           <View style={styles.inputRow}>
             <View style={{ flex: 1 }}>
               <GlassInput
-                label={t('app.ageLabel', locale)}
+                label={t('eligibility.age.label', locale)}
                 value={age}
                 onChangeText={setAge}
                 keyboardType="numeric"
@@ -190,7 +202,7 @@ export const HomeScreen: React.FC = () => {
             <View style={{ width: 12 }} />
             <View style={{ flex: 1 }}>
               <GlassInput
-                label={t('app.countryApiLabel', locale)}
+                label={t('eligibility.country.apiLabel', locale)}
                 value={apiCountry}
                 onChangeText={(v) => setApiCountry(v.toUpperCase())}
               />
@@ -200,14 +212,18 @@ export const HomeScreen: React.FC = () => {
             style={[styles.actionBtn, { backgroundColor: theme.palette.accent }]}
             onPress={handleApi}
           >
-            <Text style={styles.actionBtnText}>{t('app.checkButton', locale)}</Text>
+            <Text style={styles.actionBtnText}>{t('eligibility.submitApi', locale)}</Text>
           </TouchableOpacity>
           {lastApiResult && (
             <EligibilityBlock
               result={lastApiResult}
               theme={theme}
               locale={locale}
-              extra={`${lastApiResult.country_code} · min ${lastApiResult.minimum_age} · IP ${lastApiResult.client_ip}`}
+              extra={t('eligibility.result.meta', locale, {
+                country: lastApiResult.country_code,
+                minimumAge: lastApiResult.minimum_age,
+                clientIp: lastApiResult.client_ip,
+              })}
             />
           )}
           {alertMessage ? (
@@ -219,14 +235,16 @@ export const HomeScreen: React.FC = () => {
 
         <GlassCard variant="subtle" style={styles.sectionCard}>
           <Text style={[styles.sectionTitle, { color: theme.palette.text.primary }]}>
-            {t('app.status', locale)}
+            {t('shell.status.title', locale)}
           </Text>
           {isLoading ? (
             <SkeletonView count={3} height={24} />
           ) : health ? (
             <Text style={{ color: theme.palette.success }}>● {health.overall_status}</Text>
           ) : (
-            <Text style={{ color: theme.palette.text.secondary }}>API standby</Text>
+            <Text style={{ color: theme.palette.text.secondary }}>
+              {t('shell.status.standby', locale)}
+            </Text>
           )}
         </GlassCard>
       </ScrollView>

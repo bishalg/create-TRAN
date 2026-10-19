@@ -61,17 +61,19 @@ export function App({ initialSession }: AppProps = {}) {
       <main className="shell">
         <section className="hero">
           <TranText variant="display" as="h1">
-            {t('app.title', locale)}
+            {t('shell.title', locale)}
           </TranText>
-          <TranText variant="muted">{t('app.subtitle2', locale)}</TranText>
+          <TranText variant="muted">{t('shell.subtitle', locale)}</TranText>
         </section>
 
-        {destination === 'auth_welcome' && <AuthWelcomePage onSelectRole={handleSelectRole} />}
+        {destination === 'auth_welcome' && (
+          <AuthWelcomePage locale={locale} onSelectRole={handleSelectRole} />
+        )}
 
         {destination === 'voter_dashboard' && <EligibilityPage api={api} locale={locale} />}
 
         {destination === 'auditor_dashboard' && (
-          <AuditorPage onBackToVoter={() => handleSelectRole('citizen_voter')} />
+          <AuditorPage locale={locale} onBackToVoter={() => handleSelectRole('citizen_voter')} />
         )}
       </main>
 
