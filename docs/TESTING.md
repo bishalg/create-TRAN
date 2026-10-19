@@ -50,6 +50,19 @@ the app when it finishes — reinstall the built APK before Maestro:
 
 First E2E run needs `pnpm --filter e2e exec playwright install chromium`.
 
+### Native suites in CI
+
+`.github/workflows/native-tests.yml` runs the same suites nightly (04:17 UTC) and on demand — pull requests are
+never blocked by a flaky simulator until the promotion rule is met ([ADR-0021](./adr/0021-native-tests-in-ci.md)):
+
+```bash
+gh workflow run native-tests.yml --ref <branch>                  # iOS + Android suites
+gh workflow run native-tests.yml -f maestro=true --ref <branch>  # …plus the Maestro smoke flows (Android)
+```
+
+A failing nightly opens or updates one tracking issue; a green nightly closes it. After **14 consecutive green
+nightly runs** the `ios` and `android` jobs become path-filtered pull-request checks.
+
 ## Rules that keep it robust
 
 - **Inject the world.** Never read the clock/env inside a rule. `evaluate_vote_eligibility_on(.., today)`

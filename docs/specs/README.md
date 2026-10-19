@@ -39,9 +39,11 @@ ID that no spec defines.
 | [002 HTTP API](./002-http-api.md)                           | Axum service, contract, security defaults    | `REQ-API`             |
 | [003 Web app](./003-web-app.md)                             | Behaviour, theming, i18n, accessibility      | `REQ-WEB`, `REQ-A11Y` |
 | [004 SSR and SEO](./004-ssr-seo.md)                         | TanStack Start, metadata, social cards       | `REQ-SEO`             |
-| [005 Native apps](./005-native-apps.md)                     | SwiftUI and Compose parity and accessibility | `REQ-NATIVE`          |
+| [005 Native apps](./005-native-apps.md)                     | SwiftUI and Compose parity and accessibility | `REQ-NAT`             |
 | [006 Navigation & Auth Flow](./006-navigation-auth-flow.md) | Navigation Director, splash boot & branching | `REQ-NAV`             |
 | [007 Git Quality Hooks](./007-git-quality-hooks.md)         | Pre-commit lint/typecheck & pre-push testing | `REQ-HOOK`            |
+| [008 Localization](./008-localization.md)                   | Dictionaries, modules and fallback           | `REQ-I18N`            |
+| [009 Native tests in CI](./009-native-tests-in-ci.md)       | Nightly iOS/Android suites, flake policy     | `REQ-CI`              |
 
 ## Template
 
