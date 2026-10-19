@@ -41,7 +41,7 @@ where the check ran.
 While a server check is running the submit button MUST be disabled, show a progress label and expose `aria-busy`.
 **Verified by:** `App.test.tsx`, `useTranApi.test.tsx`.
 
-### REQ-WEB-007 [planned] Theme preference
+### REQ-WEB-007 [verified] Theme preference
 
 The first render MUST follow the OS colour-scheme preference. A user's explicit choice MUST be remembered across visits
 and MUST be applied before first paint so there is no flash of the wrong theme.
@@ -77,12 +77,19 @@ Feature code MUST use shared atoms (`TranStack`, `TranInline`, `TranBox`, `TranS
 `apps/web` ESLint MUST fail on inline `style`, hex/px literals in JSX, and banned semantic tags outside `shared/ui`.
 **Verified by:** ESLint config wired into `pnpm lint` and CI.
 
+### REQ-WEB-014 [verified] Theme registry
+
+Every palette in the rust-core theme registry (`light`, `dark`, `black`, `sepia`) MUST be selectable and MUST apply its
+own colour tokens. Application code MUST look palettes up by name and MUST NOT branch on a light/dark boolean.
+**Verified by:** `Header.test.tsx`, `usePreferences.test.tsx`, `tokens-guard.test.ts`, `ThemeMode` codegen slice in
+`crates/tran-tokens-codegen`.
+
 ## Accessibility (target: WCAG 2.2 level AA)
 
 ### REQ-A11Y-001 [verified] No automated violations
 
-Every page in both themes MUST have no axe-core violations for the WCAG 2 A and AA rule sets.
-**Verified by:** BDD "no accessibility violations" (both themes, with a result displayed).
+Every page in every registered theme MUST have no axe-core violations for the WCAG 2 A and AA rule sets.
+**Verified by:** BDD "no accessibility violations" (every theme, with a result displayed).
 
 ### REQ-A11Y-002 [verified] Programmatic labels
 

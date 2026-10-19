@@ -28,5 +28,5 @@ Footer        API online / offline / checking
 ## Proving it
 
 - Component and behaviour tests: `apps/web/tests` (query by role and label).
-- Real browser: `e2e/features/vote-eligibility.feature` runs an **axe** WCAG A/AA audit in both themes and
+- Real browser: `e2e/features/vote-eligibility.feature` runs an **axe** WCAG A/AA audit in every theme and
   asserts there is no sideways scroll on a phone. Contrast bugs (e.g. muted text on a tinted card) fail CI.

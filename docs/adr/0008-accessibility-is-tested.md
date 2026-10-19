@@ -8,7 +8,7 @@ Accessibility regresses silently.
 
 ## Decision
 
-axe-core runs in BDD for both themes; behaviours axe cannot see (focus, live regions, keyboard) have explicit scenarios; native apps use platform audits.
+axe-core runs in BDD in every registered theme; behaviours axe cannot see (focus, live regions, keyboard) have explicit scenarios; native apps use platform audits.
 
 ## Consequences
 

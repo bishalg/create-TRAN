@@ -6,7 +6,7 @@ All brand and semantic UI tokens live in Rust:
 
 `crates/rust-core/src/tokens.rs` → `default_design_tokens()`
 
-That contract covers typography, spacing, radii, Liquid Glass structure, and light/dark semantic palettes (primary, success, danger, surface, background, text, voting eligibility green/red).
+That contract covers typography, spacing, radii, Liquid Glass structure, and a theme registry (`light`, `dark`, `black`, `sepia`) of semantic palettes (primary, success, danger, surface, background, text, voting eligibility green/red), each tagged light or dark.
 
 ## Changing the brand
 

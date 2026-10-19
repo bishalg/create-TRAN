@@ -31,5 +31,11 @@ Interactive controls MUST be at least 44×44 pt (iOS) / 48×48 dp (Android).
 
 ### REQ-NAT-006 [planned] Reduced motion and contrast
 
-Animations MUST respect Reduce Motion / animation-scale settings; text contrast MUST meet 4.5:1 in light and dark.
+Animations MUST respect Reduce Motion / animation-scale settings; text contrast MUST meet 4.5:1 in every registered theme.
 **Verified by:** platform accessibility audits.
+
+### REQ-NAT-007 [planned] Theme registry
+
+Every palette in the rust-core theme registry MUST be selectable on the voter dashboard and MUST apply its own colour
+tokens; screens MUST receive a palette and MUST NOT branch on a light/dark boolean.
+**Verified by:** XCUITest theme picker checks, Maestro `theme` flow, generated palette parity with `tokens.json`.
