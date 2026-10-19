@@ -1,4 +1,4 @@
-// Verifies: REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006 REQ-NAT-007
+// Verifies: REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006 REQ-NAT-007 REQ-NAT-010
 import XCTest
 
 /// Native UI + accessibility tests. Journeys mirror e2e/maestro/flows and e2e/features.
@@ -53,15 +53,14 @@ final class VotingUITests: XCTestCase {
         XCTAssertTrue(check.isHittable, "check-button must be tappable")
         XCTAssertTrue(app.buttons["Check offline"].exists, "button needs a spoken label")
 
-        // The theme picker is UIKit's segmented control — ~32 pt tall on older SDKs by Apple's
-        // design — so its height is covered by the platform audit in
-        // testAccessibilityAuditPassesAcrossThemes. Its segments must still be tappable.
+        // The theme picker is app-owned (TranSegmented), so every segment is a ≥44×44 pt target.
         let themePicker = app.descendants(matching: .any).matching(identifier: "theme-picker").element(boundBy: 0)
         XCTAssertTrue(themePicker.waitForExistence(timeout: 2))
         XCTAssertTrue(themePicker.isHittable, "theme-picker must be tappable")
         for name in ["Light", "Dark", "Black", "Sepia"] {
             let segment = app.buttons[name]
             XCTAssertTrue(segment.exists, "\(name) needs a spoken label")
+            XCTAssertGreaterThanOrEqual(segment.frame.height, 44, "\(name) segment is too short to tap")
             XCTAssertGreaterThanOrEqual(segment.frame.width, 44, "\(name) segment is too narrow to tap")
         }
     }

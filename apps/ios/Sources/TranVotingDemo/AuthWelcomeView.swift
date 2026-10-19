@@ -3,51 +3,40 @@ import SwiftUI
 /// Welcome and role-selection screen providing the two branching navigation options.
 /// Verifies: REQ-NAV-002 REQ-NAV-003 REQ-NAV-004
 struct AuthWelcomeView: View {
-    let palette: TranPalette
     let onSelectRole: (UserRole) -> Void
 
     var body: some View {
-        ZStack {
-            palette.background.ignoresSafeArea()
-            VStack(spacing: TranSpace.lg) {
-                VStack(spacing: TranSpace.sm) {
-                    Text(L10n.Auth.welcomeTitle)
-                        .font(.largeTitle.weight(.bold))
-                        .foregroundStyle(palette.textPrimary)
-                    Text(L10n.Auth.welcomeSubtitle)
-                        .font(.body)
-                        .foregroundStyle(palette.textPrimary.opacity(0.8))
-                }
-
-                VStack(spacing: TranSpace.md) {
-                    Button(action: { onSelectRole(.citizenVoter) }) {
-                        HStack {
-                            Image(systemName: "person.fill")
-                            Text(L10n.Auth.continueAsVoter)
-                                .fontWeight(.semibold)
-                        }
-                        .foregroundStyle(palette.onAction)
-                        .frame(maxWidth: .infinity, minHeight: TranSpace.touch)
+        TranScreen {
+            TranBox(padding: .lg) {
+                TranStack(gap: .lg) {
+                    TranStack(gap: .sm) {
+                        TranText(L10n.Auth.welcomeTitle, variant: .display)
+                        TranText(L10n.Auth.welcomeSubtitle, variant: .muted)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(palette.action)
-                    .accessibilityIdentifier("voter-branch-button")
 
-                    Button(action: { onSelectRole(.electionAuditor) }) {
-                        HStack {
-                            Image(systemName: "checkmark.shield.fill")
-                            Text(L10n.Auth.continueAsAuditor)
-                                .fontWeight(.semibold)
+                    TranStack(gap: .md) {
+                        TranButton(
+                            label: L10n.Auth.continueAsVoter,
+                            icon: "person.fill",
+                            fullWidth: true
+                        ) {
+                            onSelectRole(.citizenVoter)
                         }
-                        .foregroundStyle(palette.textPrimary)
-                        .frame(maxWidth: .infinity, minHeight: TranSpace.touch)
+                        .accessibilityIdentifier("voter-branch-button")
+
+                        TranButton(
+                            label: L10n.Auth.continueAsAuditor,
+                            icon: "checkmark.shield.fill",
+                            variant: .secondary,
+                            fullWidth: true
+                        ) {
+                            onSelectRole(.electionAuditor)
+                        }
+                        .accessibilityIdentifier("auditor-branch-button")
                     }
-                    .buttonStyle(.bordered)
-                    .tint(palette.primary)
-                    .accessibilityIdentifier("auditor-branch-button")
                 }
+                .frame(maxWidth: .infinity)
             }
-            .padding(TranSpace.lg)
         }
     }
 }

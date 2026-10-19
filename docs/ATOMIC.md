@@ -38,6 +38,13 @@ Styles live in `apps/web/src/styles/app.css` on `.tran-*` selectors and `[data-v
 
 ## Native (**N**)
 
-iOS (SwiftUI) and Android (Compose) will mirror these **names** (`TranText`, `TranButton`, …) on generated `BrandTokens` — not duplicated in this slice yet.
+iOS (`apps/ios/Sources/TranVotingDemo/Atoms/`) and Android (`apps/android/.../ui/atoms/`) mirror these **names**
+(`TranText`, `TranStack`, `TranInline`, `TranBox`, `TranSurface`, `TranButton`, `TranField`, `TranSegmented`,
+`TranDivider`, plus the `TranScreen` background container) on the generated `BrandTokens`; gaps come from `TranGap`,
+whose steps are the generated space scale (`xxs…xxl`). The palette arrives through the platform environment
+(SwiftUI `\.tranPalette` / Compose `LocalTranPalette`) — the native analogue of web CSS variables. Raw
+`Text`/`Button`/`TextField`/`Picker`/`Divider` (iOS) and their Material3 counterparts (Android) outside the atoms
+directories fail [`native-atoms.test.ts`](../../packages/core-ts/tests/native-atoms.test.ts) — a regex guard, not
+a type checker ([ADR-0022](./adr/0022-native-atoms.md)).
 
 See [DESIGN.md](./DESIGN.md) and [ADR-0017](./adr/0017-web-atomic-enforcement.md).

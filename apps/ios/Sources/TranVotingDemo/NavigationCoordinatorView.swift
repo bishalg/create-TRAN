@@ -30,15 +30,12 @@ struct NavigationCoordinatorView: View {
         Group {
             if isBootstrapping {
                 // Screen 0: Launch / Splash Screen (Navigation Director boots)
-                ZStack {
-                    palette.background.ignoresSafeArea()
-                    VStack(spacing: TranSpace.md) {
+                TranScreen {
+                    TranStack(gap: .md) {
                         Image(systemName: "hand.raised.fill")
                             .font(.largeTitle)
                             .foregroundStyle(palette.primary)
-                        Text(L10n.Common.brand)
-                            .font(.largeTitle.weight(.bold))
-                            .foregroundStyle(palette.textPrimary)
+                        TranText(L10n.Common.brand, variant: .display)
                         ProgressView()
                             .tint(palette.primary)
                             .accessibilityIdentifier("splash-progress")
@@ -55,19 +52,19 @@ struct NavigationCoordinatorView: View {
             } else {
                 switch NavigationDirector.resolveDestination(session: session) {
                 case .splash, .authWelcome:
-                    AuthWelcomeView(palette: palette) { selectedRole in
+                    AuthWelcomeView { selectedRole in
                         withAnimation(TranMotion.animation(reduceMotion: reduceMotion)) {
                             session = .authenticated(role: selectedRole)
                         }
                     }
                 case .voterDashboard:
-                    VotingHomeView(palette: palette, theme: $theme, onSignOut: {
+                    VotingHomeView(theme: $theme, onSignOut: {
                         withAnimation(TranMotion.animation(reduceMotion: reduceMotion)) {
                             session = .unauthenticated
                         }
                     })
                 case .auditorDashboard:
-                    AuditorHomeView(palette: palette) {
+                    AuditorHomeView {
                         withAnimation(TranMotion.animation(reduceMotion: reduceMotion)) {
                             session = .unauthenticated
                         }
@@ -75,7 +72,9 @@ struct NavigationCoordinatorView: View {
                 }
             }
         }
-        // Appearance follows the palette's own metadata (token data, not a theme-name check).
+        // Atoms read the registry palette from the environment; appearance follows the palette's
+        // own metadata (token data, not a theme-name check).
+        .environment(\.tranPalette, palette)
         .preferredColorScheme(palette.colorScheme)
     }
 }

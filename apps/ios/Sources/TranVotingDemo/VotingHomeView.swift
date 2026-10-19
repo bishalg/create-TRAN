@@ -3,7 +3,6 @@ import SwiftUI
 /// Voting demo — brand tokens + offline rust-core rules via UniFFI.
 /// Copy comes from the shared dictionaries through the generated String Catalog.
 struct VotingHomeView: View {
-    let palette: TranPalette
     @Binding var theme: TranTheme
     @State private var ageText = "20"
     @State private var countryCode = "NP"
@@ -11,100 +10,66 @@ struct VotingHomeView: View {
     var onSignOut: (() -> Void)? = nil
 
     var body: some View {
-        ZStack {
-            palette.background.ignoresSafeArea()
+        TranScreen {
             ScrollView {
-                VStack(alignment: .leading, spacing: TranSpace.md) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: TranSpace.xs) {
-                            Text(L10n.Shell.header("iOS"))
-                                .font(.headline)
-                                .foregroundStyle(palette.textPrimary)
-                            Text(L10n.Eligibility.subtitle)
-                                .font(.subheadline)
-                                .foregroundStyle(palette.textPrimary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        Spacer()
-                        if let onSignOut {
-                            Button(action: onSignOut) {
-                                Text(L10n.Common.signOut)
-                                    .foregroundStyle(palette.textPrimary)
+                TranBox(padding: .lg) {
+                    TranStack(gap: .md, alignment: .leading) {
+                        TranInline(gap: .md) {
+                            TranStack(gap: .xs, alignment: .leading) {
+                                TranText(L10n.Shell.header("iOS"), variant: .title)
+                                TranText(L10n.Eligibility.subtitle, variant: .muted)
                             }
-                            .buttonStyle(.bordered)
-                            .tint(palette.primary)
-                            .accessibilityIdentifier("sign-out-button")
+                            Spacer()
+                            if let onSignOut {
+                                TranButton(label: L10n.Common.signOut, variant: .secondary, size: .md) {
+                                    onSignOut()
+                                }
+                                .accessibilityIdentifier("sign-out-button")
+                            }
                         }
-                    }
 
-                    VStack(alignment: .leading, spacing: TranSpace.base) {
-                        VStack(alignment: .leading, spacing: TranSpace.xs) {
-                            Text(L10n.Eligibility.ageLabel)
-                                .font(.subheadline)
-                                .foregroundStyle(palette.textPrimary)
-                            TextField("", text: $ageText, prompt: Text(L10n.Eligibility.agePlaceholder).foregroundStyle(palette.textPrimary))
-                                .keyboardType(.numberPad)
-                                .padding(TranSpace.base)
-                                .background(palette.surface)
-                                .foregroundStyle(palette.textPrimary)
-                                .clipShape(RoundedRectangle(cornerRadius: TranRadius.sm))
-                                .accessibilityIdentifier("age-field")
+                        TranStack(gap: .base, alignment: .leading) {
+                            TranField(
+                                label: L10n.Eligibility.ageLabel,
+                                hint: L10n.Eligibility.agePlaceholder,
+                                text: $ageText,
+                                identifier: "age-field",
+                                keyboard: .numberPad
+                            )
+                            TranField(
+                                label: L10n.Eligibility.countryLabel,
+                                hint: L10n.Eligibility.countryPlaceholder,
+                                text: $countryCode,
+                                identifier: "country-field",
+                                autocapitalization: .characters
+                            )
                         }
-                        VStack(alignment: .leading, spacing: TranSpace.xs) {
-                            Text(L10n.Eligibility.countryLabel)
-                                .font(.subheadline)
-                                .foregroundStyle(palette.textPrimary)
-                            TextField("", text: $countryCode, prompt: Text(L10n.Eligibility.countryPlaceholder).foregroundStyle(palette.textPrimary))
-                                .textInputAutocapitalization(.characters)
-                                .padding(TranSpace.base)
-                                .background(palette.surface)
-                                .foregroundStyle(palette.textPrimary)
-                                .clipShape(RoundedRectangle(cornerRadius: TranRadius.sm))
-                                .accessibilityIdentifier("country-field")
-                        }
-                    }
 
-                    Button {
-                        checkOffline(
-                            canVote: palette.eligibilityCanVote,
-                            cannotVote: palette.eligibilityCannotVote
+                        TranButton(label: L10n.Eligibility.checkOffline, fullWidth: true) {
+                            checkOffline()
+                        }
+                        .accessibilityIdentifier("check-button")
+
+                        TranText(resultText, live: true)
+                            .accessibilityIdentifier("offline-result")
+
+                        // Theme choices come from the rust-core registry: every case renders here,
+                        // with its label from the shared dictionaries (`shell.theme.<mode>`).
+                        TranSegmented(
+                            options: TranTheme.allCases,
+                            selection: $theme,
+                            label: { $0.label },
+                            accessibilityLabel: L10n.Shell.themeLabel
                         )
-                    } label: {
-                        Text(L10n.Eligibility.checkOffline)
-                            .foregroundStyle(palette.onAction)
+                        .accessibilityIdentifier("theme-picker")
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .frame(maxWidth: .infinity, minHeight: TranSpace.touch)
-                    .tint(palette.action)
-                    .accessibilityIdentifier("check-button")
-
-                    Text(resultText)
-                        .font(.body)
-                        .foregroundStyle(palette.textPrimary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .accessibilityIdentifier("offline-result")
-                        .accessibilityAddTraits(.updatesFrequently)
-
-                    // Theme choices come from the rust-core registry: every case renders here,
-                    // with its label from the shared dictionaries (`shell.theme.<mode>`).
-                    Picker(L10n.Shell.themeLabel, selection: $theme) {
-                        ForEach(TranTheme.allCases) { mode in
-                            Text(mode.label).tag(mode)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .controlSize(.large)
-                    .frame(maxWidth: .infinity, minHeight: TranSpace.touch)
-                    .accessibilityIdentifier("theme-picker")
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(TranSpace.lg)
             }
         }
     }
 
-    private func checkOffline(canVote: Color, cannotVote: Color) {
+    private func checkOffline() {
         guard let age = UInt16(ageText), !countryCode.isEmpty else {
             resultText = L10n.Errors.ageAndCountry
             return
@@ -128,11 +93,9 @@ struct VotingHomeView: View {
                 countryCode: countryCode,
                 referenceDateIso: String(reference)
             )
-            let tint = res.eligible ? canVote : cannotVote
             resultText = res.eligible
                 ? L10n.Eligibility.resultReasonMeets(String(res.age), String(res.minimumAge), res.countryCode)
                 : L10n.Eligibility.resultReasonBelow(String(res.age), String(res.minimumAge), res.countryCode)
-            _ = tint
         } catch {
             // Pre-validated above; the core's English detail is never shown to users.
             resultText = L10n.Errors.countryInvalid
