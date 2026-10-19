@@ -103,7 +103,5 @@ Pluralization is deliberately deferred (i18next-style selectors or ICU plurals c
 - Translators work on small, module-scoped files; scaffolding can delete `ne`/`hi` in three
   steps without touching code.
 - `%` in a value is rejected: Android format strings need positional placeholders instead.
-- Rust-core verdict text (the engine `reason` and validation messages) is still English —
-  locale-aware reason codes are the next increment, out of scope here.
-- `apps/native` (legacy RN) keeps compiling against the same typed keys; it is not the target
-  platform (N = iOS + Android).
+- The core's English `reason` and validation `detail` are diagnostic only: every UI builds the
+  verdict sentence from facts via `eligibility.result.reasonMeets/Below` (REQ-I18N-007).

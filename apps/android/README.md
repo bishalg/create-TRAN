@@ -71,5 +71,3 @@ pnpm uniffi:generate
 
 - CI instrumentation run on an emulator (Maestro flows already run locally via `pnpm e2e:maestro`)
 - OkHttp client matching Axum error envelope
-
-Legacy Expo: `apps/native` — see [docs/ROADMAP.md](../../docs/ROADMAP.md).

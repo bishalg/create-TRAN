@@ -89,50 +89,6 @@
         }
       }
     },
-    "eligibility.country.apiHint": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sends X-Debug-Country with your pick; production would use geo from IP."
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "X-Debug-Country भेजता है; प्रोडक्शन में IP जियो।"
-          }
-        },
-        "ne": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "X-Debug-Country पठाउँछ; प्रोडक्शनमा IP जियो।"
-          }
-        }
-      }
-    },
-    "eligibility.country.apiLabel": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Debug country (API header)"
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "डिबग देश (API)"
-          }
-        },
-        "ne": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "डिबग देश (API)"
-          }
-        }
-      }
-    },
     "eligibility.country.example": {
       "localizations": {
         "en": {
@@ -441,28 +397,6 @@
         }
       }
     },
-    "eligibility.result.meta": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ · min %2$@ · IP %3$@"
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ · न्यूनतम %2$@ · IP %3$@"
-          }
-        },
-        "ne": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ · न्यूनतम %2$@ · IP %3$@"
-          }
-        }
-      }
-    },
     "eligibility.result.minimumAge": {
       "localizations": {
         "en": {
@@ -595,50 +529,6 @@
         }
       }
     },
-    "eligibility.section.api": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "API (country from IP stub)"
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "API (IP से देश)"
-          }
-        },
-        "ne": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "API (IP बाट देश)"
-          }
-        }
-      }
-    },
-    "eligibility.section.offline": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Offline (Rust rules mirror)"
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ऑफ़लाइन (Rust नियम)"
-          }
-        },
-        "ne": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "अफलाइन (Rust नियम)"
-          }
-        }
-      }
-    },
     "eligibility.submit": {
       "localizations": {
         "en": {
@@ -657,28 +547,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "योग्यता जाँच्नुहोस्"
-          }
-        }
-      }
-    },
-    "eligibility.submitApi": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Check via API"
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "API से जाँचें"
-          }
-        },
-        "ne": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "API बाट जाँच"
           }
         }
       }

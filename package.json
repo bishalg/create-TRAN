@@ -8,7 +8,6 @@
     "dev": "nx run-many -t dev",
     "dev:web": "nx run web:dev",
     "dev:api": "nx run api:dev",
-    "dev:native": "nx run native:start",
     "build": "nx run-many -t build",
     "test": "pnpm run test:rust && pnpm run test:ts",
     "test:rust": "cargo test",

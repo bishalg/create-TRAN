@@ -36,9 +36,6 @@ xcuserdata/
 apps/ios/RustLib/**/*
 !apps/ios/RustLib/active.xcconfig
 
-# Expo & React Native
-.expo/
-.expo-shared/
 *.jks
 *.p8
 *.p12
@@ -46,8 +43,6 @@ apps/ios/RustLib/**/*
 *.mobileprovision
 *.orig.*
 web-build/
-apps/native/android/
-apps/native/ios/
 
 # macOS & OS files
 .DS_Store

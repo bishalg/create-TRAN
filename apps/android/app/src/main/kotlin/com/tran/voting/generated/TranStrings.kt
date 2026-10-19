@@ -63,10 +63,6 @@ object TranStrings {
         @StringRes
         val checkOffline: Int = R.string.eligibility_check_offline // eligibility.checkOffline
         @StringRes
-        val countryApiHint: Int = R.string.eligibility_country_api_hint // eligibility.country.apiHint
-        @StringRes
-        val countryApiLabel: Int = R.string.eligibility_country_api_label // eligibility.country.apiLabel
-        @StringRes
         val countryExample: Int = R.string.eligibility_country_example // eligibility.country.example
         @StringRes
         val countryHint: Int = R.string.eligibility_country_hint // eligibility.country.hint
@@ -95,8 +91,6 @@ object TranStrings {
         @StringRes
         val resultLabel: Int = R.string.eligibility_result_label // eligibility.result.label
         @StringRes
-        val resultMeta: Int = R.string.eligibility_result_meta // eligibility.result.meta
-        @StringRes
         val resultMinimumAge: Int = R.string.eligibility_result_minimum_age // eligibility.result.minimumAge
         @StringRes
         val resultPlaceholder: Int = R.string.eligibility_result_placeholder // eligibility.result.placeholder
@@ -109,13 +103,7 @@ object TranStrings {
         @StringRes
         val resultSourceServer: Int = R.string.eligibility_result_source_server // eligibility.result.sourceServer
         @StringRes
-        val sectionApi: Int = R.string.eligibility_section_api // eligibility.section.api
-        @StringRes
-        val sectionOffline: Int = R.string.eligibility_section_offline // eligibility.section.offline
-        @StringRes
         val submit: Int = R.string.eligibility_submit // eligibility.submit
-        @StringRes
-        val submitApi: Int = R.string.eligibility_submit_api // eligibility.submitApi
         @StringRes
         val submitting: Int = R.string.eligibility_submitting // eligibility.submitting
         @StringRes
@@ -145,17 +133,11 @@ object TranStrings {
         @StringRes
         val skipToContent: Int = R.string.shell_skip_to_content // shell.skipToContent
         @StringRes
-        val stack: Int = R.string.shell_stack // shell.stack
-        @StringRes
         val statusChecking: Int = R.string.shell_status_checking // shell.status.checking
         @StringRes
         val statusOffline: Int = R.string.shell_status_offline // shell.status.offline
         @StringRes
         val statusOnline: Int = R.string.shell_status_online // shell.status.online
-        @StringRes
-        val statusStandby: Int = R.string.shell_status_standby // shell.status.standby
-        @StringRes
-        val statusTitle: Int = R.string.shell_status_title // shell.status.title
         @StringRes
         val subtitle: Int = R.string.shell_subtitle // shell.subtitle
         @StringRes

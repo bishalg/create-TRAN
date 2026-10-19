@@ -36,8 +36,6 @@
     "tanstack-start",
     "rust",
     "axum",
-    "react-native",
-    "expo",
     "nx",
     "monorepo"
   ],
