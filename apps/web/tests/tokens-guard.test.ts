@@ -26,6 +26,10 @@ const snapshotThemes = (
 ).themes;
 
 describe('app.css token guard', () => {
+  it('does not use raw hex colours', () => {
+    expect(appCss.match(/#[0-9a-fA-F]{3,8}\b/g) ?? []).toEqual([]);
+  });
+
   it('has no var() inside @media conditions (invalid CSS, rule is silently dropped)', () => {
     expect(appCss).not.toMatch(/@media[^{]*var\(/);
   });

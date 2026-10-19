@@ -562,7 +562,7 @@ input {
   height: var(--tran-spacing-touch);
   border-radius: 50%;
   background: var(--tone);
-  color: #fff;
+  color: var(--tran-color-background);
 }
 
 .result-badge svg {
