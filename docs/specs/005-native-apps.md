@@ -31,9 +31,10 @@ reachable; Compose test at `fontScale = 2f` scrolling to the intact verdict.
 
 ### REQ-NAT-005 [verified] Touch targets
 
-Interactive controls MUST be at least 44×44 pt (iOS) / 48×48 dp (Android).
-**Verified by:** XCUITest frame assertions plus the audit's hit-region check; Compose test asserting every control's
-`touchBoundsInRoot` is at least 48×48 dp.
+Interactive controls the app lays out MUST be at least 44×44 pt (iOS) / 48×48 dp (Android); the iOS system segmented
+picker keeps Apple's native ~32 pt height on older SDKs and is covered by the platform audit instead.
+**Verified by:** XCUITest frame assertions for app-owned controls and the picker's segments, `performAccessibilityAudit`
+across all four themes, and the Compose test asserting every control's `touchBoundsInRoot` is at least 48×48 dp.
 
 ### REQ-NAT-006 [verified] Reduced motion and contrast
 
