@@ -15,12 +15,13 @@
   --border: var(--tran-glass-border-standard);
   --ring: var(--tran-color-primary);
   /*
-   * Buttons mix the theme's own primary with its own text colour, so every
-   * palette (present and future) keeps the background token readable on the
-   * fill. No per-theme overrides — one derived rule for all themes.
+   * Buttons use the derived action pair from rust-core (`palette.action` /
+   * `palette.onAction`): the theme's own primary mixed toward its own text colour, labelled
+   * with the background token. One derived rule for every palette (present and future),
+   * shared by web, iOS and Android — no per-theme overrides.
    */
-  --btn-bg: color-mix(in srgb, var(--tran-color-primary) 82%, var(--tran-color-text-primary));
-  --btn-fg: var(--tran-color-background);
+  --btn-bg: var(--tran-color-action);
+  --btn-fg: var(--tran-color-on-action);
   --shadow: var(--tran-glass-shadow-ambient);
 }
 

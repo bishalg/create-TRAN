@@ -27,10 +27,13 @@ struct VotingHomeView: View {
                         }
                         Spacer()
                         if let onSignOut {
-                            Button(L10n.Common.signOut, action: onSignOut)
-                                .buttonStyle(.bordered)
-                                .tint(palette.primary)
-                                .accessibilityIdentifier("sign-out-button")
+                            Button(action: onSignOut) {
+                                Text(L10n.Common.signOut)
+                                    .foregroundStyle(palette.textPrimary)
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(palette.primary)
+                            .accessibilityIdentifier("sign-out-button")
                         }
                     }
 
@@ -61,16 +64,19 @@ struct VotingHomeView: View {
                         }
                     }
 
-                    Button(L10n.Eligibility.checkOffline) {
+                    Button {
                         checkOffline(
                             canVote: palette.eligibilityCanVote,
                             cannotVote: palette.eligibilityCannotVote
                         )
+                    } label: {
+                        Text(L10n.Eligibility.checkOffline)
+                            .foregroundStyle(palette.onAction)
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
                     .frame(maxWidth: .infinity, minHeight: TranSpace.touch)
-                    .tint(palette.primary)
+                    .tint(palette.action)
                     .accessibilityIdentifier("check-button")
 
                     Text(resultText)

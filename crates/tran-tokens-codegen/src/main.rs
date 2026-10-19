@@ -186,7 +186,7 @@ fn render_tokens_ts(snapshot: &TokensJsonSnapshot) -> String {
         quoted.join(", ")
     ));
     out.push_str(&format!(
-        "/** Palette applied before the user (or OS) has chosen one. */\nexport const defaultTheme: ThemeMode = '{}';\n\nexport interface ThemeTokens {{\n  mode: ThemeMode;\n  colorScheme: 'light' | 'dark';\n  glass: {{\n    background: {{\n      subtle: string;\n      standard: string;\n      prominent: string;\n      dark: string;\n    }};\n    border: {{\n      subtle: string;\n      standard: string;\n      highlight: string;\n    }};\n    blur: {{\n      sm: string;\n      md: string;\n      lg: string;\n      xl: string;\n    }};\n    shadow: {{\n      ambient: string;\n      raised: string;\n      insetGlow: string;\n    }};\n  }};\n  radii: typeof snapshot.radii;\n  palette: {{\n    primary: string;\n    primaryGlow: string;\n    accent: string;\n    success: string;\n    warning: string;\n    danger: string;\n    surface: string;\n    background: string;\n    eligibility: {{\n      canVote: string;\n      cannotVote: string;\n      neutral: string;\n    }};\n    text: {{\n      primary: string;\n      secondary: string;\n      muted: string;\n    }};\n  }};\n}}\n\nexport type LiquidGlassTokens = ThemeTokens;\n\n",
+        "/** Palette applied before the user (or OS) has chosen one. */\nexport const defaultTheme: ThemeMode = '{}';\n\nexport interface ThemeTokens {{\n  mode: ThemeMode;\n  colorScheme: 'light' | 'dark';\n  glass: {{\n    background: {{\n      subtle: string;\n      standard: string;\n      prominent: string;\n      dark: string;\n    }};\n    border: {{\n      subtle: string;\n      standard: string;\n      highlight: string;\n    }};\n    blur: {{\n      sm: string;\n      md: string;\n      lg: string;\n      xl: string;\n    }};\n    shadow: {{\n      ambient: string;\n      raised: string;\n      insetGlow: string;\n    }};\n  }};\n  radii: typeof snapshot.radii;\n  palette: {{\n    primary: string;\n    action: string;\n    onAction: string;\n    primaryGlow: string;\n    accent: string;\n    success: string;\n    warning: string;\n    danger: string;\n    surface: string;\n    background: string;\n    eligibility: {{\n      canVote: string;\n      cannotVote: string;\n      neutral: string;\n    }};\n    text: {{\n      primary: string;\n      secondary: string;\n      muted: string;\n    }};\n  }};\n}}\n\nexport type LiquidGlassTokens = ThemeTokens;\n\n",
         snapshot.default_theme
     ));
     out.push_str(&format!(
@@ -297,8 +297,10 @@ fn render_radii_vars(r: &rust_core::tokens::RadiiTokens) -> String {
 fn theme_vars(theme: &ThemeJson) -> String {
     let p = &theme.palette;
     format!(
-        "  --tran-color-primary: {primary};\n  --tran-color-accent: {accent};\n  --tran-color-success: {success};\n  --tran-color-warning: {warning};\n  --tran-color-danger: {danger};\n  --tran-color-surface: {surface};\n  --tran-color-background: {background};\n  --tran-color-text-primary: {text_primary};\n  --tran-color-text-secondary: {text_secondary};\n  --tran-color-text-muted: {text_muted};\n  --tran-color-eligible: {eligible};\n  --tran-color-ineligible: {ineligible};\n  --tran-color-eligibility-neutral: {neutral};\n  --tran-glass-bg-standard: {glass_std};\n  --tran-glass-border-standard: {glass_border};\n  --tran-glass-shadow-ambient: {shadow_ambient};\n  --tran-glass-shadow-raised: {shadow_raised};\n",
+        "  --tran-color-primary: {primary};\n  --tran-color-action: {action};\n  --tran-color-on-action: {on_action};\n  --tran-color-accent: {accent};\n  --tran-color-success: {success};\n  --tran-color-warning: {warning};\n  --tran-color-danger: {danger};\n  --tran-color-surface: {surface};\n  --tran-color-background: {background};\n  --tran-color-text-primary: {text_primary};\n  --tran-color-text-secondary: {text_secondary};\n  --tran-color-text-muted: {text_muted};\n  --tran-color-eligible: {eligible};\n  --tran-color-ineligible: {ineligible};\n  --tran-color-eligibility-neutral: {neutral};\n  --tran-glass-bg-standard: {glass_std};\n  --tran-glass-border-standard: {glass_border};\n  --tran-glass-shadow-ambient: {shadow_ambient};\n  --tran-glass-shadow-raised: {shadow_raised};\n",
         primary = p.primary,
+        action = p.action,
+        on_action = p.onAction,
         accent = p.accent,
         success = p.success,
         warning = p.warning,
@@ -359,14 +361,16 @@ fn render_swift_tokens(snapshot: &TokensJsonSnapshot) -> String {
     }
     out.push_str("\n    var id: String { rawValue }\n}\n\n");
     out.push_str(
-        "struct TranPalette {\n    let primary: Color\n    let accent: Color\n    let success: Color\n    let danger: Color\n    let surface: Color\n    let background: Color\n    let eligibilityCanVote: Color\n    let eligibilityCannotVote: Color\n    let textPrimary: Color\n    let colorScheme: ColorScheme\n}\n\nenum TranBrandTokens {\n",
+        "struct TranPalette {\n    let primary: Color\n    let action: Color\n    let onAction: Color\n    let accent: Color\n    let success: Color\n    let danger: Color\n    let surface: Color\n    let background: Color\n    let eligibilityCanVote: Color\n    let eligibilityCannotVote: Color\n    let textPrimary: Color\n    let colorScheme: ColorScheme\n}\n\nenum TranBrandTokens {\n",
     );
     for theme in &snapshot.themes {
         let p = &theme.palette;
         out.push_str(&format!(
-            "    static let {name} = TranPalette(\n        primary: Color(tranHex: \"{primary}\"),\n        accent: Color(tranHex: \"{accent}\"),\n        success: Color(tranHex: \"{success}\"),\n        danger: Color(tranHex: \"{danger}\"),\n        surface: Color(tranHex: \"{surface}\"),\n        background: Color(tranHex: \"{background}\"),\n        eligibilityCanVote: Color(tranHex: \"{can_vote}\"),\n        eligibilityCannotVote: Color(tranHex: \"{cannot_vote}\"),\n        textPrimary: Color(tranHex: \"{text_primary}\"),\n        colorScheme: {scheme}\n    )\n\n",
+            "    static let {name} = TranPalette(\n        primary: Color(tranHex: \"{primary}\"),\n        action: Color(tranHex: \"{action}\"),\n        onAction: Color(tranHex: \"{on_action}\"),\n        accent: Color(tranHex: \"{accent}\"),\n        success: Color(tranHex: \"{success}\"),\n        danger: Color(tranHex: \"{danger}\"),\n        surface: Color(tranHex: \"{surface}\"),\n        background: Color(tranHex: \"{background}\"),\n        eligibilityCanVote: Color(tranHex: \"{can_vote}\"),\n        eligibilityCannotVote: Color(tranHex: \"{cannot_vote}\"),\n        textPrimary: Color(tranHex: \"{text_primary}\"),\n        colorScheme: {scheme}\n    )\n\n",
             name = theme.mode,
             primary = p.primary,
+            action = p.action,
+            on_action = p.onAction,
             accent = p.accent,
             success = p.success,
             danger = p.danger,
@@ -422,14 +426,16 @@ fn render_kotlin_tokens(snapshot: &TokensJsonSnapshot) -> String {
     }
     out.push_str("}\n\n");
     out.push_str(
-        "/** Semantic palette implemented by every theme; screens receive a palette, never a theme name. */\ninterface BrandPalette {\n    val primary: Color\n    val accent: Color\n    val success: Color\n    val danger: Color\n    val surface: Color\n    val background: Color\n    val eligibilityCanVote: Color\n    val eligibilityCannotVote: Color\n    val textPrimary: Color\n    val isLight: Boolean\n}\n\nobject TranBrandTokens {\n",
+        "/** Semantic palette implemented by every theme; screens receive a palette, never a theme name. */\ninterface BrandPalette {\n    val primary: Color\n    val action: Color\n    val onAction: Color\n    val accent: Color\n    val success: Color\n    val danger: Color\n    val surface: Color\n    val background: Color\n    val eligibilityCanVote: Color\n    val eligibilityCannotVote: Color\n    val textPrimary: Color\n    val isLight: Boolean\n}\n\nobject TranBrandTokens {\n",
     );
     for theme in &snapshot.themes {
         let p = &theme.palette;
         out.push_str(&format!(
-            "    object {object_name} : BrandPalette {{\n        override val primary = tranColor(\"{primary}\")\n        override val accent = tranColor(\"{accent}\")\n        override val success = tranColor(\"{success}\")\n        override val danger = tranColor(\"{danger}\")\n        override val surface = tranColor(\"{surface}\")\n        override val background = tranColor(\"{background}\")\n        override val eligibilityCanVote = tranColor(\"{can_vote}\")\n        override val eligibilityCannotVote = tranColor(\"{cannot_vote}\")\n        override val textPrimary = tranColor(\"{text_primary}\")\n        override val isLight = {is_light}\n    }}\n\n",
+            "    object {object_name} : BrandPalette {{\n        override val primary = tranColor(\"{primary}\")\n        override val action = tranColor(\"{action}\")\n        override val onAction = tranColor(\"{on_action}\")\n        override val accent = tranColor(\"{accent}\")\n        override val success = tranColor(\"{success}\")\n        override val danger = tranColor(\"{danger}\")\n        override val surface = tranColor(\"{surface}\")\n        override val background = tranColor(\"{background}\")\n        override val eligibilityCanVote = tranColor(\"{can_vote}\")\n        override val eligibilityCannotVote = tranColor(\"{cannot_vote}\")\n        override val textPrimary = tranColor(\"{text_primary}\")\n        override val isLight = {is_light}\n    }}\n\n",
             object_name = pascal_case(&theme.mode),
             primary = p.primary,
+            action = p.action,
+            on_action = p.onAction,
             accent = p.accent,
             success = p.success,
             danger = p.danger,
@@ -453,7 +459,7 @@ fn render_kotlin_tokens(snapshot: &TokensJsonSnapshot) -> String {
         "    )\n\n    fun palette(theme: TranTheme): BrandPalette = themes.getValue(theme)\n}\n\n",
     );
     out.push_str(
-        "/** Material shell colours derived from the palette's own light/dark metadata. */\nfun tranColorScheme(palette: BrandPalette): ColorScheme =\n    if (palette.isLight) {\n        lightColorScheme(\n            primary = palette.primary,\n            background = palette.background,\n            surface = palette.surface,\n            onBackground = palette.textPrimary,\n        )\n    } else {\n        darkColorScheme(\n            primary = palette.primary,\n            background = palette.background,\n            surface = palette.surface,\n            onBackground = palette.textPrimary,\n        )\n    }\n",
+        "/** Material shell colours derived from the palette's own light/dark metadata. Actions use the\n * palette's AA-safe action pair, so every Material button inherits readable fill and label. */\nfun tranColorScheme(palette: BrandPalette): ColorScheme =\n    if (palette.isLight) {\n        lightColorScheme(\n            primary = palette.action,\n            onPrimary = palette.onAction,\n            background = palette.background,\n            surface = palette.surface,\n            onBackground = palette.textPrimary,\n        )\n    } else {\n        darkColorScheme(\n            primary = palette.action,\n            onPrimary = palette.onAction,\n            background = palette.background,\n            surface = palette.surface,\n            onBackground = palette.textPrimary,\n        )\n    }\n",
     );
     out.push_str(&render_kotlin_scale(snapshot));
     out

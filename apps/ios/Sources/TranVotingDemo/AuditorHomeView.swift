@@ -31,10 +31,13 @@ struct AuditorHomeView: View {
                                 .foregroundStyle(palette.textPrimary.opacity(0.8))
                         }
                         Spacer()
-                        Button(L10n.Common.signOut, action: onSignOut)
-                            .buttonStyle(.bordered)
-                            .tint(palette.primary)
-                            .accessibilityIdentifier("sign-out-button")
+                        Button(action: onSignOut) {
+                            Text(L10n.Common.signOut)
+                                .foregroundStyle(palette.textPrimary)
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(palette.primary)
+                        .accessibilityIdentifier("sign-out-button")
                     }
 
                     VStack(alignment: .leading, spacing: TranSpace.base) {

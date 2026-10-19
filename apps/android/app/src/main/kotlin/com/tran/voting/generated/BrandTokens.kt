@@ -38,6 +38,8 @@ enum class TranTheme(val id: String) {
 /** Semantic palette implemented by every theme; screens receive a palette, never a theme name. */
 interface BrandPalette {
     val primary: Color
+    val action: Color
+    val onAction: Color
     val accent: Color
     val success: Color
     val danger: Color
@@ -52,6 +54,8 @@ interface BrandPalette {
 object TranBrandTokens {
     object Light : BrandPalette {
         override val primary = tranColor("#0284c7")
+        override val action = tranColor("#0470ab")
+        override val onAction = tranColor("#f8fafc")
         override val accent = tranColor("#4f46e5")
         override val success = tranColor("#059669")
         override val danger = tranColor("#dc2626")
@@ -65,6 +69,8 @@ object TranBrandTokens {
 
     object Dark : BrandPalette {
         override val primary = tranColor("#38bdf8")
+        override val action = tranColor("#5bc8f9")
+        override val onAction = tranColor("#0b0f19")
         override val accent = tranColor("#818cf8")
         override val success = tranColor("#34d399")
         override val danger = tranColor("#f87171")
@@ -78,6 +84,8 @@ object TranBrandTokens {
 
     object Black : BrandPalette {
         override val primary = tranColor("#38bdf8")
+        override val action = tranColor("#5bc8f9")
+        override val onAction = tranColor("#000000")
         override val accent = tranColor("#818cf8")
         override val success = tranColor("#34d399")
         override val danger = tranColor("#f87171")
@@ -91,6 +99,8 @@ object TranBrandTokens {
 
     object Sepia : BrandPalette {
         override val primary = tranColor("#8a5a24")
+        override val action = tranColor("#7c5223")
+        override val onAction = tranColor("#f5ecd7")
         override val accent = tranColor("#7e5aa0")
         override val success = tranColor("#3f6212")
         override val danger = tranColor("#a8261f")
@@ -112,18 +122,21 @@ object TranBrandTokens {
     fun palette(theme: TranTheme): BrandPalette = themes.getValue(theme)
 }
 
-/** Material shell colours derived from the palette's own light/dark metadata. */
+/** Material shell colours derived from the palette's own light/dark metadata. Actions use the
+ * palette's AA-safe action pair, so every Material button inherits readable fill and label. */
 fun tranColorScheme(palette: BrandPalette): ColorScheme =
     if (palette.isLight) {
         lightColorScheme(
-            primary = palette.primary,
+            primary = palette.action,
+            onPrimary = palette.onAction,
             background = palette.background,
             surface = palette.surface,
             onBackground = palette.textPrimary,
         )
     } else {
         darkColorScheme(
-            primary = palette.primary,
+            primary = palette.action,
+            onPrimary = palette.onAction,
             background = palette.background,
             surface = palette.surface,
             onBackground = palette.textPrimary,

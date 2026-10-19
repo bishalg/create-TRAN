@@ -26,10 +26,11 @@ struct AuthWelcomeView: View {
                             Text(L10n.Auth.continueAsVoter)
                                 .fontWeight(.semibold)
                         }
+                        .foregroundStyle(palette.onAction)
                         .frame(maxWidth: .infinity, minHeight: TranSpace.touch)
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(palette.primary)
+                    .tint(palette.action)
                     .accessibilityIdentifier("voter-branch-button")
 
                     Button(action: { onSelectRole(.electionAuditor) }) {
@@ -38,6 +39,7 @@ struct AuthWelcomeView: View {
                             Text(L10n.Auth.continueAsAuditor)
                                 .fontWeight(.semibold)
                         }
+                        .foregroundStyle(palette.textPrimary)
                         .frame(maxWidth: .infinity, minHeight: TranSpace.touch)
                     }
                     .buttonStyle(.bordered)

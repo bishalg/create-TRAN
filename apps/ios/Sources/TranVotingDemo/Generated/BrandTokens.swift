@@ -46,6 +46,8 @@ enum TranTheme: String, CaseIterable, Identifiable {
 
 struct TranPalette {
     let primary: Color
+    let action: Color
+    let onAction: Color
     let accent: Color
     let success: Color
     let danger: Color
@@ -60,6 +62,8 @@ struct TranPalette {
 enum TranBrandTokens {
     static let light = TranPalette(
         primary: Color(tranHex: "#0284c7"),
+        action: Color(tranHex: "#0470ab"),
+        onAction: Color(tranHex: "#f8fafc"),
         accent: Color(tranHex: "#4f46e5"),
         success: Color(tranHex: "#059669"),
         danger: Color(tranHex: "#dc2626"),
@@ -73,6 +77,8 @@ enum TranBrandTokens {
 
     static let dark = TranPalette(
         primary: Color(tranHex: "#38bdf8"),
+        action: Color(tranHex: "#5bc8f9"),
+        onAction: Color(tranHex: "#0b0f19"),
         accent: Color(tranHex: "#818cf8"),
         success: Color(tranHex: "#34d399"),
         danger: Color(tranHex: "#f87171"),
@@ -86,6 +92,8 @@ enum TranBrandTokens {
 
     static let black = TranPalette(
         primary: Color(tranHex: "#38bdf8"),
+        action: Color(tranHex: "#5bc8f9"),
+        onAction: Color(tranHex: "#000000"),
         accent: Color(tranHex: "#818cf8"),
         success: Color(tranHex: "#34d399"),
         danger: Color(tranHex: "#f87171"),
@@ -99,6 +107,8 @@ enum TranBrandTokens {
 
     static let sepia = TranPalette(
         primary: Color(tranHex: "#8a5a24"),
+        action: Color(tranHex: "#7c5223"),
+        onAction: Color(tranHex: "#f5ecd7"),
         accent: Color(tranHex: "#7e5aa0"),
         success: Color(tranHex: "#3f6212"),
         danger: Color(tranHex: "#a8261f"),

@@ -39,6 +39,8 @@
   --tran-outline-width: 2px;
 
   --tran-color-primary: #38bdf8;
+  --tran-color-action: #5bc8f9;
+  --tran-color-on-action: #0b0f19;
   --tran-color-accent: #818cf8;
   --tran-color-success: #34d399;
   --tran-color-warning: #fbbf24;
@@ -60,6 +62,8 @@
 
 [data-theme="light"] {
   --tran-color-primary: #0284c7;
+  --tran-color-action: #0470ab;
+  --tran-color-on-action: #f8fafc;
   --tran-color-accent: #4f46e5;
   --tran-color-success: #059669;
   --tran-color-warning: #d97706;
@@ -81,6 +85,8 @@
 
 [data-theme="dark"] {
   --tran-color-primary: #38bdf8;
+  --tran-color-action: #5bc8f9;
+  --tran-color-on-action: #0b0f19;
   --tran-color-accent: #818cf8;
   --tran-color-success: #34d399;
   --tran-color-warning: #fbbf24;
@@ -102,6 +108,8 @@
 
 [data-theme="black"] {
   --tran-color-primary: #38bdf8;
+  --tran-color-action: #5bc8f9;
+  --tran-color-on-action: #000000;
   --tran-color-accent: #818cf8;
   --tran-color-success: #34d399;
   --tran-color-warning: #fbbf24;
@@ -123,6 +131,8 @@
 
 [data-theme="sepia"] {
   --tran-color-primary: #8a5a24;
+  --tran-color-action: #7c5223;
+  --tran-color-on-action: #f5ecd7;
   --tran-color-accent: #7e5aa0;
   --tran-color-success: #3f6212;
   --tran-color-warning: #92400e;

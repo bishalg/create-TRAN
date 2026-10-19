@@ -26,6 +26,30 @@ impl HexColor {
             Err(format!("invalid hex color: {value}"))
         }
     }
+
+    /// sRGB channel mix — `self_weight` of `self`, the rest of `other` — matching CSS
+    /// `color-mix(in srgb, self <self_weight>%, other)`. Alpha is ignored: palette colours
+    /// are opaque, and the mix exists to keep text readable on filled controls.
+    pub fn mixed_with(&self, other: &HexColor, self_weight: f64) -> HexColor {
+        let channels = |value: &str| -> [f64; 3] {
+            let digits = value.strip_prefix('#').unwrap_or(value);
+            let digits = if digits.len() == 3 {
+                digits.chars().flat_map(|c| [c, c]).collect::<String>()
+            } else {
+                digits.to_string()
+            };
+            let channel = |index: usize| -> f64 {
+                u8::from_str_radix(&digits[index * 2..index * 2 + 2], 16)
+                    .expect("hex colors are validated when constructed") as f64
+            };
+            [channel(0), channel(1), channel(2)]
+        };
+        let (from, to) = (channels(&self.0), channels(&other.0));
+        let blend = |index: usize| -> u8 {
+            (from[index] * self_weight + to[index] * (1.0 - self_weight)).round() as u8
+        };
+        HexColor(format!("#{:02x}{:02x}{:02x}", blend(0), blend(1), blend(2)))
+    }
 }
 
 /// Native appearance a theme belongs to. Drives CSS `color-scheme`, SwiftUI
@@ -137,6 +161,20 @@ pub struct SemanticPalette {
     pub background: HexColor,
     pub eligibility: EligibilityColors,
     pub text: SemanticTextColors,
+}
+
+impl SemanticPalette {
+    /// AA-safe fill for prominent actions: the theme's primary mixed toward its own text
+    /// colour (82/18 — the same derived rule as the web's `--btn-bg`). One rule for every
+    /// palette, present and future; no per-theme overrides.
+    pub fn action_fill(&self) -> HexColor {
+        self.primary.mixed_with(&self.text.primary, 0.82)
+    }
+
+    /// Label on an action fill: the background token, like the web's `--btn-fg`.
+    pub fn action_label(&self) -> HexColor {
+        self.background.clone()
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -466,6 +504,8 @@ pub struct ThemeGlassShadowJson {
 #[allow(non_snake_case)]
 pub struct ThemePaletteJson {
     pub primary: String,
+    pub action: String,
+    pub onAction: String,
     pub primaryGlow: String,
     pub accent: String,
     pub success: String,
@@ -525,6 +565,8 @@ fn theme_to_json(brand: &BrandDesignTokens, theme: &ThemeModeTokens) -> ThemeJso
         radii: brand.radii.clone(),
         palette: ThemePaletteJson {
             primary: theme.palette.primary.0.clone(),
+            action: theme.palette.action_fill().0.clone(),
+            onAction: theme.palette.action_label().0.clone(),
             primaryGlow: theme.palette.primary_glow.clone(),
             accent: theme.palette.accent.0.clone(),
             success: theme.palette.success.0.clone(),
@@ -598,6 +640,16 @@ mod tests {
     }
 
     #[test]
+    fn mixed_with_interpolates_srgb_channels() {
+        let white = hex("#ffffff");
+        let black = hex("#000000");
+        assert_eq!(black.mixed_with(&white, 0.5).0, "#808080");
+        assert_eq!(hex("#f00").mixed_with(&hex("#00f"), 0.5).0, "#800080");
+        // 8-digit forms keep only the RGB channels (alpha cannot flip a label's contrast).
+        assert_eq!(hex("#ffffff80").mixed_with(&black, 1.0).0, "#ffffff");
+    }
+
+    #[test]
     fn default_tokens_use_valid_hex_colors() {
         let tokens = default_design_tokens();
         for color in collect_hex_colors(&tokens) {
@@ -629,6 +681,16 @@ mod tests {
                 let ratio = contrast_ratio(fg, bg);
                 assert!(ratio >= 4.5, "{} {label}: {ratio:.2}:1", theme.mode);
             }
+        }
+    }
+
+    #[test]
+    fn every_theme_keeps_action_fill_above_aa_contrast() {
+        let tokens = default_design_tokens();
+        for theme in &tokens.themes {
+            let p = &theme.palette;
+            let ratio = contrast_ratio(&p.action_fill(), &p.action_label());
+            assert!(ratio >= 4.5, "{} action fill: {ratio:.2}:1", theme.mode);
         }
     }
 
