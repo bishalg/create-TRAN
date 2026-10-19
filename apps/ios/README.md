@@ -4,12 +4,13 @@ Platform-native **N** in TRAN: Swift + SwiftUI, sharing brand tokens and **offli
 
 ## What works today
 
-| Feature                             | Status                                                                   |
-| :---------------------------------- | :----------------------------------------------------------------------- |
-| Design tokens (`BrandTokens.swift`) | `pnpm tokens:sync` from `crates/rust-core/src/tokens.rs`                 |
-| Offline vote eligibility            | `evaluateVoteEligibilityOffline` via `crates/tran-uniffi` → `TranEngine` |
-| Golden parity tests                 | `Tests/TranVotingDemoTests` reads `fixtures/vote-eligibility.json`       |
-| HTTP API client                     | Not wired yet (stretch: URLSession + Axum envelope)                      |
+| Feature                             | Status                                                                                                           |
+| :---------------------------------- | :--------------------------------------------------------------------------------------------------------------- |
+| Design tokens (`BrandTokens.swift`) | `pnpm tokens:sync` from `crates/rust-core/src/tokens.rs`                                                         |
+| Offline vote eligibility            | `evaluateVoteEligibilityOffline` via `crates/tran-uniffi` → `TranEngine`                                         |
+| Golden parity tests                 | `Tests/TranVotingDemoTests` reads `fixtures/vote-eligibility.json`                                               |
+| Accessibility tests                 | `pnpm ios:test` — XCUITest journeys + `performAccessibilityAudit` on every theme (`Tests/TranVotingDemoUITests`) |
+| HTTP API client                     | Not wired yet (stretch: URLSession + Axum envelope)                                                              |
 
 ## Layout
 
@@ -42,13 +43,19 @@ xcodegen generate
 
 ## Build & test
 
-From repo root, build the Rust bridge once (optional — Xcode pre-build also runs this):
+From the repo root (picks the first available iPhone simulator):
 
 ```bash
-pnpm uniffi:generate   # Swift/Kotlin bindings from release dylib
-cd apps/ios && bash scripts/build-tran-uniffi.sh
+pnpm ios:test
+```
+
+Or manually:
+
+```bash
+pnpm uniffi:generate   # Swift/Kotlin bindings from release dylib (Xcode pre-build also does this)
+cd apps/ios
 xcodebuild test -project TranVotingDemo.xcodeproj -scheme TranVotingDemo \
-  -destination 'platform=iOS Simulator,name=iPhone 18 Pro'
+  -destination 'platform=iOS Simulator,name=iPhone 18 Pro' CODE_SIGNING_ALLOWED=NO
 ```
 
 Open `TranVotingDemo.xcodeproj` in Xcode and Run on a simulator for the demo UI.

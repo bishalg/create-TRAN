@@ -1,3 +1,4 @@
-# Shared by iOS and Android. Run: pnpm e2e:maestro:ios | pnpm e2e:maestro:android
+# Shared by iOS and Android: pnpm e2e:maestro (Maestro targets the single booted simulator or
+# emulator; pass --device=<id> when both are running).
 flows:
   - flows/*.yaml
