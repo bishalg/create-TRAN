@@ -39,3 +39,12 @@ Animations MUST respect Reduce Motion / animation-scale settings; text contrast 
 Every palette in the rust-core theme registry MUST be selectable on the voter dashboard and MUST apply its own colour
 tokens; screens MUST receive a palette and MUST NOT branch on a light/dark boolean.
 **Verified by:** XCUITest theme picker checks, Maestro `theme` flow, generated palette parity with `tokens.json`.
+
+### REQ-NAT-008 [verified] Native copy comes from the shared dictionaries
+
+iOS and Android string resources MUST be generated from the shared
+`packages/core-ts/src/locales` dictionaries: an iOS String Catalog
+(`Localizable.xcstrings`) and Android `strings.xml` for `en`, `ne` and `hi`, matching the
+dictionaries key-for-key and value-for-value. Rust-core verdict text (the engine `reason`)
+is out of scope until the engine emits locale-aware messages.
+**Verified by:** [`packages/core-ts/tests/native-strings.test.ts`](../../packages/core-ts/tests/native-strings.test.ts).
