@@ -14,6 +14,7 @@
 		5B2A7551A748CF4934519148 /* TranVotingDemoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50205EBE0EB7A80BE144F622 /* TranVotingDemoApp.swift */; };
 		5DD2E1C9E78542434F8F0DDC /* BrandTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6884D38FE0697CF8F8DE543A /* BrandTokens.swift */; };
 		6FE3541F44F7EAD42246B0D6 /* VotingHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D67D27EB3D5D770789B21FDF /* VotingHomeView.swift */; };
+		960F3A97622BB2C784954823 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = C241E67CED7A3F0E6524F4FD /* Localizable.xcstrings */; };
 		A3B9B607F8FAB9B2688590A9 /* NavigationDirector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 312E02DE098663B7CE24DEEA /* NavigationDirector.swift */; };
 		DCED7FF96DAF77F43564EB88 /* tran_uniffi.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2AF051840CF2BCD45F86C7 /* tran_uniffi.swift */; };
 		E06715EB17C0CF5EC9358484 /* NavigationCoordinatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E48F532295512AFE483F2438 /* NavigationCoordinatorView.swift */; };
@@ -48,6 +49,7 @@
 		7C6A6C2C513D02BF5CA544BA /* AuditorHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuditorHomeView.swift; sourceTree = "<group>"; };
 		8E88174C22C857E2C4A32A1C /* AuthWelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthWelcomeView.swift; sourceTree = "<group>"; };
 		B85C1ED9728B5EF5BE132CA8 /* VotingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VotingUITests.swift; sourceTree = "<group>"; };
+		C241E67CED7A3F0E6524F4FD /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		D67D27EB3D5D770789B21FDF /* VotingHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VotingHomeView.swift; sourceTree = "<group>"; };
 		E48F532295512AFE483F2438 /* NavigationCoordinatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationCoordinatorView.swift; sourceTree = "<group>"; };
 		EF2AF051840CF2BCD45F86C7 /* tran_uniffi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = tran_uniffi.swift; sourceTree = "<group>"; };
@@ -69,6 +71,7 @@
 			isa = PBXGroup;
 			children = (
 				6884D38FE0697CF8F8DE543A /* BrandTokens.swift */,
+				C241E67CED7A3F0E6524F4FD /* Localizable.xcstrings */,
 				90B4A4F083D2BDC84DB95B57 /* UniFFI */,
 			);
 			path = Generated;
@@ -168,6 +171,7 @@
 			buildPhases = (
 				45ACA0E81776F7A8A949F44B /* Build tran-uniffi (Rust) */,
 				D86E83DA57DAE2B8480961CB /* Sources */,
+				CD90DC4E1E289E9FAFE7DE67 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -219,6 +223,8 @@
 			knownRegions = (
 				Base,
 				en,
+				hi,
+				ne,
 			);
 			mainGroup = BE10B4A2F38CCE2C68948CAB;
 			minimizedProjectReferenceProxies = 1;
@@ -233,6 +239,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		CD90DC4E1E289E9FAFE7DE67 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				960F3A97622BB2C784954823 /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
 		45ACA0E81776F7A8A949F44B /* Build tran-uniffi (Rust) */ = {

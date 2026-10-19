@@ -2,6 +2,7 @@ import { type FormEvent, useRef, useState } from 'react';
 import { type SupportedLocale, parseAgeInput, t } from '@tran/core';
 import type { TranApi } from '../../shared/api/useTranApi.js';
 import { Field } from '../../shared/ui/Field.js';
+import { TranButton } from '../../shared/ui/TranButton.js';
 import { TranText } from '../../shared/ui/TranText.js';
 import { ModeSwitch } from './ModeSwitch.js';
 import { ResultCard } from './ResultCard.js';
@@ -71,14 +72,9 @@ export function EligibilityPage({ api, locale }: EligibilityPageProps) {
           />
         </div>
 
-        <button
-          type="submit"
-          className="button"
-          disabled={api.isChecking}
-          aria-busy={api.isChecking}
-        >
+        <TranButton type="submit" disabled={api.isChecking} aria-busy={api.isChecking}>
           {t(api.isChecking ? 'app.submitting' : 'app.submit', locale)}
-        </button>
+        </TranButton>
       </form>
 
       {alertMessage && (

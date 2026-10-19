@@ -41,4 +41,11 @@ describe('TranText', () => {
     render(<TranText variant="caption">Fine print</TranText>);
     expect(screen.getByText('Fine print').tagName).toBe('SPAN');
   });
+
+  it('renders display as h1 by default and never sets inline style', () => {
+    render(<TranText variant="display">Hero</TranText>);
+    const el = screen.getByRole('heading', { level: 1, name: 'Hero' });
+    expect(el).toHaveAttribute('data-variant', 'display');
+    expect(el).not.toHaveAttribute('style');
+  });
 });

@@ -41,7 +41,7 @@ where the check ran.
 While a server check is running the submit button MUST be disabled, show a progress label and expose `aria-busy`.
 **Verified by:** `App.test.tsx`, `useTranApi.test.tsx`.
 
-### REQ-WEB-007 [planned] Theme preference
+### REQ-WEB-007 [verified] Theme preference
 
 The first render MUST follow the OS colour-scheme preference. A user's explicit choice MUST be remembered across visits
 and MUST be applied before first paint so there is no flash of the wrong theme.
@@ -57,12 +57,39 @@ All user-visible strings MUST come from the dictionaries; `en`, `ne` and `hi` MU
 Colours MUST come from the generated `--tran-*` variables (or `color-mix()` of them). Shared typography atoms (`TranText`) MUST map variants to those variables via CSS, not ad-hoc hex in components.
 **Verified by:** `TranText.test.tsx`, `TranStack.test.tsx`, [docs/ATOMIC.md](../ATOMIC.md).
 
+### REQ-WEB-010 [verified] Spacing and radii from rust-core
+
+Web layout spacing and corner radii MUST use `--tran-spacing-*` and `--tran-radius-*` from `pnpm tokens:sync`. Local `--space-*` / `--radius-*` literals in `app.css` are forbidden.
+**Verified by:** `tokens-guard.test.ts`, atom tests.
+
+### REQ-WEB-011 [verified] Typography semantics in tokens
+
+Title, body, caption, and display type MUST resolve to rust-core typography token fields (size and line-height), not hard-coded rem/px in components.
+**Verified by:** `TranText.test.tsx`, `tokens-guard.test.ts`.
+
+### REQ-WEB-012 [verified] Atomic layout and controls
+
+Feature code MUST use shared atoms (`TranStack`, `TranInline`, `TranBox`, `TranSurface`, `TranButton`, `TranTable`, `Field`) for spacing, surfaces, buttons, and tables — no raw semantic HTML tags or `style={{}}` outside `shared/ui`.
+**Verified by:** atom tests, ESLint in CI, component tests.
+
+### REQ-WEB-013 [verified] Lint enforcement
+
+`apps/web` ESLint MUST fail on inline `style`, hex/px literals in JSX, and banned semantic tags outside `shared/ui`.
+**Verified by:** ESLint config wired into `pnpm lint` and CI.
+
+### REQ-WEB-014 [verified] Theme registry
+
+Every palette in the rust-core theme registry (`light`, `dark`, `black`, `sepia`) MUST be selectable and MUST apply its
+own colour tokens. Application code MUST look palettes up by name and MUST NOT branch on a light/dark boolean.
+**Verified by:** `Header.test.tsx`, `usePreferences.test.tsx`, `tokens-guard.test.ts`, `ThemeMode` codegen slice in
+`crates/tran-tokens-codegen`.
+
 ## Accessibility (target: WCAG 2.2 level AA)
 
 ### REQ-A11Y-001 [verified] No automated violations
 
-Every page in both themes MUST have no axe-core violations for the WCAG 2 A and AA rule sets.
-**Verified by:** BDD "no accessibility violations" (both themes, with a result displayed).
+Every page in every registered theme MUST have no axe-core violations for the WCAG 2 A and AA rule sets.
+**Verified by:** BDD "no accessibility violations" (every theme, with a result displayed).
 
 ### REQ-A11Y-002 [verified] Programmatic labels
 

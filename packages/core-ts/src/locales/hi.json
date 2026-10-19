@@ -41,8 +41,13 @@
     "statusOnline": "API चालू है",
     "statusOffline": "API ऑफ़लाइन",
     "statusChecking": "API जाँची जा रही है…",
-    "themeToLight": "लाइट थीम पर जाएँ",
-    "themeToDark": "डार्क थीम पर जाएँ",
+    "themeLabel": "थीम",
+    "themes": {
+      "light": "लाइट",
+      "dark": "डार्क",
+      "black": "काला",
+      "sepia": "सेपिया"
+    },
     "languageLabel": "भाषा",
     "resultLabel": "परिणाम"
   },
@@ -51,6 +56,30 @@
     "rust": "रस्ट कोर",
     "axum": "Axum बैकएंड",
     "native": "नेटिव iOS और Android"
+  },
+  "native": {
+    "brandTitle": "TRAN",
+    "iosHeader": "TRAN / iOS",
+    "androidHeader": "TRAN / Android",
+    "voterSubtitle": "ऑफ़लाइन मतदान (UniFFI → rust-core)",
+    "signOut": "साइन आउट",
+    "ageLabel": "आयु",
+    "agePlaceholder": "आयु दर्ज करें",
+    "countryLabel": "देश",
+    "countryPlaceholder": "दो अक्षर",
+    "checkOffline": "ऑफ़लाइन जाँचें",
+    "resultPlaceholder": "ऑफ़लाइन जाँच दबाएँ",
+    "invalidAgeAndCountry": "आयु और देश दर्ज करें",
+    "invalidAge": "मान्य आयु दर्ज करें",
+    "invalidCountry": "देश दो अक्षरों का होना चाहिए",
+    "auditorTitle": "चुनाव ऑडिटर",
+    "auditorSubtitle": "वैश्विक नियम और समानता सत्यापन",
+    "auditorRulesTitle": "सत्यापित देश न्यूनतम आयु",
+    "years": "%1$d वर्ष",
+    "welcomeTitle": "TRAN वोटिंग",
+    "welcomeSubtitle": "जारी रखने के लिए अपनी भूमिका चुनें:",
+    "continueAsVoter": "नागरिक मतदाता के रूप में जारी रखें",
+    "continueAsAuditor": "चुनाव ऑडिटर के रूप में जारी रखें"
   },
   "actions": {
     "refresh": "डेटा रिफ्रेश",

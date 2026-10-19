@@ -41,7 +41,8 @@ jobs:
             apps/web/src/styles/generated \
             apps/native/src/generated \
             apps/ios/Sources/TranVotingDemo/Generated \
-            apps/android/app/src/main/kotlin/com/tran/voting/generated
+            apps/android/app/src/main/kotlin/com/tran/voting/generated \
+            apps/android/app/src/main/res
 
   node-check:
     name: TypeScript & Frontend Monorepo
@@ -66,6 +67,9 @@ jobs:
 
       - name: Typecheck
         run: pnpm run typecheck
+
+      - name: ESLint (apps/web atoms enforcement)
+        run: pnpm --filter web lint
 
       - name: Typecheck E2E
         run: pnpm --filter e2e typecheck

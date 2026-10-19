@@ -6,7 +6,10 @@ import SwiftUI
 struct NavigationCoordinatorView: View {
     @State private var session: AuthSession
     @State private var isBootstrapping: Bool
-    @State private var useDark: Bool = true
+    /// Any theme in the rust-core registry can be selected — no light/dark boolean.
+    @State private var theme: TranTheme = .dark
+
+    private var palette: TranPalette { TranBrandTokens.palette(for: theme) }
 
     init(initialSession: AuthSession? = nil) {
         if let initialSession {
@@ -23,24 +26,20 @@ struct NavigationCoordinatorView: View {
     }
 
     var body: some View {
-        let background = useDark ? TranBrandTokens.Dark.background : TranBrandTokens.Light.background
-        let primary = useDark ? TranBrandTokens.Dark.primary : TranBrandTokens.Light.primary
-        let textPrimary = useDark ? TranBrandTokens.Dark.textPrimary : TranBrandTokens.Light.textPrimary
-
         Group {
             if isBootstrapping {
                 // Screen 0: Launch / Splash Screen (Navigation Director boots)
                 ZStack {
-                    background.ignoresSafeArea()
+                    palette.background.ignoresSafeArea()
                     VStack(spacing: 16) {
                         Image(systemName: "hand.raised.fill")
                             .font(.system(size: 64))
-                            .foregroundStyle(primary)
-                        Text("TRAN")
+                            .foregroundStyle(palette.primary)
+                        Text("native.brandTitle")
                             .font(.largeTitle.weight(.bold))
-                            .foregroundStyle(textPrimary)
+                            .foregroundStyle(palette.textPrimary)
                         ProgressView()
-                            .tint(primary)
+                            .tint(palette.primary)
                             .accessibilityIdentifier("splash-progress")
                     }
                 }
@@ -55,19 +54,19 @@ struct NavigationCoordinatorView: View {
             } else {
                 switch NavigationDirector.resolveDestination(session: session) {
                 case .splash, .authWelcome:
-                    AuthWelcomeView(useDark: useDark) { selectedRole in
+                    AuthWelcomeView(palette: palette) { selectedRole in
                         withAnimation {
                             session = .authenticated(role: selectedRole)
                         }
                     }
                 case .voterDashboard:
-                    VotingHomeView(onSignOut: {
+                    VotingHomeView(palette: palette, theme: $theme, onSignOut: {
                         withAnimation {
                             session = .unauthenticated
                         }
                     })
                 case .auditorDashboard:
-                    AuditorHomeView(useDark: useDark) {
+                    AuditorHomeView(palette: palette) {
                         withAnimation {
                             session = .unauthenticated
                         }
@@ -75,5 +74,7 @@ struct NavigationCoordinatorView: View {
                 }
             }
         }
+        // Appearance follows the palette's own metadata (token data, not a theme-name check).
+        .preferredColorScheme(palette.colorScheme)
     }
 }

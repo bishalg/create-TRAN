@@ -1,14 +1,22 @@
 package com.tran.voting
 
+import android.app.Activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+import com.tran.voting.generated.TranBrandTokens
+import com.tran.voting.generated.TranTheme
+import com.tran.voting.generated.tranColorScheme
 import com.tran.voting.ui.AppDestination
 import com.tran.voting.ui.AuditorScreen
 import com.tran.voting.ui.AuthSession
@@ -39,22 +47,42 @@ fun NavigationCoordinator() {
             AuthSession.Authenticated(userId = "voter-001", role = UserRole.CITIZEN_VOTER)
         )
     }
+    // Any theme in the rust-core registry can be selected — no light/dark boolean.
+    var theme by remember { mutableStateOf(TranTheme.DARK) }
+    val palette = TranBrandTokens.palette(theme)
 
-    when (NavigationDirector.resolveDestination(session)) {
-        AppDestination.SPLASH, AppDestination.AUTH_WELCOME -> {
-            AuthWelcomeScreen { role ->
-                session = AuthSession.Authenticated(userId = "user-001", role = role)
+    val view = LocalView.current
+    LaunchedEffect(palette) {
+        val window = (view.context as Activity).window
+        WindowCompat.getInsetsController(window, view).apply {
+            // Appearance follows the palette's own metadata, not the theme name.
+            isAppearanceLightStatusBars = palette.isLight
+            isAppearanceLightNavigationBars = palette.isLight
+        }
+    }
+
+    MaterialTheme(colorScheme = tranColorScheme(palette)) {
+        when (NavigationDirector.resolveDestination(session)) {
+            AppDestination.SPLASH, AppDestination.AUTH_WELCOME -> {
+                AuthWelcomeScreen(palette = palette) { role ->
+                    session = AuthSession.Authenticated(userId = "user-001", role = role)
+                }
             }
-        }
-        AppDestination.VOTER_DASHBOARD -> {
-            VotingHomeScreen(onSignOut = {
-                session = AuthSession.Unauthenticated
-            })
-        }
-        AppDestination.AUDITOR_DASHBOARD -> {
-            AuditorScreen(onSignOut = {
-                session = AuthSession.Unauthenticated
-            })
+            AppDestination.VOTER_DASHBOARD -> {
+                VotingHomeScreen(
+                    palette = palette,
+                    theme = theme,
+                    onThemeChange = { theme = it },
+                    onSignOut = {
+                        session = AuthSession.Unauthenticated
+                    }
+                )
+            }
+            AppDestination.AUDITOR_DASHBOARD -> {
+                AuditorScreen(palette = palette, onSignOut = {
+                    session = AuthSession.Unauthenticated
+                })
+            }
         }
     }
 }

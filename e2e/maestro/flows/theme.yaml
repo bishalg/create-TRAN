@@ -1,15 +1,14 @@
-# Verifies: REQ-NAT-002
+# Verifies: REQ-NAT-002 REQ-NAT-007
 appId: com.tran.voting
 tags: [theme]
 ---
 - launchApp:
     clearState: true
 - assertVisible:
-    id: theme-toggle
-- tapOn:
-    id: theme-toggle
-- assertVisible: 'Dark theme'
-- tapOn:
-    id: theme-toggle
+    id: theme-picker
+- tapOn: 'Sepia'
+- assertVisible:
+    id: check-button
+- tapOn: 'Black'
 - assertVisible:
     id: check-button

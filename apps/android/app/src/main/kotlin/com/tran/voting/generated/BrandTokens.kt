@@ -3,6 +3,9 @@
 
 package com.tran.voting.generated
 
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
 private fun tranColor(hex: String): Color {
@@ -22,7 +25,15 @@ private fun tranColor(hex: String): Color {
     return Color(argb.toInt())
 }
 
-/** Semantic palette implemented by [TranBrandTokens.Light] and [TranBrandTokens.Dark]. */
+/** Theme ids come from the rust-core registry (`tokens.rs`); `id` is the source of truth. */
+enum class TranTheme(val id: String) {
+    LIGHT("light"),
+    DARK("dark"),
+    BLACK("black"),
+    SEPIA("sepia")
+}
+
+/** Semantic palette implemented by every theme; screens receive a palette, never a theme name. */
 interface BrandPalette {
     val primary: Color
     val accent: Color
@@ -33,6 +44,7 @@ interface BrandPalette {
     val eligibilityCanVote: Color
     val eligibilityCannotVote: Color
     val textPrimary: Color
+    val isLight: Boolean
 }
 
 object TranBrandTokens {
@@ -46,7 +58,9 @@ object TranBrandTokens {
         override val eligibilityCanVote = tranColor("#059669")
         override val eligibilityCannotVote = tranColor("#dc2626")
         override val textPrimary = tranColor("#0f172a")
+        override val isLight = true
     }
+
     object Dark : BrandPalette {
         override val primary = tranColor("#38bdf8")
         override val accent = tranColor("#818cf8")
@@ -57,5 +71,59 @@ object TranBrandTokens {
         override val eligibilityCanVote = tranColor("#34d399")
         override val eligibilityCannotVote = tranColor("#f87171")
         override val textPrimary = tranColor("#f8fafc")
+        override val isLight = false
     }
+
+    object Black : BrandPalette {
+        override val primary = tranColor("#38bdf8")
+        override val accent = tranColor("#818cf8")
+        override val success = tranColor("#34d399")
+        override val danger = tranColor("#f87171")
+        override val surface = tranColor("#101010")
+        override val background = tranColor("#000000")
+        override val eligibilityCanVote = tranColor("#34d399")
+        override val eligibilityCannotVote = tranColor("#f87171")
+        override val textPrimary = tranColor("#f8fafc")
+        override val isLight = false
+    }
+
+    object Sepia : BrandPalette {
+        override val primary = tranColor("#8a5a24")
+        override val accent = tranColor("#7e5aa0")
+        override val success = tranColor("#3f6212")
+        override val danger = tranColor("#a8261f")
+        override val surface = tranColor("#e6d9bd")
+        override val background = tranColor("#f5ecd7")
+        override val eligibilityCanVote = tranColor("#3f6212")
+        override val eligibilityCannotVote = tranColor("#a8261f")
+        override val textPrimary = tranColor("#3b2f1f")
+        override val isLight = true
+    }
+
+    val themes: Map<TranTheme, BrandPalette> = mapOf(
+        TranTheme.LIGHT to Light,
+        TranTheme.DARK to Dark,
+        TranTheme.BLACK to Black,
+        TranTheme.SEPIA to Sepia,
+    )
+
+    fun palette(theme: TranTheme): BrandPalette = themes.getValue(theme)
 }
+
+/** Material shell colours derived from the palette's own light/dark metadata. */
+fun tranColorScheme(palette: BrandPalette): ColorScheme =
+    if (palette.isLight) {
+        lightColorScheme(
+            primary = palette.primary,
+            background = palette.background,
+            surface = palette.surface,
+            onBackground = palette.textPrimary,
+        )
+    } else {
+        darkColorScheme(
+            primary = palette.primary,
+            background = palette.background,
+            surface = palette.surface,
+            onBackground = palette.textPrimary,
+        )
+    }

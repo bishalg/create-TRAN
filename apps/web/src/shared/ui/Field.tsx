@@ -1,24 +1,31 @@
-import { type ComponentProps, useId } from 'react';
+import { forwardRef, useId, type ComponentPropsWithoutRef } from 'react';
+import { TranText } from './TranText.js';
 
-export interface FieldProps extends ComponentProps<'input'> {
+export interface FieldProps extends ComponentPropsWithoutRef<'input'> {
   label: string;
   hint?: string;
 }
 
-/** Labelled text input. Label and hint are programmatically tied to the input for screen readers. */
-export function Field({ label, hint, ...inputProps }: FieldProps) {
-  const id = useId();
+/** Labelled text input. Label and hint use TranText; ref targets the input. */
+export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
+  { label, hint, id: idProp, ...inputProps },
+  ref
+) {
+  const autoId = useId();
+  const id = idProp ?? autoId;
   const hintId = `${id}-hint`;
 
   return (
     <div className="field">
-      <label htmlFor={id}>{label}</label>
-      <input id={id} aria-describedby={hint ? hintId : undefined} {...inputProps} />
+      <TranText variant="body" as="label" htmlFor={id}>
+        {label}
+      </TranText>
+      <input id={id} ref={ref} aria-describedby={hint ? hintId : undefined} {...inputProps} />
       {hint && (
-        <span id={hintId} className="field-hint">
+        <TranText variant="caption" as="span" id={hintId} className="field-hint">
           {hint}
-        </span>
+        </TranText>
       )}
     </div>
   );
-}
+});

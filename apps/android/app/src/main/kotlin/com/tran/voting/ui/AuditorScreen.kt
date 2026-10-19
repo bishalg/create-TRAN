@@ -18,11 +18,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
+import com.tran.voting.R
 import com.tran.voting.generated.BrandPalette
-import com.tran.voting.generated.TranBrandTokens
 
 /**
  * Auditor dashboard screen displaying the global voting rules matrix.
@@ -31,10 +32,9 @@ import com.tran.voting.generated.TranBrandTokens
  */
 @Composable
 fun AuditorScreen(
-    useDark: Boolean = true,
+    palette: BrandPalette,
     onSignOut: () -> Unit
 ) {
-    val palette: BrandPalette = if (useDark) TranBrandTokens.Dark else TranBrandTokens.Light
     val rules = listOf(
         "BR" to 16,
         "NP" to 18,
@@ -61,12 +61,12 @@ fun AuditorScreen(
         ) {
             Column {
                 Text(
-                    text = "Election Auditor",
+                    text = stringResource(R.string.native_auditor_title),
                     style = MaterialTheme.typography.titleLarge,
                     color = palette.textPrimary
                 )
                 Text(
-                    text = "Global Rules & Parity Verification",
+                    text = stringResource(R.string.native_auditor_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = palette.textPrimary.copy(alpha = 0.8f)
                 )
@@ -75,12 +75,12 @@ fun AuditorScreen(
                 modifier = Modifier.testTag("sign-out-button"),
                 onClick = onSignOut
             ) {
-                Text("Sign out")
+                Text(stringResource(R.string.native_sign_out))
             }
         }
 
         Text(
-            text = "Verified Country Minimum Ages",
+            text = stringResource(R.string.native_auditor_rules_title),
             style = MaterialTheme.typography.titleMedium,
             color = palette.textPrimary
         )
@@ -102,7 +102,7 @@ fun AuditorScreen(
                         color = palette.textPrimary
                     )
                     Text(
-                        text = "$age years",
+                        text = stringResource(R.string.native_years, age),
                         style = MaterialTheme.typography.bodyLarge,
                         color = palette.textPrimary.copy(alpha = 0.9f)
                     )

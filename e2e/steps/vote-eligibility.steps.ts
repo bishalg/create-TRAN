@@ -46,9 +46,27 @@ When(
 // Idempotent: the app starts in the OS-preferred theme, so only click when a change is needed.
 When('I switch to the {string} theme', async ({ page }, theme: string) => {
   if ((await page.locator('html').getAttribute('data-theme')) !== theme) {
-    await page.getByRole('button', { name: /Switch to (light|dark) theme/ }).click();
+    const label = theme.charAt(0).toUpperCase() + theme.slice(1);
+    await page
+      .getByRole('group', { name: 'Theme' })
+      .getByRole('button', { name: label, exact: true })
+      .click();
   }
   await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+});
+
+// The inline boot script in index.html must apply the remembered theme before first
+// paint: with the app bundle blocked, only the boot script can set <html data-theme>.
+When('I reload the page with the app code blocked', async ({ page }) => {
+  await page.route('**/src/main.tsx*', (route) => route.abort());
+  await page.reload({ waitUntil: 'domcontentloaded' });
+});
+
+Then('the page reports the {string} colour scheme', async ({ page }, scheme: string) => {
+  const colorScheme = await page
+    .locator('html')
+    .evaluate((element) => getComputedStyle(element).colorScheme);
+  expect(colorScheme).toBe(scheme);
 });
 
 Then('I am told I am {string}', async ({ page }, verdict: string) => {

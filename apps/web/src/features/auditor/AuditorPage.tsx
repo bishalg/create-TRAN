@@ -1,4 +1,9 @@
 import { COUNTRY_VOTING_AGES } from '@tran/core';
+import { TranBox } from '../../shared/ui/TranBox.js';
+import { TranButton } from '../../shared/ui/TranButton.js';
+import { TranStack } from '../../shared/ui/TranStack.js';
+import { TranTable, TranTd, TranTh } from '../../shared/ui/TranTable.js';
+import { TranText } from '../../shared/ui/TranText.js';
 
 export interface AuditorPageProps {
   onBackToVoter: () => void;
@@ -9,39 +14,37 @@ export function AuditorPage({ onBackToVoter }: AuditorPageProps) {
 
   return (
     <div className="auditor-page card">
-      <h2>Election Auditor Dashboard</h2>
-      <p>Global voting age rules verified against rust-core parity fixtures.</p>
-      <div style={{ marginTop: '16px', overflowX: 'auto' }}>
-        <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+      <TranText variant="title" as="h2">
+        Election Auditor Dashboard
+      </TranText>
+      <TranText variant="body">
+        Global voting age rules verified against rust-core parity fixtures.
+      </TranText>
+      <TranBox className="auditor-table-wrap" padding="none">
+        <TranTable>
           <thead>
             <tr>
-              <th style={{ padding: '8px', borderBottom: '1px solid currentColor' }}>
-                Country Code
-              </th>
-              <th style={{ padding: '8px', borderBottom: '1px solid currentColor' }}>
-                Minimum Voting Age
-              </th>
-              <th style={{ padding: '8px', borderBottom: '1px solid currentColor' }}>
-                Rule Source
-              </th>
+              <TranTh>Country Code</TranTh>
+              <TranTh>Minimum Voting Age</TranTh>
+              <TranTh>Rule Source</TranTh>
             </tr>
           </thead>
           <tbody>
             {entries.map(([country, minAge]) => (
               <tr key={country}>
-                <td style={{ padding: '8px' }}>{country}</td>
-                <td style={{ padding: '8px' }}>{minAge} years</td>
-                <td style={{ padding: '8px' }}>rust-core verified</td>
+                <TranTd>{country}</TranTd>
+                <TranTd>{minAge} years</TranTd>
+                <TranTd>rust-core verified</TranTd>
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
-      <div style={{ marginTop: '20px' }}>
-        <button type="button" className="button" onClick={onBackToVoter}>
+        </TranTable>
+      </TranBox>
+      <TranStack gap="lg">
+        <TranButton type="button" onClick={onBackToVoter}>
           Switch to Citizen Voter
-        </button>
-      </div>
+        </TranButton>
+      </TranStack>
     </div>
   );
 }

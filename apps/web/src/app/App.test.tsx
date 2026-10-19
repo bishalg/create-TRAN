@@ -1,5 +1,5 @@
 // Verifies: REQ-WEB-001 REQ-WEB-002 REQ-WEB-003 REQ-WEB-006 REQ-A11Y-002 REQ-A11Y-003 REQ-A11Y-004 REQ-A11Y-006 REQ-NAV-001 REQ-NAV-002 REQ-NAV-003 REQ-NAV-004 REQ-NAV-005
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeApi } from '../../tests/helpers/fakeApi.js';
@@ -57,18 +57,21 @@ describe('App: shell', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Voting Eligibility' })).toBeVisible();
   });
 
-  it('toggles the theme on <html data-theme> and labels the next action', async () => {
+  it('applies any registry theme to <html data-theme> and remembers the choice', async () => {
     const { user } = await renderApp();
     expect(document.documentElement.dataset.theme).toBe('dark');
 
-    await user.click(screen.getByRole('button', { name: 'Switch to light theme' }));
-    expect(document.documentElement.dataset.theme).toBe('light');
+    const themes = screen.getByRole('group', { name: 'Theme' });
+    await user.click(within(themes).getByRole('button', { name: 'Sepia' }));
+    expect(document.documentElement.dataset.theme).toBe('sepia');
+    expect(localStorage.getItem('tran.theme')).toBe('sepia');
 
-    await user.click(screen.getByRole('button', { name: 'Switch to dark theme' }));
-    expect(document.documentElement.dataset.theme).toBe('dark');
+    await user.click(within(themes).getByRole('button', { name: 'Black' }));
+    expect(document.documentElement.dataset.theme).toBe('black');
+    expect(localStorage.getItem('tran.theme')).toBe('black');
   });
 
-  it('starts in the theme the OS prefers', async () => {
+  it('starts in the theme the OS prefers when nothing is remembered', async () => {
     vi.stubGlobal('matchMedia', () => ({ matches: true }));
     await renderApp();
     expect(document.documentElement.dataset.theme).toBe('light');

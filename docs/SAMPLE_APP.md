@@ -104,7 +104,7 @@ cd apps/android && ./gradlew installDebug  # install on emulator/device
 ```
 
 1. Open web — try **Offline** with country `NP` and age `20`, then **API** with `X-Debug-Country` from the country field.
-2. Toggle light/dark — eligibility cards use token semantics (`canVote` / `cannotVote`).
+2. Pick any theme (`light`, `dark`, `black`, `sepia`) — eligibility cards use token semantics (`canVote` / `cannotVote`).
 3. Status footer shows `GET /api/health` via `TranApiClient.getHealth()`.
 4. On iOS/Android — offline eligibility uses UniFFI (same fixture table as Rust core).
 

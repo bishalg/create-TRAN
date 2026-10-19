@@ -20,7 +20,7 @@ export interface AppProps {
 }
 
 export function App({ initialSession }: AppProps = {}) {
-  const { locale, setLocale, theme, toggleTheme } = usePreferences();
+  const { locale, setLocale, theme, setTheme } = usePreferences();
   const api = useTranApi();
   const apiState: ApiState = api.isLoading ? 'checking' : api.isOffline ? 'offline' : 'online';
 
@@ -53,14 +53,14 @@ export function App({ initialSession }: AppProps = {}) {
         locale={locale}
         onLocaleChange={setLocale}
         theme={theme}
-        onThemeToggle={toggleTheme}
+        onThemeChange={setTheme}
         currentRole={currentRole}
         onSignOut={currentRole ? handleSignOut : undefined}
       />
 
       <main className="shell">
         <section className="hero">
-          <TranText variant="title" as="h1">
+          <TranText variant="display" as="h1">
             {t('app.title', locale)}
           </TranText>
           <TranText variant="muted">{t('app.subtitle2', locale)}</TranText>

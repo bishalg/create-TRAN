@@ -1,4 +1,5 @@
 import { type SupportedLocale, t } from '@tran/core';
+import { TranText } from '../shared/ui/TranText.js';
 
 export type ApiState = 'checking' | 'online' | 'offline';
 
@@ -17,10 +18,10 @@ export interface StatusFooterProps {
 export function StatusFooter({ state, version, locale }: StatusFooterProps) {
   return (
     <footer className="status" data-state={state}>
-      <span role="status" className="status-pill">
-        <span className="dot" aria-hidden="true" /> {t(LABEL[state], locale)}
+      <TranText variant="caption" as="span" role="status" className="status-pill">
+        <div className="dot" aria-hidden="true" /> {t(LABEL[state], locale)}
         {state === 'online' && version ? ` · v${version}` : ''}
-      </span>
+      </TranText>
     </footer>
   );
 }
