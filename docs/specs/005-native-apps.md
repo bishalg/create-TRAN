@@ -31,10 +31,11 @@ reachable; Compose test at `fontScale = 2f` scrolling to the intact verdict.
 
 ### REQ-NAT-005 [verified] Touch targets
 
-Interactive controls the app lays out MUST be at least 44×44 pt (iOS) / 48×48 dp (Android); the iOS system segmented
-picker keeps Apple's native ~32 pt height on older SDKs and is covered by the platform audit instead.
-**Verified by:** XCUITest frame assertions for app-owned controls and the picker's segments, `performAccessibilityAudit`
-across all four themes, and the Compose test asserting every control's `touchBoundsInRoot` is at least 48×48 dp.
+The app owns every interactive control it lays out, and all of them MUST be at least 44×44 pt (iOS) / 48×48 dp
+(Android) — including every segment of `TranSegmented`, so the earlier system-picker exception is gone.
+**Verified by:** XCUITest frame assertions for app-owned controls including each theme segment,
+`performAccessibilityAudit` across all four themes, and the Compose test asserting every control's
+`touchBoundsInRoot` is at least 48×48 dp.
 
 ### REQ-NAT-006 [verified] Reduced motion and contrast
 
@@ -69,3 +70,16 @@ Spacing, radii and sizes in iOS and Android feature code MUST come from the gene
 scales (emitted from `crates/rust-core/src/tokens.rs` by `pnpm tokens:sync`), and colours from the palette. Numeric
 `spacing:`/`.padding(n)`/`n.dp`/`n.sp`, `Color(0x…)` and fixed `.system(size:)` fonts MUST NOT appear in feature code.
 **Verified by:** [`native-tokens.test.ts`](../../packages/core-ts/tests/native-tokens.test.ts).
+
+### REQ-NAT-010 [verified] Native UI atoms
+
+iOS and Android feature code MUST compose from the atom layer (`TranScreen`, `TranText`, `TranStack`, `TranInline`,
+`TranBox`, `TranSurface`, `TranButton`, `TranField`, `TranSegmented`, `TranDivider`) with the same names on both
+platforms instead of raw SwiftUI / Material3 controls. Gaps MUST come from `TranGap`, whose names match the
+generated space scale (`xxs…xxl`, i.e. web `2xl`), colours from the palette, and each atom MUST carry the
+accessibility contract (spoken labels, selected traits, polite live regions, 44/48 pt targets) so feature code
+never hand-rolls them ([ADR-0022](../adr/0022-native-atoms.md)).
+**Verified by:** [`native-atoms.test.ts`](../../packages/core-ts/tests/native-atoms.test.ts) — raw
+`Text`/`Button`/`TextField`/`Picker`/`Divider` (iOS) and their Material3 counterparts (Android) outside the atoms
+directories fail a regex guard; atom names are identical on both platforms, and `TranGap` is pinned to
+`tokens.json` — plus the XCUITest and Compose assertions on the atoms themselves.

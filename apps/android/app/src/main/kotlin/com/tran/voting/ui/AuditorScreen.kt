@@ -1,29 +1,27 @@
 package com.tran.voting.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.testTagsAsResourceId
 import com.tran.voting.generated.TranSpace
-import com.tran.voting.generated.BrandPalette
 import com.tran.voting.generated.TranStrings
+import com.tran.voting.ui.atoms.TranButton
+import com.tran.voting.ui.atoms.TranButtonSize
+import com.tran.voting.ui.atoms.TranButtonVariant
+import com.tran.voting.ui.atoms.TranDivider
+import com.tran.voting.ui.atoms.TranGap
+import com.tran.voting.ui.atoms.TranInline
+import com.tran.voting.ui.atoms.TranScreen
+import com.tran.voting.ui.atoms.TranStack
+import com.tran.voting.ui.atoms.TranText
+import com.tran.voting.ui.atoms.TranTextVariant
 
 /**
  * Auditor dashboard screen displaying the global voting rules matrix.
@@ -31,10 +29,7 @@ import com.tran.voting.generated.TranStrings
  * Verifies: REQ-NAV-004 REQ-NAV-005
  */
 @Composable
-fun AuditorScreen(
-    palette: BrandPalette,
-    onSignOut: () -> Unit
-) {
+fun AuditorScreen(onSignOut: () -> Unit) {
     val rules = listOf(
         "BR" to 16,
         "NP" to 18,
@@ -42,72 +37,55 @@ fun AuditorScreen(
         "IN" to 18,
         "DE" to 18,
         "FR" to 18,
-        "GB" to 18
+        "GB" to 18,
     )
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(palette.background)
-            .safeDrawingPadding()
-            .semantics { testTagsAsResourceId = true }
-            .padding(TranSpace.lg),
-        verticalArrangement = Arrangement.spacedBy(TranSpace.lg)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = stringResource(TranStrings.Common.roleElectionAuditor),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = palette.textPrimary
-                )
-                Text(
-                    text = stringResource(TranStrings.Auditor.subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = palette.textPrimary.copy(alpha = 0.8f)
-                )
-            }
-            Button(
-                modifier = Modifier.testTag("sign-out-button"),
-                onClick = onSignOut
-            ) {
-                Text(stringResource(TranStrings.Common.signOut))
-            }
-        }
-
-        Text(
-            text = stringResource(TranStrings.Auditor.rulesTitle),
-            style = MaterialTheme.typography.titleMedium,
-            color = palette.textPrimary
-        )
-
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(TranSpace.sm)
-        ) {
-            items(rules) { (country, age) ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = TranSpace.xs),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = country,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = palette.textPrimary
+    TranScreen(modifier = Modifier.padding(TranSpace.lg)) {
+        TranStack(gap = TranGap.LG) {
+            TranInline(gap = TranGap.MD, modifier = Modifier.fillMaxWidth()) {
+                TranStack(gap = TranGap.XS) {
+                    TranText(
+                        text = stringResource(TranStrings.Common.roleElectionAuditor),
+                        variant = TranTextVariant.TITLE,
                     )
-                    Text(
-                        text = stringResource(TranStrings.Auditor.years, age),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = palette.textPrimary.copy(alpha = 0.9f)
+                    TranText(
+                        text = stringResource(TranStrings.Auditor.subtitle),
+                        variant = TranTextVariant.MUTED,
                     )
                 }
-                HorizontalDivider(color = palette.textPrimary.copy(alpha = 0.2f))
+                Spacer(Modifier.weight(1f))
+                TranButton(
+                    label = stringResource(TranStrings.Common.signOut),
+                    onClick = onSignOut,
+                    variant = TranButtonVariant.SECONDARY,
+                    size = TranButtonSize.MD,
+                    modifier = Modifier.testTag("sign-out-button"),
+                )
+            }
+
+            TranText(
+                text = stringResource(TranStrings.Auditor.rulesTitle),
+                variant = TranTextVariant.TITLE,
+            )
+
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(TranSpace.sm),
+            ) {
+                items(rules) { (country, age) ->
+                    TranInline(
+                        gap = TranGap.MD,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = TranSpace.xs),
+                    ) {
+                        TranText(text = country, bold = true)
+                        Spacer(Modifier.weight(1f))
+                        TranText(
+                            text = stringResource(TranStrings.Auditor.years, age),
+                            variant = TranTextVariant.MUTED,
+                        )
+                    }
+                    TranDivider()
+                }
             }
         }
     }

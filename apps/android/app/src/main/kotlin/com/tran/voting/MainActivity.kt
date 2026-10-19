@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,6 +25,7 @@ import com.tran.voting.ui.AuthWelcomeScreen
 import com.tran.voting.ui.NavigationDirector
 import com.tran.voting.ui.UserRole
 import com.tran.voting.ui.VotingHomeScreen
+import com.tran.voting.ui.atoms.LocalTranPalette
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,26 +64,28 @@ fun NavigationCoordinator() {
     }
 
     MaterialTheme(colorScheme = tranColorScheme(palette)) {
-        when (NavigationDirector.resolveDestination(session)) {
-            AppDestination.SPLASH, AppDestination.AUTH_WELCOME -> {
-                AuthWelcomeScreen(palette = palette) { role ->
-                    session = AuthSession.Authenticated(userId = "user-001", role = role)
-                }
-            }
-            AppDestination.VOTER_DASHBOARD -> {
-                VotingHomeScreen(
-                    palette = palette,
-                    theme = theme,
-                    onThemeChange = { theme = it },
-                    onSignOut = {
-                        session = AuthSession.Unauthenticated
+        // Atoms read the registry palette from the composition (web's CSS-variable analogue).
+        CompositionLocalProvider(LocalTranPalette provides palette) {
+            when (NavigationDirector.resolveDestination(session)) {
+                AppDestination.SPLASH, AppDestination.AUTH_WELCOME -> {
+                    AuthWelcomeScreen { role ->
+                        session = AuthSession.Authenticated(userId = "user-001", role = role)
                     }
-                )
-            }
-            AppDestination.AUDITOR_DASHBOARD -> {
-                AuditorScreen(palette = palette, onSignOut = {
-                    session = AuthSession.Unauthenticated
-                })
+                }
+                AppDestination.VOTER_DASHBOARD -> {
+                    VotingHomeScreen(
+                        theme = theme,
+                        onThemeChange = { theme = it },
+                        onSignOut = {
+                            session = AuthSession.Unauthenticated
+                        }
+                    )
+                }
+                AppDestination.AUDITOR_DASHBOARD -> {
+                    AuditorScreen(onSignOut = {
+                        session = AuthSession.Unauthenticated
+                    })
+                }
             }
         }
     }

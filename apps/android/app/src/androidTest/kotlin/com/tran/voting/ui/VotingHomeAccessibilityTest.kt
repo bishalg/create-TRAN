@@ -1,4 +1,4 @@
-// Verifies: REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006 REQ-NAT-007
+// Verifies: REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006 REQ-NAT-007 REQ-NAT-010
 package com.tran.voting.ui
 
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +32,7 @@ import com.tran.voting.generated.TranBrandTokens
 import com.tran.voting.generated.TranTheme
 import com.tran.voting.generated.labelRes
 import com.tran.voting.generated.tranColorScheme
+import com.tran.voting.ui.atoms.LocalTranPalette
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -52,7 +53,7 @@ class VotingHomeAccessibilityTest {
 
     private fun label(mode: TranTheme): String = context.getString(mode.labelRes)
 
-    /** Mirrors MainActivity: the screen receives a palette from the registry, never a light/dark flag. */
+    /** Mirrors MainActivity: the screen receives a registry palette, never a light/dark flag. */
     private fun setVotingScreen(fontScale: Float = 1f) {
         compose.setContent {
             val current = LocalDensity.current
@@ -60,7 +61,9 @@ class VotingHomeAccessibilityTest {
                 var theme by remember { mutableStateOf(TranTheme.DARK) }
                 val palette = TranBrandTokens.palette(theme)
                 MaterialTheme(colorScheme = tranColorScheme(palette)) {
-                    VotingHomeScreen(palette = palette, theme = theme, onThemeChange = { theme = it })
+                    CompositionLocalProvider(LocalTranPalette provides palette) {
+                        VotingHomeScreen(theme = theme, onThemeChange = { theme = it })
+                    }
                 }
             }
         }
