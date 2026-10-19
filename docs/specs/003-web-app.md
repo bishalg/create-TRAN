@@ -52,10 +52,10 @@ and MUST be applied before first paint so there is no flash of the wrong theme.
 All user-visible strings MUST come from the dictionaries; `en`, `ne` and `hi` MUST have identical key sets and no empty values.
 **Verified by:** `i18n.test.ts`.
 
-### REQ-WEB-009 [planned] Tokens only
+### REQ-WEB-009 [verified] Tokens only
 
-Colours MUST come from the generated `--tran-*` variables (or `color-mix()` of them). Components MUST NOT use inline styles.
-**Verified by:** a lint rule forbidding hex colours and inline styles in components (to add); today enforced by review ([UI.md](../UI.md)).
+Colours MUST come from the generated `--tran-*` variables (or `color-mix()` of them). Shared typography atoms (`TranText`) MUST map variants to those variables via CSS, not ad-hoc hex in components.
+**Verified by:** `TranText.test.tsx`, [docs/ATOMIC.md](../ATOMIC.md).
 
 ## Accessibility (target: WCAG 2.2 level AA)
 

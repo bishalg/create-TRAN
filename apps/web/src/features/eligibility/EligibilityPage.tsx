@@ -2,6 +2,7 @@ import { type FormEvent, useRef, useState } from 'react';
 import { type SupportedLocale, parseAgeInput, t } from '@tran/core';
 import type { TranApi } from '../../shared/api/useTranApi.js';
 import { Field } from '../../shared/ui/Field.js';
+import { TranText } from '../../shared/ui/TranText.js';
 import { ModeSwitch } from './ModeSwitch.js';
 import { ResultCard } from './ResultCard.js';
 import { type CheckMode, toView } from './toView.js';
@@ -38,9 +39,9 @@ export function EligibilityPage({ api, locale }: EligibilityPageProps) {
   return (
     <>
       {api.isOffline && (
-        <p className="notice" role="note">
+        <TranText variant="body" className="notice" role="note">
           {t('app.offlineNotice', locale)}
-        </p>
+        </TranText>
       )}
 
       <form className="card" aria-label={t('app.formLabel', locale)} onSubmit={onSubmit} noValidate>
@@ -81,9 +82,9 @@ export function EligibilityPage({ api, locale }: EligibilityPageProps) {
       </form>
 
       {alertMessage && (
-        <p className="error" role="alert">
+        <TranText variant="danger" className="error" role="alert">
           {alertMessage}
-        </p>
+        </TranText>
       )}
 
       {/* Always mounted: screen readers only announce changes inside a region that already exists. */}

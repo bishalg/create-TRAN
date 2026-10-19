@@ -1,4 +1,5 @@
 import { type SupportedLocale, t } from '@tran/core';
+import { TranText } from '../../shared/ui/TranText.js';
 import { CheckIcon, CrossIcon } from '../../shared/ui/icons.js';
 
 export interface EligibilityView {
@@ -22,17 +23,25 @@ export function ResultCard({
         {result.eligible ? <CheckIcon /> : <CrossIcon />}
       </span>
       <div>
-        <h2>{t(result.eligible ? 'app.eligibleYes' : 'app.eligibleNo', locale)}</h2>
-        <p>{result.reason}</p>
+        <TranText variant="title">
+          {t(result.eligible ? 'app.eligibleYes' : 'app.eligibleNo', locale)}
+        </TranText>
+        <TranText variant="body">{result.reason}</TranText>
         <ul className="chips">
           <li className="chip">
-            {t('app.resultCountry', locale)}: <b>{result.countryCode}</b>
+            <TranText variant="caption" as="span">
+              {t('app.resultCountry', locale)}: <b>{result.countryCode}</b>
+            </TranText>
           </li>
           <li className="chip">
-            {t('app.resultMinimumAge', locale)}: <b>{result.minimumAge}</b>
+            <TranText variant="caption" as="span">
+              {t('app.resultMinimumAge', locale)}: <b>{result.minimumAge}</b>
+            </TranText>
           </li>
           <li className="chip">
-            {t(result.source === 'device' ? 'app.sourceDevice' : 'app.sourceServer', locale)}
+            <TranText variant="caption" as="span">
+              {t(result.source === 'device' ? 'app.sourceDevice' : 'app.sourceServer', locale)}
+            </TranText>
           </li>
         </ul>
       </div>

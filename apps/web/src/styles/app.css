@@ -209,16 +209,61 @@ input {
   padding: var(--space-4) 0 var(--space-2);
 }
 
-.hero h1 {
-  margin: 0;
+.hero .tran-text[data-variant='title'] {
   font-size: clamp(1.75rem, 6vw, 2.25rem);
-  line-height: 1.15;
-  letter-spacing: -0.02em;
 }
 
-.hero p {
+.hero .tran-text[data-variant='muted'] {
   margin: var(--space-2) 0 0;
+}
+
+/* ── Typography atoms (TranText) ─────────────────────────────────────────── */
+
+.tran-text {
+  margin: 0;
+  font-family: var(--tran-font-family);
+}
+
+.tran-text[data-variant='title'] {
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+
+.result .tran-text[data-variant='title'] {
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+.tran-text[data-variant='body'] {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--fg);
+}
+
+.tran-text[data-variant='caption'] {
+  font-size: 0.8rem;
+  line-height: 1.4;
   color: var(--fg-muted);
+}
+
+.tran-text[data-variant='muted'] {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--fg-muted);
+}
+
+.tran-text[data-variant='success'] {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--tran-color-success);
+}
+
+.tran-text[data-variant='danger'] {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--tran-color-danger);
 }
 
 /* ── Card + form ────────────────────────────────────────────────────────── */
@@ -413,16 +458,8 @@ input {
   height: 1.4rem;
 }
 
-.result h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  line-height: 1.3;
-}
-
-.result p {
+.result .tran-text[data-variant='body'] {
   margin: var(--space-1) 0 0;
-  /* Primary text, not muted: muted grey on the tinted card fails WCAG AA contrast. */
-  color: var(--fg);
 }
 
 .chips {

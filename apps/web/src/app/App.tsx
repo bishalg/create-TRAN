@@ -10,6 +10,7 @@ import { EligibilityPage } from '../features/eligibility/EligibilityPage.js';
 import { AuthWelcomePage } from '../features/auth/AuthWelcomePage.js';
 import { AuditorPage } from '../features/auditor/AuditorPage.js';
 import { useTranApi } from '../shared/api/useTranApi.js';
+import { TranText } from '../shared/ui/TranText.js';
 import { Header } from './Header.js';
 import { type ApiState, StatusFooter } from './StatusFooter.js';
 import { usePreferences } from './usePreferences.js';
@@ -59,8 +60,10 @@ export function App({ initialSession }: AppProps = {}) {
 
       <main className="shell">
         <section className="hero">
-          <h1>{t('app.title', locale)}</h1>
-          <p>{t('app.subtitle2', locale)}</p>
+          <TranText variant="title" as="h1">
+            {t('app.title', locale)}
+          </TranText>
+          <TranText variant="muted">{t('app.subtitle2', locale)}</TranText>
         </section>
 
         {destination === 'auth_welcome' && <AuthWelcomePage onSelectRole={handleSelectRole} />}

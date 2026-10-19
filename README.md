@@ -59,7 +59,7 @@ One small domain you can extend:
 
 Golden cases live in `fixtures/vote-eligibility.json` (Rust, TypeScript, and UniFFI parity tests).
 
-The web UI follows OS light/dark, uses **design tokens only** (generated CSS + `getThemeTokens()`), locale switching, and accessibility checks in CI (axe + BDD).
+The web UI follows OS light/dark, uses **design tokens only** (generated CSS + `getThemeTokens()`), **TranText** atoms for typography ([docs/ATOMIC.md](./docs/ATOMIC.md)), locale switching, and accessibility checks in CI (axe + BDD).
 
 ### Try it
 
@@ -212,16 +212,18 @@ Requirements marked `planned` are specified but not built yet; they are the road
 
 ## Documentation
 
-| Doc                                        | Purpose                                     |
-| :----------------------------------------- | :------------------------------------------ |
-| [docs/SAMPLE_APP.md](./docs/SAMPLE_APP.md) | End-to-end walkthrough, key files           |
-| [docs/API.md](./docs/API.md)               | REST endpoints, curl samples                |
-| [docs/DESIGN.md](./docs/DESIGN.md)         | Token pipeline (`pnpm tokens:sync`)         |
-| [docs/TESTING.md](./docs/TESTING.md)       | TDD, fixtures, coverage, E2E                |
-| [docs/UI.md](./docs/UI.md)                 | Web UI structure and accessibility          |
-| [docs/REVIEW.md](./docs/REVIEW.md)         | Architecture review (verified against repo) |
-| [docs/ROADMAP.md](./docs/ROADMAP.md)       | Backlog and checkboxes                      |
-| [AGENTS.md](./AGENTS.md)                   | Agent workflow in this template             |
+| Doc                                                        | Purpose                                     |
+| :--------------------------------------------------------- | :------------------------------------------ |
+| [docs/SAMPLE_APP.md](./docs/SAMPLE_APP.md)                 | End-to-end walkthrough, key files           |
+| [docs/API.md](./docs/API.md)                               | REST endpoints, curl samples                |
+| [docs/DESIGN.md](./docs/DESIGN.md)                         | Token pipeline (`pnpm tokens:sync`)         |
+| [docs/ATOMIC.md](./docs/ATOMIC.md)                         | Web TranText / TranStack atom layer         |
+| [docs/PRODUCTION_LESSONS.md](./docs/PRODUCTION_LESSONS.md) | Token atoms, a11y patterns from production  |
+| [docs/TESTING.md](./docs/TESTING.md)                       | TDD, fixtures, coverage, E2E                |
+| [docs/UI.md](./docs/UI.md)                                 | Web UI structure and accessibility          |
+| [docs/REVIEW.md](./docs/REVIEW.md)                         | Architecture review (verified against repo) |
+| [docs/ROADMAP.md](./docs/ROADMAP.md)                       | Backlog and checkboxes                      |
+| [AGENTS.md](./AGENTS.md)                                   | Agent workflow in this template             |
 
 ---
 

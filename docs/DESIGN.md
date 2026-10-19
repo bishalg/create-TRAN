@@ -23,6 +23,8 @@ Do **not** edit generated TypeScript, CSS, or native stub files by hand — CI r
 
 Web apps import `apps/web/src/styles/generated/theme.css` for CSS variables; React code uses `getThemeTokens()` from `@tran/core`.
 
+User-visible copy on web SHOULD go through **TranText** variants (see [ATOMIC.md](./ATOMIC.md)) so colour and type stay on the token contract — do not add one-off hex in components.
+
 Native (**N**) apps consume generated platform files:
 
 - `apps/ios/Sources/TranVotingDemo/Generated/BrandTokens.swift`
