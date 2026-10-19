@@ -5,10 +5,17 @@
 
 import snapshot from './tokens.json' with { type: 'json' };
 
-export type ThemeMode = 'light' | 'dark';
+export type ThemeMode = 'light' | 'dark' | 'black' | 'sepia';
+
+/** Every palette in the rust-core registry, in picker order. */
+export const themeNames: readonly ThemeMode[] = ['light', 'dark', 'black', 'sepia'];
+
+/** Palette applied before the user (or OS) has chosen one. */
+export const defaultTheme: ThemeMode = 'dark';
 
 export interface ThemeTokens {
   mode: ThemeMode;
+  colorScheme: 'light' | 'dark';
   glass: {
     background: {
       subtle: string;
@@ -59,15 +66,17 @@ export interface ThemeTokens {
 export type LiquidGlassTokens = ThemeTokens;
 
 export const themeTokens: Record<ThemeMode, ThemeTokens> = {
-  light: snapshot.themes.light as ThemeTokens,
-  dark: snapshot.themes.dark as ThemeTokens,
+  light: snapshot.themes[0] as ThemeTokens,
+  dark: snapshot.themes[1] as ThemeTokens,
+  black: snapshot.themes[2] as ThemeTokens,
+  sepia: snapshot.themes[3] as ThemeTokens,
 };
 
-export function getThemeTokens(mode: ThemeMode = 'dark'): ThemeTokens {
+export function getThemeTokens(mode: ThemeMode = defaultTheme): ThemeTokens {
   return themeTokens[mode];
 }
 
-/** Default export for backward compatibility — dark theme. */
+/** Default export for backward compatibility — the `dark` palette. */
 export const liquidGlassTokens = themeTokens.dark;
 
 export const designTypography = snapshot.typography;

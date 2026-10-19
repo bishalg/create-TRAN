@@ -33,27 +33,93 @@ extension Color {
     }
 }
 
+/// Theme ids come from the rust-core registry (`tokens.rs`); screens receive a
+/// palette and never branch on the theme name.
+enum TranTheme: String, CaseIterable, Identifiable {
+    case light
+    case dark
+    case black
+    case sepia
+
+    var id: String { rawValue }
+
+    var label: String { rawValue.capitalized }
+}
+
+struct TranPalette {
+    let primary: Color
+    let accent: Color
+    let success: Color
+    let danger: Color
+    let surface: Color
+    let background: Color
+    let eligibilityCanVote: Color
+    let eligibilityCannotVote: Color
+    let textPrimary: Color
+    let colorScheme: ColorScheme
+}
+
 enum TranBrandTokens {
-    enum Light {
-        static let primary = Color(tranHex: "#0284c7")
-        static let accent = Color(tranHex: "#4f46e5")
-        static let success = Color(tranHex: "#059669")
-        static let danger = Color(tranHex: "#dc2626")
-        static let surface = Color(tranHex: "#e2e8f0")
-        static let background = Color(tranHex: "#f8fafc")
-        static let eligibilityCanVote = Color(tranHex: "#059669")
-        static let eligibilityCannotVote = Color(tranHex: "#dc2626")
-        static let textPrimary = Color(tranHex: "#0f172a")
-    }
-    enum Dark {
-        static let primary = Color(tranHex: "#38bdf8")
-        static let accent = Color(tranHex: "#818cf8")
-        static let success = Color(tranHex: "#34d399")
-        static let danger = Color(tranHex: "#f87171")
-        static let surface = Color(tranHex: "#1e293b")
-        static let background = Color(tranHex: "#0b0f19")
-        static let eligibilityCanVote = Color(tranHex: "#34d399")
-        static let eligibilityCannotVote = Color(tranHex: "#f87171")
-        static let textPrimary = Color(tranHex: "#f8fafc")
+    static let light = TranPalette(
+        primary: Color(tranHex: "#0284c7"),
+        accent: Color(tranHex: "#4f46e5"),
+        success: Color(tranHex: "#059669"),
+        danger: Color(tranHex: "#dc2626"),
+        surface: Color(tranHex: "#e2e8f0"),
+        background: Color(tranHex: "#f8fafc"),
+        eligibilityCanVote: Color(tranHex: "#059669"),
+        eligibilityCannotVote: Color(tranHex: "#dc2626"),
+        textPrimary: Color(tranHex: "#0f172a"),
+        colorScheme: .light
+    )
+
+    static let dark = TranPalette(
+        primary: Color(tranHex: "#38bdf8"),
+        accent: Color(tranHex: "#818cf8"),
+        success: Color(tranHex: "#34d399"),
+        danger: Color(tranHex: "#f87171"),
+        surface: Color(tranHex: "#1e293b"),
+        background: Color(tranHex: "#0b0f19"),
+        eligibilityCanVote: Color(tranHex: "#34d399"),
+        eligibilityCannotVote: Color(tranHex: "#f87171"),
+        textPrimary: Color(tranHex: "#f8fafc"),
+        colorScheme: .dark
+    )
+
+    static let black = TranPalette(
+        primary: Color(tranHex: "#38bdf8"),
+        accent: Color(tranHex: "#818cf8"),
+        success: Color(tranHex: "#34d399"),
+        danger: Color(tranHex: "#f87171"),
+        surface: Color(tranHex: "#101010"),
+        background: Color(tranHex: "#000000"),
+        eligibilityCanVote: Color(tranHex: "#34d399"),
+        eligibilityCannotVote: Color(tranHex: "#f87171"),
+        textPrimary: Color(tranHex: "#f8fafc"),
+        colorScheme: .dark
+    )
+
+    static let sepia = TranPalette(
+        primary: Color(tranHex: "#8a5a24"),
+        accent: Color(tranHex: "#7e5aa0"),
+        success: Color(tranHex: "#3f6212"),
+        danger: Color(tranHex: "#a8261f"),
+        surface: Color(tranHex: "#e6d9bd"),
+        background: Color(tranHex: "#f5ecd7"),
+        eligibilityCanVote: Color(tranHex: "#3f6212"),
+        eligibilityCannotVote: Color(tranHex: "#a8261f"),
+        textPrimary: Color(tranHex: "#3b2f1f"),
+        colorScheme: .light
+    )
+
+    static let themes: [TranTheme: TranPalette] = [
+        .light: light,
+        .dark: dark,
+        .black: black,
+        .sepia: sepia,
+    ]
+
+    static func palette(for theme: TranTheme) -> TranPalette {
+        themes[theme] ?? dark
     }
 }
