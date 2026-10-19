@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -32,6 +33,7 @@ import com.tran.voting.generated.TranTheme
 import com.tran.voting.generated.labelRes
 import uniffi.tran_uniffi.TranValidationException
 import uniffi.tran_uniffi.evaluateVoteEligibilityOffline
+import android.content.Context
 import java.time.LocalDate
 
 /** Voting demo — brand tokens + offline rust-core rules via UniFFI. Copy comes from the shared dictionaries through generated `TranStrings` accessors. */
@@ -47,7 +49,9 @@ fun VotingHomeScreen(
     val resultPlaceholder = stringResource(TranStrings.Eligibility.resultPlaceholder)
     var resultText by remember { mutableStateOf(resultPlaceholder) }
     val invalidAge = stringResource(TranStrings.Errors.ageInvalid)
+    val ageOutOfRange = stringResource(TranStrings.Errors.ageOutOfRange)
     val invalidCountry = stringResource(TranStrings.Errors.countryInvalid)
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -103,7 +107,7 @@ fun VotingHomeScreen(
         Button(
             modifier = Modifier.testTag("check-button"),
             onClick = {
-                resultText = runOfflineCheck(ageText, countryCode, invalidAge, invalidCountry)
+                resultText = runOfflineCheck(context, ageText, countryCode, invalidAge, ageOutOfRange, invalidCountry)
             },
         ) {
             Text(stringResource(TranStrings.Eligibility.checkOffline))
@@ -135,18 +139,30 @@ fun VotingHomeScreen(
     }
 }
 
+private const val MAX_AGE = 150
+
+/** Every message shown comes from string resources; the core's English `reason`/`detail` is never displayed. */
 private fun runOfflineCheck(
+    context: Context,
     ageText: String,
     countryCode: String,
     invalidAge: String,
+    ageOutOfRange: String,
     invalidCountry: String,
 ): String {
     val age = ageText.toUShortOrNull() ?: return invalidAge
-    if (countryCode.length != 2) return invalidCountry
+    if (age.toInt() > MAX_AGE) return ageOutOfRange
+    if (countryCode.length != 2 || !countryCode.all { it.isLetter() }) return invalidCountry
     val reference = LocalDate.now().toString()
     return try {
-        evaluateVoteEligibilityOffline(age, null, countryCode, reference).reason
+        val result = evaluateVoteEligibilityOffline(age, null, countryCode, reference)
+        context.getString(
+            if (result.eligible) TranStrings.Eligibility.resultReasonMeets else TranStrings.Eligibility.resultReasonBelow,
+            result.age.toString(),
+            result.minimumAge.toString(),
+            result.countryCode,
+        )
     } catch (e: TranValidationException.ValidationException) {
-        e.detail
+        invalidCountry
     }
 }

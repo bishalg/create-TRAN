@@ -103,6 +103,14 @@ struct VotingHomeView: View {
             resultText = L10n.Errors.ageAndCountry
             return
         }
+        guard age <= 150 else {
+            resultText = L10n.Errors.ageOutOfRange
+            return
+        }
+        guard countryCode.count == 2, countryCode.allSatisfy({ $0.isLetter }) else {
+            resultText = L10n.Errors.countryInvalid
+            return
+        }
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         formatter.timeZone = TimeZone(secondsFromGMT: 0)
@@ -115,16 +123,13 @@ struct VotingHomeView: View {
                 referenceDateIso: String(reference)
             )
             let tint = res.eligible ? canVote : cannotVote
-            resultText = res.reason
+            resultText = res.eligible
+                ? L10n.Eligibility.resultReasonMeets(String(res.age), String(res.minimumAge), res.countryCode)
+                : L10n.Eligibility.resultReasonBelow(String(res.age), String(res.minimumAge), res.countryCode)
             _ = tint
-        } catch let err as TranValidationError {
-            if case .ValidationError(let detail) = err {
-                resultText = detail
-            } else {
-                resultText = String(describing: err)
-            }
         } catch {
-            resultText = error.localizedDescription
+            // Pre-validated above; the core's English detail is never shown to users.
+            resultText = L10n.Errors.countryInvalid
         }
     }
 }

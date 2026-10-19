@@ -24,6 +24,8 @@
     <string name="eligibility_result_meta">%1$s · न्यूनतम %2$s · IP %3$s</string>
     <string name="eligibility_result_minimum_age">न्यूनतम उमेर</string>
     <string name="eligibility_result_placeholder">अफलाइन जाँच थिच्नुहोस्</string>
+    <string name="eligibility_result_reason_below">उमेर %1$s न्यूनतम मतदान उमेर %2$s भन्दा कम छ (%3$s)।</string>
+    <string name="eligibility_result_reason_meets">उमेर %1$s ले न्यूनतम मतदान उमेर %2$s पूरा गर्छ (%3$s)।</string>
     <string name="eligibility_result_source_device">यही उपकरणमा जाँच गरियो</string>
     <string name="eligibility_result_source_server">सर्भरबाट जाँच गरियो</string>
     <string name="eligibility_section_api">API (IP बाट देश)</string>

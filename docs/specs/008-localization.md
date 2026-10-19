@@ -58,3 +58,12 @@ The directories under `locales/` MUST be the only definition of which languages 
 `pnpm i18n:sync` + `project.yml` edit, and language switching MUST be verified end to end.
 **Verified by:** [`native-strings.test.ts`](../../packages/core-ts/tests/native-strings.test.ts)
 (knownRegions, no stale resource folders); BDD "Switching the language localizes the whole interface".
+
+### REQ-I18N-007 [verified] Core prose is never shown to users
+
+The English `reason` string produced by the core and the API is diagnostic only. Every UI MUST
+build the result sentence from `eligible`, `age`, `minimumAge` and `countryCode` using the
+`eligibility.result.reasonMeets` / `reasonBelow` templates, so the sentence follows the active
+language on every platform. No UI source may read a core-supplied `reason`.
+**Verified by:** `ResultCard.test.tsx`, `toView.test.ts`, [`i18n-guards.test.ts`](../../packages/core-ts/tests/i18n-guards.test.ts)
+(no UI reads `.reason`), BDD "The result sentence is localized, not English prose from the core".

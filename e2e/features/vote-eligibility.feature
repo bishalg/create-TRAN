@@ -87,6 +87,14 @@ Feature: Voting eligibility
     Then the document language is "en"
     And the page heading says "Voting Eligibility"
 
+  Scenario: The result sentence is localized, not English prose from the core
+    # Verifies: REQ-I18N-007
+    When I check on this device with age "17" and country "US"
+    And I switch the language to "NE"
+    Then the result says "उमेर 17 न्यूनतम मतदान उमेर 18 भन्दा कम छ (US)।"
+    When I switch the language to "HI"
+    Then the result says "आयु 17 न्यूनतम मतदान आयु 18 से कम है (US)।"
+
   Scenario: Invalid input moves focus to the age field
     When I check on this device with age "abc" and country "US"
     Then the age field has focus

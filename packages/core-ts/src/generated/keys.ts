@@ -50,6 +50,8 @@ export type TranStringKey =
   | 'eligibility.result.meta'
   | 'eligibility.result.minimumAge'
   | 'eligibility.result.placeholder'
+  | 'eligibility.result.reasonBelow'
+  | 'eligibility.result.reasonMeets'
   | 'eligibility.result.sourceDevice'
   | 'eligibility.result.sourceServer'
   | 'eligibility.section.api'

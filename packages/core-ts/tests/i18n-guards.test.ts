@@ -1,4 +1,4 @@
-// Verifies: REQ-WEB-008 REQ-I18N-004 REQ-I18N-005 REQ-I18N-006
+// Verifies: REQ-WEB-008 REQ-I18N-004 REQ-I18N-005 REQ-I18N-006 REQ-I18N-007
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -244,6 +244,24 @@ describe('user-visible copy comes from locales/', () => {
     expect(
       unused,
       'remove these from locales/ or reference them (web `t()`, iOS L10n, Android TranStrings)'
+    ).toEqual([]);
+  });
+
+  it('never displays the core-supplied English `reason` or validation `detail`', () => {
+    const sources = [
+      ...listFiles(path.join(root, 'apps/web/src'), ['.tsx', '.ts']).filter(
+        (file) => !/\.test\.tsx?$/.test(file)
+      ),
+      ...listFiles(path.join(root, 'apps/ios/Sources/TranVotingDemo'), ['.swift']),
+      ...listFiles(path.join(root, 'apps/android/app/src/main/kotlin'), ['.kt']),
+    ].filter((file) => !/\/(Generated|generated|uniffi)\//.test(file));
+    const offenders = sources
+      .filter((file) => /\.reason\b|\breason:\s|\.detail\b/.test(readText(relative(file))))
+      .map(relative);
+
+    expect(
+      offenders,
+      'build the sentence from facts with eligibility.result.reasonMeets/Below'
     ).toEqual([]);
   });
 });

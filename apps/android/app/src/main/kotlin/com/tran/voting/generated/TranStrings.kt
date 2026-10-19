@@ -101,6 +101,10 @@ object TranStrings {
         @StringRes
         val resultPlaceholder: Int = R.string.eligibility_result_placeholder // eligibility.result.placeholder
         @StringRes
+        val resultReasonBelow: Int = R.string.eligibility_result_reason_below // eligibility.result.reasonBelow
+        @StringRes
+        val resultReasonMeets: Int = R.string.eligibility_result_reason_meets // eligibility.result.reasonMeets
+        @StringRes
         val resultSourceDevice: Int = R.string.eligibility_result_source_device // eligibility.result.sourceDevice
         @StringRes
         val resultSourceServer: Int = R.string.eligibility_result_source_server // eligibility.result.sourceServer

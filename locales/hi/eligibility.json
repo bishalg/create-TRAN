@@ -44,6 +44,8 @@
     "sourceDevice": "इसी डिवाइस पर जाँच की गई",
     "sourceServer": "सर्वर द्वारा जाँच की गई",
     "placeholder": "ऑफ़लाइन जाँच दबाएँ",
-    "meta": "{country} · न्यूनतम {minimumAge} · IP {clientIp}"
+    "meta": "{country} · न्यूनतम {minimumAge} · IP {clientIp}",
+    "reasonMeets": "आयु {age} न्यूनतम मतदान आयु {minimumAge} को पूरा करती है ({country})।",
+    "reasonBelow": "आयु {age} न्यूनतम मतदान आयु {minimumAge} से कम है ({country})।"
   }
 }

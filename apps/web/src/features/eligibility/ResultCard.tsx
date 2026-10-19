@@ -4,7 +4,7 @@ import { CheckIcon, CrossIcon } from '../../shared/ui/icons.js';
 
 export interface EligibilityView {
   eligible: boolean;
-  reason: string;
+  age: number;
   countryCode: string;
   minimumAge: number;
   source: 'device' | 'server';
@@ -29,7 +29,13 @@ export function ResultCard({
             locale
           )}
         </TranText>
-        <TranText variant="body">{result.reason}</TranText>
+        <TranText variant="body">
+          {t(
+            result.eligible ? 'eligibility.result.reasonMeets' : 'eligibility.result.reasonBelow',
+            locale,
+            { age: result.age, minimumAge: result.minimumAge, country: result.countryCode }
+          )}
+        </TranText>
         <ul className="chips">
           <li className="chip">
             <TranText variant="caption" as="span">

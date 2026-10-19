@@ -61,6 +61,12 @@ enum L10n {
         }
         static var resultMinimumAge: String { String(localized: "eligibility.result.minimumAge", table: "Eligibility") }
         static var resultPlaceholder: String { String(localized: "eligibility.result.placeholder", table: "Eligibility") }
+        static func resultReasonBelow(_ age: String, _ minimumAge: String, _ country: String) -> String {
+            String(format: String(localized: "eligibility.result.reasonBelow", table: "Eligibility"), age, minimumAge, country)
+        }
+        static func resultReasonMeets(_ age: String, _ minimumAge: String, _ country: String) -> String {
+            String(format: String(localized: "eligibility.result.reasonMeets", table: "Eligibility"), age, minimumAge, country)
+        }
         static var resultSourceDevice: String { String(localized: "eligibility.result.sourceDevice", table: "Eligibility") }
         static var resultSourceServer: String { String(localized: "eligibility.result.sourceServer", table: "Eligibility") }
         static var sectionApi: String { String(localized: "eligibility.section.api", table: "Eligibility") }

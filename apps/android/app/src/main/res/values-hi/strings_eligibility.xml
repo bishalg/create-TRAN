@@ -24,6 +24,8 @@
     <string name="eligibility_result_meta">%1$s · न्यूनतम %2$s · IP %3$s</string>
     <string name="eligibility_result_minimum_age">न्यूनतम आयु</string>
     <string name="eligibility_result_placeholder">ऑफ़लाइन जाँच दबाएँ</string>
+    <string name="eligibility_result_reason_below">आयु %1$s न्यूनतम मतदान आयु %2$s से कम है (%3$s)।</string>
+    <string name="eligibility_result_reason_meets">आयु %1$s न्यूनतम मतदान आयु %2$s को पूरा करती है (%3$s)।</string>
     <string name="eligibility_result_source_device">इसी डिवाइस पर जाँच की गई</string>
     <string name="eligibility_result_source_server">सर्वर द्वारा जाँच की गई</string>
     <string name="eligibility_section_api">API (IP से देश)</string>

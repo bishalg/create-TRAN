@@ -44,6 +44,8 @@
     "sourceDevice": "Checked on this device",
     "sourceServer": "Checked by the server",
     "placeholder": "Tap Check offline",
-    "meta": "{country} · min {minimumAge} · IP {clientIp}"
+    "meta": "{country} · min {minimumAge} · IP {clientIp}",
+    "reasonMeets": "Age {age} meets the minimum voting age of {minimumAge} in {country}.",
+    "reasonBelow": "Age {age} is below the minimum voting age of {minimumAge} in {country}."
   }
 }

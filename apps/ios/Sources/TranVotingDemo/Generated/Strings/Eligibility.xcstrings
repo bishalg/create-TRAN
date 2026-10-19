@@ -507,6 +507,50 @@
         }
       }
     },
+    "eligibility.result.reasonBelow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Age %1$@ is below the minimum voting age of %2$@ in %3$@."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आयु %1$@ न्यूनतम मतदान आयु %2$@ से कम है (%3$@)।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "उमेर %1$@ न्यूनतम मतदान उमेर %2$@ भन्दा कम छ (%3$@)।"
+          }
+        }
+      }
+    },
+    "eligibility.result.reasonMeets": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Age %1$@ meets the minimum voting age of %2$@ in %3$@."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आयु %1$@ न्यूनतम मतदान आयु %2$@ को पूरा करती है (%3$@)।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "उमेर %1$@ ले न्यूनतम मतदान उमेर %2$@ पूरा गर्छ (%3$@)।"
+          }
+        }
+      }
+    },
     "eligibility.result.sourceDevice": {
       "localizations": {
         "en": {
