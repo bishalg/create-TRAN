@@ -1,4 +1,4 @@
-// Verifies: REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006
+// Verifies: REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006 REQ-NAT-007
 import XCTest
 
 /// Native UI + accessibility tests. Journeys mirror e2e/maestro/flows and e2e/features.
@@ -59,19 +59,35 @@ final class VotingUITests: XCTestCase {
 
     func testAccessibilityAuditPassesAcrossThemes() throws {
         try app.performAccessibilityAudit()
-        app.buttons["Sepia"].tap()
-        try app.performAccessibilityAudit()
-        app.buttons["Black"].tap()
-        try app.performAccessibilityAudit()
+        for name in ["Light", "Dark", "Black", "Sepia"] {
+            app.buttons[name].tap()
+            try app.performAccessibilityAudit()
+        }
+    }
+
+    func testEveryRegistryThemeIsSelectable() {
+        for name in ["Light", "Dark", "Black", "Sepia"] {
+            let segment = app.buttons[name]
+            XCTAssertTrue(segment.waitForExistence(timeout: 2), "\(name) must be in the registry picker")
+            segment.tap()
+            XCTAssertTrue(segment.isSelected, "\(name) must apply once selected")
+            XCTAssertTrue(app.buttons["check-button"].exists, "\(name) must keep the dashboard usable")
+        }
     }
 
     func testLargestDynamicTypeKeepsResultReachable() throws {
+        check(age: "20", country: "NP")
+        let defaultHeight = app.staticTexts["offline-result"].frame.height
+
         app.terminate()
         app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
         app.launch()
+
         check(age: "20", country: "NP")
-        XCTAssertTrue(app.staticTexts["offline-result"].waitForExistence(timeout: 2))
-        XCTAssertTrue(app.staticTexts["offline-result"].label.contains("minimum voting age"))
+        let result = app.staticTexts["offline-result"]
+        XCTAssertTrue(result.waitForExistence(timeout: 2))
+        XCTAssertTrue(result.label.contains("minimum voting age"))
+        XCTAssertGreaterThan(result.frame.height, defaultHeight, "the accessibility content size category was not applied")
     }
 }
 

@@ -5,16 +5,19 @@ easy to copy. Every layer below has one reference file. Copy its shape, not its 
 
 ## The pyramid
 
-| Layer               | Tool                        | Reference file                                                                                                          | What it proves                                    |
-| :------------------ | :-------------------------- | :---------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------ |
-| Rule unit tests     | `cargo test`                | `crates/rust-core/src/voting.rs` (`mod tests`)                                                                          | Pure functions, boundaries (17/18, leap day)      |
-| **Golden fixtures** | `cargo test` + `vitest`     | `fixtures/vote-eligibility.json` → `crates/rust-core/tests/parity_fixtures.rs`, `packages/core-ts/tests/parity.test.ts` | Rust and TypeScript give **identical** answers    |
-| UniFFI parity       | `cargo test -p tran-uniffi` | `crates/tran-uniffi/tests/parity_fixtures.rs` + `src/lib.rs` unit tests                                                 | Native FFI surface matches the same fixture table |
-| HTTP integration    | `tower::oneshot`            | `apps/api/tests/api_test.rs`                                                                                            | Routes, headers, status codes, one error envelope |
-| Real socket smoke   | tokio `TcpListener`         | `apps/api/tests/server_test.rs`                                                                                         | `run_server` really serves                        |
-| Client / contract   | vitest + fake `fetch`       | `packages/core-ts/tests/client.test.ts`                                                                                 | Timeouts, error mapping, Zod contract             |
-| Hook / component    | vitest + Testing Library    | `apps/web/tests/{useTranApi,App}.test.tsx`                                                                              | Behaviour via roles and labels, never CSS         |
-| **BDD + E2E**       | Playwright + Gherkin        | `e2e/features/vote-eligibility.feature`                                                                                 | Real browser → real Vite → real Axum (incl. CORS) |
+| Layer               | Tool                        | Reference file                                                                                                          | What it proves                                                                             |
+| :------------------ | :-------------------------- | :---------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------- |
+| Rule unit tests     | `cargo test`                | `crates/rust-core/src/voting.rs` (`mod tests`)                                                                          | Pure functions, boundaries (17/18, leap day)                                               |
+| **Golden fixtures** | `cargo test` + `vitest`     | `fixtures/vote-eligibility.json` → `crates/rust-core/tests/parity_fixtures.rs`, `packages/core-ts/tests/parity.test.ts` | Rust and TypeScript give **identical** answers                                             |
+| UniFFI parity       | `cargo test -p tran-uniffi` | `crates/tran-uniffi/tests/parity_fixtures.rs` + `src/lib.rs` unit tests                                                 | Native FFI surface matches the same fixture table                                          |
+| HTTP integration    | `tower::oneshot`            | `apps/api/tests/api_test.rs`                                                                                            | Routes, headers, status codes, one error envelope                                          |
+| Real socket smoke   | tokio `TcpListener`         | `apps/api/tests/server_test.rs`                                                                                         | `run_server` really serves                                                                 |
+| Client / contract   | vitest + fake `fetch`       | `packages/core-ts/tests/client.test.ts`                                                                                 | Timeouts, error mapping, Zod contract                                                      |
+| Hook / component    | vitest + Testing Library    | `apps/web/tests/{useTranApi,App}.test.tsx`                                                                              | Behaviour via roles and labels, never CSS                                                  |
+| **BDD + E2E**       | Playwright + Gherkin        | `e2e/features/vote-eligibility.feature`                                                                                 | Real browser → real Vite → real Axum (incl. CORS)                                          |
+| **iOS UI + a11y**   | XCTest / XCUITest           | `apps/ios/Tests/TranVotingDemoUITests/VotingUITests.swift`                                                              | Journeys on a simulator, `performAccessibilityAudit` per theme, 44pt targets, Dynamic Type |
+| **Android + a11y**  | Compose instrumentation     | `apps/android/app/src/androidTest/…/VotingHomeAccessibilityTest.kt`                                                     | Semantics, `liveRegion`, 48dp touch bounds, 200% font scale, every theme, contrast         |
+| **Native smoke**    | Maestro                     | `e2e/maestro/flows/*.yaml`                                                                                              | The same journeys on a booted simulator/emulator                                           |
 
 ## TDD loop (do this for every change)
 
@@ -30,10 +33,20 @@ easy to copy. Every layer below has one reference file. Copy its shape, not its 
 pnpm test                 # cargo test + vitest (fast)
 pnpm test:coverage        # Rust + TS, FAILS below 100%
 pnpm test:e2e             # Gherkin scenarios in Chromium (starts API + web itself)
+pnpm ios:test             # XCTest + XCUITest (incl. accessibility audits) on the first available iPhone simulator
+pnpm android:test         # Compose instrumentation on a booted emulator (builds the Rust .so first)
+pnpm e2e:maestro          # Maestro smoke flows on the booted simulator/emulator (--device to choose)
 pnpm test:all             # everything CI runs
 pnpm check:quick          # spec check + formatting + typecheck + clippy (matches pre-commit hook)
 pnpm hooks:install        # configure git core.hooksPath .githooks (runs automatically on pnpm install)
 ```
+
+Native runs need a booted simulator/emulator; keep the emulator awake (`adb shell svc power stayon true`)
+or the Compose rule finds no resumed activity. Android's Gradle `preBuild` stages
+`libtran_uniffi.so` for `arm64-v8a`/`x86_64` (`apps/android/scripts/build-rust-lib.sh`, NDK clang
+linkers), so the device check exercises the real Rust core. `connectedDebugAndroidTest` uninstalls
+the app when it finishes — reinstall the built APK before Maestro:
+`adb install -r apps/android/app/build/outputs/apk/debug/app-debug.apk`.
 
 First E2E run needs `pnpm --filter e2e exec playwright install chromium`.
 

@@ -90,4 +90,26 @@ describe('usePreferences', () => {
     act(() => result.current.setLocale('ne'));
     expect(document.documentElement.lang).toBe('ne');
   });
+
+  it('localizes the tab title and the meta description', () => {
+    const meta = document.createElement('meta');
+    meta.name = 'description';
+    document.head.append(meta);
+
+    const { result, unmount } = renderHook(() => usePreferences());
+    expect(document.title).toBe('Voting Eligibility · TRAN');
+    expect(meta.content).toBe('Check the minimum voting age for a country.');
+
+    act(() => result.current.setLocale('ne'));
+    expect(document.title).toBe('मतदान योग्यता · TRAN');
+    expect(meta.content).toBe('कुनै देशको न्यूनतम मतदान उमेर जाँच गर्नुहोस्।');
+
+    unmount();
+    meta.remove();
+  });
+
+  it('still syncs the title on a page without a meta description', () => {
+    renderHook(() => usePreferences());
+    expect(document.title).toBe('Voting Eligibility · TRAN');
+  });
 });

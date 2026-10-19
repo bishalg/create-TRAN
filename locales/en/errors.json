@@ -1,0 +1,6 @@
+{
+  "ageOutOfRange": "Enter a whole-number age between 0 and 150.",
+  "ageInvalid": "Enter a valid age",
+  "countryInvalid": "Country must be two letters",
+  "ageAndCountry": "Enter age and country"
+}

@@ -20,25 +20,28 @@ struct AuditorHomeView: View {
         ZStack {
             palette.background.ignoresSafeArea()
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: TranSpace.lg) {
                     HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("native.auditorTitle")
+                        VStack(alignment: .leading, spacing: TranSpace.xs) {
+                            Text(L10n.Common.roleElectionAuditor)
                                 .font(.title2.weight(.bold))
                                 .foregroundStyle(palette.textPrimary)
-                            Text("native.auditorSubtitle")
+                            Text(L10n.Auditor.subtitle)
                                 .font(.subheadline)
                                 .foregroundStyle(palette.textPrimary.opacity(0.8))
                         }
                         Spacer()
-                        Button("native.signOut", action: onSignOut)
-                            .buttonStyle(.bordered)
-                            .tint(palette.primary)
-                            .accessibilityIdentifier("sign-out-button")
+                        Button(action: onSignOut) {
+                            Text(L10n.Common.signOut)
+                                .foregroundStyle(palette.textPrimary)
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(palette.primary)
+                        .accessibilityIdentifier("sign-out-button")
                     }
 
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("native.auditorRulesTitle")
+                    VStack(alignment: .leading, spacing: TranSpace.base) {
+                        Text(L10n.Auditor.rulesTitle)
                             .font(.headline)
                             .foregroundStyle(palette.textPrimary)
 
@@ -48,18 +51,18 @@ struct AuditorHomeView: View {
                                     .fontWeight(.bold)
                                     .foregroundStyle(palette.textPrimary)
                                 Spacer()
-                                Text(String(format: NSLocalizedString("native.years", comment: ""), item.1))
+                                Text(L10n.Auditor.years(String(item.1)))
                                     .foregroundStyle(palette.textPrimary.opacity(0.9))
                             }
                             .padding(.vertical, 8)
                             Divider()
                         }
                     }
-                    .padding(16)
+                    .padding(TranSpace.md)
                     .background(palette.surface.opacity(0.4))
-                    .cornerRadius(12)
+                    .cornerRadius(TranRadius.md)
                 }
-                .padding(20)
+                .padding(TranSpace.lg)
             }
         }
     }

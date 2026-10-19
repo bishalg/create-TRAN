@@ -1,11 +1,11 @@
-import { type SupportedLocale, t } from '@tran/core';
+import { type SupportedLocale, type TranStringKey, t } from '@tran/core';
 import { TranLabel } from '../../shared/ui/TranLabel.js';
 import { TranText } from '../../shared/ui/TranText.js';
 import type { CheckMode } from './toView.js';
 
-const OPTIONS: { value: CheckMode; title: string; hint: string }[] = [
-  { value: 'device', title: 'app.modeDevice', hint: 'app.modeDeviceHint' },
-  { value: 'server', title: 'app.modeServer', hint: 'app.modeServerHint' },
+const OPTIONS: { value: CheckMode; title: TranStringKey; hint: TranStringKey }[] = [
+  { value: 'device', title: 'eligibility.mode.device', hint: 'eligibility.mode.deviceHint' },
+  { value: 'server', title: 'eligibility.mode.server', hint: 'eligibility.mode.serverHint' },
 ];
 
 export interface ModeSwitchProps {
@@ -18,7 +18,7 @@ export interface ModeSwitchProps {
 export function ModeSwitch({ mode, onChange, locale }: ModeSwitchProps) {
   return (
     <fieldset className="choice-group">
-      <legend>{t('app.modeLegend', locale)}</legend>
+      <legend>{t('eligibility.mode.legend', locale)}</legend>
       {OPTIONS.map(({ value, title, hint }) => (
         <TranLabel key={value} className="choice">
           <input

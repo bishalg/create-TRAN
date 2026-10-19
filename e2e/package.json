@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "bddgen && playwright test",
-    "test:headed": "bddgen && playwright test --headed",
+    "test": "pnpm --dir .. build:libs && bddgen && playwright test",
+    "test:headed": "pnpm --dir .. build:libs && bddgen && playwright test --headed",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

@@ -4,13 +4,14 @@ Platform-native **N** in TRAN: Kotlin + Jetpack Compose, sharing brand tokens an
 
 ## What works today
 
-| Feature                                   | Status                                                                              |
-| :---------------------------------------- | :---------------------------------------------------------------------------------- |
-| Design tokens (`BrandTokens.kt`)          | `pnpm tokens:sync`                                                                  |
-| Offline vote eligibility (JVM unit tests) | Host `libtran_uniffi.dylib` + JNA; golden `fixtures/vote-eligibility.json`          |
-| Offline UI button                         | Calls UniFFI when native library is present                                         |
-| On-device `.so` / emulator JNI            | **Not automated yet** — build Rust for Android ABIs before expecting UI on hardware |
-| HTTP API (OkHttp)                         | Not wired yet                                                                       |
+| Feature                                   | Status                                                                                                                           |
+| :---------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------- |
+| Design tokens (`BrandTokens.kt`)          | `pnpm tokens:sync`                                                                                                               |
+| Offline vote eligibility (JVM unit tests) | Host `libtran_uniffi.dylib` + JNA; golden `fixtures/vote-eligibility.json`                                                       |
+| Offline UI button                         | Calls UniFFI; Gradle `preBuild` stages `libtran_uniffi.so` for `arm64-v8a` + `x86_64`                                            |
+| On-device `.so` / emulator JNI            | `scripts/build-rust-lib.sh` (NDK clang linkers — no extra tools beyond the SDK + Rust targets)                                   |
+| Accessibility instrumentation tests       | `./gradlew connectedDebugAndroidTest` — labels, live region, 48dp targets, 200% font scale, every registry theme, 4.5:1 contrast |
+| HTTP API (OkHttp)                         | Not wired yet                                                                                                                    |
 
 ## Layout
 
@@ -19,8 +20,10 @@ apps/android/
 ├── app/src/main/kotlin/com/tran/voting/
 │   ├── ui/VotingHomeScreen.kt
 │   ├── generated/BrandTokens.kt
-│   └── uniffi/…/tran_uniffi.kt   # @generated — pnpm uniffi:generate
+│   └── uniffi/…/tran_uniffi.kt              # @generated — pnpm uniffi:generate
+├── app/src/androidTest/…/VotingHomeAccessibilityTest.kt
 ├── app/src/test/…/VoteEligibilityParityTest.kt
+├── scripts/build-rust-lib.sh                # cargo + NDK → app/src/main/jniLibs
 ├── build.gradle.kts
 └── gradlew
 ```
@@ -44,7 +47,19 @@ Gradle sets `REPO_ROOT` and `UNIFFI_LIB_DIR` to `../../target/release` so tests 
 
 ## Run on device / emulator
 
-Open `apps/android` in Android Studio. **Offline Check** requires `libtran_uniffi.so` under `app/src/main/jniLibs/<abi>/` (future: `cargo-ndk` script in ROADMAP).
+`./gradlew assembleDebug` (or `pnpm android:build`) stages the Rust core first: the `preBuild`
+task runs `scripts/build-rust-lib.sh`, which uses the NDK's clang linkers to build
+`libtran_uniffi.so` for `arm64-v8a` and `x86_64` into `app/src/main/jniLibs/`. The script adds
+the Rust targets itself (`rustup target add aarch64-linux-android x86_64-linux-android`) and
+looks for the NDK via `ANDROID_NDK_HOME` / `ANDROID_NDK_LATEST_HOME` / `$ANDROID_HOME/ndk/*`.
+
+## Instrumented accessibility tests
+
+Boot an emulator (or attach a device), then:
+
+```bash
+cd apps/android && ./gradlew connectedDebugAndroidTest   # or: pnpm android:test
+```
 
 ## Regenerate Kotlin bindings
 
@@ -54,8 +69,7 @@ pnpm uniffi:generate
 
 ## Follow-ups
 
-- Gradle pre-build + `cargo-ndk` for `jniLibs`
-- CI `./gradlew test` on Ubuntu/macOS
+- CI instrumentation run on an emulator (Maestro flows already run locally via `pnpm e2e:maestro`)
 - OkHttp client matching Axum error envelope
 
 Legacy Expo: `apps/native` — see [docs/ROADMAP.md](../../docs/ROADMAP.md).

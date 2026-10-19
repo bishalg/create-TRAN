@@ -1,4 +1,4 @@
-# Verifies: REQ-WEB-001 REQ-WEB-003 REQ-WEB-004 REQ-WEB-007 REQ-WEB-014 REQ-A11Y-001 REQ-A11Y-003 REQ-A11Y-004 REQ-A11Y-005 REQ-A11Y-006
+# Verifies: REQ-WEB-001 REQ-WEB-003 REQ-WEB-004 REQ-WEB-007 REQ-WEB-014 REQ-A11Y-001 REQ-A11Y-003 REQ-A11Y-004 REQ-A11Y-005 REQ-A11Y-006 REQ-I18N-002 REQ-I18N-006
 Feature: Voting eligibility
   As a visitor
   I want to know whether I am old enough to vote in a country
@@ -74,9 +74,26 @@ Feature: Voting eligibility
     When I check on this device with age "30" and country "US"
     Then the "Result" live region says "Eligible to vote"
 
-  Scenario: Switching language updates the document language
+  Scenario: Switching the language localizes the whole interface
     When I switch the language to "NE"
     Then the document language is "ne"
+    And the page heading says "मतदान योग्यता"
+    And the age field is labelled "तपाईंको उमेर"
+    And the submit button says "योग्यता जाँच्नुहोस्"
+    When I switch the language to "HI"
+    Then the document language is "hi"
+    And the page heading says "मतदान पात्रता"
+    When I switch the language to "EN"
+    Then the document language is "en"
+    And the page heading says "Voting Eligibility"
+
+  Scenario: The result sentence is localized, not English prose from the core
+    # Verifies: REQ-I18N-007
+    When I check on this device with age "17" and country "US"
+    And I switch the language to "NE"
+    Then the result says "उमेर 17 न्यूनतम मतदान उमेर 18 भन्दा कम छ (US)।"
+    When I switch the language to "HI"
+    Then the result says "आयु 17 न्यूनतम मतदान आयु 18 से कम है (US)।"
 
   Scenario: Invalid input moves focus to the age field
     When I check on this device with age "abc" and country "US"
@@ -99,5 +116,27 @@ Feature: Voting eligibility
       | sepia |
 
   Scenario: The layout never scrolls sideways on a phone
+    # Verifies: REQ-A11Y-007
     Given I use a phone-sized screen
     Then the page does not scroll horizontally
+    When I check on this device with age "17" and country "US"
+    Then the page does not scroll horizontally
+
+  Scenario: Controls are large enough to tap
+    # Verifies: REQ-A11Y-008
+    Then every button and field is at least 24 CSS pixels tall and wide
+    And the "Check eligibility" button is at least 44 CSS pixels tall
+
+  Scenario: Motion is removed when the user asks for less
+    # Verifies: REQ-A11Y-009
+    Given the user prefers reduced motion
+    When I check on this device with age "17" and country "US"
+    Then no animation or transition runs
+
+  Scenario: Keyboard users can skip the navigation
+    # Verifies: REQ-A11Y-010
+    When I press Tab once
+    Then the "Skip to content" link has focus
+    When I press Enter
+    Then the main landmark has focus
+    And the page has exactly one h1 and one each of header, main and footer

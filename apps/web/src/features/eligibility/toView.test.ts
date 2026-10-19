@@ -23,8 +23,9 @@ const server = {
 
 describe('toView', () => {
   it('shows the device result in device mode', () => {
-    expect(toView('device', device, server)).toMatchObject({
+    expect(toView('device', device, server)).toEqual({
       eligible: true,
+      age: 20,
       countryCode: 'NP',
       minimumAge: 18,
       source: 'device',
@@ -34,7 +35,7 @@ describe('toView', () => {
   it('maps the snake_case API result in server mode', () => {
     expect(toView('server', device, server)).toEqual({
       eligible: false,
-      reason: 'server reason',
+      age: 16,
       countryCode: 'US',
       minimumAge: 18,
       source: 'server',

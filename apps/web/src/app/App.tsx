@@ -49,6 +49,9 @@ export function App({ initialSession }: AppProps = {}) {
 
   return (
     <div className="app">
+      <a className="skip-link" href="#main">
+        {t('shell.skipToContent', locale)}
+      </a>
       <Header
         locale={locale}
         onLocaleChange={setLocale}
@@ -58,20 +61,22 @@ export function App({ initialSession }: AppProps = {}) {
         onSignOut={currentRole ? handleSignOut : undefined}
       />
 
-      <main className="shell">
+      <main id="main" className="shell" tabIndex={-1}>
         <section className="hero">
           <TranText variant="display" as="h1">
-            {t('app.title', locale)}
+            {t('shell.title', locale)}
           </TranText>
-          <TranText variant="muted">{t('app.subtitle2', locale)}</TranText>
+          <TranText variant="muted">{t('shell.subtitle', locale)}</TranText>
         </section>
 
-        {destination === 'auth_welcome' && <AuthWelcomePage onSelectRole={handleSelectRole} />}
+        {destination === 'auth_welcome' && (
+          <AuthWelcomePage locale={locale} onSelectRole={handleSelectRole} />
+        )}
 
         {destination === 'voter_dashboard' && <EligibilityPage api={api} locale={locale} />}
 
         {destination === 'auditor_dashboard' && (
-          <AuditorPage onBackToVoter={() => handleSelectRole('citizen_voter')} />
+          <AuditorPage locale={locale} onBackToVoter={() => handleSelectRole('citizen_voter')} />
         )}
       </main>
 

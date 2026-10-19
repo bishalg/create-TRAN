@@ -61,6 +61,8 @@ Golden cases live in `fixtures/vote-eligibility.json` (Rust, TypeScript, and Uni
 
 The web UI follows OS light/dark, uses **design tokens only** (generated CSS + `getThemeTokens()`), **TranText** atoms for typography ([docs/ATOMIC.md](./docs/ATOMIC.md)), locale switching, and accessibility checks in CI (axe + BDD).
 
+Both native apps share the same rules, theme registry, strings and tokens, and ship executable accessibility checks: XCUITest audits on every theme (`pnpm ios:test`), Compose instrumentation for labels, live regions, 44 pt/48 dp targets, max text scaling and contrast (`pnpm android:test`), plus Maestro smoke flows (`pnpm e2e:maestro`).
+
 ### Try it
 
 ```bash

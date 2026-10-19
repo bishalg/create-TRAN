@@ -49,8 +49,11 @@ and MUST be applied before first paint so there is no flash of the wrong theme.
 
 ### REQ-WEB-008 [verified] Translations
 
-All user-visible strings MUST come from the dictionaries; `en`, `ne` and `hi` MUST have identical key sets and no empty values.
-**Verified by:** `i18n.test.ts`.
+All user-visible strings MUST come from the shared `locales/` dictionaries (see
+[008](008-localization.md)); English is the base language and fallback, every locale MUST have
+an identical key set with no empty values, and hardcoded copy MUST fail the guard tests.
+**Verified by:** [`i18n.test.ts`](../../packages/core-ts/tests/i18n.test.ts),
+[`i18n-guards.test.ts`](../../packages/core-ts/tests/i18n-guards.test.ts).
 
 ### REQ-WEB-009 [verified] Tokens only
 
@@ -117,23 +120,27 @@ Every function MUST be usable with the keyboard alone, with a visible focus indi
 `<html lang>` MUST match the selected language.
 **Verified by:** `App.test.tsx`, BDD "Switching language updates the document language".
 
-### REQ-A11Y-007 [planned] Reflow
+### REQ-A11Y-007 [verified] Reflow
 
-At a 320 CSS-pixel viewport the page MUST NOT scroll horizontally.
-**Verified by:** BDD "layout never scrolls sideways".
+At a 320 CSS-pixel viewport the page MUST NOT scroll horizontally, before and after a result is shown.
+**Verified by:** BDD "The layout never scrolls sideways on a phone".
 
-### REQ-A11Y-008 [planned] Target size
+### REQ-A11Y-008 [verified] Target size
 
-Interactive controls MUST be at least 44×44 CSS pixels.
-**Verified by:** BDD "controls are large enough to tap".
+Every button, field and link MUST be at least 24×24 CSS pixels (WCAG 2.2 SC 2.5.8, level AA), and the primary
+action MUST be at least 44 CSS pixels tall. Dense secondary controls (language switch) use the 24 px floor.
+**Verified by:** BDD "Controls are large enough to tap".
 
-### REQ-A11Y-009 [planned] Reduced motion
+### REQ-A11Y-009 [verified] Reduced motion
 
-When the user prefers reduced motion, no animation or transition MUST run.
-**Verified by:** BDD "motion is removed when the user asks for less".
+When the user prefers reduced motion, no animation or transition MUST run. Under `forced-colors` and
+`prefers-contrast: more`, borders MUST stay visible.
+**Verified by:** BDD "Motion is removed when the user asks for less" (motion); `forced-colors` and
+`prefers-contrast` styles are CSS-only and not yet covered by a test.
 
-### REQ-A11Y-010 [planned] Landmarks and skip link
+### REQ-A11Y-010 [verified] Landmarks and skip link
 
-Every page MUST have exactly one `<h1>`, a `header`, `nav`, `main` and `footer` landmark, and a "Skip to content" link
-as the first focusable element that moves focus to `main`.
+Every page MUST have exactly one `<h1>`, one `header`, one `main` and one `footer` landmark (there is no site
+navigation, so no `nav`), and a localized "Skip to content" link as the first focusable element that moves
+focus to `main`.
 **Verified by:** BDD "Keyboard users can skip the navigation".

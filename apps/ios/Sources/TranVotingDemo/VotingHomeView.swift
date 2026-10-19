@@ -7,70 +7,76 @@ struct VotingHomeView: View {
     @Binding var theme: TranTheme
     @State private var ageText = "20"
     @State private var countryCode = "NP"
-    @State private var resultText = NSLocalizedString("native.resultPlaceholder", comment: "")
+    @State private var resultText = L10n.Eligibility.resultPlaceholder
     var onSignOut: (() -> Void)? = nil
 
     var body: some View {
         ZStack {
             palette.background.ignoresSafeArea()
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: TranSpace.md) {
                     HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("native.iosHeader")
+                        VStack(alignment: .leading, spacing: TranSpace.xs) {
+                            Text(L10n.Shell.header("iOS"))
                                 .font(.headline)
                                 .foregroundStyle(palette.textPrimary)
-                            Text("native.voterSubtitle")
+                            Text(L10n.Eligibility.subtitle)
                                 .font(.subheadline)
                                 .foregroundStyle(palette.textPrimary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         Spacer()
                         if let onSignOut {
-                            Button("native.signOut", action: onSignOut)
-                                .buttonStyle(.bordered)
-                                .tint(palette.primary)
-                                .accessibilityIdentifier("sign-out-button")
+                            Button(action: onSignOut) {
+                                Text(L10n.Common.signOut)
+                                    .foregroundStyle(palette.textPrimary)
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(palette.primary)
+                            .accessibilityIdentifier("sign-out-button")
                         }
                     }
 
-                    VStack(alignment: .leading, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("native.ageLabel")
+                    VStack(alignment: .leading, spacing: TranSpace.base) {
+                        VStack(alignment: .leading, spacing: TranSpace.xs) {
+                            Text(L10n.Eligibility.ageLabel)
                                 .font(.subheadline)
                                 .foregroundStyle(palette.textPrimary)
-                            TextField("", text: $ageText, prompt: Text("native.agePlaceholder").foregroundStyle(palette.textPrimary))
+                            TextField("", text: $ageText, prompt: Text(L10n.Eligibility.agePlaceholder).foregroundStyle(palette.textPrimary))
                                 .keyboardType(.numberPad)
-                                .padding(10)
+                                .padding(TranSpace.base)
                                 .background(palette.surface)
                                 .foregroundStyle(palette.textPrimary)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .clipShape(RoundedRectangle(cornerRadius: TranRadius.sm))
                                 .accessibilityIdentifier("age-field")
                         }
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("native.countryLabel")
+                        VStack(alignment: .leading, spacing: TranSpace.xs) {
+                            Text(L10n.Eligibility.countryLabel)
                                 .font(.subheadline)
                                 .foregroundStyle(palette.textPrimary)
-                            TextField("", text: $countryCode, prompt: Text("native.countryPlaceholder").foregroundStyle(palette.textPrimary))
+                            TextField("", text: $countryCode, prompt: Text(L10n.Eligibility.countryPlaceholder).foregroundStyle(palette.textPrimary))
                                 .textInputAutocapitalization(.characters)
-                                .padding(10)
+                                .padding(TranSpace.base)
                                 .background(palette.surface)
                                 .foregroundStyle(palette.textPrimary)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .clipShape(RoundedRectangle(cornerRadius: TranRadius.sm))
                                 .accessibilityIdentifier("country-field")
                         }
                     }
 
-                    Button("native.checkOffline") {
+                    Button {
                         checkOffline(
                             canVote: palette.eligibilityCanVote,
                             cannotVote: palette.eligibilityCannotVote
                         )
+                    } label: {
+                        Text(L10n.Eligibility.checkOffline)
+                            .foregroundStyle(palette.onAction)
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
-                    .frame(maxWidth: .infinity, minHeight: 44)
-                    .tint(palette.primary)
+                    .frame(maxWidth: .infinity, minHeight: TranSpace.touch)
+                    .tint(palette.action)
                     .accessibilityIdentifier("check-button")
 
                     Text(resultText)
@@ -81,26 +87,34 @@ struct VotingHomeView: View {
                         .accessibilityAddTraits(.updatesFrequently)
 
                     // Theme choices come from the rust-core registry: every case renders here,
-                    // with its label from the shared dictionaries (`app.themes.<mode>`).
-                    Picker("app.themeLabel", selection: $theme) {
+                    // with its label from the shared dictionaries (`shell.theme.<mode>`).
+                    Picker(L10n.Shell.themeLabel, selection: $theme) {
                         ForEach(TranTheme.allCases) { mode in
-                            Text(NSLocalizedString("app.themes.\(mode.rawValue)", comment: "")).tag(mode)
+                            Text(mode.label).tag(mode)
                         }
                     }
                     .pickerStyle(.segmented)
                     .controlSize(.large)
-                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .frame(maxWidth: .infinity, minHeight: TranSpace.touch)
                     .accessibilityIdentifier("theme-picker")
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(24)
+                .padding(TranSpace.lg)
             }
         }
     }
 
     private func checkOffline(canVote: Color, cannotVote: Color) {
         guard let age = UInt16(ageText), !countryCode.isEmpty else {
-            resultText = NSLocalizedString("native.invalidAgeAndCountry", comment: "")
+            resultText = L10n.Errors.ageAndCountry
+            return
+        }
+        guard age <= 150 else {
+            resultText = L10n.Errors.ageOutOfRange
+            return
+        }
+        guard countryCode.count == 2, countryCode.allSatisfy({ $0.isLetter }) else {
+            resultText = L10n.Errors.countryInvalid
             return
         }
         let formatter = DateFormatter()
@@ -115,16 +129,13 @@ struct VotingHomeView: View {
                 referenceDateIso: String(reference)
             )
             let tint = res.eligible ? canVote : cannotVote
-            resultText = res.reason
+            resultText = res.eligible
+                ? L10n.Eligibility.resultReasonMeets(String(res.age), String(res.minimumAge), res.countryCode)
+                : L10n.Eligibility.resultReasonBelow(String(res.age), String(res.minimumAge), res.countryCode)
             _ = tint
-        } catch let err as TranValidationError {
-            if case .ValidationError(let detail) = err {
-                resultText = detail
-            } else {
-                resultText = String(describing: err)
-            }
         } catch {
-            resultText = error.localizedDescription
+            // Pre-validated above; the core's English detail is never shown to users.
+            resultText = L10n.Errors.countryInvalid
         }
     }
 }

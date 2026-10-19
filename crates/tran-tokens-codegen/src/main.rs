@@ -4,14 +4,23 @@ use rust_core::tokens::{
     ColorScheme, SpacingTokens, ThemeJson, TokensJsonSnapshot, TypographyTokens,
 };
 use rust_core::tokens_json_snapshot;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-/// Shared locale dictionaries and the Android `res/` folder each one feeds.
-const LOCALES: [(&str, &str); 3] = [("en", "values"), ("ne", "values-ne"), ("hi", "values-hi")];
+/// Base language under `locales/`. Other locales fall back to it at runtime: web in `t()`,
+/// iOS through the String Catalog development language, Android through the default `values/`.
+const BASE_LOCALE: &str = "en";
 
-type Dictionaries = Vec<(String, BTreeMap<String, String>)>;
+/// One locale's dictionaries: module name → module-relative flat keys (`welcome.title`).
+type ModuleKeys = BTreeMap<String, String>;
+
+struct Dictionary {
+    locale: String,
+    modules: BTreeMap<String, ModuleKeys>,
+}
+
+type Locales = Vec<Dictionary>;
 
 fn main() {
     if let Err(err) = run() {
@@ -57,16 +66,6 @@ fn run() -> Result<(), String> {
     write_file(&kotlin_path, render_kotlin_tokens(&snapshot))?;
 
     let kotlin_strings_path = android_generated.join("TranStrings.kt");
-    write_file(&kotlin_strings_path, render_kotlin_strings(&snapshot))?;
-
-    let dictionaries = load_dictionaries(&root.join("packages/core-ts/src/locales"))?;
-    let reference = dictionaries
-        .first()
-        .ok_or_else(|| "no locale dictionaries loaded".to_string())?;
-    verify_android_resource_names(&reference.1)?;
-
-    let xcstrings_path = ios_generated.join("Localizable.xcstrings");
-    write_file(&xcstrings_path, render_xcstrings(&dictionaries)?)?;
 
     println!("tran-tokens-codegen: wrote {}", json_path.display());
     println!("tran-tokens-codegen: wrote {}", ts_path.display());
@@ -74,25 +73,78 @@ fn run() -> Result<(), String> {
     println!("tran-tokens-codegen: wrote {}", native_path.display());
     println!("tran-tokens-codegen: wrote {}", swift_path.display());
     println!("tran-tokens-codegen: wrote {}", kotlin_path.display());
-    println!(
-        "tran-tokens-codegen: wrote {}",
-        kotlin_strings_path.display()
-    );
-    println!("tran-tokens-codegen: wrote {}", xcstrings_path.display());
+
+    let dictionaries = load_locales(&root.join("locales"))?;
+    let base = dictionaries
+        .first()
+        .ok_or_else(|| "no locale dictionaries loaded".to_string())?;
+    verify_no_duplicate_values(base)?;
+    verify_generated_names(base)?;
+    verify_theme_labels(base, &snapshot)?;
+
+    let strings_path = core_generated.join("strings.json");
+    write_file(&strings_path, render_translations_json(&dictionaries)?)?;
+
+    let keys_path = core_generated.join("keys.ts");
+    write_file(&keys_path, render_ts_keys(&dictionaries))?;
+
+    let ios_strings = ios_generated.join("Strings");
+    fs::create_dir_all(&ios_strings).map_err(|e| e.to_string())?;
+    let mut ios_kept = BTreeSet::new();
+    for module in base.modules.keys() {
+        let table = pascal_case(module);
+        let catalog_path = ios_strings.join(format!("{table}.xcstrings"));
+        write_file(&catalog_path, render_xcstrings(&dictionaries, module)?)?;
+        ios_kept.insert(catalog_path);
+    }
+    for stale in prune_files(&ios_strings, &ios_kept, &|name| {
+        name.ends_with(".xcstrings")
+    })? {
+        println!("tran-tokens-codegen: removed stale {stale}");
+    }
+    // The pre-module layout lived in a single `Generated/Localizable.xcstrings`.
+    for stale in prune_files(&ios_generated, &BTreeSet::new(), &|name| {
+        name.ends_with(".xcstrings")
+    })? {
+        println!("tran-tokens-codegen: removed stale {stale}");
+    }
+    write_file(
+        &ios_generated.join("L10n.swift"),
+        render_l10n_swift(base, &snapshot)?,
+    )?;
 
     let android_res = root.join("apps/android/app/src/main/res");
-    for (locale, res_dir) in LOCALES {
-        let dictionary = dictionaries
-            .iter()
-            .find(|(candidate, _)| candidate == locale)
-            .map(|(_, dictionary)| dictionary)
-            .ok_or_else(|| format!("no dictionary loaded for locale `{locale}`"))?;
-        let directory = android_res.join(res_dir);
+    let mut android_kept = BTreeSet::new();
+    for dictionary in &dictionaries {
+        let directory = android_res.join(android_resource_dir(&dictionary.locale)?);
         fs::create_dir_all(&directory).map_err(|e| e.to_string())?;
-        let strings_path = directory.join("strings.xml");
-        write_file(&strings_path, render_android_strings(dictionary))?;
-        println!("tran-tokens-codegen: wrote {}", strings_path.display());
+        for (module, keys) in &dictionary.modules {
+            let path = directory.join(format!("strings_{module}.xml"));
+            write_file(&path, render_android_module_strings(module, keys))?;
+            android_kept.insert(path);
+        }
     }
+    for stale in prune_android_resources(&android_res, &android_kept)? {
+        println!("tran-tokens-codegen: removed stale {stale}");
+    }
+    write_file(
+        &kotlin_strings_path,
+        render_kotlin_strings(base, &snapshot)?,
+    )?;
+
+    println!(
+        "tran-tokens-codegen: wrote {} String Catalogs and L10n.swift (iOS)",
+        ios_kept.len()
+    );
+    println!(
+        "tran-tokens-codegen: wrote {} string resource files and TranStrings.kt (Android)",
+        android_kept.len()
+    );
+    println!(
+        "tran-tokens-codegen: wrote {} and {}",
+        strings_path.display(),
+        keys_path.display()
+    );
     Ok(())
 }
 
@@ -134,7 +186,7 @@ fn render_tokens_ts(snapshot: &TokensJsonSnapshot) -> String {
         quoted.join(", ")
     ));
     out.push_str(&format!(
-        "/** Palette applied before the user (or OS) has chosen one. */\nexport const defaultTheme: ThemeMode = '{}';\n\nexport interface ThemeTokens {{\n  mode: ThemeMode;\n  colorScheme: 'light' | 'dark';\n  glass: {{\n    background: {{\n      subtle: string;\n      standard: string;\n      prominent: string;\n      dark: string;\n    }};\n    border: {{\n      subtle: string;\n      standard: string;\n      highlight: string;\n    }};\n    blur: {{\n      sm: string;\n      md: string;\n      lg: string;\n      xl: string;\n    }};\n    shadow: {{\n      ambient: string;\n      raised: string;\n      insetGlow: string;\n    }};\n  }};\n  radii: typeof snapshot.radii;\n  palette: {{\n    primary: string;\n    primaryGlow: string;\n    accent: string;\n    success: string;\n    warning: string;\n    danger: string;\n    surface: string;\n    background: string;\n    eligibility: {{\n      canVote: string;\n      cannotVote: string;\n      neutral: string;\n    }};\n    text: {{\n      primary: string;\n      secondary: string;\n      muted: string;\n    }};\n  }};\n}}\n\nexport type LiquidGlassTokens = ThemeTokens;\n\n",
+        "/** Palette applied before the user (or OS) has chosen one. */\nexport const defaultTheme: ThemeMode = '{}';\n\nexport interface ThemeTokens {{\n  mode: ThemeMode;\n  colorScheme: 'light' | 'dark';\n  glass: {{\n    background: {{\n      subtle: string;\n      standard: string;\n      prominent: string;\n      dark: string;\n    }};\n    border: {{\n      subtle: string;\n      standard: string;\n      highlight: string;\n    }};\n    blur: {{\n      sm: string;\n      md: string;\n      lg: string;\n      xl: string;\n    }};\n    shadow: {{\n      ambient: string;\n      raised: string;\n      insetGlow: string;\n    }};\n  }};\n  radii: typeof snapshot.radii;\n  palette: {{\n    primary: string;\n    action: string;\n    onAction: string;\n    primaryGlow: string;\n    accent: string;\n    success: string;\n    warning: string;\n    danger: string;\n    surface: string;\n    background: string;\n    eligibility: {{\n      canVote: string;\n      cannotVote: string;\n      neutral: string;\n    }};\n    text: {{\n      primary: string;\n      secondary: string;\n      muted: string;\n    }};\n  }};\n}}\n\nexport type LiquidGlassTokens = ThemeTokens;\n\n",
         snapshot.default_theme
     ));
     out.push_str(&format!(
@@ -245,8 +297,10 @@ fn render_radii_vars(r: &rust_core::tokens::RadiiTokens) -> String {
 fn theme_vars(theme: &ThemeJson) -> String {
     let p = &theme.palette;
     format!(
-        "  --tran-color-primary: {primary};\n  --tran-color-accent: {accent};\n  --tran-color-success: {success};\n  --tran-color-warning: {warning};\n  --tran-color-danger: {danger};\n  --tran-color-surface: {surface};\n  --tran-color-background: {background};\n  --tran-color-text-primary: {text_primary};\n  --tran-color-text-secondary: {text_secondary};\n  --tran-color-text-muted: {text_muted};\n  --tran-color-eligible: {eligible};\n  --tran-color-ineligible: {ineligible};\n  --tran-color-eligibility-neutral: {neutral};\n  --tran-glass-bg-standard: {glass_std};\n  --tran-glass-border-standard: {glass_border};\n  --tran-glass-shadow-ambient: {shadow_ambient};\n  --tran-glass-shadow-raised: {shadow_raised};\n",
+        "  --tran-color-primary: {primary};\n  --tran-color-action: {action};\n  --tran-color-on-action: {on_action};\n  --tran-color-accent: {accent};\n  --tran-color-success: {success};\n  --tran-color-warning: {warning};\n  --tran-color-danger: {danger};\n  --tran-color-surface: {surface};\n  --tran-color-background: {background};\n  --tran-color-text-primary: {text_primary};\n  --tran-color-text-secondary: {text_secondary};\n  --tran-color-text-muted: {text_muted};\n  --tran-color-eligible: {eligible};\n  --tran-color-ineligible: {ineligible};\n  --tran-color-eligibility-neutral: {neutral};\n  --tran-glass-bg-standard: {glass_std};\n  --tran-glass-border-standard: {glass_border};\n  --tran-glass-shadow-ambient: {shadow_ambient};\n  --tran-glass-shadow-raised: {shadow_raised};\n",
         primary = p.primary,
+        action = p.action,
+        on_action = p.onAction,
         accent = p.accent,
         success = p.success,
         warning = p.warning,
@@ -307,14 +361,16 @@ fn render_swift_tokens(snapshot: &TokensJsonSnapshot) -> String {
     }
     out.push_str("\n    var id: String { rawValue }\n}\n\n");
     out.push_str(
-        "struct TranPalette {\n    let primary: Color\n    let accent: Color\n    let success: Color\n    let danger: Color\n    let surface: Color\n    let background: Color\n    let eligibilityCanVote: Color\n    let eligibilityCannotVote: Color\n    let textPrimary: Color\n    let colorScheme: ColorScheme\n}\n\nenum TranBrandTokens {\n",
+        "struct TranPalette {\n    let primary: Color\n    let action: Color\n    let onAction: Color\n    let accent: Color\n    let success: Color\n    let danger: Color\n    let surface: Color\n    let background: Color\n    let eligibilityCanVote: Color\n    let eligibilityCannotVote: Color\n    let textPrimary: Color\n    let colorScheme: ColorScheme\n}\n\nenum TranBrandTokens {\n",
     );
     for theme in &snapshot.themes {
         let p = &theme.palette;
         out.push_str(&format!(
-            "    static let {name} = TranPalette(\n        primary: Color(tranHex: \"{primary}\"),\n        accent: Color(tranHex: \"{accent}\"),\n        success: Color(tranHex: \"{success}\"),\n        danger: Color(tranHex: \"{danger}\"),\n        surface: Color(tranHex: \"{surface}\"),\n        background: Color(tranHex: \"{background}\"),\n        eligibilityCanVote: Color(tranHex: \"{can_vote}\"),\n        eligibilityCannotVote: Color(tranHex: \"{cannot_vote}\"),\n        textPrimary: Color(tranHex: \"{text_primary}\"),\n        colorScheme: {scheme}\n    )\n\n",
+            "    static let {name} = TranPalette(\n        primary: Color(tranHex: \"{primary}\"),\n        action: Color(tranHex: \"{action}\"),\n        onAction: Color(tranHex: \"{on_action}\"),\n        accent: Color(tranHex: \"{accent}\"),\n        success: Color(tranHex: \"{success}\"),\n        danger: Color(tranHex: \"{danger}\"),\n        surface: Color(tranHex: \"{surface}\"),\n        background: Color(tranHex: \"{background}\"),\n        eligibilityCanVote: Color(tranHex: \"{can_vote}\"),\n        eligibilityCannotVote: Color(tranHex: \"{cannot_vote}\"),\n        textPrimary: Color(tranHex: \"{text_primary}\"),\n        colorScheme: {scheme}\n    )\n\n",
             name = theme.mode,
             primary = p.primary,
+            action = p.action,
+            on_action = p.onAction,
             accent = p.accent,
             success = p.success,
             danger = p.danger,
@@ -334,6 +390,7 @@ fn render_swift_tokens(snapshot: &TokensJsonSnapshot) -> String {
         "    ]\n\n    static func palette(for theme: TranTheme) -> TranPalette {{\n        themes[theme] ?? {}\n    }}\n}}\n",
         snapshot.default_theme
     ));
+    out.push_str(&render_swift_scale(snapshot));
     out
 }
 
@@ -346,7 +403,7 @@ fn swift_color_scheme(theme: &ThemeJson) -> &'static str {
 
 fn render_kotlin_tokens(snapshot: &TokensJsonSnapshot) -> String {
     let mut out = String::from(
-        "// @generated by tran-tokens-codegen — do not edit by hand.\n// Run `pnpm tokens:sync` after changing rust-core tokens.\n\npackage com.tran.voting.generated\n\nimport androidx.compose.material3.ColorScheme\nimport androidx.compose.material3.darkColorScheme\nimport androidx.compose.material3.lightColorScheme\nimport androidx.compose.ui.graphics.Color\n\n",
+        "// @generated by tran-tokens-codegen — do not edit by hand.\n// Run `pnpm tokens:sync` after changing rust-core tokens.\n\npackage com.tran.voting.generated\n\nimport androidx.compose.material3.ColorScheme\nimport androidx.compose.material3.darkColorScheme\nimport androidx.compose.material3.lightColorScheme\nimport androidx.compose.ui.graphics.Color\nimport androidx.compose.ui.unit.Dp\nimport androidx.compose.ui.unit.dp\n\n",
     );
     out.push_str(
         "private fun tranColor(hex: String): Color {\n    val raw = hex.removePrefix(\"#\")\n    val value = raw.toLong(16)\n    val argb = when (raw.length) {\n        3 -> {\n            val r = ((value shr 8) and 0xF) * 17\n            val g = ((value shr 4) and 0xF) * 17\n            val b = (value and 0xF) * 17\n            (0xFFL shl 24) or (r shl 16) or (g shl 8) or b\n        }\n        6 -> 0xFF000000L or value\n        8 -> ((value and 0xFF) shl 24) or ((value shr 8) and 0xFFFFFF)\n        else -> 0xFF000000L\n    }\n    return Color(argb.toInt())\n}\n\n",
@@ -369,14 +426,16 @@ fn render_kotlin_tokens(snapshot: &TokensJsonSnapshot) -> String {
     }
     out.push_str("}\n\n");
     out.push_str(
-        "/** Semantic palette implemented by every theme; screens receive a palette, never a theme name. */\ninterface BrandPalette {\n    val primary: Color\n    val accent: Color\n    val success: Color\n    val danger: Color\n    val surface: Color\n    val background: Color\n    val eligibilityCanVote: Color\n    val eligibilityCannotVote: Color\n    val textPrimary: Color\n    val isLight: Boolean\n}\n\nobject TranBrandTokens {\n",
+        "/** Semantic palette implemented by every theme; screens receive a palette, never a theme name. */\ninterface BrandPalette {\n    val primary: Color\n    val action: Color\n    val onAction: Color\n    val accent: Color\n    val success: Color\n    val danger: Color\n    val surface: Color\n    val background: Color\n    val eligibilityCanVote: Color\n    val eligibilityCannotVote: Color\n    val textPrimary: Color\n    val isLight: Boolean\n}\n\nobject TranBrandTokens {\n",
     );
     for theme in &snapshot.themes {
         let p = &theme.palette;
         out.push_str(&format!(
-            "    object {object_name} : BrandPalette {{\n        override val primary = tranColor(\"{primary}\")\n        override val accent = tranColor(\"{accent}\")\n        override val success = tranColor(\"{success}\")\n        override val danger = tranColor(\"{danger}\")\n        override val surface = tranColor(\"{surface}\")\n        override val background = tranColor(\"{background}\")\n        override val eligibilityCanVote = tranColor(\"{can_vote}\")\n        override val eligibilityCannotVote = tranColor(\"{cannot_vote}\")\n        override val textPrimary = tranColor(\"{text_primary}\")\n        override val isLight = {is_light}\n    }}\n\n",
+            "    object {object_name} : BrandPalette {{\n        override val primary = tranColor(\"{primary}\")\n        override val action = tranColor(\"{action}\")\n        override val onAction = tranColor(\"{on_action}\")\n        override val accent = tranColor(\"{accent}\")\n        override val success = tranColor(\"{success}\")\n        override val danger = tranColor(\"{danger}\")\n        override val surface = tranColor(\"{surface}\")\n        override val background = tranColor(\"{background}\")\n        override val eligibilityCanVote = tranColor(\"{can_vote}\")\n        override val eligibilityCannotVote = tranColor(\"{cannot_vote}\")\n        override val textPrimary = tranColor(\"{text_primary}\")\n        override val isLight = {is_light}\n    }}\n\n",
             object_name = pascal_case(&theme.mode),
             primary = p.primary,
+            action = p.action,
+            on_action = p.onAction,
             accent = p.accent,
             success = p.success,
             danger = p.danger,
@@ -400,59 +459,216 @@ fn render_kotlin_tokens(snapshot: &TokensJsonSnapshot) -> String {
         "    )\n\n    fun palette(theme: TranTheme): BrandPalette = themes.getValue(theme)\n}\n\n",
     );
     out.push_str(
-        "/** Material shell colours derived from the palette's own light/dark metadata. */\nfun tranColorScheme(palette: BrandPalette): ColorScheme =\n    if (palette.isLight) {\n        lightColorScheme(\n            primary = palette.primary,\n            background = palette.background,\n            surface = palette.surface,\n            onBackground = palette.textPrimary,\n        )\n    } else {\n        darkColorScheme(\n            primary = palette.primary,\n            background = palette.background,\n            surface = palette.surface,\n            onBackground = palette.textPrimary,\n        )\n    }\n",
+        "/** Material shell colours derived from the palette's own light/dark metadata. Actions use the\n * palette's AA-safe action pair, so every Material button inherits readable fill and label. */\nfun tranColorScheme(palette: BrandPalette): ColorScheme =\n    if (palette.isLight) {\n        lightColorScheme(\n            primary = palette.action,\n            onPrimary = palette.onAction,\n            background = palette.background,\n            surface = palette.surface,\n            onBackground = palette.textPrimary,\n        )\n    } else {\n        darkColorScheme(\n            primary = palette.action,\n            onPrimary = palette.onAction,\n            background = palette.background,\n            surface = palette.surface,\n            onBackground = palette.textPrimary,\n        )\n    }\n",
     );
+    out.push_str(&render_kotlin_scale(snapshot));
     out
 }
 
-/// Localized theme labels: Kotlin cannot build `R.string` names dynamically, so the
-/// generator maps every registry theme to the resource created from its `app.themes.<mode>` key.
-fn render_kotlin_strings(snapshot: &TokensJsonSnapshot) -> String {
+/// Typed Android accessors: Kotlin cannot build `R.string` names dynamically, so every
+/// dictionary key becomes a `@StringRes` constant grouped by module, plus the registry
+/// theme → label-resource mapping the theme pickers need.
+fn render_kotlin_strings(
+    base: &Dictionary,
+    snapshot: &TokensJsonSnapshot,
+) -> Result<String, String> {
     let mut out = String::from(
-        "// @generated by tran-tokens-codegen — do not edit by hand.\n// Run `pnpm tokens:sync` after changing the locale dictionaries or themes.\n\npackage com.tran.voting.generated\n\nimport com.tran.voting.R\n\n/** Localized display label for every registry theme, backed by the shared `app.themes.*` keys. */\nval TranTheme.labelRes: Int\n    get() = when (this) {\n",
+        "// @generated by tran-tokens-codegen — do not edit by hand.\n// Run `pnpm i18n:sync` after changing `locales/`.\n\npackage com.tran.voting.generated\n\nimport androidx.annotation.StringRes\nimport com.tran.voting.R\n\n/** Typed string resources generated from `locales/`; English is the base language. */\nobject TranStrings {\n",
+    );
+    for (module, keys) in &base.modules {
+        out.push_str(&format!("    object {} {{\n", pascal_case(module)));
+        for relative in keys.keys() {
+            let full = full_key(module, relative);
+            out.push_str(&format!(
+                "        @StringRes\n        val {}: Int = R.string.{} // {full}\n",
+                member_name(relative),
+                android_resource_name(&full),
+            ));
+        }
+        out.push_str("    }\n\n");
+    }
+    out.push_str("}\n");
+    out.push_str(
+        "\n/** Localized display label for every registry theme, backed by the `shell.theme.*` keys. */\nval TranTheme.labelRes: Int\n    get() = when (this) {\n",
     );
     for theme in &snapshot.themes {
         out.push_str(&format!(
             "        TranTheme.{} -> R.string.{}\n",
             pascal_case(&theme.mode).to_uppercase(),
-            android_resource_name(&format!("app.themes.{}", theme.mode)),
+            android_resource_name(&format!("shell.theme.{}", theme.mode)),
         ));
     }
     out.push_str("    }\n");
-    out
+    Ok(out)
 }
 
-fn load_dictionaries(dir: &Path) -> Result<Dictionaries, String> {
-    let mut dictionaries: Dictionaries = Vec::new();
-    for (locale, _) in LOCALES {
-        let path = dir.join(format!("{locale}.json"));
-        let raw = fs::read_to_string(&path).map_err(|e| format!("read {}: {e}", path.display()))?;
-        let document: serde_json::Value =
-            serde_json::from_str(&raw).map_err(|e| format!("parse {}: {e}", path.display()))?;
-        let mut flat = BTreeMap::new();
-        flatten_dictionary(&document, "", &mut flat)?;
-        dictionaries.push((locale.to_string(), flat));
+/// Typed Swift accessors: one enum per module, one member per key, resolved through the
+/// generated String Catalog table for that module.
+fn render_l10n_swift(base: &Dictionary, snapshot: &TokensJsonSnapshot) -> Result<String, String> {
+    let mut out = String::from(
+        "// @generated by tran-tokens-codegen — do not edit by hand.\n// Run `pnpm i18n:sync` after changing `locales/`.\n\nimport Foundation\n\n/// Typed accessors for every string in `locales/`; English is the base language and\n/// missing translations fall back to it through the String Catalogs.\nenum L10n {\n",
+    );
+    for (module, keys) in &base.modules {
+        let table = pascal_case(module);
+        out.push_str(&format!("    enum {table} {{\n"));
+        for (relative, value) in keys {
+            let full = full_key(module, relative);
+            let member = member_name(relative);
+            let names = placeholders(value);
+            if names.is_empty() {
+                out.push_str(&format!(
+                    "        static var {member}: String {{ String(localized: \"{full}\", table: \"{table}\") }}\n"
+                ));
+            } else {
+                let parameters: Vec<String> = names
+                    .iter()
+                    .map(|name| format!("_ {name}: String"))
+                    .collect();
+                out.push_str(&format!(
+                    "        static func {member}({}) -> String {{\n            String(format: String(localized: \"{full}\", table: \"{table}\"), {})\n        }}\n",
+                    parameters.join(", "),
+                    names.join(", "),
+                ));
+            }
+        }
+        out.push_str("    }\n\n");
+    }
+    out.push_str("}\n");
+    out.push_str(
+        "\nextension TranTheme {\n    /// Localized display label backed by the `shell.theme.*` dictionary keys.\n    var label: String {\n        switch self {\n",
+    );
+    for theme in &snapshot.themes {
+        out.push_str(&format!(
+            "        case .{mode}: return L10n.Shell.theme{label}\n",
+            mode = theme.mode,
+            label = pascal_case(&theme.mode),
+        ));
+    }
+    out.push_str("        }\n    }\n}\n");
+    Ok(out)
+}
+
+/// Reads `locales/<locale>/<module>.json`. Module set, key set and placeholder sets must be
+/// identical across locales, and values must be non-empty `{name}`-placeholder templates.
+fn load_locales(dir: &Path) -> Result<Locales, String> {
+    let mut locale_ids = Vec::new();
+    for entry in fs::read_dir(dir).map_err(|e| format!("read {}: {e}", dir.display()))? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        if entry.path().is_dir() {
+            locale_ids.push(entry.file_name().to_string_lossy().into_owned());
+        }
+    }
+    if !locale_ids.iter().any(|id| id == BASE_LOCALE) {
+        return Err(format!(
+            "`locales/{BASE_LOCALE}` is the base language and must exist"
+        ));
+    }
+    locale_ids.sort();
+    locale_ids.sort_by_key(|id| id != BASE_LOCALE);
+
+    let mut dictionaries: Locales = Vec::new();
+    for locale in locale_ids {
+        let locale_dir = dir.join(&locale);
+        let mut module_names = Vec::new();
+        for entry in fs::read_dir(&locale_dir).map_err(|e| e.to_string())? {
+            let entry = entry.map_err(|e| e.to_string())?;
+            let path = entry.path();
+            if path
+                .extension()
+                .is_some_and(|extension| extension == "json")
+            {
+                module_names.push(
+                    path.file_stem()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .into_owned(),
+                );
+            }
+        }
+        module_names.sort();
+        if module_names.is_empty() {
+            return Err(format!("`locales/{locale}` has no module files"));
+        }
+        let mut modules = BTreeMap::new();
+        for module in module_names {
+            let path = locale_dir.join(format!("{module}.json"));
+            let raw =
+                fs::read_to_string(&path).map_err(|e| format!("read {}: {e}", path.display()))?;
+            let document: serde_json::Value =
+                serde_json::from_str(&raw).map_err(|e| format!("parse {}: {e}", path.display()))?;
+            let mut keys = BTreeMap::new();
+            flatten_module(&document, "", &mut keys)?;
+            for (relative, value) in &keys {
+                let full = full_key(&module, relative);
+                if value.trim().is_empty() {
+                    return Err(format!(
+                        "`locales/{locale}/{module}.json`: `{full}` is empty"
+                    ));
+                }
+                if value.contains('%') {
+                    return Err(format!(
+                        "`locales/{locale}/{module}.json`: `{full}` must use named placeholders (`{{name}}`), not `%`"
+                    ));
+                }
+                validate_placeholders(&full, value)?;
+            }
+            modules.insert(module, keys);
+        }
+        dictionaries.push(Dictionary { locale, modules });
     }
 
-    let reference = dictionaries
+    let base = dictionaries
         .first()
-        .ok_or_else(|| "no locale dictionaries loaded".to_string())?
-        .1
-        .clone();
-    for (locale, dictionary) in &dictionaries {
-        if !dictionary.keys().eq(reference.keys()) {
-            return Err(format!(
-                "locale `{locale}` does not expose the same keys as the reference locale"
-            ));
+        .ok_or_else(|| "no locale dictionaries loaded".to_string())?;
+    for dictionary in &dictionaries[1..] {
+        for module in base.modules.keys() {
+            if !dictionary.modules.contains_key(module) {
+                return Err(format!(
+                    "`locales/{}/{module}.json` is missing (the base language `{BASE_LOCALE}` defines it)",
+                    dictionary.locale
+                ));
+            }
+        }
+        for (module, keys) in &dictionary.modules {
+            let base_keys = base.modules.get(module).ok_or_else(|| {
+                format!(
+                    "`locales/{}/{module}.json` has no `{BASE_LOCALE}` counterpart",
+                    dictionary.locale
+                )
+            })?;
+            for (relative, value) in keys {
+                let full = full_key(module, relative);
+                let base_value = base_keys.get(relative).ok_or_else(|| {
+                    format!(
+                        "`locales/{}/{module}.json` has a key `{full}` that `{BASE_LOCALE}` does not define",
+                        dictionary.locale
+                    )
+                })?;
+                if placeholders(value) != placeholders(base_value) {
+                    return Err(format!(
+                        "`{full}` placeholders must match `{BASE_LOCALE}`: `{value}` vs `{base_value}`"
+                    ));
+                }
+            }
+            for relative in base_keys.keys() {
+                if !keys.contains_key(relative) {
+                    return Err(format!(
+                        "`locales/{}/{module}.json` is missing `{}`",
+                        dictionary.locale,
+                        full_key(module, relative)
+                    ));
+                }
+            }
         }
     }
     Ok(dictionaries)
 }
 
-fn flatten_dictionary(
+/// Flattens one module file into module-relative dotted keys (`welcome.title`).
+fn flatten_module(
     value: &serde_json::Value,
     prefix: &str,
-    out: &mut BTreeMap<String, String>,
+    out: &mut ModuleKeys,
 ) -> Result<(), String> {
     match value {
         serde_json::Value::Object(entries) => {
@@ -462,7 +678,7 @@ fn flatten_dictionary(
                 } else {
                     format!("{prefix}.{key}")
                 };
-                flatten_dictionary(child, &path, out)?;
+                flatten_module(child, &path, out)?;
             }
             Ok(())
         }
@@ -476,32 +692,164 @@ fn flatten_dictionary(
     }
 }
 
-/// iOS String Catalog: one `Localizable.xcstrings` carrying every locale the dictionaries ship.
-fn render_xcstrings(dictionaries: &Dictionaries) -> Result<String, String> {
-    let reference = dictionaries
-        .first()
-        .ok_or_else(|| "no locale dictionaries loaded".to_string())?
-        .1
-        .clone();
-    let mut strings = serde_json::Map::new();
-    for key in reference.keys() {
-        let mut localizations = serde_json::Map::new();
-        for (locale, dictionary) in dictionaries {
-            let value = dictionary
-                .get(key)
-                .ok_or_else(|| format!("locale `{locale}` is missing `{key}`"))?;
-            localizations.insert(
-                locale.clone(),
-                serde_json::json!({ "stringUnit": { "state": "translated", "value": value } }),
-            );
+/// Named `{placeholder}` tokens in order of first appearance; repeated names keep one entry.
+fn placeholders(value: &str) -> Vec<String> {
+    let mut names: Vec<String> = Vec::new();
+    let mut rest = value;
+    while let Some(start) = rest.find('{') {
+        let after = &rest[start + 1..];
+        let Some(end) = after.find('}') else { break };
+        let name = &after[..end];
+        if !names.iter().any(|seen| seen == name) {
+            names.push(name.to_string());
         }
-        strings.insert(
-            key.clone(),
-            serde_json::json!({ "localizations": localizations }),
+        rest = &after[end + 1..];
+    }
+    names
+}
+
+/// Rejects braces that are not a single `{name}` token and names that are not identifiers.
+fn validate_placeholders(key: &str, value: &str) -> Result<(), String> {
+    let mut stripped = value.to_string();
+    for name in placeholders(value) {
+        let valid = name.chars().next().is_some_and(|c| c.is_ascii_alphabetic())
+            && name.chars().all(|c| c.is_ascii_alphanumeric());
+        if !valid {
+            return Err(format!(
+                "`{key}`: placeholder `{{{name}}}` must be a camelCase identifier"
+            ));
+        }
+        stripped = stripped.replace(&format!("{{{name}}}"), "");
+    }
+    if stripped.contains('{') || stripped.contains('}') {
+        return Err(format!("`{key}`: unbalanced braces in `{value}`"));
+    }
+    Ok(())
+}
+
+/// `TRAN / {platform}` → `TRAN / %1$@` (iOS) or `%1$s` (Android); repeated names reuse the index.
+fn positional_template(value: &str, conversion: char) -> String {
+    let mut out = value.to_string();
+    for (index, name) in placeholders(value).iter().enumerate() {
+        out = out.replace(
+            &format!("{{{name}}}"),
+            &format!("%{}${conversion}", index + 1),
         );
     }
+    out
+}
+
+fn full_key(module: &str, relative: &str) -> String {
+    format!("{module}.{relative}")
+}
+
+/// `welcome.title` → `welcomeTitle`; the member name shared by the Swift and Kotlin accessors.
+fn member_name(relative: &str) -> String {
+    let mut out = String::new();
+    for (index, part) in relative.split('.').enumerate() {
+        if index == 0 {
+            out.push_str(part);
+        } else {
+            out.push_str(&pascal_case(part));
+        }
+    }
+    out
+}
+
+/// English is the base language: a value shared by two modules belongs in `common`.
+fn verify_no_duplicate_values(base: &Dictionary) -> Result<(), String> {
+    let mut seen: BTreeMap<&str, (String, String)> = BTreeMap::new();
+    for (module, keys) in &base.modules {
+        for (relative, value) in keys {
+            let full = full_key(module, relative);
+            match seen.get(value.as_str()) {
+                Some((other_module, other_key)) if other_module != module => {
+                    return Err(format!(
+                        "`{value}` is defined in both `{other_key}` and `{full}`; keep one shared key in `common`"
+                    ));
+                }
+                Some(_) => {}
+                None => {
+                    seen.insert(value, (module.clone(), full));
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Android resource names and Swift/Kotlin member names must be unique after key folding.
+fn verify_generated_names(base: &Dictionary) -> Result<(), String> {
+    let mut resources: BTreeMap<String, String> = BTreeMap::new();
+    for (module, keys) in &base.modules {
+        let mut members: BTreeMap<String, String> = BTreeMap::new();
+        for relative in keys.keys() {
+            let full = full_key(module, relative);
+            let resource = android_resource_name(&full);
+            if let Some(existing) = resources.insert(resource.clone(), full.clone()) {
+                return Err(format!(
+                    "Android resource `{resource}` would be generated twice (`{existing}` and `{full}`)"
+                ));
+            }
+            let member = member_name(relative);
+            if let Some(existing) = members.insert(member.clone(), full.clone()) {
+                return Err(format!(
+                    "member `{module}.{member}` would be generated twice (`{existing}` and `{full}`)"
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Every registry theme needs a `shell.theme.<mode>` label key so the pickers can localize.
+fn verify_theme_labels(base: &Dictionary, snapshot: &TokensJsonSnapshot) -> Result<(), String> {
+    let shell = base
+        .modules
+        .get("shell")
+        .ok_or_else(|| "`locales/<locale>/shell.json` is required for theme labels".to_string())?;
+    for theme in &snapshot.themes {
+        let relative = format!("theme.{}", theme.mode);
+        if !shell.contains_key(&relative) {
+            return Err(format!(
+                "theme `{}` needs `shell.{relative}` in `locales/{BASE_LOCALE}/shell.json`",
+                theme.mode
+            ));
+        }
+    }
+    Ok(())
+}
+
+/// One iOS String Catalog per module; `{name}` placeholders become positional `%n$@` templates.
+fn render_xcstrings(dictionaries: &Locales, module: &str) -> Result<String, String> {
+    let base = dictionaries
+        .first()
+        .ok_or_else(|| "no locale dictionaries loaded".to_string())?;
+    let base_keys = base
+        .modules
+        .get(module)
+        .ok_or_else(|| format!("`{BASE_LOCALE}` has no `{module}` module"))?;
+    let mut strings = serde_json::Map::new();
+    for relative in base_keys.keys() {
+        let full = full_key(module, relative);
+        let mut localizations = serde_json::Map::new();
+        for dictionary in dictionaries {
+            let value = dictionary
+                .modules
+                .get(module)
+                .and_then(|keys| keys.get(relative))
+                .ok_or_else(|| format!("locale `{}` is missing `{full}`", dictionary.locale))?;
+            localizations.insert(
+                dictionary.locale.clone(),
+                serde_json::json!({
+                    "stringUnit": { "state": "translated", "value": positional_template(value, '@') }
+                }),
+            );
+        }
+        strings.insert(full, serde_json::json!({ "localizations": localizations }));
+    }
     let catalog = serde_json::json!({
-        "sourceLanguage": "en",
+        "sourceLanguage": BASE_LOCALE,
         "strings": strings,
         "version": "1.0",
     });
@@ -510,28 +858,148 @@ fn render_xcstrings(dictionaries: &Dictionaries) -> Result<String, String> {
     Ok(json)
 }
 
-fn verify_android_resource_names(dictionary: &BTreeMap<String, String>) -> Result<(), String> {
-    let mut seen: BTreeMap<String, String> = BTreeMap::new();
-    for key in dictionary.keys() {
-        let name = android_resource_name(key);
-        if let Some(existing) = seen.insert(name.clone(), key.clone()) {
-            return Err(format!(
-                "Android resource `{name}` would be generated twice (`{existing}` and `{key}`)"
-            ));
+/// `packages/core-ts/src/generated/strings.json`: locale → full key → value.
+fn render_translations_json(locales: &Locales) -> Result<String, String> {
+    let mut document = serde_json::Map::new();
+    for dictionary in locales {
+        let mut entries = serde_json::Map::new();
+        for (module, keys) in &dictionary.modules {
+            for (relative, value) in keys {
+                entries.insert(
+                    full_key(module, relative),
+                    serde_json::Value::String(value.clone()),
+                );
+            }
         }
+        document.insert(
+            dictionary.locale.clone(),
+            serde_json::Value::Object(entries),
+        );
     }
-    Ok(())
+    let mut json = serde_json::to_string_pretty(&serde_json::Value::Object(document))
+        .map_err(|e| e.to_string())?;
+    json.push('\n');
+    Ok(json)
 }
 
-fn render_android_strings(dictionary: &BTreeMap<String, String>) -> String {
+/// `packages/core-ts/src/generated/keys.ts`: the locale list plus the `TranStringKey` union.
+/// Typed keys keep web/RN call sites honest — an invented key is a compile error.
+fn render_ts_keys(locales: &Locales) -> String {
     let mut out = String::from(
-        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!-- @generated by tran-tokens-codegen — do not edit by hand. -->\n<resources>\n",
+        "/**\n * @generated by tran-tokens-codegen — do not edit by hand.\n * Run `pnpm i18n:sync` after changing `locales/`.\n */\n\n",
     );
-    for (key, value) in dictionary {
+    let ids: Vec<String> = locales
+        .iter()
+        .map(|dictionary| format!("'{}'", dictionary.locale))
+        .collect();
+    out.push_str(&format!(
+        "export const TRAN_LOCALES = [{}] as const;\n\n",
+        ids.join(", ")
+    ));
+    out.push_str("export type SupportedLocale = (typeof TRAN_LOCALES)[number];\n\n");
+    let base = &locales[0];
+    let keys: Vec<String> = base
+        .modules
+        .iter()
+        .flat_map(|(module, keys)| {
+            let module = module.clone();
+            keys.keys()
+                .map(move |relative| full_key(&module, relative))
+                .collect::<Vec<_>>()
+        })
+        .collect();
+    out.push_str(
+        "/** Every key in `locales/<locale>/*.json`: `<module>.<group>.<name>`. */\nexport type TranStringKey =\n",
+    );
+    for (index, key) in keys.iter().enumerate() {
+        let terminator = if index + 1 == keys.len() { ";" } else { "" };
+        out.push_str(&format!("  | '{key}'{terminator}\n"));
+    }
+    out
+}
+
+/// Android resource folder name: `en` → `values`, `ne` → `values-ne`, `en-GB` → `values-b+en+GB`.
+fn android_resource_dir(locale: &str) -> Result<String, String> {
+    let mut parts = locale.split('-');
+    let language = parts.next().unwrap_or_default();
+    let region = parts.next();
+    let invalid =
+        || format!("`locales/{locale}` is not a valid locale folder name (use `en` or `en-GB`)");
+    if parts.next().is_some()
+        || language.len() != 2
+        || !language.chars().all(|c| c.is_ascii_lowercase())
+    {
+        return Err(invalid());
+    }
+    match region {
+        None => Ok(if locale == BASE_LOCALE {
+            "values".to_string()
+        } else {
+            format!("values-{locale}")
+        }),
+        Some(region) if region.len() == 2 && region.chars().all(|c| c.is_ascii_uppercase()) => {
+            Ok(format!("values-b+{}", locale.replace('-', "+")))
+        }
+        Some(_) => Err(invalid()),
+    }
+}
+
+/// Deletes files this generator used to write and no longer does (stale locales/modules),
+/// then removes the folder when nothing is left in it.
+fn prune_files(
+    dir: &Path,
+    keep: &BTreeSet<PathBuf>,
+    matches: &dyn Fn(&str) -> bool,
+) -> Result<Vec<String>, String> {
+    let mut removed = Vec::new();
+    if !dir.exists() {
+        return Ok(removed);
+    }
+    for entry in fs::read_dir(dir).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let path = entry.path();
+        if path.is_file() && matches(&entry.file_name().to_string_lossy()) && !keep.contains(&path)
+        {
+            fs::remove_file(&path).map_err(|e| format!("remove {}: {e}", path.display()))?;
+            removed.push(path.display().to_string());
+        }
+    }
+    if fs::read_dir(dir)
+        .map_err(|e| e.to_string())?
+        .next()
+        .is_none()
+    {
+        fs::remove_dir(dir).map_err(|e| format!("remove {}: {e}", dir.display()))?;
+    }
+    Ok(removed)
+}
+
+/// Prunes `strings*.xml` files in every `res/values*` folder that this run did not write.
+fn prune_android_resources(res: &Path, keep: &BTreeSet<PathBuf>) -> Result<Vec<String>, String> {
+    let mut removed = Vec::new();
+    for entry in fs::read_dir(res).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if !entry.path().is_dir() || !name.starts_with("values") {
+            continue;
+        }
+        removed.extend(prune_files(&entry.path(), keep, &|file| {
+            file.starts_with("strings") && file.ends_with(".xml")
+        })?);
+    }
+    Ok(removed)
+}
+
+/// One Android resource file per module; `{name}` placeholders become positional `%n$s`.
+fn render_android_module_strings(module: &str, keys: &ModuleKeys) -> String {
+    let mut out = String::from(
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<!-- @generated by tran-tokens-codegen — do not edit by hand. Run `pnpm i18n:sync`. -->\n<resources>\n",
+    );
+    for (relative, value) in keys {
         out.push_str(&format!(
             "    <string name=\"{}\">{}</string>\n",
-            android_resource_name(key),
-            android_escape(value)
+            android_resource_name(&full_key(module, relative)),
+            android_escape(&positional_template(value, 's')),
         ));
     }
     out.push_str("</resources>\n");
@@ -589,21 +1057,122 @@ fn pascal_case(mode: &str) -> String {
         .collect()
 }
 
+/// Spacing and radius scale entries as `(member, points)`, in the order they are declared.
+/// Points equal CSS px at the 16px root, and dp on Android.
+fn scale_entries(snapshot: &TokensJsonSnapshot) -> Result<Vec<(&'static str, f64)>, String> {
+    let sp = &snapshot.spacing;
+    let raw = [
+        ("xxs", &sp.xxs),
+        ("xs", &sp.xs),
+        ("sm", &sp.sm),
+        ("base", &sp.base),
+        ("md", &sp.md),
+        ("lg", &sp.lg),
+        ("xl", &sp.xl),
+        ("xxl", &sp.two_xl),
+        ("touch", &sp.touch),
+        ("nudge", &sp.nudge),
+    ];
+    raw.into_iter()
+        .map(|(name, value)| Ok((name, css_length_to_points(value)?)))
+        .collect()
+}
+
+fn radius_entries(snapshot: &TokensJsonSnapshot) -> Result<Vec<(&'static str, f64)>, String> {
+    let r = &snapshot.radii;
+    [("sm", &r.sm), ("md", &r.md), ("lg", &r.lg)]
+        .into_iter()
+        .map(|(name, value)| Ok((name, css_length_to_points(value)?)))
+        .collect()
+}
+
+/// `0.5rem` → 8, `10px` → 10 (16px root font size).
+fn css_length_to_points(value: &str) -> Result<f64, String> {
+    let parsed = if let Some(rem) = value.strip_suffix("rem") {
+        rem.parse::<f64>().map(|v| v * 16.0)
+    } else if let Some(px) = value.strip_suffix("px") {
+        px.parse::<f64>()
+    } else {
+        return Err(format!("unsupported length `{value}` (use rem or px)"));
+    };
+    parsed.map_err(|e| format!("invalid length `{value}`: {e}"))
+}
+
+fn format_points(value: f64) -> String {
+    if value.fract() == 0.0 {
+        format!("{value:.0}")
+    } else {
+        format!("{value}")
+    }
+}
+
+fn render_swift_scale(snapshot: &TokensJsonSnapshot) -> String {
+    let mut out = String::from(
+        "\n/// Spacing scale from rust-core (`tokens.rs`), in points. Feature code never uses numeric literals.\nenum TranSpace {\n",
+    );
+    for (name, points) in scale_entries(snapshot).expect("valid spacing tokens") {
+        out.push_str(&format!(
+            "    static let {name}: CGFloat = {}\n",
+            format_points(points)
+        ));
+    }
+    out.push_str("}\n\n/// Corner radii from rust-core, in points.\nenum TranRadius {\n");
+    for (name, points) in radius_entries(snapshot).expect("valid radius tokens") {
+        out.push_str(&format!(
+            "    static let {name}: CGFloat = {}\n",
+            format_points(points)
+        ));
+    }
+    out.push_str("}\n");
+    out
+}
+
+fn render_kotlin_scale(snapshot: &TokensJsonSnapshot) -> String {
+    let mut out = String::from(
+        "\n/** Spacing scale from rust-core (`tokens.rs`), in dp. Feature code never uses numeric literals. */\nobject TranSpace {\n",
+    );
+    for (name, points) in scale_entries(snapshot).expect("valid spacing tokens") {
+        out.push_str(&format!(
+            "    val {name}: Dp = {}.dp\n",
+            format_points(points)
+        ));
+    }
+    out.push_str("}\n\n/** Corner radii from rust-core, in dp. */\nobject TranRadius {\n");
+    for (name, points) in radius_entries(snapshot).expect("valid radius tokens") {
+        out.push_str(&format!(
+            "    val {name}: Dp = {}.dp\n",
+            format_points(points)
+        ));
+    }
+    out.push_str("}\n");
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
+    fn css_lengths_convert_to_points_at_a_16px_root() {
+        assert_eq!(css_length_to_points("0.5rem"), Ok(8.0));
+        assert_eq!(css_length_to_points("10px"), Ok(10.0));
+        assert!(css_length_to_points("2em").is_err());
+        assert!(css_length_to_points("abcrem").is_err());
+        assert_eq!(format_points(2.0), "2");
+        assert_eq!(format_points(6.5), "6.5");
+    }
+
+    #[test]
     fn android_resource_names_are_lowercase_snake_case() {
         assert_eq!(
-            android_resource_name("native.checkOffline"),
-            "native_check_offline"
+            android_resource_name("eligibility.age.label"),
+            "eligibility_age_label"
         );
         assert_eq!(
-            android_resource_name("app.themes.sepia"),
-            "app_themes_sepia"
+            android_resource_name("shell.theme.sepia"),
+            "shell_theme_sepia"
         );
-        assert_eq!(android_resource_name("layers.tanstack"), "layers_tanstack");
+        assert_eq!(android_resource_name("common.appName"), "common_app_name");
     }
 
     #[test]
@@ -612,30 +1181,68 @@ mod tests {
             android_escape("Global Rules & Parity Verification"),
             "Global Rules &amp; Parity Verification"
         );
-        assert_eq!(android_escape("%1$d years"), "%1$d years");
+        assert_eq!(android_escape("%1$s years"), "%1$s years");
         assert_eq!(android_escape("it's fine"), "it\\'s fine");
         assert_eq!(android_escape("@launch"), "\\@launch");
         assert_eq!(android_escape("ready?"), "ready?");
     }
 
     #[test]
-    fn flattening_uses_dotted_keys() {
+    fn flattening_uses_module_relative_dotted_keys() {
         let document: serde_json::Value = serde_json::json!({
-            "app": { "themes": { "light": "Light" }, "title": "TRAN" }
+            "theme": { "light": "Light" },
+            "title": "TRAN"
         });
         let mut flat = BTreeMap::new();
-        flatten_dictionary(&document, "", &mut flat).expect("flatten");
+        flatten_module(&document, "", &mut flat).expect("flatten");
         assert_eq!(flat.len(), 2);
-        assert_eq!(
-            flat.get("app.themes.light").map(String::as_str),
-            Some("Light")
-        );
+        assert_eq!(flat.get("theme.light").map(String::as_str), Some("Light"));
+        assert_eq!(flat.get("title").map(String::as_str), Some("TRAN"));
     }
 
     #[test]
     fn flattening_rejects_non_string_leaves() {
-        let document: serde_json::Value = serde_json::json!({ "app": { "count": 3 } });
+        let document: serde_json::Value = serde_json::json!({ "form": { "count": 3 } });
         let mut flat = BTreeMap::new();
-        assert!(flatten_dictionary(&document, "", &mut flat).is_err());
+        assert!(flatten_module(&document, "", &mut flat).is_err());
+    }
+
+    #[test]
+    fn member_names_fold_paths_to_camel_case() {
+        assert_eq!(member_name("welcome.title"), "welcomeTitle");
+        assert_eq!(member_name("table.countryCode"), "tableCountryCode");
+        assert_eq!(member_name("theme.light"), "themeLight");
+        assert_eq!(member_name("title"), "title");
+    }
+
+    #[test]
+    fn positional_templates_convert_named_placeholders() {
+        assert_eq!(positional_template("TRAN / {platform}", '@'), "TRAN / %1$@");
+        assert_eq!(positional_template("{years} years", 's'), "%1$s years");
+        assert_eq!(
+            positional_template("{a} and {a}: {b}", '@'),
+            "%1$@ and %1$@: %2$@"
+        );
+    }
+
+    #[test]
+    fn placeholders_are_validated() {
+        assert_eq!(placeholders("{years} years"), vec!["years".to_string()]);
+        assert!(validate_placeholders("a", "{years} years").is_ok());
+        assert!(validate_placeholders("a", "{bad").is_err());
+        assert!(validate_placeholders("a", "{}").is_err());
+        assert!(validate_placeholders("a", "{3x}").is_err());
+    }
+
+    #[test]
+    fn android_resource_dirs_follow_locale_folder_names() {
+        assert_eq!(android_resource_dir("en").expect("en"), "values");
+        assert_eq!(android_resource_dir("ne").expect("ne"), "values-ne");
+        assert_eq!(
+            android_resource_dir("en-GB").expect("en-GB"),
+            "values-b+en+GB"
+        );
+        assert!(android_resource_dir("english").is_err());
+        assert!(android_resource_dir("en-gb").is_err());
     }
 }

@@ -1,6 +1,8 @@
 # ADR-0019 Native strings from the shared dictionaries
 
-Status: accepted
+Status: accepted — kept for the original rationale. The layout it describes (single-file
+dictionaries, one `Localizable.xcstrings`, `values*/strings.xml`) is superseded by
+[ADR-0020](0020-localization-modules-and-english-fallback.md).
 
 ## Context
 

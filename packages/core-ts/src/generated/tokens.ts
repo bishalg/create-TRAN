@@ -43,6 +43,8 @@ export interface ThemeTokens {
   radii: typeof snapshot.radii;
   palette: {
     primary: string;
+    action: string;
+    onAction: string;
     primaryGlow: string;
     accent: string;
     success: string;

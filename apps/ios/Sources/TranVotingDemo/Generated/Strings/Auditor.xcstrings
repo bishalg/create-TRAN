@@ -1,0 +1,204 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "auditor.backToVoter": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch to Citizen Voter"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नागरिक मतदाता पर स्विच करें"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नागरिक मतदातामा स्विच गर्नुहोस्"
+          }
+        }
+      }
+    },
+    "auditor.rules.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verified Country Minimum Ages"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सत्यापित देश न्यूनतम आयु"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "प्रमाणित देश न्यूनतम उमेर"
+          }
+        }
+      }
+    },
+    "auditor.subtitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Global voting age rules verified against rust-core parity fixtures."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "वैश्विक मतदान आयु नियम rust-core समानता फ़िक्स्चर द्वारा सत्यापित।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "विश्वव्यापी मतदान उमेर नियमहरू rust-core समानता फिक्स्चरद्वारा प्रमाणित।"
+          }
+        }
+      }
+    },
+    "auditor.table.countryCode": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Country Code"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "देश कोड"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "देश कोड"
+          }
+        }
+      }
+    },
+    "auditor.table.minimumAge": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minimum Voting Age"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "न्यूनतम मतदान आयु"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "न्यूनतम मतदान उमेर"
+          }
+        }
+      }
+    },
+    "auditor.table.ruleSource": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rule Source"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नियम स्रोत"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नियम स्रोत"
+          }
+        }
+      }
+    },
+    "auditor.table.verified": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "rust-core verified"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "rust-core सत्यापित"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "rust-core प्रमाणित"
+          }
+        }
+      }
+    },
+    "auditor.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Election Auditor Dashboard"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "चुनाव ऑडिटर डैशबोर्ड"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "निर्वाचन अडिटर ड्यासबोर्ड"
+          }
+        }
+      }
+    },
+    "auditor.years": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ years"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ वर्ष"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ वर्ष"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

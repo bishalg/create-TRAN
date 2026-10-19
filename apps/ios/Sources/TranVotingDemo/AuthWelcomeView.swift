@@ -9,43 +9,45 @@ struct AuthWelcomeView: View {
     var body: some View {
         ZStack {
             palette.background.ignoresSafeArea()
-            VStack(spacing: 28) {
-                VStack(spacing: 8) {
-                    Text("native.welcomeTitle")
+            VStack(spacing: TranSpace.lg) {
+                VStack(spacing: TranSpace.sm) {
+                    Text(L10n.Auth.welcomeTitle)
                         .font(.largeTitle.weight(.bold))
                         .foregroundStyle(palette.textPrimary)
-                    Text("native.welcomeSubtitle")
+                    Text(L10n.Auth.welcomeSubtitle)
                         .font(.body)
                         .foregroundStyle(palette.textPrimary.opacity(0.8))
                 }
 
-                VStack(spacing: 16) {
+                VStack(spacing: TranSpace.md) {
                     Button(action: { onSelectRole(.citizenVoter) }) {
                         HStack {
                             Image(systemName: "person.fill")
-                            Text("native.continueAsVoter")
+                            Text(L10n.Auth.continueAsVoter)
                                 .fontWeight(.semibold)
                         }
-                        .frame(maxWidth: .infinity, minHeight: 48)
+                        .foregroundStyle(palette.onAction)
+                        .frame(maxWidth: .infinity, minHeight: TranSpace.touch)
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(palette.primary)
+                    .tint(palette.action)
                     .accessibilityIdentifier("voter-branch-button")
 
                     Button(action: { onSelectRole(.electionAuditor) }) {
                         HStack {
                             Image(systemName: "checkmark.shield.fill")
-                            Text("native.continueAsAuditor")
+                            Text(L10n.Auth.continueAsAuditor)
                                 .fontWeight(.semibold)
                         }
-                        .frame(maxWidth: .infinity, minHeight: 48)
+                        .foregroundStyle(palette.textPrimary)
+                        .frame(maxWidth: .infinity, minHeight: TranSpace.touch)
                     }
                     .buttonStyle(.bordered)
                     .tint(palette.primary)
                     .accessibilityIdentifier("auditor-branch-button")
                 }
             }
-            .padding(24)
+            .padding(TranSpace.lg)
         }
     }
 }

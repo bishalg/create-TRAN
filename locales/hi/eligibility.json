@@ -1,0 +1,51 @@
+{
+  "subtitle": "ऑफ़लाइन मतदान (UniFFI → rust-core)",
+  "form": {
+    "label": "पात्रता जाँच"
+  },
+  "mode": {
+    "legend": "जाँच कहाँ चलानी है?",
+    "device": "इसी डिवाइस पर",
+    "deviceHint": "तुरंत, ऑफ़लाइन भी चलता है",
+    "server": "सर्वर से पूछें",
+    "serverHint": "API के पीछे Rust नियम"
+  },
+  "age": {
+    "label": "आपकी आयु",
+    "example": "जैसे 21",
+    "placeholder": "आयु दर्ज करें"
+  },
+  "country": {
+    "label": "देश कोड",
+    "example": "जैसे NP",
+    "placeholder": "दो अक्षर",
+    "hint": "दो अक्षर, जैसे US, NP या BR।",
+    "serverHint": "सर्वर को X-Debug-Country हेडर के रूप में भेजा जाता है (केवल विकास के लिए)।",
+    "apiHint": "X-Debug-Country भेजता है; प्रोडक्शन में IP जियो।",
+    "apiLabel": "डिबग देश (API)"
+  },
+  "section": {
+    "offline": "ऑफ़लाइन (Rust नियम)",
+    "api": "API (IP से देश)"
+  },
+  "submit": "पात्रता जाँचें",
+  "submitApi": "API से जाँचें",
+  "submitting": "जाँच हो रही है…",
+  "checkOffline": "ऑफ़लाइन जाँचें",
+  "offlineNotice": "API उपलब्ध नहीं — Rust Core से मेल खाते ऑफ़लाइन नियम।",
+  "verdict": {
+    "eligible": "मतदान के लिए पात्र",
+    "ineligible": "मतदान के लिए अपात्र"
+  },
+  "result": {
+    "label": "परिणाम",
+    "country": "देश",
+    "minimumAge": "न्यूनतम आयु",
+    "sourceDevice": "इसी डिवाइस पर जाँच की गई",
+    "sourceServer": "सर्वर द्वारा जाँच की गई",
+    "placeholder": "ऑफ़लाइन जाँच दबाएँ",
+    "meta": "{country} · न्यूनतम {minimumAge} · IP {clientIp}",
+    "reasonMeets": "आयु {age} न्यूनतम मतदान आयु {minimumAge} को पूरा करती है ({country})।",
+    "reasonBelow": "आयु {age} न्यूनतम मतदान आयु {minimumAge} से कम है ({country})।"
+  }
+}

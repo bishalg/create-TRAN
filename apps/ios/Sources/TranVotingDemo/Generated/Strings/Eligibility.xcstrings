@@ -1,0 +1,776 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "eligibility.age.example": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e.g. 21"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जैसे 21"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जस्तै २१"
+          }
+        }
+      }
+    },
+    "eligibility.age.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your age"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपकी आयु"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "तपाईंको उमेर"
+          }
+        }
+      }
+    },
+    "eligibility.age.placeholder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter age"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आयु दर्ज करें"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "उमेर लेख्नुहोस्"
+          }
+        }
+      }
+    },
+    "eligibility.checkOffline": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check offline"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ऑफ़लाइन जाँचें"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अफलाइन जाँच"
+          }
+        }
+      }
+    },
+    "eligibility.country.apiHint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sends X-Debug-Country with your pick; production would use geo from IP."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X-Debug-Country भेजता है; प्रोडक्शन में IP जियो।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X-Debug-Country पठाउँछ; प्रोडक्शनमा IP जियो।"
+          }
+        }
+      }
+    },
+    "eligibility.country.apiLabel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Debug country (API header)"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "डिबग देश (API)"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "डिबग देश (API)"
+          }
+        }
+      }
+    },
+    "eligibility.country.example": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e.g. NP"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जैसे NP"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जस्तै NP"
+          }
+        }
+      }
+    },
+    "eligibility.country.hint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Two letters, like US, NP or BR."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "दो अक्षर, जैसे US, NP या BR।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "दुई अक्षर, जस्तै US, NP वा BR।"
+          }
+        }
+      }
+    },
+    "eligibility.country.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Country code"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "देश कोड"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "देश कोड"
+          }
+        }
+      }
+    },
+    "eligibility.country.placeholder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Two letters"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "दो अक्षर"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "दुई अक्षर"
+          }
+        }
+      }
+    },
+    "eligibility.country.serverHint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sent to the server as the X-Debug-Country header (development only)."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सर्वर को X-Debug-Country हेडर के रूप में भेजा जाता है (केवल विकास के लिए)।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सर्भरमा X-Debug-Country हेडरको रूपमा पठाइन्छ (विकासका लागि मात्र)।"
+          }
+        }
+      }
+    },
+    "eligibility.form.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eligibility check"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पात्रता जाँच"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "योग्यता जाँच"
+          }
+        }
+      }
+    },
+    "eligibility.mode.device": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On this device"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इसी डिवाइस पर"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "यही उपकरणमा"
+          }
+        }
+      }
+    },
+    "eligibility.mode.deviceHint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instant, works offline"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "तुरंत, ऑफ़लाइन भी चलता है"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "तुरुन्त, अफलाइन पनि चल्छ"
+          }
+        }
+      }
+    },
+    "eligibility.mode.legend": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Where should the check run?"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जाँच कहाँ चलानी है?"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जाँच कहाँ चलाउने?"
+          }
+        }
+      }
+    },
+    "eligibility.mode.server": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask the server"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सर्वर से पूछें"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सर्भरलाई सोध्नुहोस्"
+          }
+        }
+      }
+    },
+    "eligibility.mode.serverHint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rust rules behind the API"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API के पीछे Rust नियम"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API पछाडिको Rust नियम"
+          }
+        }
+      }
+    },
+    "eligibility.offlineNotice": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API unreachable — using offline rules mirrored from Rust Core."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API उपलब्ध नहीं — Rust Core से मेल खाते ऑफ़लाइन नियम।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API उपलब्ध छैन — Rust Core सँग मिल्दो अफलाइन नियम।"
+          }
+        }
+      }
+    },
+    "eligibility.result.country": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Country"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "देश"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "देश"
+          }
+        }
+      }
+    },
+    "eligibility.result.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Result"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "परिणाम"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नतिजा"
+          }
+        }
+      }
+    },
+    "eligibility.result.meta": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · min %2$@ · IP %3$@"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · न्यूनतम %2$@ · IP %3$@"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · न्यूनतम %2$@ · IP %3$@"
+          }
+        }
+      }
+    },
+    "eligibility.result.minimumAge": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minimum age"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "न्यूनतम आयु"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "न्यूनतम उमेर"
+          }
+        }
+      }
+    },
+    "eligibility.result.placeholder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap Check offline"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ऑफ़लाइन जाँच दबाएँ"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अफलाइन जाँच थिच्नुहोस्"
+          }
+        }
+      }
+    },
+    "eligibility.result.reasonBelow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Age %1$@ is below the minimum voting age of %2$@ in %3$@."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आयु %1$@ न्यूनतम मतदान आयु %2$@ से कम है (%3$@)।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "उमेर %1$@ न्यूनतम मतदान उमेर %2$@ भन्दा कम छ (%3$@)।"
+          }
+        }
+      }
+    },
+    "eligibility.result.reasonMeets": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Age %1$@ meets the minimum voting age of %2$@ in %3$@."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आयु %1$@ न्यूनतम मतदान आयु %2$@ को पूरा करती है (%3$@)।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "उमेर %1$@ ले न्यूनतम मतदान उमेर %2$@ पूरा गर्छ (%3$@)।"
+          }
+        }
+      }
+    },
+    "eligibility.result.sourceDevice": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checked on this device"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "इसी डिवाइस पर जाँच की गई"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "यही उपकरणमा जाँच गरियो"
+          }
+        }
+      }
+    },
+    "eligibility.result.sourceServer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checked by the server"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सर्वर द्वारा जाँच की गई"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सर्भरबाट जाँच गरियो"
+          }
+        }
+      }
+    },
+    "eligibility.section.api": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API (country from IP stub)"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API (IP से देश)"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API (IP बाट देश)"
+          }
+        }
+      }
+    },
+    "eligibility.section.offline": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline (Rust rules mirror)"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ऑफ़लाइन (Rust नियम)"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अफलाइन (Rust नियम)"
+          }
+        }
+      }
+    },
+    "eligibility.submit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check eligibility"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पात्रता जाँचें"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "योग्यता जाँच्नुहोस्"
+          }
+        }
+      }
+    },
+    "eligibility.submitApi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check via API"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API से जाँचें"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API बाट जाँच"
+          }
+        }
+      }
+    },
+    "eligibility.submitting": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checking…"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जाँच हो रही है…"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जाँच हुँदैछ…"
+          }
+        }
+      }
+    },
+    "eligibility.subtitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline voting (UniFFI → rust-core)"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ऑफ़लाइन मतदान (UniFFI → rust-core)"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अफलाइन मतदान (UniFFI → rust-core)"
+          }
+        }
+      }
+    },
+    "eligibility.verdict.eligible": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eligible to vote"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मतदान के लिए पात्र"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मतदान गर्न योग्य"
+          }
+        }
+      }
+    },
+    "eligibility.verdict.ineligible": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not eligible to vote"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मतदान के लिए अपात्र"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मतदान गर्न अयोग्य"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

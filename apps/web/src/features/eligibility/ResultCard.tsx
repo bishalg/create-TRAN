@@ -4,7 +4,7 @@ import { CheckIcon, CrossIcon } from '../../shared/ui/icons.js';
 
 export interface EligibilityView {
   eligible: boolean;
-  reason: string;
+  age: number;
   countryCode: string;
   minimumAge: number;
   source: 'device' | 'server';
@@ -24,23 +24,37 @@ export function ResultCard({
       </div>
       <div>
         <TranText variant="title">
-          {t(result.eligible ? 'app.eligibleYes' : 'app.eligibleNo', locale)}
+          {t(
+            result.eligible ? 'eligibility.verdict.eligible' : 'eligibility.verdict.ineligible',
+            locale
+          )}
         </TranText>
-        <TranText variant="body">{result.reason}</TranText>
+        <TranText variant="body">
+          {t(
+            result.eligible ? 'eligibility.result.reasonMeets' : 'eligibility.result.reasonBelow',
+            locale,
+            { age: result.age, minimumAge: result.minimumAge, country: result.countryCode }
+          )}
+        </TranText>
         <ul className="chips">
           <li className="chip">
             <TranText variant="caption" as="span">
-              {t('app.resultCountry', locale)}: <b>{result.countryCode}</b>
+              {t('eligibility.result.country', locale)}: <b>{result.countryCode}</b>
             </TranText>
           </li>
           <li className="chip">
             <TranText variant="caption" as="span">
-              {t('app.resultMinimumAge', locale)}: <b>{result.minimumAge}</b>
+              {t('eligibility.result.minimumAge', locale)}: <b>{result.minimumAge}</b>
             </TranText>
           </li>
           <li className="chip">
             <TranText variant="caption" as="span">
-              {t(result.source === 'device' ? 'app.sourceDevice' : 'app.sourceServer', locale)}
+              {t(
+                result.source === 'device'
+                  ? 'eligibility.result.sourceDevice'
+                  : 'eligibility.result.sourceServer',
+                locale
+              )}
             </TranText>
           </li>
         </ul>

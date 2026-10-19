@@ -1,0 +1,15 @@
+{
+  "title": "Election Auditor Dashboard",
+  "subtitle": "Global voting age rules verified against rust-core parity fixtures.",
+  "backToVoter": "Switch to Citizen Voter",
+  "years": "{years} years",
+  "rules": {
+    "title": "Verified Country Minimum Ages"
+  },
+  "table": {
+    "countryCode": "Country Code",
+    "minimumAge": "Minimum Voting Age",
+    "ruleSource": "Rule Source",
+    "verified": "rust-core verified"
+  }
+}
