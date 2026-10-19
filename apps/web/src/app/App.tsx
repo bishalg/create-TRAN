@@ -49,6 +49,9 @@ export function App({ initialSession }: AppProps = {}) {
 
   return (
     <div className="app">
+      <a className="skip-link" href="#main">
+        {t('shell.skipToContent', locale)}
+      </a>
       <Header
         locale={locale}
         onLocaleChange={setLocale}
@@ -58,7 +61,7 @@ export function App({ initialSession }: AppProps = {}) {
         onSignOut={currentRole ? handleSignOut : undefined}
       />
 
-      <main className="shell">
+      <main id="main" className="shell" tabIndex={-1}>
         <section className="hero">
           <TranText variant="display" as="h1">
             {t('shell.title', locale)}

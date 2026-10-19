@@ -60,6 +60,26 @@ input {
   outline-offset: var(--tran-spacing-xxs);
 }
 
+.skip-link {
+  position: absolute;
+  inset-inline-start: var(--tran-spacing-sm);
+  inset-block-start: calc(-1 * var(--tran-spacing-2xl));
+  z-index: 10;
+  padding: var(--tran-spacing-sm) var(--tran-spacing-md);
+  border-radius: var(--tran-radius-sm);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font-weight: var(--tran-font-weight-semibold);
+}
+
+.skip-link:focus {
+  inset-block-start: var(--tran-spacing-sm);
+}
+
+main:focus {
+  outline: none; /* Programmatic focus target for the skip link; not a control. */
+}
+
 .sr-only {
   position: absolute;
   width: var(--tran-border-width);
@@ -650,5 +670,34 @@ input {
 
   .brand-name {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .tran-button,
+  .skip-link,
+  .result,
+  .card {
+    border: var(--tran-border-width) solid CanvasText;
+  }
+
+  .result-badge {
+    forced-color-adjust: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --border: var(--fg-muted);
   }
 }

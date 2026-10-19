@@ -68,6 +68,7 @@ export type TranStringKey =
   | 'errors.countryInvalid'
   | 'shell.header'
   | 'shell.language.label'
+  | 'shell.skipToContent'
   | 'shell.stack'
   | 'shell.status.checking'
   | 'shell.status.offline'

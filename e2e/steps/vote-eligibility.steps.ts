@@ -18,7 +18,8 @@ Given('the API is unreachable', async ({ page }) => {
 });
 
 Given('I use a phone-sized screen', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+  // 320 CSS px is the WCAG 2.2 reflow baseline (SC 1.4.10).
+  await page.setViewportSize({ width: 320, height: 640 });
 });
 
 async function fillAndSubmit(page: import('@playwright/test').Page, age: string, country: string) {
@@ -155,4 +156,68 @@ Then('the page does not scroll horizontally', async ({ page }) => {
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth
   );
   expect(overflow).toBe(0);
+});
+
+Then(
+  'every button and field is at least {int} CSS pixels tall and wide',
+  async ({ page }, size: number) => {
+    const undersized = await page.evaluate((min) => {
+      const controls = document.querySelectorAll('button, input, select, textarea, a[href]');
+      return [...controls]
+        .map((el) => ({ el, box: el.getBoundingClientRect() }))
+        .filter(({ box }) => box.width > 0 && (box.width < min || box.height < min))
+        .map(
+          ({ el, box }) => `${el.tagName} "${el.textContent?.trim()}" ${box.width}x${box.height}`
+        );
+    }, size);
+    expect(undersized).toEqual([]);
+  }
+);
+
+Then(
+  'the {string} button is at least {int} CSS pixels tall',
+  async ({ page }, name: string, size: number) => {
+    const box = await page.getByRole('button', { name, exact: true }).boundingBox();
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(size);
+  }
+);
+
+Given('the user prefers reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+});
+
+Then('no animation or transition runs', async ({ page }) => {
+  expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+  const durations = await page.evaluate(
+    () =>
+      [...document.querySelectorAll('*')]
+        .map((el) => getComputedStyle(el))
+        .filter(
+          (style) => parseFloat(style.transitionDuration) > 0 || style.animationName !== 'none'
+        ).length
+  );
+  expect(durations).toBe(0);
+});
+
+When('I press Tab once', async ({ page }) => {
+  await page.keyboard.press('Tab');
+});
+
+Then('the {string} link has focus', async ({ page }, name: string) => {
+  await expect(page.getByRole('link', { name, exact: true })).toBeFocused();
+});
+
+When('I press Enter', async ({ page }) => {
+  await page.keyboard.press('Enter');
+});
+
+Then('the main landmark has focus', async ({ page }) => {
+  await expect(page.locator('main')).toBeFocused();
+});
+
+Then('the page has exactly one h1 and one each of header, main and footer', async ({ page }) => {
+  await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+  await expect(page.getByRole('banner')).toHaveCount(1);
+  await expect(page.getByRole('main')).toHaveCount(1);
+  await expect(page.getByRole('contentinfo')).toHaveCount(1);
 });

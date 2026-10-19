@@ -116,5 +116,27 @@ Feature: Voting eligibility
       | sepia |
 
   Scenario: The layout never scrolls sideways on a phone
+    # Verifies: REQ-A11Y-007
     Given I use a phone-sized screen
     Then the page does not scroll horizontally
+    When I check on this device with age "17" and country "US"
+    Then the page does not scroll horizontally
+
+  Scenario: Controls are large enough to tap
+    # Verifies: REQ-A11Y-008
+    Then every button and field is at least 24 CSS pixels tall and wide
+    And the "Check eligibility" button is at least 44 CSS pixels tall
+
+  Scenario: Motion is removed when the user asks for less
+    # Verifies: REQ-A11Y-009
+    Given the user prefers reduced motion
+    When I check on this device with age "17" and country "US"
+    Then no animation or transition runs
+
+  Scenario: Keyboard users can skip the navigation
+    # Verifies: REQ-A11Y-010
+    When I press Tab once
+    Then the "Skip to content" link has focus
+    When I press Enter
+    Then the main landmark has focus
+    And the page has exactly one h1 and one each of header, main and footer

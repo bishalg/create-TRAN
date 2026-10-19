@@ -1,6 +1,7 @@
 {
   "title": "मतदान पात्रता",
   "subtitle": "किसी देश की न्यूनतम मतदान आयु जाँचें।",
+  "skipToContent": "मुख्य सामग्री पर जाएँ",
   "stack": "ऑफ़लाइन नियम TypeScript में, API जाँच Axum + Rust Core से",
   "header": "TRAN / {platform}",
   "language": {

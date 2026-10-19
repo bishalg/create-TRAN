@@ -1,6 +1,7 @@
 {
   "title": "Voting Eligibility",
   "subtitle": "Check the minimum voting age for a country.",
+  "skipToContent": "Skip to content",
   "stack": "Offline rules in TypeScript, async checks via Axum + Rust Core",
   "header": "TRAN / {platform}",
   "language": {
