@@ -1,0 +1,11 @@
+{
+  "locales_dir": "locales",
+  "core_generated_dir": "packages/core-ts/src/generated",
+  "web_generated_dir": "apps/web/src/styles/generated",
+  "ios_generated_dir": "apps/ios/Sources/TranVotingDemo/Generated",
+  "android_kotlin_generated_dir": "apps/android/app/src/main/kotlin/com/tran/voting/generated",
+  "android_res_dir": "apps/android/app/src/main/res",
+  "android_kotlin_package": "com.tran.voting.generated",
+  "android_app_package": "com.tran.voting",
+  "design_md_path": "DESIGN.md"
+}

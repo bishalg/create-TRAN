@@ -1242,6 +1242,7 @@ name = "tran-tokens-codegen"
 version = "0.1.0"
 dependencies = [
  "rust-core",
+ "serde",
  "serde_json",
 ]
 

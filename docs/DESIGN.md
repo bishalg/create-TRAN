@@ -1,4 +1,8 @@
-# TRAN design tokens
+# TRAN design tokens (pipeline)
+
+> **Brand contract for agents / Stitch:** the generated Google-format file is
+> [`DESIGN.md`](../DESIGN.md) at the repo root (`pnpm tokens:sync`).  
+> **This page** explains how to change tokens in Rust. Do not confuse the two.
 
 ## Single source of truth
 
@@ -12,9 +16,23 @@ That contract covers typography, spacing, radii, Liquid Glass structure, and a t
 
 1. Edit values in `tokens.rs`.
 2. Run `pnpm tokens:sync` (or `nx run rust-core:sync-tokens`).
-3. Commit the updated `*/generated/*` files with your change.
+3. Commit the updated generated files with your change — including root **`DESIGN.md`**.
 
-Do **not** edit generated TypeScript, CSS, or native stub files by hand — CI runs codegen and fails if they drift.
+Do **not** edit generated TypeScript, CSS, native stubs, or `DESIGN.md` by hand — regenerate from Rust ([ADR-0026](./adr/0026-design-md-from-rust.md)).
+
+Output paths and Android package names live in
+[`tooling/design-tokens/codegen.json`](../tooling/design-tokens/codegen.json). Edit that file when
+renaming the iOS module, Android package, or `design_md_path`; the converter binary stays in this monorepo
+([ADR-0025](./adr/0025-tokens-codegen-stays-in-repo.md)).
+
+## What `tokens:sync` writes
+
+| Artifact                                  | Purpose                                                                               |
+| ----------------------------------------- | ------------------------------------------------------------------------------------- |
+| `packages/core-ts/src/generated/*`        | TS tokens + i18n keys                                                                 |
+| `apps/web/src/styles/generated/theme.css` | CSS variables                                                                         |
+| iOS / Android `Generated/*`               | Swift / Kotlin brand + strings                                                        |
+| **`DESIGN.md` (repo root)**               | [Google DESIGN.md](https://github.com/google-labs-code/design.md) for agents & Stitch |
 
 ## Voting UI semantics
 
@@ -38,4 +56,4 @@ Offline eligibility calls `crates/tran-uniffi`, which wraps `TranEngine` in `rus
 
 ## Why Rust-first?
 
-One type-safe contract feeds hex/RGB-friendly JSON, TypeScript, CSS variables, Swift/Kotlin brand tokens, and UniFFI-backed native logic without copy-paste across platforms.
+One type-safe contract feeds hex/RGB-friendly JSON, TypeScript, CSS variables, Swift/Kotlin brand tokens, UniFFI-backed native logic, and a Stitch-ready `DESIGN.md` without copy-paste across platforms.

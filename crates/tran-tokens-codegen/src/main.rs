@@ -1,4 +1,7 @@
 //! Writes platform design-token artifacts from `rust-core` brand tokens.
+//!
+//! Destinations and Android package names come from
+//! `tooling/design-tokens/codegen.json` (ADR-0025).
 
 use rust_core::tokens::{
     ColorScheme, SpacingTokens, ThemeJson, TokensJsonSnapshot, TypographyTokens,
@@ -7,6 +10,7 @@ use rust_core::tokens_json_snapshot;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
+use tran_tokens_codegen::{render_design_md, CodegenConfig};
 
 /// Base language under `locales/`. Other locales fall back to it at runtime: web in `t()`,
 /// iOS through the String Catalog development language, Android through the default `values/`.
@@ -31,44 +35,53 @@ fn main() {
 
 fn run() -> Result<(), String> {
     let root = workspace_root()?;
+    let config = CodegenConfig::load_for_workspace(&root)?;
+    let paths = config.resolve(&root);
     let snapshot = tokens_json_snapshot();
 
-    let core_generated = root.join("packages/core-ts/src/generated");
-    let web_generated = root.join("apps/web/src/styles/generated");
+    fs::create_dir_all(&paths.core_generated_dir).map_err(|e| e.to_string())?;
+    fs::create_dir_all(&paths.web_generated_dir).map_err(|e| e.to_string())?;
 
-    fs::create_dir_all(&core_generated).map_err(|e| e.to_string())?;
-    fs::create_dir_all(&web_generated).map_err(|e| e.to_string())?;
-
-    let json_path = core_generated.join("tokens.json");
+    let json_path = paths.core_generated_dir.join("tokens.json");
     let json = serde_json::to_string_pretty(&snapshot).map_err(|e| e.to_string())?;
     write_file(&json_path, format!("{json}\n"))?;
 
-    let ts_path = core_generated.join("tokens.ts");
+    let ts_path = paths.core_generated_dir.join("tokens.ts");
     write_file(&ts_path, render_tokens_ts(&snapshot))?;
 
-    let css_path = web_generated.join("theme.css");
+    let css_path = paths.web_generated_dir.join("theme.css");
     write_file(&css_path, render_theme_css(&snapshot))?;
 
-    let ios_generated = root.join("apps/ios/Sources/TranVotingDemo/Generated");
-    let android_generated = root.join("apps/android/app/src/main/kotlin/com/tran/voting/generated");
-    fs::create_dir_all(&ios_generated).map_err(|e| e.to_string())?;
-    fs::create_dir_all(&android_generated).map_err(|e| e.to_string())?;
+    fs::create_dir_all(&paths.ios_generated_dir).map_err(|e| e.to_string())?;
+    fs::create_dir_all(&paths.android_kotlin_generated_dir).map_err(|e| e.to_string())?;
 
-    let swift_path = ios_generated.join("BrandTokens.swift");
+    let swift_path = paths.ios_generated_dir.join("BrandTokens.swift");
     write_file(&swift_path, render_swift_tokens(&snapshot))?;
 
-    let kotlin_path = android_generated.join("BrandTokens.kt");
-    write_file(&kotlin_path, render_kotlin_tokens(&snapshot))?;
+    let kotlin_path = paths.android_kotlin_generated_dir.join("BrandTokens.kt");
+    write_file(
+        &kotlin_path,
+        render_kotlin_tokens(&snapshot, &paths.android_kotlin_package),
+    )?;
 
-    let kotlin_strings_path = android_generated.join("TranStrings.kt");
+    if let Some(parent) = paths.design_md_path.parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    write_file(&paths.design_md_path, render_design_md(&snapshot))?;
+
+    let kotlin_strings_path = paths.android_kotlin_generated_dir.join("TranStrings.kt");
 
     println!("tran-tokens-codegen: wrote {}", json_path.display());
     println!("tran-tokens-codegen: wrote {}", ts_path.display());
     println!("tran-tokens-codegen: wrote {}", css_path.display());
     println!("tran-tokens-codegen: wrote {}", swift_path.display());
     println!("tran-tokens-codegen: wrote {}", kotlin_path.display());
+    println!(
+        "tran-tokens-codegen: wrote {}",
+        paths.design_md_path.display()
+    );
 
-    let dictionaries = load_locales(&root.join("locales"))?;
+    let dictionaries = load_locales(&paths.locales_dir)?;
     let base = dictionaries
         .first()
         .ok_or_else(|| "no locale dictionaries loaded".to_string())?;
@@ -76,13 +89,13 @@ fn run() -> Result<(), String> {
     verify_generated_names(base)?;
     verify_theme_labels(base, &snapshot)?;
 
-    let strings_path = core_generated.join("strings.json");
+    let strings_path = paths.core_generated_dir.join("strings.json");
     write_file(&strings_path, render_translations_json(&dictionaries)?)?;
 
-    let keys_path = core_generated.join("keys.ts");
+    let keys_path = paths.core_generated_dir.join("keys.ts");
     write_file(&keys_path, render_ts_keys(&dictionaries))?;
 
-    let ios_strings = ios_generated.join("Strings");
+    let ios_strings = paths.ios_generated_dir.join("Strings");
     fs::create_dir_all(&ios_strings).map_err(|e| e.to_string())?;
     let mut ios_kept = BTreeSet::new();
     for module in base.modules.keys() {
@@ -97,20 +110,21 @@ fn run() -> Result<(), String> {
         println!("tran-tokens-codegen: removed stale {stale}");
     }
     // The pre-module layout lived in a single `Generated/Localizable.xcstrings`.
-    for stale in prune_files(&ios_generated, &BTreeSet::new(), &|name| {
+    for stale in prune_files(&paths.ios_generated_dir, &BTreeSet::new(), &|name| {
         name.ends_with(".xcstrings")
     })? {
         println!("tran-tokens-codegen: removed stale {stale}");
     }
     write_file(
-        &ios_generated.join("L10n.swift"),
+        &paths.ios_generated_dir.join("L10n.swift"),
         render_l10n_swift(base, &snapshot)?,
     )?;
 
-    let android_res = root.join("apps/android/app/src/main/res");
     let mut android_kept = BTreeSet::new();
     for dictionary in &dictionaries {
-        let directory = android_res.join(android_resource_dir(&dictionary.locale)?);
+        let directory = paths
+            .android_res_dir
+            .join(android_resource_dir(&dictionary.locale)?);
         fs::create_dir_all(&directory).map_err(|e| e.to_string())?;
         for (module, keys) in &dictionary.modules {
             let path = directory.join(format!("strings_{module}.xml"));
@@ -118,12 +132,17 @@ fn run() -> Result<(), String> {
             android_kept.insert(path);
         }
     }
-    for stale in prune_android_resources(&android_res, &android_kept)? {
+    for stale in prune_android_resources(&paths.android_res_dir, &android_kept)? {
         println!("tran-tokens-codegen: removed stale {stale}");
     }
     write_file(
         &kotlin_strings_path,
-        render_kotlin_strings(base, &snapshot)?,
+        render_kotlin_strings(
+            base,
+            &snapshot,
+            &paths.android_kotlin_package,
+            &paths.android_app_package,
+        )?,
     )?;
 
     println!(
@@ -376,9 +395,9 @@ fn swift_color_scheme(theme: &ThemeJson) -> &'static str {
     }
 }
 
-fn render_kotlin_tokens(snapshot: &TokensJsonSnapshot) -> String {
-    let mut out = String::from(
-        "// @generated by tran-tokens-codegen — do not edit by hand.\n// Run `pnpm tokens:sync` after changing rust-core tokens.\n\npackage com.tran.voting.generated\n\nimport androidx.compose.material3.ColorScheme\nimport androidx.compose.material3.darkColorScheme\nimport androidx.compose.material3.lightColorScheme\nimport androidx.compose.ui.graphics.Color\nimport androidx.compose.ui.unit.Dp\nimport androidx.compose.ui.unit.dp\n\n",
+fn render_kotlin_tokens(snapshot: &TokensJsonSnapshot, kotlin_package: &str) -> String {
+    let mut out = format!(
+        "// @generated by tran-tokens-codegen — do not edit by hand.\n// Run `pnpm tokens:sync` after changing rust-core tokens.\n\npackage {kotlin_package}\n\nimport androidx.compose.material3.ColorScheme\nimport androidx.compose.material3.darkColorScheme\nimport androidx.compose.material3.lightColorScheme\nimport androidx.compose.ui.graphics.Color\nimport androidx.compose.ui.unit.Dp\nimport androidx.compose.ui.unit.dp\n\n",
     );
     out.push_str(
         "private fun tranColor(hex: String): Color {\n    val raw = hex.removePrefix(\"#\")\n    val value = raw.toLong(16)\n    val argb = when (raw.length) {\n        3 -> {\n            val r = ((value shr 8) and 0xF) * 17\n            val g = ((value shr 4) and 0xF) * 17\n            val b = (value and 0xF) * 17\n            (0xFFL shl 24) or (r shl 16) or (g shl 8) or b\n        }\n        6 -> 0xFF000000L or value\n        8 -> ((value and 0xFF) shl 24) or ((value shr 8) and 0xFFFFFF)\n        else -> 0xFF000000L\n    }\n    return Color(argb.toInt())\n}\n\n",
@@ -446,9 +465,11 @@ fn render_kotlin_tokens(snapshot: &TokensJsonSnapshot) -> String {
 fn render_kotlin_strings(
     base: &Dictionary,
     snapshot: &TokensJsonSnapshot,
+    kotlin_package: &str,
+    app_package: &str,
 ) -> Result<String, String> {
-    let mut out = String::from(
-        "// @generated by tran-tokens-codegen — do not edit by hand.\n// Run `pnpm i18n:sync` after changing `locales/`.\n\npackage com.tran.voting.generated\n\nimport androidx.annotation.StringRes\nimport com.tran.voting.R\n\n/** Typed string resources generated from `locales/`; English is the base language. */\nobject TranStrings {\n",
+    let mut out = format!(
+        "// @generated by tran-tokens-codegen — do not edit by hand.\n// Run `pnpm i18n:sync` after changing `locales/`.\n\npackage {kotlin_package}\n\nimport androidx.annotation.StringRes\nimport {app_package}.R\n\n/** Typed string resources generated from `locales/`; English is the base language. */\nobject TranStrings {{\n",
     );
     for (module, keys) in &base.modules {
         out.push_str(&format!("    object {} {{\n", pascal_case(module)));

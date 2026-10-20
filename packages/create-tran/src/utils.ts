@@ -1,5 +1,13 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { DEFAULT_THEME_MODE, type ThemeMode, validateThemeMode } from './palette.js';
+import {
+  DEFAULT_STEM,
+  normalizeHexColor,
+  normalizeStem,
+  validateHexColor,
+  validateStem,
+} from './stem.js';
 
 export const DEFAULT_TEMPLATE_REPO = 'https://github.com/bishalg/create-TRAN.git';
 export const PINNED_PNPM = 'pnpm@11.22.0';
@@ -10,6 +18,15 @@ export interface CliOptions {
   packageManager: 'pnpm' | 'npm' | 'bun' | 'yarn';
   includeNative: boolean;
   initGit: boolean;
+  /** Code stem: `@stem/`, `--stem-`, `Stem`, `STEM_`. Default `tran`. */
+  stem: string;
+  /** Brand primary hex; interactive Enter picks a random starter color. */
+  primaryColor?: string;
+  primaryColorLabel?: string;
+  defaultTheme: ThemeMode;
+  displayName: string;
+  /** Skip interactive prompts (CI / flags-only). */
+  skipPrompts: boolean;
   /** Override template source (git URL or local path). Useful for tests. */
   templateUrl?: string;
 }
@@ -30,6 +47,8 @@ export function parseArgs(
       options.initGit = false;
     } else if (arg === '--no-native') {
       options.includeNative = false;
+    } else if (arg === '--yes' || arg === '-y') {
+      options.skipPrompts = true;
     } else if (arg === '--pm' || arg === '--package-manager') {
       const next = rawArgs[++i];
       if (next && ['pnpm', 'npm', 'bun', 'yarn'].includes(next)) {
@@ -39,6 +58,40 @@ export function parseArgs(
       const next = rawArgs[++i];
       if (next) {
         options.templateUrl = next;
+      }
+    } else if (arg === '--prefix' || arg === '--stem') {
+      const next = rawArgs[++i];
+      if (next) {
+        const stem = normalizeStem(next);
+        const error = validateStem(stem);
+        if (error) {
+          throw new Error(error);
+        }
+        options.stem = stem;
+      }
+    } else if (arg === '--primary' || arg === '--color') {
+      const next = rawArgs[++i];
+      if (next) {
+        const hex = normalizeHexColor(next);
+        const error = validateHexColor(hex);
+        if (error) {
+          throw new Error(error);
+        }
+        options.primaryColor = hex;
+      }
+    } else if (arg === '--theme') {
+      const next = rawArgs[++i];
+      if (next) {
+        const mode = validateThemeMode(next);
+        if (!mode) {
+          throw new Error(`Invalid --theme (use light|dark|black|sepia)`);
+        }
+        options.defaultTheme = mode;
+      }
+    } else if (arg === '--display-name') {
+      const next = rawArgs[++i];
+      if (next) {
+        options.displayName = next;
       }
     } else if (!arg.startsWith('-')) {
       positional.push(arg);
@@ -82,3 +135,5 @@ export function packageManagerField(pm: CliOptions['packageManager']): string {
   }
   return `${pm}@latest`;
 }
+
+export { DEFAULT_STEM, DEFAULT_THEME_MODE };

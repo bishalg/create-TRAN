@@ -1,6 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { customizeIdentity } from './customize.js';
+import { DEFAULT_STEM } from './stem.js';
 import {
   type CliOptions,
   DEFAULT_TEMPLATE_REPO,
@@ -25,6 +27,13 @@ function writeJson(filePath: string, value: unknown): void {
 }
 
 function customizeProject(options: CliOptions): void {
+  customizeIdentity(options.targetDir, {
+    stem: options.stem,
+    primaryColor: options.primaryColor,
+    defaultTheme: options.defaultTheme,
+    displayName: options.displayName,
+  });
+
   const rootPkgPath = path.join(options.targetDir, 'package.json');
   if (fs.existsSync(rootPkgPath)) {
     const pkg = readJson(rootPkgPath);
@@ -81,7 +90,7 @@ function resetGitHistory(options: CliOptions): void {
 
 /**
  * Scaffold a TRAN project by cloning the GitHub template repository,
- * then renaming / trimming options for the new app.
+ * then applying name / prefix / colour customization.
  */
 export async function generateTranProject(options: CliOptions): Promise<void> {
   assertTargetAvailable(options.targetDir);
@@ -94,14 +103,37 @@ export async function generateTranProject(options: CliOptions): Promise<void> {
     fs.mkdirSync(parent, { recursive: true });
   }
 
-  // Clone into a temp name if the destination exists as an empty dir,
-  // otherwise clone directly into targetDir.
   if (fs.existsSync(options.targetDir)) {
     fs.rmSync(options.targetDir, { recursive: true, force: true });
   }
 
-  run('git', ['clone', '--depth', '1', templateUrl, options.targetDir]);
+  // Local path: copy the fixture/workdir instead of git-cloning a URL.
+  if (fs.existsSync(templateUrl) && fs.statSync(templateUrl).isDirectory()) {
+    fs.cpSync(templateUrl, options.targetDir, {
+      recursive: true,
+      filter: (src) => {
+        const base = path.basename(src);
+        return base !== 'node_modules' && base !== 'target' && base !== 'dist';
+      },
+    });
+  } else {
+    run('git', ['clone', '--depth', '1', templateUrl, options.targetDir]);
+  }
 
   customizeProject(options);
   resetGitHistory(options);
+}
+
+export function describeCustomization(options: CliOptions): string[] {
+  const color = options.primaryColorLabel || options.primaryColor || 'Template default (unchanged)';
+  return [
+    `  Project:         ${options.projectName}`,
+    `  Display name:    ${options.displayName}`,
+    `  Code prefix:     ${options.stem}${options.stem === DEFAULT_STEM ? ' (template default)' : ''}`,
+    `  Primary color:   ${color}`,
+    `  Default theme:   ${options.defaultTheme}`,
+    `  Package manager: ${options.packageManager}`,
+    `  Native mobile:   ${options.includeNative ? 'Included' : 'Skipped'}`,
+    `  Git init:        ${options.initGit ? 'Yes' : 'No'}`,
+  ];
 }

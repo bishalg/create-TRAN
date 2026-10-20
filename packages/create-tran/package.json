@@ -17,7 +17,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json && chmod +x bin/index.js",
     "prepublishOnly": "pnpm run build",
-    "test": "vitest run",
+    "test": "vitest run --config vitest.config.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {},

@@ -34,7 +34,17 @@ pnpm dev:api   # http://127.0.0.1:3001
 pnpm dev:web   # Vite SPA on :3000 (proxies /api → Axum)
 ```
 
-Or use **[Use this template](https://github.com/bishalg/create-TRAN/generate)** / `npx create-tran my-app`.
+Or use **[Use this template](https://github.com/bishalg/create-TRAN/generate)** / the onboarding CLI:
+
+```bash
+npx create-tran
+# Enter through defaults; color Enter = random from 5 template swatches
+# optional Advanced: display name, default theme, git
+
+npx create-tran my-app --prefix acme --primary '#0ea5e9' --theme light --yes
+```
+
+See [`packages/create-tran`](./packages/create-tran/README.md).
 
 **Requirements:** Node.js ≥ 20, pnpm ≥ 9, Rust stable.
 
@@ -187,39 +197,42 @@ Every behaviour starts as a numbered requirement, not as code.
 
 ### Architecture decisions
 
-| ADR                                                    | Decision                              |
-| :----------------------------------------------------- | :------------------------------------ |
-| [0001](./docs/adr/0001-rust-is-the-source-of-truth.md) | Rust is the source of truth for rules |
-| [0002](./docs/adr/0002-golden-fixtures.md)             | Golden fixtures prove parity          |
-| [0003](./docs/adr/0003-error-envelope.md)              | One error envelope                    |
-| [0004](./docs/adr/0004-inject-time-and-config.md)      | Inject time and configuration         |
-| [0005](./docs/adr/0005-generated-design-tokens.md)     | Design tokens are generated           |
-| [0006](./docs/adr/0006-coverage-gate.md)               | 100% coverage gate                    |
-| [0007](./docs/adr/0007-bdd-as-acceptance.md)           | BDD scenarios are acceptance criteria |
-| [0008](./docs/adr/0008-accessibility-is-tested.md)     | Accessibility is tested               |
-| [0009](./docs/adr/0009-spec-driven-workflow.md)        | Spec-driven workflow                  |
-| [0010](./docs/adr/0010-tanstack-start-ssr.md)          | TanStack Start for SSR                |
-| [0011](./docs/adr/0011-seo-metadata-pure-functions.md) | SEO metadata from pure functions      |
-| [0012](./docs/adr/0012-browser-calls-api-directly.md)  | Browser calls the API directly        |
-| [0013](./docs/adr/0013-feature-based-web-structure.md) | Feature-based web structure           |
-| [0014](./docs/adr/0014-native-swift-kotlin-uniffi.md)  | Native = Swift/Kotlin with UniFFI     |
+| ADR                                                     | Decision                               |
+| :------------------------------------------------------ | :------------------------------------- |
+| [0001](./docs/adr/0001-rust-is-the-source-of-truth.md)  | Rust is the source of truth for rules  |
+| [0002](./docs/adr/0002-golden-fixtures.md)              | Golden fixtures prove parity           |
+| [0003](./docs/adr/0003-error-envelope.md)               | One error envelope                     |
+| [0004](./docs/adr/0004-inject-time-and-config.md)       | Inject time and configuration          |
+| [0005](./docs/adr/0005-generated-design-tokens.md)      | Design tokens are generated            |
+| [0006](./docs/adr/0006-coverage-gate.md)                | 100% coverage gate                     |
+| [0007](./docs/adr/0007-bdd-as-acceptance.md)            | BDD scenarios are acceptance criteria  |
+| [0008](./docs/adr/0008-accessibility-is-tested.md)      | Accessibility is tested                |
+| [0009](./docs/adr/0009-spec-driven-workflow.md)         | Spec-driven workflow                   |
+| [0010](./docs/adr/0010-tanstack-start-ssr.md)           | TanStack Start for SSR                 |
+| [0011](./docs/adr/0011-seo-metadata-pure-functions.md)  | SEO metadata from pure functions       |
+| [0012](./docs/adr/0012-browser-calls-api-directly.md)   | Browser calls the API directly         |
+| [0013](./docs/adr/0013-feature-based-web-structure.md)  | Feature-based web structure            |
+| [0014](./docs/adr/0014-native-swift-kotlin-uniffi.md)   | Native = Swift/Kotlin with UniFFI      |
+| [0025](./docs/adr/0025-tokens-codegen-stays-in-repo.md) | Token codegen stays in this monorepo   |
+| [0026](./docs/adr/0026-design-md-from-rust.md)          | Emit Google DESIGN.md from Rust tokens |
 
 Requirements marked `planned` are specified but not built yet; they are the roadmap.
 
 ## Documentation
 
-| Doc                                                        | Purpose                                     |
-| :--------------------------------------------------------- | :------------------------------------------ |
-| [docs/SAMPLE_APP.md](./docs/SAMPLE_APP.md)                 | End-to-end walkthrough, key files           |
-| [docs/API.md](./docs/API.md)                               | REST endpoints, curl samples                |
-| [docs/DESIGN.md](./docs/DESIGN.md)                         | Token pipeline (`pnpm tokens:sync`)         |
-| [docs/ATOMIC.md](./docs/ATOMIC.md)                         | Web TranText / TranStack atom layer         |
-| [docs/PRODUCTION_LESSONS.md](./docs/PRODUCTION_LESSONS.md) | Token atoms, a11y patterns from production  |
-| [docs/TESTING.md](./docs/TESTING.md)                       | TDD, fixtures, coverage, E2E                |
-| [docs/UI.md](./docs/UI.md)                                 | Web UI structure and accessibility          |
-| [docs/REVIEW.md](./docs/REVIEW.md)                         | Architecture review (verified against repo) |
-| [docs/ROADMAP.md](./docs/ROADMAP.md)                       | Backlog and checkboxes                      |
-| [AGENTS.md](./AGENTS.md)                                   | Agent workflow in this template             |
+| Doc                                                        | Purpose                                      |
+| :--------------------------------------------------------- | :------------------------------------------- |
+| [docs/SAMPLE_APP.md](./docs/SAMPLE_APP.md)                 | End-to-end walkthrough, key files            |
+| [docs/API.md](./docs/API.md)                               | REST endpoints, curl samples                 |
+| [DESIGN.md](./DESIGN.md)                                   | Generated Google DESIGN.md (agents / Stitch) |
+| [docs/DESIGN.md](./docs/DESIGN.md)                         | Token pipeline (`pnpm tokens:sync`)          |
+| [docs/ATOMIC.md](./docs/ATOMIC.md)                         | Web TranText / TranStack atom layer          |
+| [docs/PRODUCTION_LESSONS.md](./docs/PRODUCTION_LESSONS.md) | Token atoms, a11y patterns from production   |
+| [docs/TESTING.md](./docs/TESTING.md)                       | TDD, fixtures, coverage, E2E                 |
+| [docs/UI.md](./docs/UI.md)                                 | Web UI structure and accessibility           |
+| [docs/REVIEW.md](./docs/REVIEW.md)                         | Architecture review (verified against repo)  |
+| [docs/ROADMAP.md](./docs/ROADMAP.md)                       | Backlog and checkboxes                       |
+| [AGENTS.md](./AGENTS.md)                                   | Agent workflow in this template              |
 
 ---
 
@@ -237,28 +250,28 @@ This gives tRPC-like ergonomics on the TypeScript side without a Rust oRPC runti
 
 ## Commands
 
-| Command                | Action                                                     |
-| :--------------------- | :--------------------------------------------------------- |
-| `pnpm dev`             | Run apps via Nx                                            |
-| `pnpm dev:web`         | Vite web app                                               |
-| `pnpm dev:api`         | Axum API                                                   |
-| `pnpm test`            | `cargo test` + Vitest (fast)                               |
-| `pnpm test:coverage`   | Rust + TS with **100% coverage gates**                     |
-| `pnpm test:e2e`        | Playwright Gherkin (starts API + web)                      |
-| `pnpm test:all`        | Coverage + E2E (what CI runs for tests)                    |
-| `pnpm typecheck`       | TypeScript                                                 |
-| `pnpm lint`            | Clippy                                                     |
-| `pnpm tokens:sync`     | Regenerate tokens + strings → TS/CSS, Swift, Kotlin        |
-| `pnpm i18n:sync`       | Same codegen, after editing `locales/`                     |
-| `pnpm uniffi:generate` | Regenerate Swift/Kotlin bindings from `crates/tran-uniffi` |
-| `pnpm ios:build`       | Build SwiftUI app for iOS Simulator (no signing)           |
-| `pnpm ios:project`     | Regenerate Xcode project from `apps/ios/project.yml`       |
-| `pnpm android:build`   | Build Compose debug APK                                    |
-| `pnpm ios:test`        | Unit + XCUITest accessibility suite (simulator)            |
-| `pnpm android:test`    | Compose accessibility suite (emulator/device)              |
-| `pnpm e2e:maestro`     | Maestro smoke flows on a running simulator/emulator        |
-| `pnpm check:quick`     | Quick local check (specs, formatting, types, linter)       |
-| `pnpm hooks:install`   | Configure Git hooks path to `.githooks`                    |
+| Command                | Action                                                         |
+| :--------------------- | :------------------------------------------------------------- |
+| `pnpm dev`             | Run apps via Nx                                                |
+| `pnpm dev:web`         | Vite web app                                                   |
+| `pnpm dev:api`         | Axum API                                                       |
+| `pnpm test`            | `cargo test` + Vitest (fast)                                   |
+| `pnpm test:coverage`   | Rust + TS with **100% coverage gates**                         |
+| `pnpm test:e2e`        | Playwright Gherkin (starts API + web)                          |
+| `pnpm test:all`        | Coverage + E2E (what CI runs for tests)                        |
+| `pnpm typecheck`       | TypeScript                                                     |
+| `pnpm lint`            | Clippy                                                         |
+| `pnpm tokens:sync`     | Regenerate tokens + strings → TS/CSS, Swift, Kotlin, DESIGN.md |
+| `pnpm i18n:sync`       | Same codegen, after editing `locales/`                         |
+| `pnpm uniffi:generate` | Regenerate Swift/Kotlin bindings from `crates/tran-uniffi`     |
+| `pnpm ios:build`       | Build SwiftUI app for iOS Simulator (no signing)               |
+| `pnpm ios:project`     | Regenerate Xcode project from `apps/ios/project.yml`           |
+| `pnpm android:build`   | Build Compose debug APK                                        |
+| `pnpm ios:test`        | Unit + XCUITest accessibility suite (simulator)                |
+| `pnpm android:test`    | Compose accessibility suite (emulator/device)                  |
+| `pnpm e2e:maestro`     | Maestro smoke flows on a running simulator/emulator            |
+| `pnpm check:quick`     | Quick local check (specs, formatting, types, linter)           |
+| `pnpm hooks:install`   | Configure Git hooks path to `.githooks`                        |
 
 Brand semantics: `crates/rust-core/src/tokens.rs` → `tran-tokens-codegen`. See [docs/DESIGN.md](./docs/DESIGN.md).
 

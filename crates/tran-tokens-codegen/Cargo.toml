@@ -5,7 +5,7 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "Codegen CLI: rust-core design tokens → TS, CSS, and native stubs"
+description = "In-repo codegen CLI: rust-core tokens + locales → TS, CSS, Swift, Kotlin (ADR-0025)"
 publish = false
 
 [lib]
@@ -18,4 +18,5 @@ path = "src/main.rs"
 
 [dependencies]
 rust-core = { workspace = true }
+serde = { workspace = true }
 serde_json = { workspace = true }

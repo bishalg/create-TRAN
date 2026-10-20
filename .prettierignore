@@ -6,3 +6,4 @@ pnpm-lock.yaml
 
 # Emitted by tran-tokens-codegen; formatting them breaks the CI drift check
 **/generated/
+DESIGN.md
