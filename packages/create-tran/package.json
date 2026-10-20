@@ -1,7 +1,7 @@
 {
   "name": "create-tran",
   "version": "0.1.0",
-  "description": "Scaffolding CLI for TRAN (TanStack Start + Rust Core + Axum + Native Swift/Kotlin monorepo)",
+  "description": "Scaffolding CLI for TRAN (Vite + React web + Rust Core + Axum + Native Swift/Kotlin monorepo)",
   "type": "module",
   "bin": {
     "create-tran": "./bin/index.js"
@@ -32,8 +32,8 @@
   ],
   "keywords": [
     "create-tran",
-    "tanstack",
-    "tanstack-start",
+    "vite",
+    "react",
     "rust",
     "axum",
     "nx",

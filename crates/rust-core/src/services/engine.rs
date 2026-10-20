@@ -74,36 +74,23 @@ impl TranEngine {
         })
     }
 
-    pub fn generate_health_report(&self, uptime_seconds: u64) -> TranHealthReport {
+    /// Reports only what the server can observe: this crate and the API binary that embeds it.
+    /// `api_version` is the caller's own crate version (`env!("CARGO_PKG_VERSION")`).
+    pub fn generate_health_report(
+        &self,
+        uptime_seconds: u64,
+        api_version: &str,
+    ) -> TranHealthReport {
+        let component = |layer, name: &str, version: &str| StackComponentStatus {
+            layer,
+            name: name.to_string(),
+            version: version.to_string(),
+            healthy: true,
+            uptime_seconds,
+        };
         let components = vec![
-            StackComponentStatus {
-                layer: StackLayer::TanStackStart,
-                name: "TanStack Start Web App".to_string(),
-                version: "1.0.0".to_string(),
-                healthy: true,
-                uptime_seconds,
-            },
-            StackComponentStatus {
-                layer: StackLayer::RustCore,
-                name: "Rust Domain Core".to_string(),
-                version: "0.1.0".to_string(),
-                healthy: true,
-                uptime_seconds,
-            },
-            StackComponentStatus {
-                layer: StackLayer::AxumApi,
-                name: "Axum Microservice".to_string(),
-                version: "0.8.0".to_string(),
-                healthy: true,
-                uptime_seconds,
-            },
-            StackComponentStatus {
-                layer: StackLayer::NativeMobile,
-                name: "Native Mobile (iOS/Android)".to_string(),
-                version: "1.0.0".to_string(),
-                healthy: true,
-                uptime_seconds,
-            },
+            component(StackLayer::RustCore, "rust-core", env!("CARGO_PKG_VERSION")),
+            component(StackLayer::AxumApi, "axum-api", api_version),
         ];
 
         TranHealthReport {

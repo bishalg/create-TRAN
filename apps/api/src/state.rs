@@ -3,17 +3,30 @@ use std::time::Instant;
 
 use rust_core::TranEngine;
 
+use crate::config::AppConfig;
+
 #[derive(Clone)]
 pub struct AppState {
     pub engine: Arc<TranEngine>,
     pub start_time: Instant,
+    /// Whether `X-Debug-Country` may override IP-based country resolution (REQ-API-006).
+    pub allow_debug_headers: bool,
 }
 
 impl AppState {
+    /// Development defaults: debug headers are honoured.
     pub fn new() -> Self {
         Self {
             engine: Arc::new(TranEngine::new()),
             start_time: Instant::now(),
+            allow_debug_headers: true,
+        }
+    }
+
+    pub fn from_config(config: &AppConfig) -> Self {
+        Self {
+            allow_debug_headers: config.allows_debug_headers(),
+            ..Self::new()
         }
     }
 

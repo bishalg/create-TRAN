@@ -156,7 +156,7 @@ describe('CLI argument parsing', () => {
 
 describe('TRAN Banner', () => {
   it('should contain TRAN letters and description', () => {
-    expect(TRAN_BANNER).toContain('TanStack Start · Rust Core · Axum · Native');
+    expect(TRAN_BANNER).toContain('Vite + React · Rust Core · Axum · Native');
   });
 });
 

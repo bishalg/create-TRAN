@@ -35,11 +35,11 @@ private ranges → `IN` (template stub), anything else → `US`. The response MU
 `country_source`.
 **Verified by:** `geo.rs` unit tests, `api_test.rs`.
 
-### REQ-API-006 [planned] Debug country header is development-only
+### REQ-API-006 [verified] Debug country header is development-only
 
 `X-Debug-Country` MUST be honoured only when `APP_ENV` is `development` or `test`. In any other environment it MUST be
 ignored (not rejected) and the country resolved from the IP.
-**Verified by:** `api_test.rs` with a production-configured app.
+**Verified by:** `api_test.rs` (`eligibility_debug_country_is_ignored_in_production`), `config.rs` unit tests.
 
 ### REQ-API-007 [planned] CORS allowlist from configuration
 
@@ -74,11 +74,11 @@ response snapshots to `fixtures/contract/`; CI fails if regenerating them change
 every snapshot with the schemas.
 **Verified by:** `apps/api/tests/contract_test.rs`, `packages/api/tests/contract-snapshots.test.ts`.
 
-### REQ-API-012 [planned] Health reports only what the server can observe
+### REQ-API-012 [verified] Health reports only what the server can observe
 
 `GET /api/health` MUST list only components the server can observe (`rust-core`, `axum-api`), each with its real crate
 version, and MUST NOT report the state of clients.
-**Verified by:** `api_test.rs` (`health_*`).
+**Verified by:** `api_test.rs` (`health_*`), `core_test.rs` (`health_report_lists_only_what_the_server_observes`).
 
 ### REQ-API-013 [verified] Server serves over a real socket
 

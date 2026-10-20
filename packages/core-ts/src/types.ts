@@ -1,6 +1,7 @@
 export type { VoteEligibilityInput, VoteEligibilityOutput } from '@tran/api';
 
-export type StackLayer = 'tanstackstart' | 'rustcore' | 'axumapi' | 'nativemobile';
+/** Components the API can observe in-process (REQ-API-012). */
+export type StackLayer = 'rustcore' | 'axumapi';
 
 export interface StackComponentStatus {
   layer: StackLayer;

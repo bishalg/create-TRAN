@@ -24,7 +24,7 @@ export default defineConfig({
       command: 'cargo run -p api',
       cwd: '..',
       url: `${API_URL}/api/health`,
-      env: { HOST: '127.0.0.1', PORT: '3001' },
+      env: { HOST: '127.0.0.1', PORT: '3001', APP_ENV: 'test' },
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,
     },

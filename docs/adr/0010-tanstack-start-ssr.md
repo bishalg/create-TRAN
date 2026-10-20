@@ -1,6 +1,7 @@
 # ADR-0010 TanStack Start for server rendering
 
-Status: accepted
+Status: proposed — not implemented. `apps/web` is a plain Vite + React SPA; the unused `@tanstack/*`
+dependencies were removed until REQ-SEO-001..012 are built (all `[planned]`).
 
 ## Context
 

@@ -5,7 +5,7 @@ export const TRAN_BANNER = `
      ██║   ██╔══██╗██╔══██║██║╚██╗██║
      ██║   ██║  ██║██║  ██║██║ ╚████║
      ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝
-   TanStack Start · Rust Core · Axum · Native (Swift + Kotlin)
+   Vite + React · Rust Core · Axum · Native (Swift + Kotlin)
 `;
 
 export function printBanner(

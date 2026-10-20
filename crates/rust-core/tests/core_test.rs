@@ -5,14 +5,6 @@ use rust_core::{
 };
 
 #[test]
-fn test_stack_layers_metadata() {
-    assert_eq!(StackLayer::TanStackStart.code(), 'T');
-    assert_eq!(StackLayer::RustCore.code(), 'R');
-    assert_eq!(StackLayer::AxumApi.code(), 'A');
-    assert_eq!(StackLayer::NativeMobile.code(), 'N');
-}
-
-#[test]
 fn test_voting_age_by_country() {
     assert_eq!(voting_age_for_country("US"), 18);
     assert_eq!(voting_age_for_country("BR"), 16);
@@ -57,20 +49,28 @@ fn test_validation_invalid_age() {
     assert!(matches!(err, CoreError::ValidationError(_)));
 }
 
+// Verifies: REQ-API-012
 #[test]
-fn test_engine_generate_health_report() {
-    let engine = TranEngine::new();
-    let report = engine.generate_health_report(120);
+fn health_report_lists_only_what_the_server_observes() {
+    let report = TranEngine::new().generate_health_report(5, "9.9.9");
     assert_eq!(report.overall_status, "HEALTHY");
-    assert_eq!(report.components.len(), 4);
-}
 
-#[test]
-fn health_report_lists_every_layer_exactly_once_and_all_healthy() {
-    let report = TranEngine::new().generate_health_report(5);
-    let mut codes: Vec<char> = report.components.iter().map(|c| c.layer.code()).collect();
-    codes.sort_unstable();
-    assert_eq!(codes, vec!['A', 'N', 'R', 'T']);
+    let parts: Vec<(&StackLayer, &str, &str)> = report
+        .components
+        .iter()
+        .map(|c| (&c.layer, c.name.as_str(), c.version.as_str()))
+        .collect();
+    assert_eq!(
+        parts,
+        vec![
+            (
+                &StackLayer::RustCore,
+                "rust-core",
+                env!("CARGO_PKG_VERSION")
+            ),
+            (&StackLayer::AxumApi, "axum-api", "9.9.9"),
+        ]
+    );
     assert!(report
         .components
         .iter()
@@ -94,19 +94,4 @@ fn engine_reports_unique_eligibility_ids() {
             .unwrap()
     };
     assert_ne!(make().eligibility_id, make().eligibility_id);
-}
-
-#[test]
-fn stack_layers_have_human_readable_names() {
-    let names: Vec<&str> = [
-        StackLayer::TanStackStart,
-        StackLayer::RustCore,
-        StackLayer::AxumApi,
-        StackLayer::NativeMobile,
-    ]
-    .iter()
-    .map(StackLayer::display_name)
-    .collect();
-    assert_eq!(names.len(), 4);
-    assert!(names.iter().all(|n| !n.is_empty()));
 }

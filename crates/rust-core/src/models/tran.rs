@@ -2,33 +2,12 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+/// A component the API process can observe from inside itself (REQ-API-012).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum StackLayer {
-    TanStackStart,
     RustCore,
     AxumApi,
-    NativeMobile,
-}
-
-impl StackLayer {
-    pub fn display_name(&self) -> &'static str {
-        match self {
-            Self::TanStackStart => "TanStack Start (Web)",
-            Self::RustCore => "Rust Core (Domain/Engine)",
-            Self::AxumApi => "Axum (API Gateway)",
-            Self::NativeMobile => "Native Mobile (iOS & Android)",
-        }
-    }
-
-    pub fn code(&self) -> char {
-        match self {
-            Self::TanStackStart => 'T',
-            Self::RustCore => 'R',
-            Self::AxumApi => 'A',
-            Self::NativeMobile => 'N',
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

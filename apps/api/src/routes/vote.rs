@@ -20,7 +20,10 @@ pub async fn eligibility_handler(
     let direct = headers.get("x-real-ip").and_then(|v| v.to_str().ok());
     let client_ip = extract_client_ip(forwarded, direct);
 
-    let debug_country = headers.get("x-debug-country").and_then(|v| v.to_str().ok());
+    let debug_country = headers
+        .get("x-debug-country")
+        .filter(|_| state.allow_debug_headers)
+        .and_then(|v| v.to_str().ok());
 
     let (country_code, country_source) = country_from_client_ip(&client_ip, debug_country);
 

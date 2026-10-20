@@ -1,8 +1,9 @@
-// Verifies: REQ-API-001 REQ-API-002 REQ-API-003 REQ-API-004 REQ-API-005 REQ-API-008
+// Verifies: REQ-API-001 REQ-API-002 REQ-API-003 REQ-API-004 REQ-API-005 REQ-API-006 REQ-API-008 REQ-API-012
 //! HTTP-level integration tests. Each test drives the real router in-process (no socket),
 //! so they are fast and deterministic. Naming: `<endpoint>_<condition>_<outcome>`.
 
 use api::build_app;
+use api::config::AppConfig;
 use api::state::AppState;
 use axum::body::Body;
 use axum::http::{header, Method, Request, StatusCode};
@@ -16,7 +17,11 @@ struct Reply {
 }
 
 async fn send(request: Request<Body>) -> Reply {
-    let response = build_app(AppState::new()).oneshot(request).await.unwrap();
+    send_to(AppState::new(), request).await
+}
+
+async fn send_to(state: AppState, request: Request<Body>) -> Reply {
+    let response = build_app(state).oneshot(request).await.unwrap();
     let status = response.status();
     let bytes = response.into_body().collect().await.unwrap().to_bytes();
     let json = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
@@ -49,15 +54,27 @@ fn assert_error_envelope(reply: &Reply, status: StatusCode, needle: &str) {
     );
 }
 
+/// App state as `run_server` builds it for the given `APP_ENV`.
+fn state_for_env(app_env: &str) -> AppState {
+    let config = AppConfig::from_lookup(|key| (key == "APP_ENV").then(|| app_env.to_string()));
+    AppState::from_config(&config)
+}
+
 // ── GET /api/health ────────────────────────────────────────────────────────
 
 #[tokio::test]
-async fn health_returns_healthy_report_with_all_four_layers() {
+async fn health_reports_core_and_api_with_real_versions() {
     let reply = send(get("/api/health")).await;
 
     assert_eq!(reply.status, StatusCode::OK);
     assert_eq!(reply.json["overall_status"], "HEALTHY");
-    assert_eq!(reply.json["components"].as_array().unwrap().len(), 4);
+    let components = reply.json["components"].as_array().unwrap();
+    let names: Vec<&str> = components
+        .iter()
+        .map(|c| c["name"].as_str().unwrap())
+        .collect();
+    assert_eq!(names, ["rust-core", "axum-api"]);
+    assert_eq!(components[1]["version"], env!("CARGO_PKG_VERSION"));
 }
 
 // ── GET /api/tran/info ─────────────────────────────────────────────────────
@@ -171,6 +188,30 @@ async fn eligibility_debug_country_beats_ip_based_resolution() {
     .await;
 
     assert_eq!(reply.json["country_code"], "BR");
+    assert_eq!(reply.json["country_source"], "x-debug-country");
+}
+
+#[tokio::test]
+async fn eligibility_debug_country_is_ignored_in_production() {
+    let reply = send_to(
+        state_for_env("production"),
+        eligibility(r#"{"age": 16}"#, &[("x-debug-country", "BR")]),
+    )
+    .await;
+
+    assert_eq!(reply.status, StatusCode::OK);
+    assert_eq!(reply.json["country_code"], "US");
+    assert_eq!(reply.json["country_source"], "loopback-default");
+}
+
+#[tokio::test]
+async fn eligibility_debug_country_is_honoured_in_test_env() {
+    let reply = send_to(
+        state_for_env("test"),
+        eligibility(r#"{"age": 16}"#, &[("x-debug-country", "BR")]),
+    )
+    .await;
+
     assert_eq!(reply.json["country_source"], "x-debug-country");
 }
 

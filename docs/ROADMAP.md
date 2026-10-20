@@ -21,9 +21,9 @@ Platform-native iOS (`apps/ios`) and Android (`apps/android`) are the real **N**
 
 - [ ] **Decision:** adopt TanStack Start for `apps/web` _or_ rebrand stack/docs as “Vite + React” (drop “Start” claims).
 - [ ] If Start: add file-based routes, SSR entry, and at least one loader/server function calling Axum.
-- [ ] If rename: remove unused `@tanstack/react-start` / router deps or use router without SSR claims.
+- [x] Remove unused `@tanstack/react-start` / router deps until Start is actually adopted; ADR-0010 is `proposed`.
 - [x] Update `apps/api/src/routes/tran.rs`, `docs/API.md`, README to describe Vite SPA honestly (docs pass).
-- [ ] Align root `package.json` / CLI banner / health metadata with the same **T** story.
+- [x] Align root `package.json` / CLI banner / health metadata with the same **T** story.
 - [ ] Add one E2E scenario that would fail if SSR/routing claims regress (e.g. deep link or server-rendered marker).
 
 ---
@@ -47,10 +47,10 @@ Platform-native iOS (`apps/ios`) and Android (`apps/android`) are the real **N**
 
 ## 4. Production-safe debug and proxy headers
 
-- [ ] Wire `AppConfig.environment` into geo middleware: ignore `X-Debug-Country` unless `development` (or explicit `ALLOW_DEBUG_COUNTRY=1`).
+- [x] Wire `AppConfig.environment` into the eligibility handler: ignore `X-Debug-Country` unless `development` or `test` (REQ-API-006).
 - [ ] Trusted proxy list for `X-Forwarded-For` (env var or config struct field).
-- [ ] Update `docs/API.md` and locale hints to match enforced behaviour.
-- [ ] API tests: debug header ignored in `production`/`test` profile; still works in `development`.
+- [x] Update `docs/API.md` to match enforced behaviour.
+- [x] API tests: debug header ignored in `production`; honoured in `development`/`test`.
 - [ ] E2E: optional scenario for “debug header blocked” when `APP_ENV` is not development.
 
 ---
@@ -62,7 +62,7 @@ Platform-native iOS (`apps/ios`) and Android (`apps/android`) are the real **N**
 - [ ] Add TypeScript linter (Biome or ESLint) to CI; extend `pnpm lint` beyond Clippy.
 - [ ] Optional: mutation testing (`cargo-mutants`, Stryker) on critical paths.
 - [ ] **Nx:** use `nx affected` + caching in CI, add Rust plugin, **or** remove Nx and document plain `pnpm` workflows.
-- [ ] **Health:** return minimal `{ "ok": true, "uptime_seconds": … }` or probe real dependencies; stop asserting web/native process health from Axum.
+- [x] **Health:** report only `rust-core` + `axum-api` with real crate versions (REQ-API-012). ~~Return minimal `{ "ok": true, "uptime_seconds": … }` or probe real dependencies; stop asserting web/native process health from Axum.~~
 
 ---
 

@@ -24,6 +24,11 @@ impl AppConfig {
         }
     }
 
+    /// Debug-only request headers (`X-Debug-Country`) are trusted only in `development` and `test`.
+    pub fn allows_debug_headers(&self) -> bool {
+        matches!(self.environment.as_str(), "development" | "test")
+    }
+
     pub fn socket_addr(&self) -> String {
         format!("{}:{}", self.host, self.port)
     }
@@ -60,6 +65,15 @@ mod tests {
     fn an_unparsable_port_falls_back_to_the_default() {
         assert_eq!(config_from(&[("PORT", "not-a-port")]).port, 3001);
         assert_eq!(config_from(&[("PORT", "99999")]).port, 3001);
+    }
+
+    // Verifies: REQ-API-006
+    #[test]
+    fn debug_headers_are_allowed_only_in_development_and_test() {
+        assert!(config_from(&[]).allows_debug_headers());
+        assert!(config_from(&[("APP_ENV", "test")]).allows_debug_headers());
+        assert!(!config_from(&[("APP_ENV", "production")]).allows_debug_headers());
+        assert!(!config_from(&[("APP_ENV", "staging")]).allows_debug_headers());
     }
 
     #[test]

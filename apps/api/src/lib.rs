@@ -20,7 +20,7 @@ pub async fn run_server(config: AppConfig) -> std::io::Result<()> {
     let addr = config.socket_addr();
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     tracing::info!(%addr, "Server listening");
-    serve(listener, build_app(AppState::new())).await
+    serve(listener, build_app(AppState::from_config(&config))).await
 }
 
 /// Serves `app` on an already-bound listener (tests bind port 0 and read the address back).

@@ -7,7 +7,7 @@ pub async fn stack_info_handler() -> Json<Value> {
         "description": "Voting Eligibility demo — TanStack + Rust Core + Axum + Native",
         "demo": "voting-eligibility",
         "layers": {
-            "T": "TanStack ecosystem (Vite + React SPA today; Start/router deps present but not wired — see docs/REVIEW.md)",
+            "T": "Vite + React SPA today; TanStack Start SSR is planned (ADR-0010, REQ-SEO)",
             "R": "Rust Core (Shared logic, Domain, Validation, Algorithms)",
             "A": "Axum (High-performance Async Web Backend)",
             "N": "Native mobile — SwiftUI (iOS) and Jetpack Compose (Android); apps/ios + apps/android"

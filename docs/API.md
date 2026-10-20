@@ -8,7 +8,8 @@ The Axum app in `apps/api` exposes a small REST surface. JSON shapes match `@tra
 
 ## `GET /api/health`
 
-Rust Core engine health report (uptime, component versions).
+Reports only what the server can observe in-process (REQ-API-012): `rust-core` and `axum-api`, each with its real
+crate version.
 
 ### Example
 
@@ -20,11 +21,24 @@ curl -s http://127.0.0.1:3001/api/health | jq
 
 ```json
 {
+  "report_id": "1f0c…",
+  "timestamp": "2026-10-20T08:00:00Z",
   "overall_status": "HEALTHY",
-  "uptime_seconds": 42,
   "components": [
-    { "name": "rust-core", "version": "0.1.0", "healthy": true },
-    { "name": "axum-api", "version": "0.1.0", "healthy": true }
+    {
+      "layer": "rustcore",
+      "name": "rust-core",
+      "version": "0.1.0",
+      "healthy": true,
+      "uptime_seconds": 42
+    },
+    {
+      "layer": "axumapi",
+      "name": "axum-api",
+      "version": "0.1.0",
+      "healthy": true,
+      "uptime_seconds": 42
+    }
   ]
 }
 ```
@@ -49,7 +63,7 @@ curl -s http://127.0.0.1:3001/api/tran/info | jq
   "description": "Voting Eligibility demo — TanStack + Rust Core + Axum + Native",
   "demo": "voting-eligibility",
   "layers": {
-    "T": "TanStack ecosystem (Vite + React SPA today; Start/router deps present but not wired — see docs/REVIEW.md)",
+    "T": "Vite + React SPA today; TanStack Start SSR is planned (ADR-0010, REQ-SEO)",
     "R": "Rust Core (Shared logic, Domain, Validation, Algorithms)",
     "A": "Axum (High-performance Async Web Backend)",
     "N": "Native mobile — SwiftUI (iOS) and Jetpack Compose (Android); apps/ios + apps/android"
@@ -66,11 +80,11 @@ Evaluates voting eligibility using **Rust Core** (`crates/rust-core/src/voting.r
 
 ### Headers
 
-| Header                          | Purpose                                                              |
-| :------------------------------ | :------------------------------------------------------------------- |
-| `Content-Type`                  | `application/json`                                                   |
-| `X-Forwarded-For` / `X-Real-IP` | Client IP for country stub                                           |
-| `X-Debug-Country`               | **Development only** — force ISO country (`US`, `IN`, `NP`, `BR`, …) |
+| Header                          | Purpose                                                                                  |
+| :------------------------------ | :--------------------------------------------------------------------------------------- |
+| `Content-Type`                  | `application/json`                                                                       |
+| `X-Forwarded-For` / `X-Real-IP` | Client IP for country stub                                                               |
+| `X-Debug-Country`               | Honoured only when `APP_ENV` is `development` or `test`; ignored otherwise (REQ-API-006) |
 
 Loopback addresses default to `US`; private ranges stub to `IN` for demo variety.
 
