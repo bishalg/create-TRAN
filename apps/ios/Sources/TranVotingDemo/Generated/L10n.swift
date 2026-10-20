@@ -23,6 +23,8 @@ enum L10n {
     enum Auth {
         static var continueAsAuditor: String { String(localized: "auth.continueAsAuditor", table: "Auth") }
         static var continueAsVoter: String { String(localized: "auth.continueAsVoter", table: "Auth") }
+        static var signOutConfirmBody: String { String(localized: "auth.signOutConfirm.body", table: "Auth") }
+        static var signOutConfirmTitle: String { String(localized: "auth.signOutConfirm.title", table: "Auth") }
         static var welcomeSubtitle: String { String(localized: "auth.welcome.subtitle", table: "Auth") }
         static var welcomeTitle: String { String(localized: "auth.welcome.title", table: "Auth") }
     }
@@ -30,6 +32,9 @@ enum L10n {
     enum Common {
         static var appName: String { String(localized: "common.appName", table: "Common") }
         static var brand: String { String(localized: "common.brand", table: "Common") }
+        static var cancel: String { String(localized: "common.cancel", table: "Common") }
+        static var dismiss: String { String(localized: "common.dismiss", table: "Common") }
+        static var notifications: String { String(localized: "common.notifications", table: "Common") }
         static var roleCitizenVoter: String { String(localized: "common.role.citizenVoter", table: "Common") }
         static var roleElectionAuditor: String { String(localized: "common.role.electionAuditor", table: "Common") }
         static var signOut: String { String(localized: "common.signOut", table: "Common") }
@@ -64,6 +69,7 @@ enum L10n {
         }
         static var resultSourceDevice: String { String(localized: "eligibility.result.sourceDevice", table: "Eligibility") }
         static var resultSourceServer: String { String(localized: "eligibility.result.sourceServer", table: "Eligibility") }
+        static var serverCheckDone: String { String(localized: "eligibility.serverCheckDone", table: "Eligibility") }
         static var submit: String { String(localized: "eligibility.submit", table: "Eligibility") }
         static var submitting: String { String(localized: "eligibility.submitting", table: "Eligibility") }
         static var subtitle: String { String(localized: "eligibility.subtitle", table: "Eligibility") }
@@ -75,7 +81,20 @@ enum L10n {
         static var ageAndCountry: String { String(localized: "errors.ageAndCountry", table: "Errors") }
         static var ageInvalid: String { String(localized: "errors.ageInvalid", table: "Errors") }
         static var ageOutOfRange: String { String(localized: "errors.ageOutOfRange", table: "Errors") }
+        static var birthdateInFuture: String { String(localized: "errors.birthdateInFuture", table: "Errors") }
         static var countryInvalid: String { String(localized: "errors.countryInvalid", table: "Errors") }
+        static var dateInvalid: String { String(localized: "errors.dateInvalid", table: "Errors") }
+        static var notFound: String { String(localized: "errors.notFound", table: "Errors") }
+        static var rateLimited: String { String(localized: "errors.rateLimited", table: "Errors") }
+        static func reference(_ id: String) -> String {
+            String(format: String(localized: "errors.reference", table: "Errors"), id)
+        }
+        static var requestCancelled: String { String(localized: "errors.requestCancelled", table: "Errors") }
+        static var requestMalformed: String { String(localized: "errors.requestMalformed", table: "Errors") }
+        static var serverInternal: String { String(localized: "errors.serverInternal", table: "Errors") }
+        static var serverUnavailable: String { String(localized: "errors.serverUnavailable", table: "Errors") }
+        static var timeout: String { String(localized: "errors.timeout", table: "Errors") }
+        static var unexpected: String { String(localized: "errors.unexpected", table: "Errors") }
     }
 
     enum Shell {
@@ -106,6 +125,30 @@ extension TranTheme {
         case .dark: return L10n.Shell.themeDark
         case .black: return L10n.Shell.themeBlack
         case .sepia: return L10n.Shell.themeSepia
+        }
+    }
+}
+
+extension L10n {
+    /// Localized copy for a key the Rust feedback catalogue names (ADR-0028).
+    static func feedback(_ key: String) -> String? {
+        switch key {
+        case "auth.signOutConfirm.title": return L10n.Auth.signOutConfirmTitle
+        case "eligibility.offlineNotice": return L10n.Eligibility.offlineNotice
+        case "eligibility.serverCheckDone": return L10n.Eligibility.serverCheckDone
+        case "errors.ageOutOfRange": return L10n.Errors.ageOutOfRange
+        case "errors.birthdateInFuture": return L10n.Errors.birthdateInFuture
+        case "errors.countryInvalid": return L10n.Errors.countryInvalid
+        case "errors.dateInvalid": return L10n.Errors.dateInvalid
+        case "errors.notFound": return L10n.Errors.notFound
+        case "errors.rateLimited": return L10n.Errors.rateLimited
+        case "errors.requestCancelled": return L10n.Errors.requestCancelled
+        case "errors.requestMalformed": return L10n.Errors.requestMalformed
+        case "errors.serverInternal": return L10n.Errors.serverInternal
+        case "errors.serverUnavailable": return L10n.Errors.serverUnavailable
+        case "errors.timeout": return L10n.Errors.timeout
+        case "errors.unexpected": return L10n.Errors.unexpected
+        default: return nil
         }
     }
 }

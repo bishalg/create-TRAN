@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
+import { ACTION_CATALOGUE, ERROR_CATALOGUE } from '../src/generated/feedback.js';
 
 const root = path.resolve(fileURLToPath(import.meta.url), '../../../../');
 
@@ -202,6 +203,9 @@ function usedKeys(): Set<string> {
   if (swiftViews.includes('.label') || kotlinViews.includes('labelRes')) {
     for (const mode of themeModes) used.add(`shell.theme.${mode}`);
   }
+
+  // Feedback copy is looked up by code at runtime through the Rust catalogue (ADR-0028).
+  for (const spec of [...ERROR_CATALOGUE, ...ACTION_CATALOGUE]) used.add(spec.messageKey);
 
   return used;
 }

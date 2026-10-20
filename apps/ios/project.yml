@@ -69,6 +69,7 @@ targets:
       - Sources/TranVotingDemo/Extensions
       - Sources/TranVotingDemo/TranMotion.swift
       - Sources/TranVotingDemo/AuthSession.swift
+      - Sources/TranVotingDemo/Feedback/TranFeedback.swift
     dependencies:
       - target: TranVotingDemo
     settings:

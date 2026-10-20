@@ -24,7 +24,6 @@ private fun TranValidationException.code(): String =
         is TranValidationException.InvalidBirthdate -> "invalid_birthdate"
         is TranValidationException.InvalidReferenceDate -> "invalid_reference_date"
         is TranValidationException.InvalidCountryCode -> "invalid_country_code"
-        is TranValidationException.Internal -> "internal"
     }
 
 class VoteEligibilityParityTest {

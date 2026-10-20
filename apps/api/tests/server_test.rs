@@ -1,5 +1,6 @@
 // Verifies: REQ-API-013
 //! Real-socket smoke tests: the only place the TCP listener and `run_server` are exercised.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use api::config::AppConfig;
 use api::state::AppState;

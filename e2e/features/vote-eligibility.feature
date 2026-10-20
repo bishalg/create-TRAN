@@ -29,7 +29,7 @@ Feature: Voting eligibility
 
   Scenario: The server rejects a malformed country and the app stays online
     When I ask the server with age "30" and country "U1"
-    Then I see the error "Country code must be two ASCII letters"
+    Then I see the error "Country must be two letters"
     And I do not see the offline notice
 
   Scenario Outline: Invalid ages are explained, not ignored

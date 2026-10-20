@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, Utc};
+use chrono::{DateTime, NaiveDate, NaiveTime, Utc};
 use uuid::Uuid;
 
 use crate::error::CoreResult;
@@ -16,8 +16,8 @@ impl TranEngine {
         Self
     }
 
-    /// Evaluates eligibility using the current UTC date. Prefer
-    /// [`Self::evaluate_vote_eligibility_on`] in tests so results do not depend on the clock.
+    /// Evaluates eligibility at the current instant, read once (REQ-ROB-011). Prefer
+    /// [`Self::evaluate_vote_eligibility_at`] in tests so results do not depend on the clock.
     pub fn evaluate_vote_eligibility(
         &self,
         request: VoteEligibilityRequest,
@@ -25,16 +25,17 @@ impl TranEngine {
         country_source: &str,
         client_ip: &str,
     ) -> CoreResult<VoteEligibilityResponse> {
-        self.evaluate_vote_eligibility_on(
+        self.evaluate_vote_eligibility_at(
             request,
             country_code,
             country_source,
             client_ip,
-            Utc::now().date_naive(),
+            Utc::now(),
         )
     }
 
-    /// Deterministic core of the eligibility rules: `today` is injected, never read from a clock.
+    /// Evaluates as of midnight UTC on `today` — for callers that only have a date (offline FFI,
+    /// golden fixtures).
     pub fn evaluate_vote_eligibility_on(
         &self,
         request: VoteEligibilityRequest,
@@ -43,6 +44,26 @@ impl TranEngine {
         client_ip: &str,
         today: NaiveDate,
     ) -> CoreResult<VoteEligibilityResponse> {
+        self.evaluate_vote_eligibility_at(
+            request,
+            country_code,
+            country_source,
+            client_ip,
+            today.and_time(NaiveTime::MIN).and_utc(),
+        )
+    }
+
+    /// Deterministic core of the eligibility rules: `now` is injected, never read from a clock, and
+    /// both the age and `evaluated_at` come from it (REQ-ROB-011).
+    pub fn evaluate_vote_eligibility_at(
+        &self,
+        request: VoteEligibilityRequest,
+        country_code: &str,
+        country_source: &str,
+        client_ip: &str,
+        now: DateTime<Utc>,
+    ) -> CoreResult<VoteEligibilityResponse> {
+        let today = now.date_naive();
         validate_vote_eligibility_request(&request, today)?;
         validate_country_code(country_code)?;
 
@@ -70,7 +91,7 @@ impl TranEngine {
             country_source: country_source.to_string(),
             client_ip: client_ip.to_string(),
             reason,
-            evaluated_at: Utc::now(),
+            evaluated_at: now,
         })
     }
 

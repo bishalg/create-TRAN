@@ -84,10 +84,47 @@
     "2000-00-10",
     "20000101",
     "not-a-date",
-    ""
+    "",
+    "-0001-01-01",
+    "-262143-01-01",
+    "+002000-01-01",
+    "20000-01-01",
+    " 2000-01-01",
+    "2000-1-01",
+    "2000-04-31",
+    "2000-01-01T00:00:00Z",
+    "2000-01-01\n"
   ],
   "invalidCountryCodes": ["", "U", "USA", "U1", "1S", " ", "U S"],
   "evaluations": [
+    {
+      "name": "age 150 is the oldest accepted",
+      "input": { "age": 150 },
+      "countryCode": "US",
+      "referenceDate": "2026-10-18",
+      "expected": {
+        "eligible": true,
+        "age": 150,
+        "minimumAge": 18,
+        "countryCode": "US",
+        "reason": "Age 150 meets the minimum voting age of 18 in US.",
+        "reasonCode": "meets_minimum_age"
+      }
+    },
+    {
+      "name": "born on the reference date is age 0, not in the future",
+      "input": { "age": 30, "birthdate": "2026-10-18" },
+      "countryCode": "US",
+      "referenceDate": "2026-10-18",
+      "expected": {
+        "eligible": false,
+        "age": 0,
+        "minimumAge": 18,
+        "countryCode": "US",
+        "reason": "Age 0 is below the minimum voting age of 18 in US.",
+        "reasonCode": "below_minimum_age"
+      }
+    },
     {
       "name": "adult in Nepal by age",
       "input": { "age": 20 },
@@ -185,6 +222,20 @@
         "reason": "Age 18 meets the minimum voting age of 18 in ZZ.",
         "reasonCode": "meets_minimum_age"
       }
+    },
+    {
+      "name": "birthdate exactly 150 years ago is the oldest accepted",
+      "input": { "age": 0, "birthdate": "1876-10-18" },
+      "countryCode": "US",
+      "referenceDate": "2026-10-18",
+      "expected": {
+        "eligible": true,
+        "age": 150,
+        "minimumAge": 18,
+        "countryCode": "US",
+        "reason": "Age 150 meets the minimum voting age of 18 in US.",
+        "reasonCode": "meets_minimum_age"
+      }
     }
   ],
   "rejectedEvaluations": [
@@ -211,6 +262,22 @@
       "referenceDate": "2026-10-18",
       "error": "Country code must be two ASCII letters (ISO 3166-1 alpha-2)",
       "code": "invalid_country_code"
+    },
+    {
+      "name": "birthdate implying an age of 151 (REQ-ROB-001)",
+      "input": { "age": 20, "birthdate": "1875-10-18" },
+      "countryCode": "US",
+      "referenceDate": "2026-10-18",
+      "error": "Age must be 150 or less",
+      "code": "age_out_of_range"
+    },
+    {
+      "name": "birthdate centuries ago never wraps into a plausible age (REQ-ROB-001)",
+      "input": { "age": 20, "birthdate": "0001-01-01" },
+      "countryCode": "US",
+      "referenceDate": "2026-10-18",
+      "error": "Age must be 150 or less",
+      "code": "age_out_of_range"
     }
   ]
 }

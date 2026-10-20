@@ -67,6 +67,28 @@
         }
       }
     },
+    "errors.birthdateInFuture": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Birthdate can't be in the future."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जन्मतिथि भविष्य की नहीं हो सकती।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जन्ममिति भविष्यको हुन सक्दैन।"
+          }
+        }
+      }
+    },
     "errors.countryInvalid": {
       "localizations": {
         "en": {
@@ -85,6 +107,226 @@
           "stringUnit": {
             "state": "translated",
             "value": "देश दुई अक्षरको हुनुपर्छ"
+          }
+        }
+      }
+    },
+    "errors.dateInvalid": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter a real date as YYYY-MM-DD."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YYYY-MM-DD रूप में सही तारीख दर्ज करें।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YYYY-MM-DD ढाँचामा सही मिति लेख्नुहोस्।"
+          }
+        }
+      }
+    },
+    "errors.notFound": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This feature isn't available on the server yet."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "यह सुविधा अभी सर्वर पर उपलब्ध नहीं है।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "यो सुविधा अहिले सर्भरमा उपलब्ध छैन।"
+          }
+        }
+      }
+    },
+    "errors.rateLimited": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Too many requests. Please wait a moment and try again."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "बहुत अधिक अनुरोध। कृपया थोड़ी देर बाद फिर कोशिश करें।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "धेरै अनुरोधहरू भए। कृपया केही बेरपछि फेरि प्रयास गर्नुहोस्।"
+          }
+        }
+      }
+    },
+    "errors.reference": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reference: %1$@"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "संदर्भ: %1$@"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सन्दर्भ: %1$@"
+          }
+        }
+      }
+    },
+    "errors.requestCancelled": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The request was cancelled."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अनुरोध रद्द कर दिया गया।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अनुरोध रद्द गरियो।"
+          }
+        }
+      }
+    },
+    "errors.requestMalformed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app sent a request the server couldn't read. Please refresh and try again."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ऐप ने ऐसा अनुरोध भेजा जिसे सर्वर पढ़ नहीं सका। कृपया रीफ़्रेश करके फिर कोशिश करें।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "एपले सर्भरले पढ्न नसक्ने अनुरोध पठायो। कृपया रिफ्रेस गरेर फेरि प्रयास गर्नुहोस्।"
+          }
+        }
+      }
+    },
+    "errors.serverInternal": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something went wrong on our side. Your result was checked on this device instead."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "हमारी ओर से कुछ गड़बड़ हुई। आपका परिणाम इसी डिवाइस पर जाँचा गया।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "हाम्रो तर्फबाट केही गडबड भयो। तपाईंको नतिजा यही उपकरणमा जाँचियो।"
+          }
+        }
+      }
+    },
+    "errors.serverUnavailable": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The server is temporarily unavailable — results are checked on this device."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सर्वर अस्थायी रूप से उपलब्ध नहीं है — परिणाम इसी डिवाइस पर जाँचे जा रहे हैं।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सर्भर अस्थायी रूपमा उपलब्ध छैन — नतिजा यही उपकरणमा जाँचिँदैछ।"
+          }
+        }
+      }
+    },
+    "errors.timeout": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The server is taking too long — results are checked on this device."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सर्वर बहुत समय ले रहा है — परिणाम इसी डिवाइस पर जाँचे जा रहे हैं।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सर्भरले धेरै समय लिइरहेको छ — नतिजा यही उपकरणमा जाँचिँदैछ।"
+          }
+        }
+      }
+    },
+    "errors.unexpected": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something went wrong in the app. Please try again."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ऐप में कुछ गड़बड़ हुई। कृपया फिर कोशिश करें।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "एपमा केही गडबड भयो। कृपया फेरि प्रयास गर्नुहोस्।"
           }
         }
       }

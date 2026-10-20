@@ -2,5 +2,16 @@
   "ageOutOfRange": "Enter a whole-number age between 0 and 150.",
   "ageInvalid": "Enter a valid age",
   "countryInvalid": "Country must be two letters",
-  "ageAndCountry": "Enter age and country"
+  "ageAndCountry": "Enter age and country",
+  "birthdateInFuture": "Birthdate can't be in the future.",
+  "dateInvalid": "Enter a real date as YYYY-MM-DD.",
+  "requestMalformed": "The app sent a request the server couldn't read. Please refresh and try again.",
+  "requestCancelled": "The request was cancelled.",
+  "notFound": "This feature isn't available on the server yet.",
+  "rateLimited": "Too many requests. Please wait a moment and try again.",
+  "serverInternal": "Something went wrong on our side. Your result was checked on this device instead.",
+  "serverUnavailable": "The server is temporarily unavailable — results are checked on this device.",
+  "timeout": "The server is taking too long — results are checked on this device.",
+  "reference": "Reference: {id}",
+  "unexpected": "Something went wrong in the app. Please try again."
 }

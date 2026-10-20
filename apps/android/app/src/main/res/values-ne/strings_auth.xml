@@ -3,6 +3,8 @@
 <resources>
     <string name="auth_continue_as_auditor">निर्वाचन अडिटरको रूपमा जारी राख्नुहोस्</string>
     <string name="auth_continue_as_voter">नागरिक मतदाताको रूपमा जारी राख्नुहोस्</string>
+    <string name="auth_sign_out_confirm_body">तपाईं भूमिका छनोटमा फर्कनुहुनेछ।</string>
+    <string name="auth_sign_out_confirm_title">साइन आउट गर्ने?</string>
     <string name="auth_welcome_subtitle">जारी राख्न आफ्नो भूमिका छान्नुहोस्:</string>
     <string name="auth_welcome_title">TRAN मतदानमा स्वागत छ</string>
 </resources>

@@ -1,0 +1,370 @@
+{
+  "$comment": "Golden error/feedback policy (REQ-ERR-*) shared by Rust (crates/rust-core/tests/feedback_fixtures.rs), TypeScript (packages/core-ts/tests/feedback.test.ts), iOS and Android parity tests. Change the policy here first (red), then in crates/rust-core/src/feedback.rs, then `pnpm tokens:sync`.",
+  "toastDurationsMs": {
+    "short": 3000,
+    "medium": 5000,
+    "long": 10000
+  },
+  "retryPolicy": {
+    "maxAttempts": 3,
+    "baseDelayMs": 200,
+    "maxDelayMs": 2000,
+    "requestTimeoutMs": 5000
+  },
+  "serverDeadlineMs": 4000,
+  "logEvent": {
+    "message": "request failed",
+    "fields": ["code", "status", "request_id"]
+  },
+  "retryDelays": [
+    {
+      "retry": 1,
+      "random": 0,
+      "expectedMs": 100
+    },
+    {
+      "retry": 1,
+      "random": 0.5,
+      "expectedMs": 150
+    },
+    {
+      "retry": 1,
+      "random": 0.999,
+      "expectedMs": 199
+    },
+    {
+      "retry": 2,
+      "random": 0.5,
+      "expectedMs": 300
+    },
+    {
+      "retry": 3,
+      "random": 0.25,
+      "expectedMs": 500
+    },
+    {
+      "retry": 5,
+      "random": 0,
+      "expectedMs": 1000
+    }
+  ],
+  "requestIds": {
+    "valid": [
+      "a",
+      "req-e2e-500",
+      "trace_42.v1",
+      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    ],
+    "invalid": [
+      "",
+      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
+      "has spaces",
+      "evil\nline",
+      "semi;colon",
+      "quote\"d",
+      "ünïcode",
+      "<script>"
+    ]
+  },
+  "retryAfter": [
+    {
+      "header": " 1 ",
+      "expectedMs": 1000
+    },
+    {
+      "header": "99999999999999999999999",
+      "expectedMs": 2000
+    },
+    {
+      "header": "+1",
+      "expectedMs": null
+    },
+    {
+      "header": "-1",
+      "expectedMs": null
+    },
+    {
+      "header": "1a",
+      "expectedMs": null
+    },
+    {
+      "header": "a1",
+      "expectedMs": null
+    },
+    {
+      "header": "1.5",
+      "expectedMs": null
+    },
+    {
+      "header": "1",
+      "expectedMs": 1000
+    },
+    {
+      "header": "0",
+      "expectedMs": 0
+    },
+    {
+      "header": "10",
+      "expectedMs": 2000
+    },
+    {
+      "header": "abc",
+      "expectedMs": null
+    },
+    {
+      "header": "",
+      "expectedMs": null
+    }
+  ],
+  "errors": [
+    {
+      "code": "validation.age_out_of_range",
+      "httpStatus": 400,
+      "retryable": false,
+      "logLevel": "debug",
+      "presentation": {
+        "kind": "inline"
+      },
+      "messageKey": "errors.ageOutOfRange"
+    },
+    {
+      "code": "validation.birthdate_in_future",
+      "httpStatus": 400,
+      "retryable": false,
+      "logLevel": "debug",
+      "presentation": {
+        "kind": "inline"
+      },
+      "messageKey": "errors.birthdateInFuture"
+    },
+    {
+      "code": "validation.invalid_country_code",
+      "httpStatus": 400,
+      "retryable": false,
+      "logLevel": "debug",
+      "presentation": {
+        "kind": "inline"
+      },
+      "messageKey": "errors.countryInvalid"
+    },
+    {
+      "code": "validation.invalid_date",
+      "httpStatus": 400,
+      "retryable": false,
+      "logLevel": "debug",
+      "presentation": {
+        "kind": "inline"
+      },
+      "messageKey": "errors.dateInvalid"
+    },
+    {
+      "code": "request.malformed",
+      "httpStatus": 400,
+      "retryable": false,
+      "logLevel": "warn",
+      "presentation": {
+        "kind": "toast",
+        "tone": "error",
+        "duration": "medium"
+      },
+      "messageKey": "errors.requestMalformed"
+    },
+    {
+      "code": "request.unsupported_media_type",
+      "httpStatus": 415,
+      "retryable": false,
+      "logLevel": "warn",
+      "presentation": {
+        "kind": "toast",
+        "tone": "error",
+        "duration": "medium"
+      },
+      "messageKey": "errors.requestMalformed"
+    },
+    {
+      "code": "request.too_large",
+      "httpStatus": 413,
+      "retryable": false,
+      "logLevel": "warn",
+      "presentation": {
+        "kind": "toast",
+        "tone": "error",
+        "duration": "medium"
+      },
+      "messageKey": "errors.requestMalformed"
+    },
+    {
+      "code": "request.cancelled",
+      "httpStatus": null,
+      "retryable": false,
+      "logLevel": "debug",
+      "presentation": {
+        "kind": "silent"
+      },
+      "messageKey": "errors.requestCancelled"
+    },
+    {
+      "code": "route.not_found",
+      "httpStatus": 404,
+      "retryable": false,
+      "logLevel": "warn",
+      "presentation": {
+        "kind": "toast",
+        "tone": "error",
+        "duration": "medium"
+      },
+      "messageKey": "errors.notFound"
+    },
+    {
+      "code": "route.method_not_allowed",
+      "httpStatus": 405,
+      "retryable": false,
+      "logLevel": "warn",
+      "presentation": {
+        "kind": "toast",
+        "tone": "error",
+        "duration": "medium"
+      },
+      "messageKey": "errors.notFound"
+    },
+    {
+      "code": "server.rate_limited",
+      "httpStatus": 429,
+      "retryable": true,
+      "logLevel": "warn",
+      "presentation": {
+        "kind": "toast",
+        "tone": "warning",
+        "duration": "medium"
+      },
+      "messageKey": "errors.rateLimited"
+    },
+    {
+      "code": "server.internal",
+      "httpStatus": 500,
+      "retryable": true,
+      "logLevel": "error",
+      "presentation": {
+        "kind": "toast",
+        "tone": "error",
+        "duration": "long"
+      },
+      "messageKey": "errors.serverInternal"
+    },
+    {
+      "code": "server.unavailable",
+      "httpStatus": 503,
+      "retryable": true,
+      "logLevel": "warn",
+      "presentation": {
+        "kind": "banner"
+      },
+      "messageKey": "errors.serverUnavailable"
+    },
+    {
+      "code": "network.offline",
+      "httpStatus": null,
+      "retryable": true,
+      "logLevel": "info",
+      "presentation": {
+        "kind": "banner"
+      },
+      "messageKey": "eligibility.offlineNotice"
+    },
+    {
+      "code": "network.timeout",
+      "httpStatus": null,
+      "retryable": true,
+      "logLevel": "info",
+      "presentation": {
+        "kind": "banner"
+      },
+      "messageKey": "errors.timeout"
+    },
+    {
+      "code": "client.unexpected",
+      "httpStatus": null,
+      "retryable": false,
+      "logLevel": "error",
+      "presentation": {
+        "kind": "toast",
+        "tone": "error",
+        "duration": "long"
+      },
+      "messageKey": "errors.unexpected"
+    }
+  ],
+  "statusFallback": [
+    {
+      "status": 400,
+      "code": "request.malformed"
+    },
+    {
+      "status": 401,
+      "code": "request.malformed"
+    },
+    {
+      "status": 404,
+      "code": "route.not_found"
+    },
+    {
+      "status": 405,
+      "code": "route.method_not_allowed"
+    },
+    {
+      "status": 413,
+      "code": "request.too_large"
+    },
+    {
+      "status": 415,
+      "code": "request.unsupported_media_type"
+    },
+    {
+      "status": 418,
+      "code": "request.malformed"
+    },
+    {
+      "status": 429,
+      "code": "server.rate_limited"
+    },
+    {
+      "status": 500,
+      "code": "server.internal"
+    },
+    {
+      "status": 501,
+      "code": "server.internal"
+    },
+    {
+      "status": 502,
+      "code": "server.unavailable"
+    },
+    {
+      "status": 503,
+      "code": "server.unavailable"
+    },
+    {
+      "status": 504,
+      "code": "server.unavailable"
+    }
+  ],
+  "actions": [
+    {
+      "action": "sign_out",
+      "presentation": {
+        "kind": "dialog",
+        "destructive": true
+      },
+      "messageKey": "auth.signOutConfirm.title"
+    },
+    {
+      "action": "server_check_succeeded",
+      "presentation": {
+        "kind": "toast",
+        "tone": "success",
+        "duration": "short"
+      },
+      "messageKey": "eligibility.serverCheckDone"
+    }
+  ]
+}

@@ -1,4 +1,5 @@
-use chrono::NaiveDate;
+#![allow(clippy::unwrap_used, clippy::expect_used)]
+use chrono::{NaiveDate, TimeZone, Utc};
 use rust_core::{
     age_from_birthdate, can_vote_by_age, validate_vote_eligibility_request, voting_age_for_country,
     CoreError, StackLayer, TranEngine, VoteEligibilityRequest,
@@ -28,6 +29,48 @@ fn test_engine_vote_eligibility() {
         .expect("eligibility");
     assert!(res.eligible);
     assert_eq!(res.minimum_age, 18);
+}
+
+// Verifies: REQ-ROB-011
+#[test]
+fn one_instant_decides_both_the_age_and_the_timestamp() {
+    // One second before an 18th birthday: the age and `evaluated_at` must agree on the day.
+    let now = Utc.with_ymd_and_hms(2026, 10, 17, 23, 59, 59).unwrap();
+    let res = TranEngine::new()
+        .evaluate_vote_eligibility_at(
+            VoteEligibilityRequest {
+                age: 0,
+                birthdate: NaiveDate::from_ymd_opt(2008, 10, 18),
+            },
+            "US",
+            "test",
+            "127.0.0.1",
+            now,
+        )
+        .expect("eligibility");
+    assert_eq!(res.evaluated_at, now);
+    assert_eq!(res.age, 17);
+    assert!(!res.eligible);
+}
+
+#[test]
+fn a_date_evaluates_at_midnight_utc() {
+    let res = TranEngine::new()
+        .evaluate_vote_eligibility_on(
+            VoteEligibilityRequest {
+                age: 30,
+                birthdate: None,
+            },
+            "US",
+            "test",
+            "127.0.0.1",
+            NaiveDate::from_ymd_opt(2026, 10, 18).unwrap(),
+        )
+        .expect("eligibility");
+    assert_eq!(
+        res.evaluated_at,
+        Utc.with_ymd_and_hms(2026, 10, 18, 0, 0, 0).unwrap()
+    );
 }
 
 #[test]

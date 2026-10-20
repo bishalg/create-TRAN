@@ -3,6 +3,9 @@
 <resources>
     <string name="common_app_name">TRAN मतदान</string>
     <string name="common_brand">TRAN</string>
+    <string name="common_cancel">रद्द गर्नुहोस्</string>
+    <string name="common_dismiss">बन्द गर्नुहोस्</string>
+    <string name="common_notifications">सूचनाहरू</string>
     <string name="common_role_citizen_voter">नागरिक मतदाता</string>
     <string name="common_role_election_auditor">निर्वाचन अडिटर</string>
     <string name="common_sign_out">साइन आउट</string>

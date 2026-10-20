@@ -481,6 +481,54 @@ fileprivate struct FfiConverterUInt16: FfiConverterPrimitive {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterUInt32: FfiConverterPrimitive {
+    typealias FfiType = UInt32
+    typealias SwiftType = UInt32
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UInt32 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterUInt64: FfiConverterPrimitive {
+    typealias FfiType = UInt64
+    typealias SwiftType = UInt64
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UInt64 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterDouble: FfiConverterPrimitive {
+    typealias FfiType = Double
+    typealias SwiftType = Double
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Double {
+        return try lift(readDouble(&buf))
+    }
+
+    public static func write(_ value: Double, into buf: inout [UInt8]) {
+        writeDouble(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterBool : FfiConverter {
     typealias FfiType = Int8
     typealias SwiftType = Bool
@@ -550,6 +598,95 @@ fileprivate struct FfiConverterString: FfiConverter {
 
 
 /**
+ * How a [`TranUserAction`] is presented.
+ */
+public struct TranActionSpec: Equatable, Hashable {
+    /**
+     * The action this spec describes.
+     */
+    public var action: TranUserAction
+    /**
+     * The action's stable name, as in `fixtures/feedback.json`.
+     */
+    public var wireName: String
+    /**
+     * How the user is asked or told.
+     */
+    public var presentation: TranPresentation
+    /**
+     * Locale key of the headline (the dialog title or the toast text).
+     */
+    public var messageKey: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * The action this spec describes.
+         */action: TranUserAction, 
+        /**
+         * The action's stable name, as in `fixtures/feedback.json`.
+         */wireName: String, 
+        /**
+         * How the user is asked or told.
+         */presentation: TranPresentation, 
+        /**
+         * Locale key of the headline (the dialog title or the toast text).
+         */messageKey: String) {
+        self.action = action
+        self.wireName = wireName
+        self.presentation = presentation
+        self.messageKey = messageKey
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranActionSpec: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranActionSpec: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranActionSpec {
+        return
+            try TranActionSpec(
+                action: FfiConverterTypeTranUserAction.read(from: &buf), 
+                wireName: FfiConverterString.read(from: &buf), 
+                presentation: FfiConverterTypeTranPresentation.read(from: &buf), 
+                messageKey: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranActionSpec, into buf: inout [UInt8]) {
+        FfiConverterTypeTranUserAction.write(value.action, into: &buf)
+        FfiConverterString.write(value.wireName, into: &buf)
+        FfiConverterTypeTranPresentation.write(value.presentation, into: &buf)
+        FfiConverterString.write(value.messageKey, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranActionSpec_lift(_ buf: RustBuffer) throws -> TranActionSpec {
+    return try FfiConverterTypeTranActionSpec.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranActionSpec_lower(_ value: TranActionSpec) -> RustBuffer {
+    return FfiConverterTypeTranActionSpec.lower(value)
+}
+
+
+/**
  * One row of the supported-country table.
  */
 public struct TranCountryVotingAge: Equatable, Hashable {
@@ -615,6 +752,214 @@ public func FfiConverterTypeTranCountryVotingAge_lift(_ buf: RustBuffer) throws 
 #endif
 public func FfiConverterTypeTranCountryVotingAge_lower(_ value: TranCountryVotingAge) -> RustBuffer {
     return FfiConverterTypeTranCountryVotingAge.lower(value)
+}
+
+
+/**
+ * Everything a native app needs to know about one [`TranErrorCode`].
+ */
+public struct TranErrorSpec: Equatable, Hashable {
+    /**
+     * The code this spec describes.
+     */
+    public var code: TranErrorCode
+    /**
+     * The code as it travels in the API envelope's `code` field.
+     */
+    public var wireCode: String
+    /**
+     * Status the API answers with; `None` for failures only a client can observe.
+     */
+    public var httpStatus: UInt16?
+    /**
+     * Whether an idempotent request failing with this code may be retried.
+     */
+    public var retryable: Bool
+    /**
+     * Level to log at.
+     */
+    public var logLevel: TranLogLevel
+    /**
+     * How the user hears about it.
+     */
+    public var presentation: TranPresentation
+    /**
+     * Locale key of the message (`L10n.feedback(_:)` on iOS, `feedbackMessageRes` on Android).
+     */
+    public var messageKey: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * The code this spec describes.
+         */code: TranErrorCode, 
+        /**
+         * The code as it travels in the API envelope's `code` field.
+         */wireCode: String, 
+        /**
+         * Status the API answers with; `None` for failures only a client can observe.
+         */httpStatus: UInt16?, 
+        /**
+         * Whether an idempotent request failing with this code may be retried.
+         */retryable: Bool, 
+        /**
+         * Level to log at.
+         */logLevel: TranLogLevel, 
+        /**
+         * How the user hears about it.
+         */presentation: TranPresentation, 
+        /**
+         * Locale key of the message (`L10n.feedback(_:)` on iOS, `feedbackMessageRes` on Android).
+         */messageKey: String) {
+        self.code = code
+        self.wireCode = wireCode
+        self.httpStatus = httpStatus
+        self.retryable = retryable
+        self.logLevel = logLevel
+        self.presentation = presentation
+        self.messageKey = messageKey
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranErrorSpec: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranErrorSpec: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranErrorSpec {
+        return
+            try TranErrorSpec(
+                code: FfiConverterTypeTranErrorCode.read(from: &buf), 
+                wireCode: FfiConverterString.read(from: &buf), 
+                httpStatus: FfiConverterOptionUInt16.read(from: &buf), 
+                retryable: FfiConverterBool.read(from: &buf), 
+                logLevel: FfiConverterTypeTranLogLevel.read(from: &buf), 
+                presentation: FfiConverterTypeTranPresentation.read(from: &buf), 
+                messageKey: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranErrorSpec, into buf: inout [UInt8]) {
+        FfiConverterTypeTranErrorCode.write(value.code, into: &buf)
+        FfiConverterString.write(value.wireCode, into: &buf)
+        FfiConverterOptionUInt16.write(value.httpStatus, into: &buf)
+        FfiConverterBool.write(value.retryable, into: &buf)
+        FfiConverterTypeTranLogLevel.write(value.logLevel, into: &buf)
+        FfiConverterTypeTranPresentation.write(value.presentation, into: &buf)
+        FfiConverterString.write(value.messageKey, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranErrorSpec_lift(_ buf: RustBuffer) throws -> TranErrorSpec {
+    return try FfiConverterTypeTranErrorSpec.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranErrorSpec_lower(_ value: TranErrorSpec) -> RustBuffer {
+    return FfiConverterTypeTranErrorSpec.lower(value)
+}
+
+
+/**
+ * Retry budget for idempotent requests (REQ-ERR-005).
+ */
+public struct TranRetryPolicy: Equatable, Hashable {
+    /**
+     * Total attempts, including the first.
+     */
+    public var maxAttempts: UInt32
+    /**
+     * Base of the exponential backoff.
+     */
+    public var baseDelayMs: UInt64
+    /**
+     * Ceiling for any single wait, including `Retry-After`.
+     */
+    public var maxDelayMs: UInt64
+    /**
+     * Per-attempt timeout; exceeding it is [`TranErrorCode::NetworkTimeout`].
+     */
+    public var requestTimeoutMs: UInt64
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Total attempts, including the first.
+         */maxAttempts: UInt32, 
+        /**
+         * Base of the exponential backoff.
+         */baseDelayMs: UInt64, 
+        /**
+         * Ceiling for any single wait, including `Retry-After`.
+         */maxDelayMs: UInt64, 
+        /**
+         * Per-attempt timeout; exceeding it is [`TranErrorCode::NetworkTimeout`].
+         */requestTimeoutMs: UInt64) {
+        self.maxAttempts = maxAttempts
+        self.baseDelayMs = baseDelayMs
+        self.maxDelayMs = maxDelayMs
+        self.requestTimeoutMs = requestTimeoutMs
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranRetryPolicy: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranRetryPolicy: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranRetryPolicy {
+        return
+            try TranRetryPolicy(
+                maxAttempts: FfiConverterUInt32.read(from: &buf), 
+                baseDelayMs: FfiConverterUInt64.read(from: &buf), 
+                maxDelayMs: FfiConverterUInt64.read(from: &buf), 
+                requestTimeoutMs: FfiConverterUInt64.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranRetryPolicy, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.maxAttempts, into: &buf)
+        FfiConverterUInt64.write(value.baseDelayMs, into: &buf)
+        FfiConverterUInt64.write(value.maxDelayMs, into: &buf)
+        FfiConverterUInt64.write(value.requestTimeoutMs, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranRetryPolicy_lift(_ buf: RustBuffer) throws -> TranRetryPolicy {
+    return try FfiConverterTypeTranRetryPolicy.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranRetryPolicy_lower(_ value: TranRetryPolicy) -> RustBuffer {
+    return FfiConverterTypeTranRetryPolicy.lower(value)
 }
 
 
@@ -892,6 +1237,693 @@ public func FfiConverterTypeTranEligibilityReason_lower(_ value: TranEligibility
 
 
 /**
+ * A stable failure code. Its wire form (for example `validation.invalid_country_code`) is
+ * [`TranErrorSpec::wire_code`]; everything else about it is in [`error_spec`].
+ */
+
+public enum TranErrorCode: Equatable, Hashable {
+    
+    /**
+     * The age is negative, fractional or above 150.
+     */
+    case validationAgeOutOfRange
+    /**
+     * The birthdate is after the reference date.
+     */
+    case validationBirthdateInFuture
+    /**
+     * The country code is not two ASCII letters.
+     */
+    case validationInvalidCountryCode
+    /**
+     * A date is not `YYYY-MM-DD`.
+     */
+    case validationInvalidDate
+    /**
+     * The server could not read the request body.
+     */
+    case requestMalformed
+    /**
+     * The request was not sent as JSON.
+     */
+    case requestUnsupportedMediaType
+    /**
+     * The request body is larger than the server accepts.
+     */
+    case requestTooLarge
+    /**
+     * The app cancelled the request itself (for example, the screen closed).
+     */
+    case requestCancelled
+    /**
+     * The server has no such route.
+     */
+    case routeNotFound
+    /**
+     * The route exists but not for this method.
+     */
+    case routeMethodNotAllowed
+    /**
+     * Too many requests; retry later.
+     */
+    case serverRateLimited
+    /**
+     * The server failed unexpectedly.
+     */
+    case serverInternal
+    /**
+     * The server (or a proxy in front of it) is temporarily down.
+     */
+    case serverUnavailable
+    /**
+     * No response at all: no network, or the server is unreachable.
+     */
+    case networkOffline
+    /**
+     * The request exceeded [`TranRetryPolicy::request_timeout_ms`].
+     */
+    case networkTimeout
+    /**
+     * A bug in the app itself.
+     */
+    case clientUnexpected
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranErrorCode: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranErrorCode: FfiConverterRustBuffer {
+    typealias SwiftType = TranErrorCode
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranErrorCode {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .validationAgeOutOfRange
+        
+        case 2: return .validationBirthdateInFuture
+        
+        case 3: return .validationInvalidCountryCode
+        
+        case 4: return .validationInvalidDate
+        
+        case 5: return .requestMalformed
+        
+        case 6: return .requestUnsupportedMediaType
+        
+        case 7: return .requestTooLarge
+        
+        case 8: return .requestCancelled
+        
+        case 9: return .routeNotFound
+        
+        case 10: return .routeMethodNotAllowed
+        
+        case 11: return .serverRateLimited
+        
+        case 12: return .serverInternal
+        
+        case 13: return .serverUnavailable
+        
+        case 14: return .networkOffline
+        
+        case 15: return .networkTimeout
+        
+        case 16: return .clientUnexpected
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranErrorCode, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .validationAgeOutOfRange:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .validationBirthdateInFuture:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .validationInvalidCountryCode:
+            writeInt(&buf, Int32(3))
+        
+        
+        case .validationInvalidDate:
+            writeInt(&buf, Int32(4))
+        
+        
+        case .requestMalformed:
+            writeInt(&buf, Int32(5))
+        
+        
+        case .requestUnsupportedMediaType:
+            writeInt(&buf, Int32(6))
+        
+        
+        case .requestTooLarge:
+            writeInt(&buf, Int32(7))
+        
+        
+        case .requestCancelled:
+            writeInt(&buf, Int32(8))
+        
+        
+        case .routeNotFound:
+            writeInt(&buf, Int32(9))
+        
+        
+        case .routeMethodNotAllowed:
+            writeInt(&buf, Int32(10))
+        
+        
+        case .serverRateLimited:
+            writeInt(&buf, Int32(11))
+        
+        
+        case .serverInternal:
+            writeInt(&buf, Int32(12))
+        
+        
+        case .serverUnavailable:
+            writeInt(&buf, Int32(13))
+        
+        
+        case .networkOffline:
+            writeInt(&buf, Int32(14))
+        
+        
+        case .networkTimeout:
+            writeInt(&buf, Int32(15))
+        
+        
+        case .clientUnexpected:
+            writeInt(&buf, Int32(16))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranErrorCode_lift(_ buf: RustBuffer) throws -> TranErrorCode {
+    return try FfiConverterTypeTranErrorCode.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranErrorCode_lower(_ value: TranErrorCode) -> RustBuffer {
+    return FfiConverterTypeTranErrorCode.lower(value)
+}
+
+
+
+/**
+ * How loudly to log a failure where it is handled.
+ */
+
+public enum TranLogLevel: Equatable, Hashable {
+    
+    /**
+     * Expected and harmless (validation).
+     */
+    case debug
+    /**
+     * Expected but worth knowing (offline).
+     */
+    case info
+    /**
+     * Unexpected, recoverable.
+     */
+    case warn
+    /**
+     * A bug or an outage; always investigate.
+     */
+    case error
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranLogLevel: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranLogLevel: FfiConverterRustBuffer {
+    typealias SwiftType = TranLogLevel
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranLogLevel {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .debug
+        
+        case 2: return .info
+        
+        case 3: return .warn
+        
+        case 4: return .error
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranLogLevel, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .debug:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .info:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .warn:
+            writeInt(&buf, Int32(3))
+        
+        
+        case .error:
+            writeInt(&buf, Int32(4))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranLogLevel_lift(_ buf: RustBuffer) throws -> TranLogLevel {
+    return try FfiConverterTypeTranLogLevel.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranLogLevel_lower(_ value: TranLogLevel) -> RustBuffer {
+    return FfiConverterTypeTranLogLevel.lower(value)
+}
+
+
+
+/**
+ * The one way an outcome reaches the user (REQ-ERR-006).
+ */
+
+public enum TranPresentation: Equatable, Hashable {
+    
+    /**
+     * Log only; do not interrupt the user.
+     */
+    case silent
+    /**
+     * Show next to the field that caused it, until the input is fixed.
+     */
+    case inline
+    /**
+     * Non-blocking and self-dismissing; pause while the user interacts with it.
+     */
+    case toast(
+        /**
+         * Colour and icon.
+         */tone: TranToastTone, 
+        /**
+         * How long it stays up.
+         */duration: TranToastDuration
+    )
+    /**
+     * Persistent and non-blocking; remove it when the condition clears.
+     */
+    case banner
+    /**
+     * Blocking; the user must choose.
+     */
+    case dialog(
+        /**
+         * Style the confirm button as destructive and focus Cancel first.
+         */destructive: Bool
+    )
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranPresentation: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranPresentation: FfiConverterRustBuffer {
+    typealias SwiftType = TranPresentation
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranPresentation {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .silent
+        
+        case 2: return .inline
+        
+        case 3: return .toast(tone: try FfiConverterTypeTranToastTone.read(from: &buf), duration: try FfiConverterTypeTranToastDuration.read(from: &buf)
+        )
+        
+        case 4: return .banner
+        
+        case 5: return .dialog(destructive: try FfiConverterBool.read(from: &buf)
+        )
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranPresentation, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .silent:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .inline:
+            writeInt(&buf, Int32(2))
+        
+        
+        case let .toast(tone,duration):
+            writeInt(&buf, Int32(3))
+            FfiConverterTypeTranToastTone.write(tone, into: &buf)
+            FfiConverterTypeTranToastDuration.write(duration, into: &buf)
+            
+        
+        case .banner:
+            writeInt(&buf, Int32(4))
+        
+        
+        case let .dialog(destructive):
+            writeInt(&buf, Int32(5))
+            FfiConverterBool.write(destructive, into: &buf)
+            
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPresentation_lift(_ buf: RustBuffer) throws -> TranPresentation {
+    return try FfiConverterTypeTranPresentation.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPresentation_lower(_ value: TranPresentation) -> RustBuffer {
+    return FfiConverterTypeTranPresentation.lower(value)
+}
+
+
+
+/**
+ * How long a toast stays up; [`toast_duration_ms`] gives the milliseconds.
+ */
+
+public enum TranToastDuration: Equatable, Hashable {
+    
+    /**
+     * 3 s — acknowledgements.
+     */
+    case short
+    /**
+     * 5 s — something to read once.
+     */
+    case medium
+    /**
+     * 10 s — failures that carry a reference id.
+     */
+    case long
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranToastDuration: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranToastDuration: FfiConverterRustBuffer {
+    typealias SwiftType = TranToastDuration
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranToastDuration {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .short
+        
+        case 2: return .medium
+        
+        case 3: return .long
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranToastDuration, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .short:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .medium:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .long:
+            writeInt(&buf, Int32(3))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranToastDuration_lift(_ buf: RustBuffer) throws -> TranToastDuration {
+    return try FfiConverterTypeTranToastDuration.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranToastDuration_lower(_ value: TranToastDuration) -> RustBuffer {
+    return FfiConverterTypeTranToastDuration.lower(value)
+}
+
+
+
+/**
+ * Colour and icon of a toast.
+ */
+
+public enum TranToastTone: Equatable, Hashable {
+    
+    /**
+     * Green check mark: something finished.
+     */
+    case success
+    /**
+     * Neutral information.
+     */
+    case info
+    /**
+     * Something to watch.
+     */
+    case warning
+    /**
+     * Something failed.
+     */
+    case error
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranToastTone: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranToastTone: FfiConverterRustBuffer {
+    typealias SwiftType = TranToastTone
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranToastTone {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .success
+        
+        case 2: return .info
+        
+        case 3: return .warning
+        
+        case 4: return .error
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranToastTone, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .success:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .info:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .warning:
+            writeInt(&buf, Int32(3))
+        
+        
+        case .error:
+            writeInt(&buf, Int32(4))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranToastTone_lift(_ buf: RustBuffer) throws -> TranToastTone {
+    return try FfiConverterTypeTranToastTone.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranToastTone_lower(_ value: TranToastTone) -> RustBuffer {
+    return FfiConverterTypeTranToastTone.lower(value)
+}
+
+
+
+/**
+ * A notable outcome of a user action that is not a failure.
+ */
+
+public enum TranUserAction: Equatable, Hashable {
+    
+    /**
+     * Ends the session — destructive, so it asks first (REQ-ERR-007).
+     */
+    case signOut
+    /**
+     * A server eligibility check completed (REQ-ERR-008).
+     */
+    case serverCheckSucceeded
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranUserAction: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranUserAction: FfiConverterRustBuffer {
+    typealias SwiftType = TranUserAction
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranUserAction {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .signOut
+        
+        case 2: return .serverCheckSucceeded
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranUserAction, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .signOut:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .serverCheckSucceeded:
+            writeInt(&buf, Int32(2))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranUserAction_lift(_ buf: RustBuffer) throws -> TranUserAction {
+    return try FfiConverterTypeTranUserAction.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranUserAction_lower(_ value: TranUserAction) -> RustBuffer {
+    return FfiConverterTypeTranUserAction.lower(value)
+}
+
+
+
+/**
  * A signed-in role. The app stores the session; Rust decides where it leads.
  */
 
@@ -997,13 +2029,6 @@ enum TranValidationError: Swift.Error, Equatable, Hashable, Foundation.Localized
      * The country code is not two ASCII letters (ISO 3166-1 alpha-2 shape).
      */
     case InvalidCountryCode
-    /**
-     * An unexpected failure came back from the shared core.
-     *
-     * The app has already validated its inputs, so this indicates a programming error rather than
-     * something the voter can fix.
-     */
-    case Internal
 
     
 
@@ -1038,7 +2063,6 @@ public struct FfiConverterTypeTranValidationError: FfiConverterRustBuffer {
         case 3: return .InvalidBirthdate
         case 4: return .InvalidReferenceDate
         case 5: return .InvalidCountryCode
-        case 6: return .Internal
 
          default: throw UniffiInternalError.unexpectedEnumCase
         }
@@ -1070,10 +2094,6 @@ public struct FfiConverterTypeTranValidationError: FfiConverterRustBuffer {
         case .InvalidCountryCode:
             writeInt(&buf, Int32(5))
         
-        
-        case .Internal:
-            writeInt(&buf, Int32(6))
-        
         }
     }
 }
@@ -1096,6 +2116,54 @@ public func FfiConverterTypeTranValidationError_lower(_ value: TranValidationErr
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterOptionUInt16: FfiConverterRustBuffer {
+    typealias SwiftType = UInt16?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterUInt16.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterUInt16.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionUInt64: FfiConverterRustBuffer {
+    typealias SwiftType = UInt64?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterUInt64.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterUInt64.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterOptionString: FfiConverterRustBuffer {
     typealias SwiftType = String?
 
@@ -1112,6 +2180,30 @@ fileprivate struct FfiConverterOptionString: FfiConverterRustBuffer {
         switch try readInt(&buf) as Int8 {
         case 0: return nil
         case 1: return try FfiConverterString.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionTypeTranErrorCode: FfiConverterRustBuffer {
+    typealias SwiftType = TranErrorCode?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeTranErrorCode.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeTranErrorCode.read(from: &buf)
         default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }
@@ -1161,6 +2253,31 @@ fileprivate struct FfiConverterSequenceTypeTranCountryVotingAge: FfiConverterRus
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeTranCountryVotingAge.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeTranErrorSpec: FfiConverterRustBuffer {
+    typealias SwiftType = [TranErrorSpec]
+
+    public static func write(_ value: [TranErrorSpec], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeTranErrorSpec.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [TranErrorSpec] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [TranErrorSpec]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeTranErrorSpec.read(from: &buf))
         }
         return seq
     }
@@ -1303,6 +2420,145 @@ public func votingAgeForCountryOffline(countryCode: String) -> UInt16  {
     )
 })
 }
+/**
+ * How `action` is presented.
+ */
+public func actionSpec(action: TranUserAction) -> TranActionSpec  {
+    return try!  FfiConverterTypeTranActionSpec_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_action_spec(
+        FfiConverterTypeTranUserAction_lower(action),uniffiCallStatus
+    )
+})
+}
+/**
+ * Every catalogue entry, in catalogue order (parity tests walk it against the fixture).
+ */
+public func errorCatalogue() -> [TranErrorSpec]  {
+    return try!  FfiConverterSequenceTypeTranErrorSpec.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_error_catalogue(uniffiCallStatus
+    )
+})
+}
+/**
+ * Classifies a non-2xx response whose body carries no `code` (REQ-ERR-004).
+ */
+public func errorCodeForHttpStatus(status: UInt16) -> TranErrorCode  {
+    return try!  FfiConverterTypeTranErrorCode_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_error_code_for_http_status(
+        FfiConverterUInt16.lower(status),uniffiCallStatus
+    )
+})
+}
+/**
+ * The code for an offline validation failure, so device and server rejections look the same.
+ */
+public func errorCodeForValidation(error: TranValidationError) -> TranErrorCode  {
+    return try!  FfiConverterTypeTranErrorCode_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_error_code_for_validation(
+        FfiConverterTypeTranValidationError_lower(error),uniffiCallStatus
+    )
+})
+}
+/**
+ * Reads the envelope's `code` field.
+ *
+ * # Returns
+ *
+ * The code, or `None` for a code this build does not know (a newer server) — then classify by
+ * status with [`error_code_for_http_status`].
+ */
+public func errorCodeFromWire(raw: String) -> TranErrorCode?  {
+    return try!  FfiConverterOptionTypeTranErrorCode.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_error_code_from_wire(
+        FfiConverterString.lower(raw),uniffiCallStatus
+    )
+})
+}
+/**
+ * The catalogue entry for `code`.
+ *
+ * # Returns
+ *
+ * Status, retryability, log level, presentation and message key, pinned by
+ * `fixtures/feedback.json`.
+ */
+public func errorSpec(code: TranErrorCode) -> TranErrorSpec  {
+    return try!  FfiConverterTypeTranErrorSpec_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_error_spec(
+        FfiConverterTypeTranErrorCode_lower(code),uniffiCallStatus
+    )
+})
+}
+/**
+ * Whether a request id (from the envelope or the `x-request-id` header) is safe to log and show:
+ * 1–64 characters of `[A-Za-z0-9._-]`. Drop any other id (REQ-ROB-010).
+ */
+public func isValidRequestId(value: String) -> Bool  {
+    return try!  FfiConverterBool.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_is_valid_request_id(
+        FfiConverterString.lower(value),uniffiCallStatus
+    )
+})
+}
+/**
+ * A `Retry-After` header in whole seconds, capped at [`TranRetryPolicy::max_delay_ms`].
+ *
+ * # Returns
+ *
+ * `None` for HTTP dates and junk; then use [`retry_delay_ms`].
+ */
+public func retryAfterMs(header: String) -> UInt64?  {
+    return try!  FfiConverterOptionUInt64.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_retry_after_ms(
+        FfiConverterString.lower(header),uniffiCallStatus
+    )
+})
+}
+/**
+ * Wait before retry number `retry` (1 = the first retry).
+ *
+ * # Arguments
+ *
+ * * `random` — a value in `[0, 1)`; inject it in tests so the schedule is deterministic.
+ */
+public func retryDelayMs(retry: UInt32, random: Double) -> UInt64  {
+    return try!  FfiConverterUInt64.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_retry_delay_ms(
+        FfiConverterUInt32.lower(retry),
+        FfiConverterDouble.lower(random),uniffiCallStatus
+    )
+})
+}
+/**
+ * The retry budget every client uses.
+ */
+public func retryPolicy() -> TranRetryPolicy  {
+    return try!  FfiConverterTypeTranRetryPolicy_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_retry_policy(uniffiCallStatus
+    )
+})
+}
+/**
+ * Milliseconds a toast of `duration` stays up.
+ */
+public func toastDurationMs(duration: TranToastDuration) -> UInt64  {
+    return try!  FfiConverterUInt64.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_toast_duration_ms(
+        FfiConverterTypeTranToastDuration_lower(duration),uniffiCallStatus
+    )
+})
+}
 
 private enum InitializationResult {
     case ok
@@ -1335,6 +2591,39 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_voting_age_for_country_offline() != 55415) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_action_spec() != 29757) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_error_catalogue() != 60106) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_error_code_for_http_status() != 44936) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_error_code_for_validation() != 63980) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_error_code_from_wire() != 22728) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_error_spec() != 41162) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_is_valid_request_id() != 24842) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_retry_after_ms() != 54130) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_retry_delay_ms() != 18892) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_retry_policy() != 41459) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_toast_duration_ms() != 56817) {
         return InitializationResult.apiChecksumMismatch
     }
 

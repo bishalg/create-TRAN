@@ -1,0 +1,77 @@
+name: Mutation tests
+
+# Robustness gate (ADR-0029, REQ-ROB-012): 100% line coverage proves code ran, not that a test would notice it
+# breaking. Each mutant is a small bug planted in the source; a survivor is a missing test. Too slow for every pull
+# request, so nightly + manual dispatch only, like the native suites (ADR-0021).
+#
+#   gh workflow run mutation.yml --ref <branch>
+#
+# Locally: `cargo mutants -p rust-core -p api -p tran-tokens-codegen` and `pnpm --filter @tran/core mutation`.
+# Every action is pinned by commit SHA below; bumps are deliberate commits.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Nightly at 03:41 UTC; scheduled runs execute the default branch.
+    - cron: '41 3 * * *'
+
+concurrency:
+  group: mutation-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    name: cargo-mutants (rust-core, api, tran-tokens-codegen)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
+      - name: Rust cache
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - name: Install cargo-mutants
+        run: cargo install cargo-mutants --locked
+      # Fails on any missed mutant; equivalent ones are listed, with a reason, in .cargo/mutants.toml.
+      - name: Mutate
+        run: cargo mutants -p rust-core -p api -p tran-tokens-codegen --no-shuffle -j 2 --timeout 120
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: cargo-mutants
+          path: mutants.out
+          if-no-files-found: ignore
+
+  typescript:
+    name: Stryker (packages/core-ts)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build @tran/api (imported from dist/)
+        run: pnpm --filter @tran/api build
+      # Fails below `thresholds.break` in packages/core-ts/stryker.config.json.
+      - name: Mutate
+        run: pnpm --filter @tran/core mutation
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: stryker
+          path: packages/core-ts/reports/mutation
+          if-no-files-found: ignore

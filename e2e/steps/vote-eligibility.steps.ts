@@ -128,12 +128,16 @@ Then('I see the error {string}', async ({ page }, message: string) => {
   await expect(page.getByRole('alert')).toContainText(message);
 });
 
+// The offline banner (REQ-ERR-006) is a status region, not an alert.
+const offlineBanner = (page: import('@playwright/test').Page) =>
+  page.getByRole('status').filter({ hasText: 'API unreachable' });
+
 Then('I see the offline notice', async ({ page }) => {
-  await expect(page.getByRole('note')).toContainText('API unreachable');
+  await expect(offlineBanner(page)).toBeVisible();
 });
 
 Then('I do not see the offline notice', async ({ page }) => {
-  await expect(page.getByRole('note')).toHaveCount(0);
+  await expect(offlineBanner(page)).toHaveCount(0);
 });
 
 Then('the API status is {string}', async ({ page }, status: string) => {

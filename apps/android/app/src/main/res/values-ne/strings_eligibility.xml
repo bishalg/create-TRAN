@@ -25,6 +25,7 @@
     <string name="eligibility_result_reason_meets">उमेर %1$s ले न्यूनतम मतदान उमेर %2$s पूरा गर्छ (%3$s)।</string>
     <string name="eligibility_result_source_device">यही उपकरणमा जाँच गरियो</string>
     <string name="eligibility_result_source_server">सर्भरबाट जाँच गरियो</string>
+    <string name="eligibility_server_check_done">सर्भर जाँच पूरा भयो</string>
     <string name="eligibility_submit">योग्यता जाँच्नुहोस्</string>
     <string name="eligibility_submitting">जाँच हुँदैछ…</string>
     <string name="eligibility_subtitle">अफलाइन मतदान (UniFFI → rust-core)</string>

@@ -274,6 +274,63 @@ RustBuffer uniffi_tran_uniffi_fn_func_supported_countries_offline(RustCallStatus
 uint16_t uniffi_tran_uniffi_fn_func_voting_age_for_country_offline(RustBuffer country_code, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_ACTION_SPEC
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_ACTION_SPEC
+RustBuffer uniffi_tran_uniffi_fn_func_action_spec(RustBuffer action, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_ERROR_CATALOGUE
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_ERROR_CATALOGUE
+RustBuffer uniffi_tran_uniffi_fn_func_error_catalogue(RustCallStatus *_Nonnull out_status
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_ERROR_CODE_FOR_HTTP_STATUS
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_ERROR_CODE_FOR_HTTP_STATUS
+RustBuffer uniffi_tran_uniffi_fn_func_error_code_for_http_status(uint16_t status, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_ERROR_CODE_FOR_VALIDATION
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_ERROR_CODE_FOR_VALIDATION
+RustBuffer uniffi_tran_uniffi_fn_func_error_code_for_validation(RustBuffer error, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_ERROR_CODE_FROM_WIRE
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_ERROR_CODE_FROM_WIRE
+RustBuffer uniffi_tran_uniffi_fn_func_error_code_from_wire(RustBuffer raw, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_ERROR_SPEC
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_ERROR_SPEC
+RustBuffer uniffi_tran_uniffi_fn_func_error_spec(RustBuffer code, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_IS_VALID_REQUEST_ID
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_IS_VALID_REQUEST_ID
+int8_t uniffi_tran_uniffi_fn_func_is_valid_request_id(RustBuffer value, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_RETRY_AFTER_MS
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_RETRY_AFTER_MS
+RustBuffer uniffi_tran_uniffi_fn_func_retry_after_ms(RustBuffer header, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_RETRY_DELAY_MS
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_RETRY_DELAY_MS
+uint64_t uniffi_tran_uniffi_fn_func_retry_delay_ms(uint32_t retry, double random, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_RETRY_POLICY
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_RETRY_POLICY
+RustBuffer uniffi_tran_uniffi_fn_func_retry_policy(RustCallStatus *_Nonnull out_status
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TOAST_DURATION_MS
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TOAST_DURATION_MS
+uint64_t uniffi_tran_uniffi_fn_func_toast_duration_ms(RustBuffer duration, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_FFI_TRAN_UNIFFI_RUSTBUFFER_ALLOC
 #define UNIFFI_FFIDEF_FFI_TRAN_UNIFFI_RUSTBUFFER_ALLOC
 RustBuffer ffi_tran_uniffi_rustbuffer_alloc(uint64_t size, RustCallStatus *_Nonnull out_status
@@ -567,6 +624,72 @@ uint16_t uniffi_tran_uniffi_checksum_func_supported_countries_offline(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_VOTING_AGE_FOR_COUNTRY_OFFLINE
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_VOTING_AGE_FOR_COUNTRY_OFFLINE
 uint16_t uniffi_tran_uniffi_checksum_func_voting_age_for_country_offline(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_ACTION_SPEC
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_ACTION_SPEC
+uint16_t uniffi_tran_uniffi_checksum_func_action_spec(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_ERROR_CATALOGUE
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_ERROR_CATALOGUE
+uint16_t uniffi_tran_uniffi_checksum_func_error_catalogue(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_ERROR_CODE_FOR_HTTP_STATUS
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_ERROR_CODE_FOR_HTTP_STATUS
+uint16_t uniffi_tran_uniffi_checksum_func_error_code_for_http_status(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_ERROR_CODE_FOR_VALIDATION
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_ERROR_CODE_FOR_VALIDATION
+uint16_t uniffi_tran_uniffi_checksum_func_error_code_for_validation(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_ERROR_CODE_FROM_WIRE
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_ERROR_CODE_FROM_WIRE
+uint16_t uniffi_tran_uniffi_checksum_func_error_code_from_wire(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_ERROR_SPEC
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_ERROR_SPEC
+uint16_t uniffi_tran_uniffi_checksum_func_error_spec(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_IS_VALID_REQUEST_ID
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_IS_VALID_REQUEST_ID
+uint16_t uniffi_tran_uniffi_checksum_func_is_valid_request_id(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_RETRY_AFTER_MS
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_RETRY_AFTER_MS
+uint16_t uniffi_tran_uniffi_checksum_func_retry_after_ms(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_RETRY_DELAY_MS
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_RETRY_DELAY_MS
+uint16_t uniffi_tran_uniffi_checksum_func_retry_delay_ms(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_RETRY_POLICY
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_RETRY_POLICY
+uint16_t uniffi_tran_uniffi_checksum_func_retry_policy(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TOAST_DURATION_MS
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TOAST_DURATION_MS
+uint16_t uniffi_tran_uniffi_checksum_func_toast_duration_ms(void
     
 );
 #endif

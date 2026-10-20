@@ -85,3 +85,8 @@ e2e/.features-gen/
 e2e/test-results/
 e2e/playwright-report/
 coverage/
+
+# Mutation testing (ADR-0029)
+**/reports/mutation/
+**/.stryker-tmp/
+mutants.out*/

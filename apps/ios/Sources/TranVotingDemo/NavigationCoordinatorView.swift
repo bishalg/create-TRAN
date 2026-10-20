@@ -8,6 +8,8 @@ struct NavigationCoordinatorView: View {
     @State private var isBootstrapping: Bool
     /// Any theme in the rust-core registry can be selected — no light/dark boolean.
     @State private var theme: TranTheme = .dark
+    /// One feedback center for the app: toasts and confirmations render above every screen.
+    @State private var feedback = TranFeedback()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var palette: TranPalette { TranBrandTokens.palette(for: theme) }
@@ -58,23 +60,26 @@ struct NavigationCoordinatorView: View {
                         }
                     }
                 case .voterDashboard:
-                    VotingHomeView(theme: $theme, onSignOut: {
-                        withAnimation(TranMotion.animation(reduceMotion: reduceMotion)) {
-                            session = .unauthenticated
-                        }
-                    })
+                    VotingHomeView(theme: $theme, onSignOut: signOut)
                 case .auditorDashboard:
-                    AuditorHomeView {
-                        withAnimation(TranMotion.animation(reduceMotion: reduceMotion)) {
-                            session = .unauthenticated
-                        }
-                    }
+                    AuditorHomeView(onSignOut: signOut)
                 }
             }
         }
+        .modifier(TranFeedbackHost(feedback: feedback))
+        .environment(feedback)
         // Atoms read the registry palette from the environment; appearance follows the palette's
         // own metadata (token data, not a theme-name check).
         .environment(\.tranPalette, palette)
         .preferredColorScheme(palette.colorScheme)
+    }
+
+    /// Destructive, so the catalogue asks first (REQ-ERR-007).
+    private func signOut() {
+        feedback.confirm(.signOut) {
+            withAnimation(TranMotion.animation(reduceMotion: reduceMotion)) {
+                session = .unauthenticated
+            }
+        }
     }
 }

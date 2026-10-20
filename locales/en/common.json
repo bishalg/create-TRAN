@@ -5,5 +5,8 @@
   "role": {
     "citizenVoter": "Citizen Voter",
     "electionAuditor": "Election Auditor"
-  }
+  },
+  "cancel": "Cancel",
+  "dismiss": "Dismiss",
+  "notifications": "Notifications"
 }

@@ -1,9 +1,11 @@
-// Verifies: REQ-WEB-001 REQ-WEB-002 REQ-WEB-003 REQ-WEB-006 REQ-A11Y-002 REQ-A11Y-003 REQ-A11Y-004 REQ-A11Y-006 REQ-NAV-001 REQ-NAV-002 REQ-NAV-003 REQ-NAV-004 REQ-NAV-005
+// Verifies: REQ-ERR-005 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-WEB-001 REQ-WEB-002 REQ-WEB-003 REQ-WEB-006 REQ-A11Y-002 REQ-A11Y-003 REQ-A11Y-004 REQ-A11Y-006 REQ-NAV-001 REQ-NAV-002 REQ-NAV-003 REQ-NAV-004 REQ-NAV-005
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { createFakeApi } from '../../tests/helpers/fakeApi.js';
-import { App } from './App.js';
+import { createFakeApi, envelope, REQUEST_ID } from '../../tests/helpers/fakeApi.js';
+import { App, type AppProps } from './App.js';
+
+const instant: AppProps['retry'] = { sleep: async () => {}, random: () => 0 };
 
 type User = ReturnType<typeof userEvent.setup>;
 
@@ -11,7 +13,7 @@ async function renderApp(opts: Parameters<typeof createFakeApi>[0] = {}) {
   const api = createFakeApi(opts);
   vi.stubGlobal('fetch', api.fetchFn);
   const user = userEvent.setup();
-  render(<App />);
+  render(<App retry={instant} />);
   // Startup settles as "API online" or "API offline".
   await screen.findByText(/API (online|offline)/);
   return { api, user };
@@ -170,10 +172,12 @@ describe('App: on this device', () => {
     expect(ageInput()).toBeValid();
   });
 
-  it('explains a malformed country code', async () => {
+  it('explains a malformed country code next to the field', async () => {
     const { user } = await renderApp();
     await check(user, '30', 'U1');
-    expect(await screen.findByRole('alert')).toHaveTextContent(/country code/i);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Country must be two letters');
+    expect(countryInput()).toBeInvalid();
+    expect(ageInput()).toBeValid();
   });
 });
 
@@ -209,14 +213,59 @@ describe('App: ask the server', () => {
     expect(await screen.findByRole('button', { name: 'Check eligibility' })).toBeEnabled();
   });
 
-  it('shows the server message for a rejected input without claiming the API is offline', async () => {
+  it('shows a rejected input inline, in the user’s language, without claiming the API is offline', async () => {
     const { user } = await renderApp();
     await user.click(screen.getByRole('radio', { name: /Ask the server/ }));
     await check(user, '30', 'U1');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(/country code/i);
-    expect(screen.queryByRole('note')).toBeNull();
+    // The server's English `error` is never shown: the code picks the localized copy.
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Country must be two letters');
+    expect(alert).not.toHaveTextContent('server says');
+    expect(screen.queryByText(/API unreachable/)).toBeNull();
     expect(screen.getByText(/API online/)).toBeVisible();
+
+    await user.click(screen.getByRole('button', { name: 'NE' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('देश दुई अक्षरको हुनुपर्छ');
+  });
+
+  it('acknowledges a server check with a short success toast', async () => {
+    const { user } = await renderApp();
+    await user.click(screen.getByRole('radio', { name: /Ask the server/ }));
+    await check(user, '30', 'US');
+
+    const region = screen.getByRole('region', { name: 'Notifications' });
+    expect(await within(region).findByText('Server check complete')).toBeVisible();
+  });
+
+  it('retries a flaky server without bothering the user', async () => {
+    const { api, user } = await renderApp();
+    await user.click(screen.getByRole('radio', { name: /Ask the server/ }));
+    const healthy = createFakeApi();
+    api.fetchFn
+      .mockResolvedValueOnce(envelope(503, 'server.unavailable', true))
+      .mockImplementation(healthy.fetchFn);
+
+    await check(user, '30', 'US');
+
+    expect(await screen.findByText('Checked by the server')).toBeVisible();
+    expect(api.callsTo('/api/vote/eligibility')).toHaveLength(2);
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('after a server error, explains it with a reference and answers on the device', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { api, user } = await renderApp();
+    await user.click(screen.getByRole('radio', { name: /Ask the server/ }));
+    api.fetchFn.mockResolvedValue(envelope(500, 'server.internal', true));
+
+    await check(user, '17', 'US');
+
+    const toast = await screen.findByRole('alert');
+    expect(toast).toHaveTextContent('Something went wrong on our side.');
+    expect(toast).toHaveTextContent(`Reference: ${REQUEST_ID}`);
+    expect(screen.getByRole('heading', { name: 'Not eligible to vote' })).toBeVisible();
+    expect(screen.getByText('Checked on this device')).toBeVisible();
   });
 
   it('keeps each mode’s last result separate', async () => {
@@ -233,9 +282,9 @@ describe('App: ask the server', () => {
 });
 
 describe('App: server down', () => {
-  it('shows the notice and the offline status, and the device check still works', async () => {
+  it('shows the banner and the offline status, and the device check still works', async () => {
     const { user } = await renderApp({ down: true });
-    expect(await screen.findByRole('note')).toHaveTextContent(/API unreachable/);
+    expect(await screen.findByText(/API unreachable/)).toBeVisible();
     expect(screen.getByText('API offline')).toBeVisible();
 
     await check(user, '30');
@@ -244,15 +293,17 @@ describe('App: server down', () => {
     );
   });
 
-  it('switches to the offline notice (not an error alert) when the server dies mid-session', async () => {
+  it('switches to the offline banner (not an error alert) and the device verdict when the server dies mid-session', async () => {
     const { api, user } = await renderApp();
     await user.click(screen.getByRole('radio', { name: /Ask the server/ }));
     api.fetchFn.mockRejectedValue(new TypeError('Failed to fetch'));
 
     await user.click(submit());
 
-    expect(await screen.findByRole('note')).toBeVisible();
+    expect(await screen.findByText(/API unreachable/)).toBeVisible();
     expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByText('Checked on this device')).toBeVisible();
+    expect(screen.getByText('API offline')).toBeVisible();
   });
 });
 
@@ -260,7 +311,7 @@ describe('App: navigation and role branching', () => {
   it('[REQ-NAV-001] [REQ-NAV-002] renders auth welcome when initial session is unauthenticated', async () => {
     const api = createFakeApi();
     vi.stubGlobal('fetch', api.fetchFn);
-    render(<App initialSession={{ status: 'unauthenticated' }} />);
+    render(<App retry={instant} initialSession={{ status: 'unauthenticated' }} />);
     await screen.findByText(/API (online|offline)/);
 
     expect(screen.getByRole('heading', { level: 2, name: 'Welcome to TRAN Voting' })).toBeVisible();
@@ -272,7 +323,7 @@ describe('App: navigation and role branching', () => {
     const api = createFakeApi();
     vi.stubGlobal('fetch', api.fetchFn);
     const user = userEvent.setup();
-    render(<App initialSession={{ status: 'unauthenticated' }} />);
+    render(<App retry={instant} initialSession={{ status: 'unauthenticated' }} />);
     await screen.findByText(/API (online|offline)/);
 
     await user.click(screen.getByRole('button', { name: 'Continue as Citizen Voter' }));
@@ -284,7 +335,7 @@ describe('App: navigation and role branching', () => {
     const api = createFakeApi();
     vi.stubGlobal('fetch', api.fetchFn);
     const user = userEvent.setup();
-    render(<App initialSession={{ status: 'unauthenticated' }} />);
+    render(<App retry={instant} initialSession={{ status: 'unauthenticated' }} />);
     await screen.findByText(/API (online|offline)/);
 
     await user.click(screen.getByRole('button', { name: 'Continue as Election Auditor' }));
@@ -299,11 +350,23 @@ describe('App: navigation and role branching', () => {
     expect(screen.getByLabelText('Your age')).toBeVisible();
   });
 
-  it('[REQ-NAV-005] signing out returns to the auth welcome screen', async () => {
+  it('[REQ-NAV-005] signing out asks first, and cancelling keeps the session', async () => {
+    const { user } = await renderApp();
+    await user.click(screen.getByRole('button', { name: 'Sign out' }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Sign out?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByTestId('role-badge')).toHaveTextContent('Citizen Voter');
+  });
+
+  it('[REQ-NAV-005] confirming sign-out returns to the auth welcome screen', async () => {
     const { user } = await renderApp();
     expect(screen.getByTestId('role-badge')).toHaveTextContent('Citizen Voter');
 
     await user.click(screen.getByRole('button', { name: 'Sign out' }));
+    const dialog = screen.getByRole('dialog', { name: 'Sign out?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Sign out' }));
     expect(screen.getByRole('heading', { level: 2, name: 'Welcome to TRAN Voting' })).toBeVisible();
     expect(screen.queryByTestId('role-badge')).toBeNull();
   });

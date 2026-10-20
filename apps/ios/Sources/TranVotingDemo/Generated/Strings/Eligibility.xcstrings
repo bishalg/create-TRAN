@@ -529,6 +529,28 @@
         }
       }
     },
+    "eligibility.serverCheckDone": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server check complete"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सर्वर जाँच पूरी हुई"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सर्भर जाँच पूरा भयो"
+          }
+        }
+      }
+    },
     "eligibility.submit": {
       "localizations": {
         "en": {

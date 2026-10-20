@@ -537,17 +537,11 @@ main:focus {
 
 /* ── Feedback ───────────────────────────────────────────────────────────── */
 
-.notice,
 .error {
   margin: 0;
   padding: var(--tran-spacing-base) var(--tran-spacing-md);
   border-radius: var(--tran-radius-md);
   font-size: var(--tran-font-size-sm);
-}
-
-.notice {
-  border: var(--tran-border-width) solid var(--tran-color-warning);
-  background: color-mix(in srgb, var(--tran-color-warning) 14%, transparent);
 }
 
 .error {
@@ -700,5 +694,147 @@ main:focus {
 @media (prefers-contrast: more) {
   :root {
     --border: var(--fg-muted);
+  }
+}
+
+/* ── Feedback atoms (REQ-ERR-006): toast · banner · dialog ─────────────────────────────────── */
+
+/* Destructive actions keep body-text colour on a tinted fill, so contrast holds in every theme. */
+.tran-button[data-variant='danger'] {
+  border: var(--tran-border-width) solid var(--tran-color-danger);
+  background: color-mix(in srgb, var(--tran-color-danger) 16%, var(--field));
+  color: var(--fg);
+}
+
+.tran-toast-region {
+  position: fixed;
+  inset-inline: var(--tran-spacing-md);
+  inset-block-end: var(--tran-spacing-md);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tran-spacing-sm);
+  pointer-events: none;
+}
+
+.tran-toast {
+  --tone: var(--tran-color-primary);
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--tran-spacing-sm);
+  width: min(100%, var(--tran-layout-shell-max));
+  padding: var(--tran-spacing-base) var(--tran-spacing-md);
+  border: var(--tran-border-width) solid var(--tone);
+  border-radius: var(--tran-radius-md);
+  background: color-mix(in srgb, var(--tone) 12%, var(--tran-color-surface));
+  box-shadow: var(--tran-glass-shadow-raised);
+  color: var(--fg);
+  font-size: var(--tran-font-size-sm);
+}
+
+.tran-toast[data-tone='success'] {
+  --tone: var(--tran-color-success);
+}
+.tran-toast[data-tone='warning'] {
+  --tone: var(--tran-color-warning);
+}
+.tran-toast[data-tone='error'] {
+  --tone: var(--tran-color-danger);
+}
+
+.tran-toast-icon,
+.tran-banner-icon {
+  flex: none;
+  inline-size: var(--tran-spacing-lg);
+  block-size: var(--tran-spacing-lg);
+  color: var(--tone, var(--tran-color-warning));
+}
+
+.tran-toast-body {
+  flex: 1;
+}
+
+.tran-toast-message,
+.tran-toast-detail,
+.tran-banner-text {
+  margin: 0;
+}
+
+.tran-toast-detail {
+  color: var(--fg-muted);
+  font-size: var(--tran-font-size-caption);
+}
+
+.tran-toast-dismiss {
+  flex: none;
+  inline-size: var(--tran-spacing-touch);
+  block-size: var(--tran-spacing-touch);
+  margin: calc(-1 * var(--tran-spacing-sm));
+  padding: var(--tran-spacing-sm);
+  border: 0;
+  background: transparent;
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+
+.tran-banner {
+  --tone: var(--tran-color-warning);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--tran-spacing-sm);
+  padding: var(--tran-spacing-base) var(--tran-spacing-md);
+  border: var(--tran-border-width) solid var(--tone);
+  border-radius: var(--tran-radius-md);
+  background: color-mix(in srgb, var(--tone) 14%, transparent);
+  font-size: var(--tran-font-size-sm);
+}
+
+.tran-banner[data-tone='info'] {
+  --tone: var(--tran-color-primary);
+}
+
+.tran-dialog {
+  width: min(calc(100% - 2 * var(--tran-spacing-md)), var(--tran-layout-shell-max));
+  padding: var(--tran-spacing-lg);
+  border: var(--tran-border-width) solid var(--border);
+  border-radius: var(--tran-radius-lg);
+  background: var(--tran-color-surface);
+  box-shadow: var(--tran-glass-shadow-raised);
+  color: var(--fg);
+}
+
+.tran-dialog::backdrop {
+  background: color-mix(in srgb, var(--tran-color-background) 70%, transparent);
+}
+
+.tran-dialog-title {
+  margin: 0 0 var(--tran-spacing-sm);
+  font-size: var(--tran-font-size-title);
+  line-height: var(--tran-line-height-title);
+}
+
+.tran-dialog-body {
+  margin: 0 0 var(--tran-spacing-lg);
+  color: var(--fg-muted);
+}
+
+.tran-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--tran-spacing-sm);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tran-toast {
+    animation: tran-toast-in 0.2s ease-out;
+  }
+}
+
+@keyframes tran-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--tran-spacing-sm));
   }
 }

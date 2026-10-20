@@ -35,6 +35,10 @@ object TranStrings {
         @StringRes
         val continueAsVoter: Int = R.string.auth_continue_as_voter // auth.continueAsVoter
         @StringRes
+        val signOutConfirmBody: Int = R.string.auth_sign_out_confirm_body // auth.signOutConfirm.body
+        @StringRes
+        val signOutConfirmTitle: Int = R.string.auth_sign_out_confirm_title // auth.signOutConfirm.title
+        @StringRes
         val welcomeSubtitle: Int = R.string.auth_welcome_subtitle // auth.welcome.subtitle
         @StringRes
         val welcomeTitle: Int = R.string.auth_welcome_title // auth.welcome.title
@@ -45,6 +49,12 @@ object TranStrings {
         val appName: Int = R.string.common_app_name // common.appName
         @StringRes
         val brand: Int = R.string.common_brand // common.brand
+        @StringRes
+        val cancel: Int = R.string.common_cancel // common.cancel
+        @StringRes
+        val dismiss: Int = R.string.common_dismiss // common.dismiss
+        @StringRes
+        val notifications: Int = R.string.common_notifications // common.notifications
         @StringRes
         val roleCitizenVoter: Int = R.string.common_role_citizen_voter // common.role.citizenVoter
         @StringRes
@@ -103,6 +113,8 @@ object TranStrings {
         @StringRes
         val resultSourceServer: Int = R.string.eligibility_result_source_server // eligibility.result.sourceServer
         @StringRes
+        val serverCheckDone: Int = R.string.eligibility_server_check_done // eligibility.serverCheckDone
+        @StringRes
         val submit: Int = R.string.eligibility_submit // eligibility.submit
         @StringRes
         val submitting: Int = R.string.eligibility_submitting // eligibility.submitting
@@ -122,7 +134,29 @@ object TranStrings {
         @StringRes
         val ageOutOfRange: Int = R.string.errors_age_out_of_range // errors.ageOutOfRange
         @StringRes
+        val birthdateInFuture: Int = R.string.errors_birthdate_in_future // errors.birthdateInFuture
+        @StringRes
         val countryInvalid: Int = R.string.errors_country_invalid // errors.countryInvalid
+        @StringRes
+        val dateInvalid: Int = R.string.errors_date_invalid // errors.dateInvalid
+        @StringRes
+        val notFound: Int = R.string.errors_not_found // errors.notFound
+        @StringRes
+        val rateLimited: Int = R.string.errors_rate_limited // errors.rateLimited
+        @StringRes
+        val reference: Int = R.string.errors_reference // errors.reference
+        @StringRes
+        val requestCancelled: Int = R.string.errors_request_cancelled // errors.requestCancelled
+        @StringRes
+        val requestMalformed: Int = R.string.errors_request_malformed // errors.requestMalformed
+        @StringRes
+        val serverInternal: Int = R.string.errors_server_internal // errors.serverInternal
+        @StringRes
+        val serverUnavailable: Int = R.string.errors_server_unavailable // errors.serverUnavailable
+        @StringRes
+        val timeout: Int = R.string.errors_timeout // errors.timeout
+        @StringRes
+        val unexpected: Int = R.string.errors_unexpected // errors.unexpected
     }
 
     object Shell {
@@ -164,3 +198,22 @@ val TranTheme.labelRes: Int
         TranTheme.BLACK -> R.string.shell_theme_black
         TranTheme.SEPIA -> R.string.shell_theme_sepia
     }
+
+/** String resource for every key the Rust feedback catalogue names (ADR-0028). */
+val feedbackMessageRes: Map<String, Int> = mapOf(
+    "auth.signOutConfirm.title" to R.string.auth_sign_out_confirm_title,
+    "eligibility.offlineNotice" to R.string.eligibility_offline_notice,
+    "eligibility.serverCheckDone" to R.string.eligibility_server_check_done,
+    "errors.ageOutOfRange" to R.string.errors_age_out_of_range,
+    "errors.birthdateInFuture" to R.string.errors_birthdate_in_future,
+    "errors.countryInvalid" to R.string.errors_country_invalid,
+    "errors.dateInvalid" to R.string.errors_date_invalid,
+    "errors.notFound" to R.string.errors_not_found,
+    "errors.rateLimited" to R.string.errors_rate_limited,
+    "errors.requestCancelled" to R.string.errors_request_cancelled,
+    "errors.requestMalformed" to R.string.errors_request_malformed,
+    "errors.serverInternal" to R.string.errors_server_internal,
+    "errors.serverUnavailable" to R.string.errors_server_unavailable,
+    "errors.timeout" to R.string.errors_timeout,
+    "errors.unexpected" to R.string.errors_unexpected,
+)

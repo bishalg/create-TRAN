@@ -2,6 +2,7 @@ import { type FormEvent, useRef, useState } from 'react';
 import { type SupportedLocale, parseAgeInput, t } from '@tran/core';
 import type { TranApi } from '../../shared/api/useTranApi.js';
 import { Field } from '../../shared/ui/Field.js';
+import { TranBanner } from '../../shared/ui/TranBanner.js';
 import { TranButton } from '../../shared/ui/TranButton.js';
 import { TranText } from '../../shared/ui/TranText.js';
 import { ModeSwitch } from './ModeSwitch.js';
@@ -17,33 +18,31 @@ export function EligibilityPage({ api, locale }: EligibilityPageProps) {
   const [mode, setMode] = useState<CheckMode>('device');
   const [age, setAge] = useState('21');
   const [country, setCountry] = useState('US');
-  const [inputError, setInputError] = useState<string | null>(null);
+  const [ageRejected, setAgeRejected] = useState(false);
   const ageField = useRef<HTMLInputElement>(null);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
     const parsedAge = parseAgeInput(age);
-    setInputError(parsedAge === null ? t('errors.ageOutOfRange', locale) : null);
+    setAgeRejected(parsedAge === null);
     if (parsedAge === null) {
       ageField.current?.focus();
       return;
     }
 
     if (mode === 'device') api.checkOffline(parsedAge, country);
-    else await api.checkViaApi(parsedAge, { 'X-Debug-Country': country });
+    else await api.checkViaApi(parsedAge, country, { 'X-Debug-Country': country });
   };
 
-  const result = toView(mode, api.lastOfflineResult, api.lastApiResult);
-  // An unreachable server is explained by the notice; every other error is actionable.
-  const alertMessage = inputError ?? (api.isOffline ? null : api.error);
+  const result = toView(mode, api.lastOfflineResult, api.lastApiResult, api.fallbackResult);
+  // Inline (REQ-ERR-006): always the localized copy for the code, never the server's English.
+  const fieldCode = ageRejected ? 'validation.age_out_of_range' : api.fieldError?.code;
+  const alertKey = ageRejected ? 'errors.ageOutOfRange' : api.fieldError?.spec.messageKey;
+  const countryRejected = fieldCode === 'validation.invalid_country_code';
 
   return (
     <>
-      {api.isOffline && (
-        <TranText variant="body" className="notice" role="note">
-          {t('eligibility.offlineNotice', locale)}
-        </TranText>
-      )}
+      {api.banner && <TranBanner>{t(api.banner.spec.messageKey, locale)}</TranBanner>}
 
       <form
         className="card"
@@ -62,7 +61,7 @@ export function EligibilityPage({ api, locale }: EligibilityPageProps) {
             inputMode="numeric"
             autoComplete="off"
             placeholder={t('eligibility.age.example', locale)}
-            aria-invalid={inputError ? true : undefined}
+            aria-invalid={fieldCode && !countryRejected ? true : undefined}
           />
           <Field
             label={t('eligibility.country.label', locale)}
@@ -73,6 +72,7 @@ export function EligibilityPage({ api, locale }: EligibilityPageProps) {
             autoComplete="off"
             spellCheck={false}
             placeholder={t('eligibility.country.example', locale)}
+            aria-invalid={countryRejected ? true : undefined}
             hint={t(
               mode === 'server' ? 'eligibility.country.serverHint' : 'eligibility.country.hint',
               locale
@@ -85,9 +85,9 @@ export function EligibilityPage({ api, locale }: EligibilityPageProps) {
         </TranButton>
       </form>
 
-      {alertMessage && (
+      {alertKey && (
         <TranText variant="danger" className="error" role="alert">
-          {alertMessage}
+          {t(alertKey, locale)}
         </TranText>
       )}
 

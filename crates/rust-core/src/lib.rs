@@ -5,6 +5,7 @@
 //! WASM/Native bridges, and developer tooling.
 
 pub mod error;
+pub mod feedback;
 pub mod models;
 pub mod navigation;
 pub mod services;

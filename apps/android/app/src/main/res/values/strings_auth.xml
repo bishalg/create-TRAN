@@ -3,6 +3,8 @@
 <resources>
     <string name="auth_continue_as_auditor">Continue as Election Auditor</string>
     <string name="auth_continue_as_voter">Continue as Citizen Voter</string>
+    <string name="auth_sign_out_confirm_body">You\'ll return to role selection.</string>
+    <string name="auth_sign_out_confirm_title">Sign out?</string>
     <string name="auth_welcome_subtitle">Select your role to continue into the application:</string>
     <string name="auth_welcome_title">Welcome to TRAN Voting</string>
 </resources>

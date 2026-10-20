@@ -20,6 +20,8 @@ export default tseslint.config(
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
     rules: {
+      // Log through `logFailure` from @tran/core, at the catalogue's level (REQ-ROB-008).
+      'no-console': 'error',
       'react/forbid-dom-props': ['error', { forbid: ['style'] }],
       'no-restricted-syntax': [
         'error',

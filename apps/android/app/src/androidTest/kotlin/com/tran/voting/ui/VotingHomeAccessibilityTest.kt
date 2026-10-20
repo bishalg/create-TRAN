@@ -1,4 +1,4 @@
-// Verifies: REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006 REQ-NAT-007 REQ-NAT-010 REQ-NAT-011
+// Verifies: REQ-ERR-007 REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006 REQ-NAT-007 REQ-NAT-010 REQ-NAT-011
 package com.tran.voting.ui
 
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +21,7 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.Density
 import androidx.core.graphics.ColorUtils
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.tran.voting.NavigationCoordinator
 import com.tran.voting.api.TranApiClient
 import com.tran.voting.generated.TranBrandTokens
 import com.tran.voting.generated.TranTheme
@@ -103,11 +105,28 @@ class VotingHomeAccessibilityTest {
             compose.onAllNodesWithTag("offline-notice").fetchSemanticsNodes().isNotEmpty()
         }
         compose.onNodeWithTag("api-status").assertTextEquals("API offline")
+        // A banner, not an error toast: the catalogue presents `network.offline` persistently.
+        assertTrue(compose.onAllNodesWithTag("toast").fetchSemanticsNodes().isEmpty())
 
         // REQ-NAT-002: the verdict does not wait for the API.
         compose.onNodeWithTag("check-button").performClick()
         compose.onNodeWithTag("offline-result")
             .assertTextEquals("Age 20 meets the minimum voting age of 18 in NP.")
+    }
+
+    @Test
+    fun signOutAsksFirstAndCancelKeepsTheSession() {
+        compose.setContent { NavigationCoordinator() }
+
+        compose.onNodeWithTag("sign-out-button").performClick()
+        compose.onNodeWithText("Sign out?").assertIsDisplayed()
+        compose.onNodeWithTag("dialog-cancel").performClick()
+        assertTrue(compose.onAllNodesWithText("Sign out?").fetchSemanticsNodes().isEmpty())
+        compose.onNodeWithTag("check-button").assertIsDisplayed()
+
+        compose.onNodeWithTag("sign-out-button").performClick()
+        compose.onNodeWithTag("dialog-confirm").performClick()
+        compose.onNodeWithText("Continue as Citizen Voter").assertIsDisplayed()
     }
 
     @Test

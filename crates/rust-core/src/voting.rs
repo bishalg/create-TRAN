@@ -60,17 +60,31 @@ pub fn can_vote_by_age(age: u16, minimum_age: u16) -> bool {
     age >= minimum_age
 }
 
+/// Parses exactly `YYYY-MM-DD` (ISO 8601 calendar date, four-digit year). chrono alone also accepts
+/// signed and five-digit years (`-0001-01-01`, `+002000-01-01`); the TypeScript and native clients
+/// do not, so neither does the core (REQ-ROB-001).
+pub fn parse_iso_date(raw: &str) -> Option<NaiveDate> {
+    let well_formed = raw.len() == 10
+        && raw.bytes().enumerate().all(|(i, b)| match i {
+            4 | 7 => b == b'-',
+            _ => b.is_ascii_digit(),
+        });
+    if !well_formed {
+        return None;
+    }
+    NaiveDate::parse_from_str(raw, "%Y-%m-%d").ok()
+}
+
 /// Whole years between birth date and reference date (birthday not yet reached → age - 1).
 pub fn age_from_birthdate(birthdate: NaiveDate, reference: NaiveDate) -> u16 {
-    if birthdate > reference {
-        return 0;
-    }
-
     let years = reference.year() - birthdate.year();
     let birthday_passed =
         (reference.month(), reference.day()) >= (birthdate.month(), birthdate.day());
     let age = if birthday_passed { years } else { years - 1 };
-    age.max(0) as u16
+    // A future birthdate is age 0 (validation rejects it separately). chrono spans ±262 143 years:
+    // saturate instead of wrapping (`as u16`) so an absurd birthdate stays absurd and the
+    // `MAX_AGE` check rejects it (REQ-ROB-001).
+    u16::try_from(age.max(0)).unwrap_or(u16::MAX)
 }
 
 #[cfg(test)]
@@ -113,6 +127,14 @@ mod tests {
         assert_eq!(age_from_birthdate(birth, ref_date), 0);
     }
 
+    // Verifies: REQ-ROB-001
+    #[test]
+    fn age_from_birthdate_saturates_instead_of_wrapping() {
+        let ancient = NaiveDate::from_ymd_opt(-262_000, 1, 1).unwrap();
+        let ref_date = NaiveDate::from_ymd_opt(2026, 10, 18).unwrap();
+        assert_eq!(age_from_birthdate(ancient, ref_date), u16::MAX);
+    }
+
     #[test]
     fn age_from_birthdate_leap_day_counts_as_passed_on_march_first() {
         let birth = NaiveDate::from_ymd_opt(2004, 2, 29).unwrap();
@@ -130,6 +152,28 @@ mod tests {
         assert!(codes
             .iter()
             .all(|code| code.len() == 2 && code.bytes().all(|b| b.is_ascii_uppercase())));
+    }
+
+    // Verifies: REQ-ROB-001
+    #[test]
+    fn parse_iso_date_accepts_only_four_digit_calendar_dates() {
+        assert_eq!(
+            parse_iso_date("0001-01-01"),
+            NaiveDate::from_ymd_opt(1, 1, 1)
+        );
+        assert_eq!(
+            parse_iso_date("2024-02-29"),
+            NaiveDate::from_ymd_opt(2024, 2, 29)
+        );
+        for raw in [
+            "2023-02-29",
+            "-001-01-01",
+            "+2000-0101",
+            "2000/01/01",
+            "２０００-01-01",
+        ] {
+            assert_eq!(parse_iso_date(raw), None, "{raw}");
+        }
     }
 
     #[test]

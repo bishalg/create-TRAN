@@ -42,7 +42,19 @@ interface Fixtures {
     countryCode: string;
     referenceDate: string;
     error: string;
+    /** `VoteValidationError` code in Rust; `validation.<code>` in the catalogue. */
+    code: string;
   }[];
+}
+
+/** The value `fn` throws, so tests can assert on its fields (`code`, `message`). */
+function thrown(fn: () => unknown): unknown {
+  try {
+    fn();
+  } catch (err) {
+    return err;
+  }
+  throw new Error('expected a throw');
 }
 
 const fixtures: Fixtures = JSON.parse(
@@ -67,7 +79,11 @@ describe('golden fixtures (shared with Rust)', () => {
   });
 
   it.each(fixtures.invalidBirthdates)('rejects invalid birthdate %j', (raw) => {
-    expect(() => ageFromBirthdate(raw, '2026-10-18')).toThrow(VoteEligibilityValidationError);
+    const err = thrown(() => ageFromBirthdate(raw, '2026-10-18'));
+    expect(err).toBeInstanceOf(VoteEligibilityValidationError);
+    expect(err).toMatchObject({ code: 'validation.invalid_date' });
+    // The log line names the input, quoted so a newline in it cannot forge a second line.
+    expect((err as Error).message).toContain(JSON.stringify(raw));
   });
 
   it.each(fixtures.evaluations)('evaluates: $name', (c) => {
@@ -91,12 +107,18 @@ describe('golden fixtures (shared with Rust)', () => {
       });
     expect(run).toThrow(VoteEligibilityValidationError);
     expect(run).toThrow(c.error);
+    expect(thrown(run)).toMatchObject({ code: `validation.${c.code}` });
   });
 
   it.each(fixtures.invalidCountryCodes)('rejects malformed country code %j', (code) => {
-    expect(() =>
-      evaluateVoteEligibilityOffline({ age: 30, countryCode: code, referenceDate: '2026-10-18' })
-    ).toThrow(VoteEligibilityValidationError);
+    expect(
+      thrown(() =>
+        evaluateVoteEligibilityOffline({ age: 30, countryCode: code, referenceDate: '2026-10-18' })
+      )
+    ).toMatchObject({
+      name: 'VoteEligibilityValidationError',
+      code: 'validation.invalid_country_code',
+    });
   });
 });
 
@@ -106,6 +128,25 @@ describe('TypeScript-only input hardening (JSON cannot express these in Rust)', 
 
   it.each([-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY])('rejects age %s', (age) => {
     expect(() => run(age)).toThrow(VoteEligibilityValidationError);
+    expect(thrown(() => run(age))).toMatchObject({
+      code: 'validation.age_out_of_range',
+      message: expect.stringContaining('whole number'),
+    });
+  });
+
+  it('measures age against today when no reference date is given', () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const result = evaluateVoteEligibilityOffline({
+      age: 0,
+      countryCode: 'US',
+      birthdate: today,
+    });
+    expect(result.age).toBe(0);
+  });
+
+  it('a future birthdate is age 0 when measured directly', () => {
+    expect(ageFromBirthdate('2026-10-19', '2026-10-18')).toBe(0);
+    expect(ageFromBirthdate('2030-01-01', '2026-10-18')).toBe(0);
   });
 
   it('accepts the boundary ages 0 and 150', () => {

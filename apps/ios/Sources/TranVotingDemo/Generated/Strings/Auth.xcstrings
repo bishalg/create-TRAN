@@ -45,6 +45,50 @@
         }
       }
     },
+    "auth.signOutConfirm.body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You'll return to role selection."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आप भूमिका चयन पर लौट जाएँगे।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "तपाईं भूमिका छनोटमा फर्कनुहुनेछ।"
+          }
+        }
+      }
+    },
+    "auth.signOutConfirm.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign out?"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "साइन आउट करें?"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "साइन आउट गर्ने?"
+          }
+        }
+      }
+    },
     "auth.welcome.subtitle": {
       "localizations": {
         "en": {

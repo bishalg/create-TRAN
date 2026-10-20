@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { VoteEligibilityOutputSchema } from '../src/schemas/vote.js';
-import { checkVoteEligibility, createTranOrpcClient, TranApiError } from '../src/client.js';
+import {
+  checkVoteEligibility,
+  createTranOrpcClient,
+  readApiError,
+  TranApiError,
+} from '../src/client.js';
 
 describe('@tran/api vote contract', () => {
   it('validates eligibility responses with Zod', () => {
@@ -97,5 +102,40 @@ describe('@tran/api client edge cases', () => {
     await expect(checkVoteEligibility({ age: 21 }, { fetchFn: notJson as never })).rejects.toThrow(
       'HTTP 502'
     );
+  });
+
+  // Verifies: REQ-ERR-002 REQ-ERR-004
+  it('reads code, request id and Retry-After from the envelope and headers', async () => {
+    const response = {
+      status: 429,
+      headers: new Headers({ 'x-request-id': 'hdr-1', 'retry-after': '1' }),
+      json: async () => ({
+        success: false,
+        error: 'slow down',
+        code: 'server.rate_limited',
+        retryable: true,
+        request_id: 'body-1',
+      }),
+    } as unknown as Response;
+    const err = await readApiError(response);
+    expect(err).toMatchObject({
+      status: 429,
+      message: 'slow down',
+      code: 'server.rate_limited',
+      requestId: 'body-1',
+      retryAfter: '1',
+    });
+  });
+
+  it('falls back to the x-request-id header and leaves the code empty for foreign bodies', async () => {
+    const response = {
+      status: 502,
+      headers: new Headers({ 'x-request-id': 'hdr-2' }),
+      json: async () => ({ message: 'nginx says no' }),
+    } as unknown as Response;
+    const err = await readApiError(response);
+    expect(err).toMatchObject({ status: 502, message: 'HTTP 502', requestId: 'hdr-2' });
+    expect(err.code).toBeUndefined();
+    expect(err.retryAfter).toBeUndefined();
   });
 });

@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { evaluateVoteEligibilityOffline } from '@tran/core';
+import { evaluateVoteEligibilityOffline, VoteEligibilityValidationError } from '@tran/core';
 
 export const healthReport = {
   report_id: 'r-1',
@@ -31,8 +31,24 @@ export const stackInfo = {
   version: '0.1.0',
 };
 
-function json(body: unknown, status = 200) {
-  return { ok: status < 300, status, statusText: String(status), json: async () => body };
+export const REQUEST_ID = 'req-test-1';
+
+export function json(body: unknown, status = 200) {
+  return {
+    ok: status < 300,
+    status,
+    statusText: String(status),
+    headers: new Headers({ 'x-request-id': REQUEST_ID }),
+    json: async () => body,
+  };
+}
+
+/** The API's error envelope (REQ-ERR-002). */
+export function envelope(status: number, code: string, retryable = false) {
+  return json(
+    { success: false, error: `server says ${code}`, code, retryable, request_id: REQUEST_ID },
+    status
+  );
 }
 
 export interface FakeApiOptions {
@@ -69,10 +85,10 @@ export function createFakeApi(options: FakeApiOptions = {}) {
           evaluated_at: '2026-10-18T00:00:00Z',
         });
       } catch (e) {
-        return json({ success: false, error: (e as Error).message }, 400);
+        return envelope(400, (e as VoteEligibilityValidationError).code);
       }
     }
-    return json({ success: false, error: 'not found' }, 404);
+    return envelope(404, 'route.not_found');
   });
 
   const callsTo = (path: string) =>

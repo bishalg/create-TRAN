@@ -18,9 +18,9 @@ Route handlers MUST only translate HTTP to a call on `rust_core::TranEngine` and
 
 ### REQ-API-003 [verified] One error envelope
 
-Every failure MUST be JSON `{ "success": false, "error": "<message>" }`: rule violations `400`; unreadable JSON,
-missing or mistyped fields, negative age, impossible dates `400`; missing JSON content type `415`.
-Unknown routes are `404` and wrong methods `405`.
+Every failure MUST be the envelope of REQ-ERR-002 — `{ "success": false, "error", "code", "retryable", "request_id" }`:
+rule violations `400`; unreadable JSON, missing or mistyped fields, negative age, impossible dates `400`; missing JSON
+content type `415`. Unknown routes are `404` and wrong methods `405`, in the same envelope.
 **Verified by:** `api_test.rs` (`*_is_a_400_with_envelope`, `unknown_route_is_404`, `eligibility_rejects_get_with_405`).
 
 ### REQ-API-004 [verified] Client IP

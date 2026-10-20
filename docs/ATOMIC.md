@@ -15,6 +15,12 @@ TRAN’s web sample uses a thin **atom layer** under `apps/web/src/shared/ui/`. 
 | `TranTable` / `TranTh` / `TranTd` | Tabular data           | class + ref forwarding only                                                                                                              |
 | `TranLabel`                       | Radio/checkbox tiles   | native `<label>` for associated controls                                                                                                 |
 | `Field`                           | Labelled input         | `label`, optional `hint` via `TranText`                                                                                                  |
+| `TranToast` / `TranToastRegion`   | Transient feedback     | `tone`: `success` \| `info` \| `warning` \| `error`; `durationMs` (catalogue); pauses on hover/focus; `role=alert` only for errors       |
+| `TranBanner`                      | Persistent notice      | `tone`: `warning` \| `info`; `role=status`; owner removes it when the condition clears                                                   |
+| `TranDialog`                      | Blocking choice        | native `<dialog>`; `destructive` focuses Cancel and styles confirm `danger`; Escape cancels; focus returns to the trigger                |
+
+Features never pick a feedback atom themselves: they call `useFeedback()` (`acknowledge`, `confirm`, `report`) and
+the Rust catalogue decides the presentation ([API.md § Errors](./API.md#errors), ADR-0028).
 
 Styles live in `apps/web/src/styles/app.css` on `.tran-*` selectors and `[data-variant]` / `[data-gap]` hooks. Generated colours and scales live in `apps/web/src/styles/generated/theme.css`.
 
@@ -40,11 +46,12 @@ Styles live in `apps/web/src/styles/app.css` on `.tran-*` selectors and `[data-v
 
 iOS (`apps/ios/Sources/TranVotingDemo/Atoms/`) and Android (`apps/android/.../ui/atoms/`) mirror these **names**
 (`TranText`, `TranStack`, `TranInline`, `TranBox`, `TranSurface`, `TranButton`, `TranField`, `TranSegmented`,
-`TranDivider`, plus the `TranScreen` background container) on the generated `BrandTokens`; gaps come from `TranGap`,
+`TranDivider`, `TranToast`, `TranBanner`, `TranDialog`, plus the `TranScreen` background container) on the generated `BrandTokens`; gaps come from `TranGap`,
 whose steps are the generated space scale (`xxs…xxl`). The palette arrives through the platform environment
 (SwiftUI `\.tranPalette` / Compose `LocalTranPalette`) — the native analogue of web CSS variables. Raw
 `Text`/`Button`/`TextField`/`Picker`/`Divider` (iOS) and their Material3 counterparts (Android) outside the atoms
 directories fail [`native-atoms.test.ts`](../../packages/core-ts/tests/native-atoms.test.ts) — a regex guard, not
-a type checker ([ADR-0022](./adr/0022-native-atoms.md)).
+a type checker ([ADR-0022](./adr/0022-native-atoms.md)). Feedback goes through `TranFeedback` (iOS
+`Feedback/`, Android `ui/feedback/`), which reads the presentation from the UniFFI catalogue.
 
 See [DESIGN.md](./DESIGN.md) and [ADR-0017](./adr/0017-web-atomic-enforcement.md).

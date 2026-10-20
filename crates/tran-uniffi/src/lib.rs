@@ -6,13 +6,16 @@
 
 use chrono::NaiveDate;
 use rust_core::{
-    age_from_birthdate, can_vote_by_age, resolve_destination, validate_country_code_format,
-    validate_vote_eligibility, voting_age_for_country, AppDestination, AuthSession, CoreError,
-    TranEngine, UserRole, VoteEligibilityRequest, VoteValidationError, SUPPORTED_COUNTRIES,
+    age_from_birthdate, can_vote_by_age, parse_iso_date, resolve_destination,
+    voting_age_for_country, AppDestination, AuthSession, CoreError, TranEngine, UserRole,
+    VoteEligibilityRequest, VoteValidationError, SUPPORTED_COUNTRIES,
 };
 use thiserror::Error as ThisError;
 
 uniffi::setup_scaffolding!("tran_uniffi");
+
+mod feedback;
+pub use feedback::*;
 
 /// A validation failure that native code can branch on without parsing English prose.
 ///
@@ -39,22 +42,13 @@ pub enum TranValidationError {
     /// The country code is not two ASCII letters (ISO 3166-1 alpha-2 shape).
     #[error("Country code must be two ASCII letters (ISO 3166-1 alpha-2)")]
     InvalidCountryCode,
-
-    /// An unexpected failure came back from the shared core.
-    ///
-    /// The app has already validated its inputs, so this indicates a programming error rather than
-    /// something the voter can fix.
-    #[error("Unexpected core failure")]
-    Internal,
 }
 
-impl TranValidationError {
-    /// Convert an untyped core failure into the stable native error surface.
-    ///
-    /// All expected validation failures are raised before the core runs, so anything reaching this
-    /// point is unexpected.
-    fn from_core(_err: CoreError) -> Self {
-        Self::Internal
+impl From<CoreError> for TranValidationError {
+    fn from(err: CoreError) -> Self {
+        match err {
+            CoreError::ValidationError(err) => err.into(),
+        }
     }
 }
 
@@ -101,12 +95,11 @@ pub struct VoteEligibilityOfflineResult {
 }
 
 fn parse_reference_date(value: &str) -> Result<NaiveDate, TranValidationError> {
-    NaiveDate::parse_from_str(value, "%Y-%m-%d")
-        .map_err(|_| TranValidationError::InvalidReferenceDate)
+    parse_iso_date(value).ok_or(TranValidationError::InvalidReferenceDate)
 }
 
 fn parse_birthdate(value: &str) -> Result<NaiveDate, TranValidationError> {
-    NaiveDate::parse_from_str(value, "%Y-%m-%d").map_err(|_| TranValidationError::InvalidBirthdate)
+    parse_iso_date(value).ok_or(TranValidationError::InvalidBirthdate)
 }
 
 /// Minimum voting age for an ISO 3166-1 alpha-2 country code (case-insensitive).
@@ -202,13 +195,14 @@ pub fn evaluate_vote_eligibility_offline(
     };
 
     let request = VoteEligibilityRequest { age, birthdate };
-    validate_vote_eligibility(&request, reference)?;
-    validate_country_code_format(&country_code)?;
-
-    let engine = TranEngine::new();
-    let response = engine
-        .evaluate_vote_eligibility_on(request, &country_code, "offline", "127.0.0.1", reference)
-        .map_err(TranValidationError::from_core)?;
+    // The engine validates (age, derived age, birthdate, country) and its errors convert 1:1.
+    let response = TranEngine::new().evaluate_vote_eligibility_on(
+        request,
+        &country_code,
+        "offline",
+        "127.0.0.1",
+        reference,
+    )?;
 
     let reason = if response.eligible {
         TranEligibilityReason::MeetsMinimumAge

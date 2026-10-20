@@ -3,12 +3,19 @@ import { createBdd } from 'playwright-bdd';
 
 const { Given, When, Then } = createBdd();
 
+/** Sign-out is destructive, so it always goes through the confirmation dialog (REQ-ERR-007). */
+async function signOut(page: import('@playwright/test').Page) {
+  await page.getByTestId('sign-out-button').click();
+  await page
+    .getByRole('dialog', { name: 'Sign out?' })
+    .getByRole('button', { name: 'Sign out' })
+    .click();
+}
+
+// The app opens signed in as a Citizen Voter, so reaching role selection is always one sign-out.
 Given('I launch the application', async ({ page }) => {
   await page.goto('/');
-  const signOutBtn = page.getByTestId('sign-out-button');
-  if (await signOutBtn.isVisible()) {
-    await signOutBtn.click();
-  }
+  await signOut(page);
   await expect(
     page.getByRole('heading', { level: 2, name: 'Welcome to TRAN Voting' })
   ).toBeVisible();
@@ -43,18 +50,19 @@ Given(
   'I am on the {string} dashboard as {string}',
   async ({ page }, _dashboard: string, role: string) => {
     await page.goto('/');
-    const badge = page.getByTestId('role-badge');
-    if (!(await badge.isVisible()) || (await badge.textContent()) !== role) {
-      const signOutBtn = page.getByTestId('sign-out-button');
-      if (await signOutBtn.isVisible()) {
-        await signOutBtn.click();
-      }
-      await page.getByRole('button', { name: new RegExp(`Continue as ${role}`) }).click();
-    }
-    await expect(badge).toHaveText(role);
+    await signOut(page);
+    await page.getByRole('button', { name: new RegExp(`Continue as ${role}`) }).click();
+    await expect(page.getByTestId('role-badge')).toHaveText(role);
   }
 );
 
 When('I click the sign out button', async ({ page }) => {
   await page.getByTestId('sign-out-button').click();
+});
+
+When('I confirm signing out', async ({ page }) => {
+  await page
+    .getByRole('dialog', { name: 'Sign out?' })
+    .getByRole('button', { name: 'Sign out' })
+    .click();
 });

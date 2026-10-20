@@ -19,11 +19,13 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.tran.voting.api.TranApiClient
 import com.tran.voting.api.TranApiStatus
+import com.tran.voting.api.TranRequestFailure
 import com.tran.voting.api.tranApiStatusFrom
 import com.tran.voting.generated.TranSpace
 import com.tran.voting.generated.TranStrings
 import com.tran.voting.generated.TranTheme
 import com.tran.voting.generated.labelRes
+import com.tran.voting.ui.atoms.TranBanner
 import com.tran.voting.ui.atoms.TranButton
 import com.tran.voting.ui.atoms.TranButtonSize
 import com.tran.voting.ui.atoms.TranButtonVariant
@@ -35,9 +37,13 @@ import com.tran.voting.ui.atoms.TranSegmented
 import com.tran.voting.ui.atoms.TranStack
 import com.tran.voting.ui.atoms.TranText
 import com.tran.voting.ui.atoms.TranTextVariant
+import com.tran.voting.ui.feedback.LocalTranFeedback
+import com.tran.voting.ui.feedback.TranFeedback
 import java.time.LocalDate
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import uniffi.tran_uniffi.TranPresentation
+import uniffi.tran_uniffi.TranUserAction
 import uniffi.tran_uniffi.TranValidationException
 import uniffi.tran_uniffi.evaluateVoteEligibilityOffline
 
@@ -54,13 +60,22 @@ fun VotingHomeScreen(
     val resultPlaceholder = stringResource(TranStrings.Eligibility.resultPlaceholder)
     var resultText by remember { mutableStateOf(resultPlaceholder) }
     var apiStatus by remember { mutableStateOf(TranApiStatus.CHECKING) }
+    // A connectivity failure shown until a call succeeds (REQ-ERR-006).
+    var banner by remember { mutableStateOf<TranRequestFailure?>(null) }
     val invalidAge = stringResource(TranStrings.Errors.ageInvalid)
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val feedback = LocalTranFeedback.current
+
+    fun record(failure: TranRequestFailure?) {
+        apiStatus = failure?.let(::tranApiStatusFrom) ?: TranApiStatus.ONLINE
+        banner = failure?.takeIf { it.spec.presentation is TranPresentation.Banner }
+    }
 
     // REQ-NAT-011: the status pill mirrors the web footer; it never gates the device check.
+    // A background call the user did not start: log it, never toast.
     LaunchedEffect(Unit) {
-        apiStatus = statusOf { api.checkHealth() }
+        record(attempt { api.checkHealth() }?.also(feedback::log))
     }
 
     TranScreen(
@@ -111,9 +126,17 @@ fun VotingHomeScreen(
                     val check = runOfflineCheck(context, ageText, countryCode, invalidAge)
                     resultText = check.text
                     // REQ-NAT-011: the verdict is already on screen; the API call only moves the status pill.
+                    // The server confirms in the background, retrying transient failures; the
+                    // catalogue decides how the outcome is shown.
                     check.age?.let { age ->
                         scope.launch {
-                            apiStatus = statusOf { api.confirmEligibility(age, countryCode) }
+                            val failure = attempt { api.confirmEligibility(age, countryCode) }
+                            record(failure)
+                            if (failure == null) {
+                                feedback.acknowledge(TranUserAction.SERVER_CHECK_SUCCEEDED)
+                            } else {
+                                feedback.report(failure)
+                            }
                         }
                     }
                 },
@@ -146,10 +169,9 @@ fun VotingHomeScreen(
                 live = true,
                 modifier = Modifier.testTag("api-status"),
             )
-            if (apiStatus == TranApiStatus.OFFLINE) {
-                TranText(
-                    text = stringResource(TranStrings.Eligibility.offlineNotice),
-                    variant = TranTextVariant.CAPTION,
+            banner?.let {
+                TranBanner(
+                    message = stringResource(TranFeedback.messageRes(it.spec.messageKey)),
                     modifier = Modifier.testTag("offline-notice"),
                 )
             }
@@ -160,14 +182,14 @@ fun VotingHomeScreen(
 /** The verdict text plus the validated age, when the input was good enough for the API call. */
 private data class OfflineCheck(val text: String, val age: Int?)
 
-/** Maps a call outcome to the pill; unknown failures read as offline instead of crashing the dashboard. */
-private suspend fun statusOf(block: suspend () -> Unit): TranApiStatus = try {
+/** Runs a call; returns its classified failure, or `null` on success. Cancellation still propagates. */
+private suspend fun attempt(block: suspend () -> Unit): TranRequestFailure? = try {
     block()
-    TranApiStatus.ONLINE
+    null
 } catch (cancelled: CancellationException) {
     throw cancelled
 } catch (error: Exception) {
-    tranApiStatusFrom(error)
+    TranRequestFailure.classify(error)
 }
 
 /** Every message shown comes from string resources; the core's English `reason`/`detail` is never displayed. */

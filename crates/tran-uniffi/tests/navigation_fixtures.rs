@@ -1,5 +1,6 @@
 // Verifies: REQ-NAV-006 REQ-RULE-009
 //! Navigation and the country table through the UniFFI export surface (same fixtures as rust-core).
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use serde::Deserialize;
 use tran_uniffi::{

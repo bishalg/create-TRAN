@@ -1,6 +1,7 @@
 // Verifies: REQ-RULE-001 REQ-RULE-002 REQ-RULE-003 REQ-RULE-004 REQ-RULE-005 REQ-RULE-006 REQ-RULE-007 REQ-RULE-008 REQ-RULE-009 REQ-RULE-010
 //! Golden-fixture parity: `fixtures/vote-eligibility.json` is shared with the TypeScript
 //! mirror (`packages/core-ts/tests/parity.test.ts`). If a rule changes, edit the fixture first.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use chrono::NaiveDate;
 use rust_core::{
@@ -190,10 +191,8 @@ fn rejected_evaluations_match_fixture() {
             )
             .expect_err(&case.name);
 
-        match err {
-            CoreError::ValidationError(msg) => assert_eq!(msg, case.error, "{}", case.name),
-            other => panic!("{}: expected ValidationError, got {other:?}", case.name),
-        }
+        let CoreError::ValidationError(err) = err;
+        assert_eq!(err.to_string(), case.error, "{}", case.name);
     }
 }
 

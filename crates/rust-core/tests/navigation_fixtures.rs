@@ -1,5 +1,6 @@
 // Verifies: REQ-NAV-006
 //! Golden navigation cases from `fixtures/navigation.json`, shared with TypeScript, UniFFI and native.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use rust_core::{resolve_destination, AppDestination, AuthSession, UserRole};
 use serde::Deserialize;

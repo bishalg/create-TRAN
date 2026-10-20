@@ -1,5 +1,6 @@
-// Verifies: REQ-RULE-001, REQ-FFI-002
+// Verifies: REQ-RULE-001, REQ-FFI-002, REQ-ROB-001
 //! Golden fixtures exercised through the UniFFI export surface (same data as rust-core parity).
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use chrono::NaiveDate;
 use rust_core::VoteEligibilityRequest;
@@ -17,6 +18,7 @@ struct Fixtures {
     voting_ages: Vec<VotingAgeCase>,
     can_vote: Vec<CanVoteCase>,
     age_from_birthdate: Vec<AgeCase>,
+    invalid_birthdates: Vec<String>,
     evaluations: Vec<EvaluationCase>,
     rejected_evaluations: Vec<RejectedCase>,
 }
@@ -92,7 +94,6 @@ fn validation_code(err: &TranValidationError) -> &'static str {
         TranValidationError::InvalidBirthdate => "invalid_birthdate",
         TranValidationError::InvalidReferenceDate => "invalid_reference_date",
         TranValidationError::InvalidCountryCode => "invalid_country_code",
-        TranValidationError::Internal => "internal",
     }
 }
 
@@ -178,5 +179,32 @@ fn uniffi_rejected_evaluations_match_fixture() {
         )
         .expect_err(&case.name);
         assert_eq!(validation_code(&err), case.code, "{}", case.name);
+    }
+}
+
+#[test]
+fn uniffi_rejects_every_invalid_birthdate_and_reference_date() {
+    for raw in fixtures().invalid_birthdates {
+        let as_birthdate = evaluate_vote_eligibility_offline(
+            20,
+            Some(raw.clone()),
+            "US".into(),
+            "2026-10-18".into(),
+        );
+        // An empty birthdate means "not given": the age is used instead.
+        if raw.is_empty() {
+            assert!(as_birthdate.is_ok());
+        } else {
+            assert_eq!(
+                as_birthdate,
+                Err(TranValidationError::InvalidBirthdate),
+                "{raw:?}"
+            );
+        }
+        assert_eq!(
+            evaluate_vote_eligibility_offline(20, None, "US".into(), raw.clone()),
+            Err(TranValidationError::InvalidReferenceDate),
+            "{raw:?}"
+        );
     }
 }

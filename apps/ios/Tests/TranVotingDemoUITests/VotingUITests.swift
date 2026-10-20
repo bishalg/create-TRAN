@@ -1,4 +1,4 @@
-// Verifies: REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006 REQ-NAT-007 REQ-NAT-010 REQ-NAT-011
+// Verifies: REQ-ERR-007 REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006 REQ-NAT-007 REQ-NAT-010 REQ-NAT-011
 import XCTest
 
 /// Native UI + accessibility tests. Journeys mirror e2e/maestro/flows and e2e/features.
@@ -57,7 +57,9 @@ final class VotingUITests: XCTestCase {
         let status = app.staticTexts["api-status"]
         XCTAssertTrue(status.waitForExistence(timeout: 5))
         XCTAssertEqual(status.label, "API offline")
-        XCTAssertTrue(app.staticTexts["offline-notice"].waitForExistence(timeout: 5))
+        // A banner, not an error toast: the catalogue presents `network.offline` persistently.
+        XCTAssertTrue(app.descendants(matching: .any)["offline-notice"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.descendants(matching: .any)["toast"].exists)
 
         // REQ-NAT-002: the verdict does not wait for the API.
         check(age: "20", country: "NP")
@@ -65,6 +67,18 @@ final class VotingUITests: XCTestCase {
             app.staticTexts["offline-result"].label,
             "Age 20 meets the minimum voting age of 18 in NP."
         )
+    }
+
+    func testSignOutAsksFirstAndCancelKeepsTheSession() {
+        app.buttons["sign-out-button"].tap()
+        let dialog = app.alerts["Sign out?"]
+        XCTAssertTrue(dialog.waitForExistence(timeout: 2))
+        dialog.buttons["Cancel"].tap()
+        XCTAssertTrue(app.buttons["check-button"].waitForExistence(timeout: 2))
+
+        app.buttons["sign-out-button"].tap()
+        app.alerts["Sign out?"].buttons["Sign out"].tap()
+        XCTAssertTrue(app.buttons["Continue as Citizen Voter"].waitForExistence(timeout: 2))
     }
 
     func testControlsAreAtLeast44PointsAndLabelled() {

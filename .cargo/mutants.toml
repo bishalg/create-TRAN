@@ -1,0 +1,13 @@
+# cargo-mutants (ADR-0029, REQ-ROB-012). The nightly job fails on any missed mutant, so a survivor is
+# either a missing test (write it) or dead code (delete it). Only a mutant no test can tell apart
+# may be excluded here, and each exclusion says why.
+
+# Binary entry points: subscriber wiring, writing files, process exit. Excluded from coverage for
+# the same reason (`test:rust:coverage`); what they call is tested in each crate's library.
+exclude_globs = ["apps/api/src/main.rs", "crates/tran-tokens-codegen/src/main.rs"]
+
+exclude_re = [
+    # `rest = &after[end * 1..]` keeps the closing `}` at the front of `rest`; the next search is
+    # for `{`, so it can never match. Same output for every input.
+    "replace \\+ with \\* in placeholders",
+]

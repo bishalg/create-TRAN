@@ -3,6 +3,7 @@ use thiserror::Error;
 
 use crate::error::{CoreError, CoreResult};
 use crate::models::VoteEligibilityRequest;
+use crate::voting::age_from_birthdate;
 
 pub const MAX_AGE: u16 = 150;
 
@@ -13,7 +14,7 @@ pub const MAX_AGE: u16 = 150;
 /// of parsing English prose.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Error)]
 pub enum VoteValidationError {
-    /// Age is above [`MAX_AGE`].
+    /// Age — given, or derived from the birthdate — is above [`MAX_AGE`].
     #[error("Age must be {MAX_AGE} or less")]
     AgeOutOfRange,
     /// Birthdate is later than the injected reference date.
@@ -52,8 +53,14 @@ pub fn validate_vote_eligibility(
     if req.age > MAX_AGE {
         return Err(VoteValidationError::AgeOutOfRange);
     }
-    if req.birthdate.is_some_and(|bd| bd > today) {
-        return Err(VoteValidationError::BirthdateInFuture);
+    if let Some(birthdate) = req.birthdate {
+        if birthdate > today {
+            return Err(VoteValidationError::BirthdateInFuture);
+        }
+        // The derived age replaces `age`, so it must pass the same limit (REQ-ROB-001).
+        if age_from_birthdate(birthdate, today) > MAX_AGE {
+            return Err(VoteValidationError::AgeOutOfRange);
+        }
     }
     Ok(())
 }
@@ -63,7 +70,7 @@ pub fn validate_vote_eligibility_request(
     req: &VoteEligibilityRequest,
     today: NaiveDate,
 ) -> CoreResult<()> {
-    validate_vote_eligibility(req, today).map_err(|err| CoreError::ValidationError(err.to_string()))
+    validate_vote_eligibility(req, today).map_err(CoreError::ValidationError)
 }
 
 /// ISO 3166-1 alpha-2 shape check (two ASCII letters).
@@ -80,7 +87,7 @@ pub fn validate_country_code_format(code: &str) -> Result<(), VoteValidationErro
 /// ISO 3166-1 alpha-2 shape check (two ASCII letters). Unknown-but-well-formed codes are allowed
 /// and fall back to the default voting age.
 pub fn validate_country_code(code: &str) -> CoreResult<()> {
-    validate_country_code_format(code).map_err(|err| CoreError::ValidationError(err.to_string()))
+    validate_country_code_format(code).map_err(CoreError::ValidationError)
 }
 
 #[cfg(test)]

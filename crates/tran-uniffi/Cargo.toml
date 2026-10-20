@@ -30,3 +30,6 @@ serde_json = { workspace = true }
 [features]
 default = []
 bindgen = ["uniffi/cli"]
+
+[lints]
+workspace = true

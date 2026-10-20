@@ -22,7 +22,8 @@ export interface HeaderProps {
   theme: ThemeMode;
   onThemeChange: (theme: ThemeMode) => void;
   currentRole?: import('@tran/core').UserRole | null;
-  onSignOut?: () => void;
+  /** May open a confirmation first, so it can be async. */
+  onSignOut?: () => void | Promise<void>;
 }
 
 export function Header({
@@ -94,7 +95,7 @@ export function Header({
             size="md"
             className="sign-out-button"
             data-testid="sign-out-button"
-            onClick={onSignOut}
+            onClick={() => void onSignOut()}
             aria-label={t('common.signOut', locale)}
           >
             {t('common.signOut', locale)}

@@ -4,5 +4,16 @@
     <string name="errors_age_and_country">Enter age and country</string>
     <string name="errors_age_invalid">Enter a valid age</string>
     <string name="errors_age_out_of_range">Enter a whole-number age between 0 and 150.</string>
+    <string name="errors_birthdate_in_future">Birthdate can\'t be in the future.</string>
     <string name="errors_country_invalid">Country must be two letters</string>
+    <string name="errors_date_invalid">Enter a real date as YYYY-MM-DD.</string>
+    <string name="errors_not_found">This feature isn\'t available on the server yet.</string>
+    <string name="errors_rate_limited">Too many requests. Please wait a moment and try again.</string>
+    <string name="errors_reference">Reference: %1$s</string>
+    <string name="errors_request_cancelled">The request was cancelled.</string>
+    <string name="errors_request_malformed">The app sent a request the server couldn\'t read. Please refresh and try again.</string>
+    <string name="errors_server_internal">Something went wrong on our side. Your result was checked on this device instead.</string>
+    <string name="errors_server_unavailable">The server is temporarily unavailable — results are checked on this device.</string>
+    <string name="errors_timeout">The server is taking too long — results are checked on this device.</string>
+    <string name="errors_unexpected">Something went wrong in the app. Please try again.</string>
 </resources>

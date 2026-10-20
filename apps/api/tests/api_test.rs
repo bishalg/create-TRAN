@@ -1,6 +1,7 @@
-// Verifies: REQ-API-001 REQ-API-002 REQ-API-003 REQ-API-004 REQ-API-005 REQ-API-006 REQ-API-008 REQ-API-012
+// Verifies: REQ-API-001 REQ-API-002 REQ-API-003 REQ-API-004 REQ-API-005 REQ-API-006 REQ-API-008 REQ-API-012 REQ-ERR-002
 //! HTTP-level integration tests. Each test drives the real router in-process (no socket),
 //! so they are fast and deterministic. Naming: `<endpoint>_<condition>_<outcome>`.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use api::build_app;
 use api::config::AppConfig;
@@ -14,6 +15,7 @@ use tower::ServiceExt;
 struct Reply {
     status: StatusCode,
     json: Value,
+    request_id: Option<String>,
 }
 
 async fn send(request: Request<Body>) -> Reply {
@@ -23,9 +25,17 @@ async fn send(request: Request<Body>) -> Reply {
 async fn send_to(state: AppState, request: Request<Body>) -> Reply {
     let response = build_app(state).oneshot(request).await.unwrap();
     let status = response.status();
+    let request_id = response
+        .headers()
+        .get("x-request-id")
+        .map(|v| v.to_str().unwrap().to_string());
     let bytes = response.into_body().collect().await.unwrap().to_bytes();
     let json = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
-    Reply { status, json }
+    Reply {
+        status,
+        json,
+        request_id,
+    }
 }
 
 fn get(uri: &str) -> Request<Body> {
@@ -44,9 +54,15 @@ fn eligibility(body: &str, headers: &[(&str, &str)]) -> Request<Body> {
     builder.body(Body::from(body.to_string())).unwrap()
 }
 
-fn assert_error_envelope(reply: &Reply, status: StatusCode, needle: &str) {
+/// REQ-ERR-002: status, catalogue code, retryability and a request id that matches the header.
+fn assert_error_envelope(reply: &Reply, status: StatusCode, code: &str, needle: &str) {
     assert_eq!(reply.status, status, "body: {}", reply.json);
     assert_eq!(reply.json["success"], false, "body: {}", reply.json);
+    assert_eq!(reply.json["code"], code, "body: {}", reply.json);
+    assert_eq!(reply.json["retryable"], false, "body: {}", reply.json);
+    let request_id = reply.json["request_id"].as_str().unwrap_or_default();
+    assert!(!request_id.is_empty(), "body: {}", reply.json);
+    assert_eq!(reply.request_id.as_deref(), Some(request_id));
     let message = reply.json["error"].as_str().unwrap_or_default();
     assert!(
         message.contains(needle),
@@ -221,7 +237,12 @@ async fn eligibility_debug_country_is_honoured_in_test_env() {
 async fn eligibility_age_above_maximum_is_a_400_with_envelope() {
     let reply = send(eligibility(r#"{"age": 151}"#, &[])).await;
 
-    assert_error_envelope(&reply, StatusCode::BAD_REQUEST, "Age must be 150 or less");
+    assert_error_envelope(
+        &reply,
+        StatusCode::BAD_REQUEST,
+        "validation.age_out_of_range",
+        "Age must be 150 or less",
+    );
 }
 
 #[tokio::test]
@@ -235,35 +256,50 @@ async fn eligibility_maximum_age_is_accepted() {
 async fn eligibility_future_birthdate_is_a_400() {
     let reply = send(eligibility(r#"{"age": 1, "birthdate": "2999-01-01"}"#, &[])).await;
 
-    assert_error_envelope(&reply, StatusCode::BAD_REQUEST, "future");
+    assert_error_envelope(
+        &reply,
+        StatusCode::BAD_REQUEST,
+        "validation.birthdate_in_future",
+        "future",
+    );
 }
 
 #[tokio::test]
 async fn eligibility_malformed_debug_country_is_a_400() {
     let reply = send(eligibility(r#"{"age": 21}"#, &[("x-debug-country", "USA")])).await;
 
-    assert_error_envelope(&reply, StatusCode::BAD_REQUEST, "Country code");
+    assert_error_envelope(
+        &reply,
+        StatusCode::BAD_REQUEST,
+        "validation.invalid_country_code",
+        "Country code",
+    );
 }
 
 #[tokio::test]
 async fn eligibility_malformed_json_is_a_400_with_envelope() {
     let reply = send(eligibility(r#"{"age": "#, &[])).await;
 
-    assert_error_envelope(&reply, StatusCode::BAD_REQUEST, "");
+    assert_error_envelope(&reply, StatusCode::BAD_REQUEST, "request.malformed", "");
 }
 
 #[tokio::test]
 async fn eligibility_missing_age_is_a_400_with_envelope() {
     let reply = send(eligibility(r#"{}"#, &[])).await;
 
-    assert_error_envelope(&reply, StatusCode::BAD_REQUEST, "age");
+    assert_error_envelope(
+        &reply,
+        StatusCode::BAD_REQUEST,
+        "request.malformed",
+        "expected shape",
+    );
 }
 
 #[tokio::test]
 async fn eligibility_negative_age_is_a_400_with_envelope() {
     let reply = send(eligibility(r#"{"age": -1}"#, &[])).await;
 
-    assert_error_envelope(&reply, StatusCode::BAD_REQUEST, "");
+    assert_error_envelope(&reply, StatusCode::BAD_REQUEST, "request.malformed", "");
 }
 
 #[tokio::test]
@@ -274,7 +310,7 @@ async fn eligibility_impossible_calendar_date_is_a_400_with_envelope() {
     ))
     .await;
 
-    assert_error_envelope(&reply, StatusCode::BAD_REQUEST, "");
+    assert_error_envelope(&reply, StatusCode::BAD_REQUEST, "request.malformed", "");
 }
 
 #[tokio::test]
@@ -286,23 +322,67 @@ async fn eligibility_without_json_content_type_is_a_415_with_envelope() {
         .unwrap();
     let reply = send(request).await;
 
-    assert_error_envelope(&reply, StatusCode::UNSUPPORTED_MEDIA_TYPE, "");
+    assert_error_envelope(
+        &reply,
+        StatusCode::UNSUPPORTED_MEDIA_TYPE,
+        "request.unsupported_media_type",
+        "",
+    );
 }
 
 // ── Routing ────────────────────────────────────────────────────────────────
 
 #[tokio::test]
-async fn unknown_route_is_404() {
+async fn unknown_route_is_404_with_envelope() {
     let reply = send(get("/api/nope")).await;
 
-    assert_eq!(reply.status, StatusCode::NOT_FOUND);
+    assert_error_envelope(&reply, StatusCode::NOT_FOUND, "route.not_found", "No route");
 }
 
 #[tokio::test]
-async fn eligibility_rejects_get_with_405() {
+async fn eligibility_rejects_get_with_405_envelope() {
     let reply = send(get("/api/vote/eligibility")).await;
 
-    assert_eq!(reply.status, StatusCode::METHOD_NOT_ALLOWED);
+    assert_error_envelope(
+        &reply,
+        StatusCode::METHOD_NOT_ALLOWED,
+        "route.method_not_allowed",
+        "method",
+    );
+}
+
+// ── Request ids ────────────────────────────────────────────────────────────
+
+#[tokio::test]
+async fn request_id_is_minted_for_successful_responses_too() {
+    let reply = send(get("/api/health")).await;
+
+    let id = reply.request_id.expect("x-request-id header");
+    assert!(uuid::Uuid::parse_str(&id).is_ok(), "{id}");
+}
+
+#[tokio::test]
+async fn request_id_reuses_a_well_formed_incoming_id() {
+    let reply = send(eligibility(
+        r#"{"age": 151}"#,
+        &[("x-request-id", "trace-42")],
+    ))
+    .await;
+
+    assert_eq!(reply.request_id.as_deref(), Some("trace-42"));
+    assert_eq!(reply.json["request_id"], "trace-42");
+}
+
+#[tokio::test]
+async fn request_id_replaces_an_unsafe_incoming_id() {
+    let reply = send(eligibility(
+        r#"{"age": 21}"#,
+        &[("x-request-id", "has spaces and is not safe")],
+    ))
+    .await;
+
+    let id = reply.request_id.expect("x-request-id header");
+    assert_ne!(id, "has spaces and is not safe");
 }
 
 // ── CORS ───────────────────────────────────────────────────────────────────

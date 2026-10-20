@@ -9,7 +9,8 @@ import {
 import { EligibilityPage } from '../features/eligibility/EligibilityPage.js';
 import { AuthWelcomePage } from '../features/auth/AuthWelcomePage.js';
 import { AuditorPage } from '../features/auditor/AuditorPage.js';
-import { useTranApi } from '../shared/api/useTranApi.js';
+import { type UseTranApiOptions, useTranApi } from '../shared/api/useTranApi.js';
+import { FeedbackProvider, useFeedback } from '../shared/feedback/FeedbackProvider.js';
 import { TranText } from '../shared/ui/TranText.js';
 import { Header } from './Header.js';
 import { type ApiState, StatusFooter } from './StatusFooter.js';
@@ -17,12 +18,31 @@ import { usePreferences } from './usePreferences.js';
 
 export interface AppProps {
   initialSession?: AuthSession;
+  /** Tests inject an instant `sleep` so retries do not wait for real backoff. */
+  retry?: UseTranApiOptions['retry'];
 }
 
-export function App({ initialSession }: AppProps = {}) {
-  const { locale, setLocale, theme, setTheme } = usePreferences();
-  const api = useTranApi();
-  const apiState: ApiState = api.isLoading ? 'checking' : api.isOffline ? 'offline' : 'online';
+export function App(props: AppProps = {}) {
+  const preferences = usePreferences();
+  return (
+    <FeedbackProvider locale={preferences.locale}>
+      <Shell {...props} preferences={preferences} />
+    </FeedbackProvider>
+  );
+}
+
+function Shell({
+  initialSession,
+  retry,
+  preferences: { locale, setLocale, theme, setTheme },
+}: AppProps & { preferences: ReturnType<typeof usePreferences> }) {
+  const feedback = useFeedback();
+  const api = useTranApi({ feedback, retry });
+  const apiState: ApiState = api.isLoading
+    ? 'checking'
+    : api.isOffline || !api.health
+      ? 'offline'
+      : 'online';
 
   const [session, setSession] = useState<AuthSession>(
     initialSession ?? {
@@ -43,8 +63,9 @@ export function App({ initialSession }: AppProps = {}) {
     });
   };
 
-  const handleSignOut = () => {
-    setSession({ status: 'unauthenticated' });
+  // Destructive: the catalogue makes this a confirmation dialog (REQ-ERR-007).
+  const handleSignOut = async () => {
+    if (await feedback.confirm('sign_out')) setSession({ status: 'unauthenticated' });
   };
 
   return (

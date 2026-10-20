@@ -1,0 +1,289 @@
+{
+  "$comment": "Failure modes every implementation must handle (REQ-ROB-010, ADR-0029). `server`: requests the Axum API must reject with the envelope and exactly one `request failed` log event — consumed by apps/api/tests/failure_modes.rs. `responses`: HTTP answers every client must classify the same way — consumed by packages/core-ts/tests/failure-modes.test.ts, TranApiClientTests.swift and TranApiClientTests.kt. `mustNotLeak` strings may appear in neither the response nor any log line. Add a row first (red), then fix every platform (green).",
+  "server": [
+    {
+      "id": "FM-S01",
+      "name": "truncated JSON",
+      "request": { "method": "POST", "path": "/api/vote/eligibility", "body": "{\"age\": " },
+      "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
+    },
+    {
+      "id": "FM-S02",
+      "name": "a wrong type never echoes the submitted value",
+      "request": {
+        "method": "POST",
+        "path": "/api/vote/eligibility",
+        "body": "{\"age\": \"SENTINEL-7f3a\"}"
+      },
+      "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" },
+      "mustNotLeak": ["SENTINEL-7f3a"]
+    },
+    {
+      "id": "FM-S03",
+      "name": "a bad birthdate never echoes the submitted value",
+      "request": {
+        "method": "POST",
+        "path": "/api/vote/eligibility",
+        "body": "{\"age\": 20, \"birthdate\": \"SENTINEL-1999\"}"
+      },
+      "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" },
+      "mustNotLeak": ["SENTINEL-1999"]
+    },
+    {
+      "id": "FM-S04",
+      "name": "fractional age",
+      "request": { "method": "POST", "path": "/api/vote/eligibility", "body": "{\"age\": 18.5}" },
+      "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
+    },
+    {
+      "id": "FM-S05",
+      "name": "age beyond u16",
+      "request": { "method": "POST", "path": "/api/vote/eligibility", "body": "{\"age\": 65536}" },
+      "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
+    },
+    {
+      "id": "FM-S06",
+      "name": "negative age",
+      "request": { "method": "POST", "path": "/api/vote/eligibility", "body": "{\"age\": -1}" },
+      "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
+    },
+    {
+      "id": "FM-S07",
+      "name": "null age",
+      "request": { "method": "POST", "path": "/api/vote/eligibility", "body": "{\"age\": null}" },
+      "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
+    },
+    {
+      "id": "FM-S08",
+      "name": "empty body",
+      "request": { "method": "POST", "path": "/api/vote/eligibility", "body": "" },
+      "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
+    },
+    {
+      "id": "FM-S09",
+      "name": "a JSON array instead of an object",
+      "request": { "method": "POST", "path": "/api/vote/eligibility", "body": "[20]" },
+      "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
+    },
+    {
+      "id": "FM-S10",
+      "name": "deep nesting is rejected, not a stack overflow",
+      "request": { "method": "POST", "path": "/api/vote/eligibility", "nesting": 5000 },
+      "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
+    },
+    {
+      "id": "FM-S11",
+      "name": "a body over the limit",
+      "request": { "method": "POST", "path": "/api/vote/eligibility", "bodyBytes": 65536 },
+      "expect": { "status": 413, "code": "request.too_large", "logLevel": "warn" }
+    },
+    {
+      "id": "FM-S12",
+      "name": "no content type",
+      "request": {
+        "method": "POST",
+        "path": "/api/vote/eligibility",
+        "contentType": null,
+        "body": "{\"age\": 20}"
+      },
+      "expect": { "status": 415, "code": "request.unsupported_media_type", "logLevel": "warn" }
+    },
+    {
+      "id": "FM-S13",
+      "name": "a non-JSON content type",
+      "request": {
+        "method": "POST",
+        "path": "/api/vote/eligibility",
+        "contentType": "text/plain",
+        "body": "{\"age\": 20}"
+      },
+      "expect": { "status": 415, "code": "request.unsupported_media_type", "logLevel": "warn" }
+    },
+    {
+      "id": "FM-S14",
+      "name": "age above the maximum",
+      "request": { "method": "POST", "path": "/api/vote/eligibility", "body": "{\"age\": 151}" },
+      "expect": { "status": 400, "code": "validation.age_out_of_range", "logLevel": "debug" }
+    },
+    {
+      "id": "FM-S15",
+      "name": "a birthdate implying an age above the maximum",
+      "request": {
+        "method": "POST",
+        "path": "/api/vote/eligibility",
+        "body": "{\"age\": 20, \"birthdate\": \"1800-01-01\"}"
+      },
+      "expect": { "status": 400, "code": "validation.age_out_of_range", "logLevel": "debug" }
+    },
+    {
+      "id": "FM-S16",
+      "name": "a signed-year birthdate",
+      "request": {
+        "method": "POST",
+        "path": "/api/vote/eligibility",
+        "body": "{\"age\": 20, \"birthdate\": \"-262143-01-01\"}"
+      },
+      "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
+    },
+    {
+      "id": "FM-S17",
+      "name": "an impossible calendar date",
+      "request": {
+        "method": "POST",
+        "path": "/api/vote/eligibility",
+        "body": "{\"age\": 20, \"birthdate\": \"2000-02-30\"}"
+      },
+      "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
+    },
+    {
+      "id": "FM-S18",
+      "name": "a birthdate in the future",
+      "request": {
+        "method": "POST",
+        "path": "/api/vote/eligibility",
+        "body": "{\"age\": 1, \"birthdate\": \"2999-01-01\"}"
+      },
+      "expect": { "status": 400, "code": "validation.birthdate_in_future", "logLevel": "debug" }
+    },
+    {
+      "id": "FM-S19",
+      "name": "a malformed debug country never echoes the header",
+      "request": {
+        "method": "POST",
+        "path": "/api/vote/eligibility",
+        "headers": { "x-debug-country": "SENTINEL-CC" },
+        "body": "{\"age\": 20}"
+      },
+      "expect": { "status": 400, "code": "validation.invalid_country_code", "logLevel": "debug" },
+      "mustNotLeak": ["SENTINEL-CC"]
+    },
+    {
+      "id": "FM-S20",
+      "name": "an unknown route",
+      "request": { "method": "GET", "path": "/api/nope" },
+      "expect": { "status": 404, "code": "route.not_found", "logLevel": "warn" }
+    },
+    {
+      "id": "FM-S21",
+      "name": "a wrong method",
+      "request": { "method": "PUT", "path": "/api/health" },
+      "expect": { "status": 405, "code": "route.method_not_allowed", "logLevel": "warn" }
+    },
+    {
+      "id": "FM-S22",
+      "name": "a birthdate that is not a string",
+      "request": {
+        "method": "POST",
+        "path": "/api/vote/eligibility",
+        "body": "{\"age\": 20, \"birthdate\": 20000101}"
+      },
+      "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
+    }
+  ],
+  "responses": [
+    {
+      "id": "FM-C01",
+      "name": "the envelope's code and request id win",
+      "status": 400,
+      "headers": { "x-request-id": "header-id" },
+      "body": "{\"success\":false,\"error\":\"x\",\"code\":\"validation.invalid_country_code\",\"retryable\":false,\"request_id\":\"body-id\"}",
+      "expect": { "code": "validation.invalid_country_code", "requestId": "body-id" }
+    },
+    {
+      "id": "FM-C02",
+      "name": "a code from a newer server falls back to the status",
+      "status": 400,
+      "body": "{\"success\":false,\"error\":\"x\",\"code\":\"validation.not_invented_yet\"}",
+      "expect": { "code": "request.malformed", "requestId": null }
+    },
+    {
+      "id": "FM-C03",
+      "name": "an empty code falls back to the status",
+      "status": 503,
+      "body": "{\"success\":false,\"error\":\"x\",\"code\":\"\"}",
+      "expect": { "code": "server.unavailable", "requestId": null }
+    },
+    {
+      "id": "FM-C04",
+      "name": "an HTML page from a proxy uses the status and the header id",
+      "status": 502,
+      "headers": { "x-request-id": "edge-9" },
+      "body": "<html><body>Bad gateway</body></html>",
+      "expect": { "code": "server.unavailable", "requestId": "edge-9" }
+    },
+    {
+      "id": "FM-C05",
+      "name": "an empty 500",
+      "status": 500,
+      "body": "",
+      "expect": { "code": "server.internal", "requestId": null }
+    },
+    {
+      "id": "FM-C06",
+      "name": "JSON that is not an object",
+      "status": 404,
+      "body": "null",
+      "expect": { "code": "route.not_found", "requestId": null }
+    },
+    {
+      "id": "FM-C07",
+      "name": "a mistyped envelope is ignored as a whole",
+      "status": 400,
+      "headers": { "x-request-id": "header-id" },
+      "body": "{\"success\":false,\"error\":\"x\",\"code\":42,\"request_id\":\"body-id\"}",
+      "expect": { "code": "request.malformed", "requestId": "header-id" }
+    },
+    {
+      "id": "FM-C08",
+      "name": "a success flag that is not false is not an envelope",
+      "status": 500,
+      "body": "{\"success\":true,\"error\":\"x\",\"code\":\"validation.age_out_of_range\"}",
+      "expect": { "code": "server.internal", "requestId": null }
+    },
+    {
+      "id": "FM-C09",
+      "name": "a body without the error message is not an envelope",
+      "status": 500,
+      "body": "{\"success\":false,\"code\":\"validation.age_out_of_range\"}",
+      "expect": { "code": "server.internal", "requestId": null }
+    },
+    {
+      "id": "FM-C10",
+      "name": "code-like text inside the message is not the code",
+      "status": 400,
+      "body": "{\"success\":false,\"error\":\"proxy said \\\"code\\\":\\\"server.internal\\\"\",\"code\":\"validation.age_out_of_range\"}",
+      "expect": { "code": "validation.age_out_of_range", "requestId": null }
+    },
+    {
+      "id": "FM-C11",
+      "name": "a 413 without a body",
+      "status": 413,
+      "body": "",
+      "expect": { "code": "request.too_large", "requestId": null }
+    },
+    {
+      "id": "FM-C12",
+      "name": "Retry-After is capped at the policy maximum",
+      "status": 429,
+      "headers": { "retry-after": "3600" },
+      "body": "",
+      "expect": { "code": "server.rate_limited", "requestId": null, "retryAfterMs": 2000 }
+    },
+    {
+      "id": "FM-C13",
+      "name": "an HTTP-date Retry-After is ignored",
+      "status": 503,
+      "headers": { "retry-after": "Wed, 21 Oct 2026 07:28:00 GMT" },
+      "body": "",
+      "expect": { "code": "server.unavailable", "requestId": null, "retryAfterMs": null }
+    },
+    {
+      "id": "FM-C14",
+      "name": "an unsafe request id from a proxy is dropped",
+      "status": 502,
+      "headers": { "x-request-id": "has spaces; and=more" },
+      "body": "",
+      "expect": { "code": "server.unavailable", "requestId": null }
+    }
+  ]
+}

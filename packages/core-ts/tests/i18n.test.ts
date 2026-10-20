@@ -121,6 +121,10 @@ describe('t()', () => {
 describe('translate()', () => {
   const english: TranslationDictionary = { 'greeting.hello': 'Hello {name}!' };
 
+  it('shows the key when there is no English dictionary at all', () => {
+    expect(translate({ ne: {} }, 'greeting.hello', 'ne')).toBe('greeting.hello');
+  });
+
   it('falls back from a missing translation to English', () => {
     expect(translate({ en: english, ne: {} }, 'greeting.hello', 'ne')).toBe('Hello {name}!');
   });

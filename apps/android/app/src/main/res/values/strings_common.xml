@@ -3,6 +3,9 @@
 <resources>
     <string name="common_app_name">TRAN Voting</string>
     <string name="common_brand">TRAN</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_dismiss">Dismiss</string>
+    <string name="common_notifications">Notifications</string>
     <string name="common_role_citizen_voter">Citizen Voter</string>
     <string name="common_role_election_auditor">Election Auditor</string>
     <string name="common_sign_out">Sign out</string>

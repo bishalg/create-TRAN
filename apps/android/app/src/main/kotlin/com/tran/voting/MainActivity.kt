@@ -24,7 +24,11 @@ import com.tran.voting.ui.AuthWelcomeScreen
 import com.tran.voting.ui.VotingHomeScreen
 import com.tran.voting.ui.atoms.LocalTranPalette
 import com.tran.voting.ui.destination
+import com.tran.voting.ui.feedback.LocalTranFeedback
+import com.tran.voting.ui.feedback.TranFeedback
+import com.tran.voting.ui.feedback.TranFeedbackHost
 import uniffi.tran_uniffi.TranAppDestination
+import uniffi.tran_uniffi.TranUserAction
 import uniffi.tran_uniffi.TranUserRole
 
 class MainActivity : ComponentActivity() {
@@ -52,6 +56,10 @@ fun NavigationCoordinator() {
     // Any theme in the rust-core registry can be selected — no light/dark boolean.
     var theme by remember { mutableStateOf(TranTheme.DARK) }
     val palette = TranBrandTokens.palette(theme)
+    // One feedback center for the app: toasts and confirmations render above every screen.
+    val feedback = remember { TranFeedback() }
+    // Destructive, so the catalogue asks first (REQ-ERR-007).
+    val signOut = { feedback.confirm(TranUserAction.SIGN_OUT) { session = AuthSession.Unauthenticated } }
 
     val view = LocalView.current
     LaunchedEffect(palette) {
@@ -65,7 +73,8 @@ fun NavigationCoordinator() {
 
     MaterialTheme(colorScheme = tranColorScheme(palette)) {
         // Atoms read the registry palette from the composition (web's CSS-variable analogue).
-        CompositionLocalProvider(LocalTranPalette provides palette) {
+        CompositionLocalProvider(LocalTranPalette provides palette, LocalTranFeedback provides feedback) {
+          TranFeedbackHost(feedback) {
             when (session.destination) {
                 TranAppDestination.SPLASH, TranAppDestination.AUTH_WELCOME -> {
                     AuthWelcomeScreen { role ->
@@ -76,17 +85,14 @@ fun NavigationCoordinator() {
                     VotingHomeScreen(
                         theme = theme,
                         onThemeChange = { theme = it },
-                        onSignOut = {
-                            session = AuthSession.Unauthenticated
-                        }
+                        onSignOut = signOut,
                     )
                 }
                 TranAppDestination.AUDITOR_DASHBOARD -> {
-                    AuditorScreen(onSignOut = {
-                        session = AuthSession.Unauthenticated
-                    })
+                    AuditorScreen(onSignOut = signOut)
                 }
             }
+          }
         }
     }
 }

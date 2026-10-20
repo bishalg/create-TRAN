@@ -4,5 +4,16 @@
     <string name="errors_age_and_country">आयु और देश दर्ज करें</string>
     <string name="errors_age_invalid">मान्य आयु दर्ज करें</string>
     <string name="errors_age_out_of_range">0 से 150 के बीच पूरी संख्या में आयु दर्ज करें।</string>
+    <string name="errors_birthdate_in_future">जन्मतिथि भविष्य की नहीं हो सकती।</string>
     <string name="errors_country_invalid">देश दो अक्षरों का होना चाहिए</string>
+    <string name="errors_date_invalid">YYYY-MM-DD रूप में सही तारीख दर्ज करें।</string>
+    <string name="errors_not_found">यह सुविधा अभी सर्वर पर उपलब्ध नहीं है।</string>
+    <string name="errors_rate_limited">बहुत अधिक अनुरोध। कृपया थोड़ी देर बाद फिर कोशिश करें।</string>
+    <string name="errors_reference">संदर्भ: %1$s</string>
+    <string name="errors_request_cancelled">अनुरोध रद्द कर दिया गया।</string>
+    <string name="errors_request_malformed">ऐप ने ऐसा अनुरोध भेजा जिसे सर्वर पढ़ नहीं सका। कृपया रीफ़्रेश करके फिर कोशिश करें।</string>
+    <string name="errors_server_internal">हमारी ओर से कुछ गड़बड़ हुई। आपका परिणाम इसी डिवाइस पर जाँचा गया।</string>
+    <string name="errors_server_unavailable">सर्वर अस्थायी रूप से उपलब्ध नहीं है — परिणाम इसी डिवाइस पर जाँचे जा रहे हैं।</string>
+    <string name="errors_timeout">सर्वर बहुत समय ले रहा है — परिणाम इसी डिवाइस पर जाँचे जा रहे हैं।</string>
+    <string name="errors_unexpected">ऐप में कुछ गड़बड़ हुई। कृपया फिर कोशिश करें।</string>
 </resources>

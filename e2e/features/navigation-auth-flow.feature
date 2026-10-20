@@ -23,4 +23,5 @@ Feature: Navigation Director and Role Branching
   Scenario: Signing out returns to the role selection screen
     Given I am on the "Voting Eligibility" dashboard as "Citizen Voter"
     When I click the sign out button
+    And I confirm signing out
     Then I see the role selection options "Continue as Citizen Voter" and "Continue as Election Auditor"

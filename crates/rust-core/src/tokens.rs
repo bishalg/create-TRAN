@@ -38,6 +38,10 @@ impl HexColor {
             } else {
                 digits.to_string()
             };
+            #[allow(
+                clippy::expect_used,
+                reason = "`HexColor::new` only admits #rgb / #rrggbb hex digits"
+            )]
             let channel = |index: usize| -> f64 {
                 u8::from_str_radix(&digits[index * 2..index * 2 + 2], 16)
                     .expect("hex colors are validated when constructed") as f64
@@ -219,6 +223,10 @@ pub const DEFAULT_THEME: &str = "dark";
 impl BrandDesignTokens {
     /// Palette for a registry key. The panic is unreachable for keys shipped in
     /// [`default_design_tokens`]; tests cover every key.
+    #[allow(
+        clippy::expect_used,
+        reason = "the registry is a compile-time table; tests resolve every shipped key"
+    )]
     pub fn theme(&self, mode: &str) -> &ThemeModeTokens {
         self.themes
             .iter()
@@ -459,6 +467,10 @@ fn sepia_theme_tokens() -> ThemeModeTokens {
     }
 }
 
+#[allow(
+    clippy::expect_used,
+    reason = "only called with literals in `default_design_tokens`, which tests construct"
+)]
 fn hex(value: &str) -> HexColor {
     HexColor::new(value).expect("compile-time hex must be valid")
 }

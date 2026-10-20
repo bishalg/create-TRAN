@@ -10,6 +10,7 @@ import {
   SUPPORTED_COUNTRIES,
   VALIDATION_MESSAGES,
 } from './generated/rules.js';
+import type { ErrorCode } from './generated/feedback.js';
 
 export { DEFAULT_VOTING_AGE, MAX_AGE, SUPPORTED_COUNTRIES, VALIDATION_MESSAGES };
 export type { CountryVotingAge } from './generated/rules.js';
@@ -23,9 +24,13 @@ export function canVoteByAge(age: number, minimumAge: number): boolean {
   return age >= minimumAge;
 }
 
-/** Mirrors `CoreError::ValidationError` in Rust; the API maps the same condition to HTTP 400. */
+/** Mirrors `CoreError::ValidationError` in Rust; the API maps the same condition to HTTP 400.
+ * `code` is the catalogue code the UI presents (REQ-ERR-001); `message` is for logs only. */
 export class VoteEligibilityValidationError extends Error {
-  constructor(message: string) {
+  constructor(
+    message: string,
+    public readonly code: ErrorCode
+  ) {
     super(message);
     this.name = 'VoteEligibilityValidationError';
   }
@@ -35,8 +40,6 @@ export class VoteEligibilityValidationError extends Error {
 export function ageFromBirthdate(birthdateIso: string, referenceIso: string): number {
   const birth = parseIsoDate(birthdateIso);
   const reference = parseIsoDate(referenceIso);
-  if (birth > reference) return 0;
-
   let years = reference.getUTCFullYear() - birth.getUTCFullYear();
   const birthdayPassed =
     reference.getUTCMonth() > birth.getUTCMonth() ||
@@ -48,12 +51,22 @@ export function ageFromBirthdate(birthdateIso: string, referenceIso: string): nu
 
 function parseIsoDate(iso: string): Date {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  if (!match) throw new VoteEligibilityValidationError(`Invalid ISO date: "${iso}"`);
+  if (!match)
+    throw new VoteEligibilityValidationError(
+      `Invalid ISO date: ${JSON.stringify(iso)}`,
+      'validation.invalid_date'
+    );
   const [y, m, d] = [Number(match[1]), Number(match[2]), Number(match[3])];
-  const date = new Date(Date.UTC(y, m - 1, d));
-  // Date.UTC silently rolls 2000-02-30 over to March 1st; round-trip to detect that.
-  if (date.getUTCFullYear() !== y || date.getUTCMonth() !== m - 1 || date.getUTCDate() !== d) {
-    throw new VoteEligibilityValidationError(`Invalid ISO date: "${iso}"`);
+  // Not `Date.UTC(y, …)`: it maps years 0–99 to 1900–1999, so 0001-01-01 would become 1901.
+  const date = new Date(0);
+  date.setUTCFullYear(y, m - 1, d);
+  // Out-of-range parts roll over (2000-02-30 → March 1st, 2000-13-01 → January). With two-digit
+  // parts every rollover lands in another month, so the month alone detects it.
+  if (date.getUTCMonth() !== m - 1) {
+    throw new VoteEligibilityValidationError(
+      `Invalid ISO date: ${JSON.stringify(iso)}`,
+      'validation.invalid_date'
+    );
   }
   return date;
 }
@@ -77,16 +90,37 @@ export interface OfflineEligibilityResult {
 /** Same checks as `validate_vote_eligibility_request` + `validate_country_code` in Rust. */
 function validateInput(input: OfflineEligibilityInput, reference: string): void {
   if (!Number.isInteger(input.age) || input.age < 0) {
-    throw new VoteEligibilityValidationError('Age must be a whole number of years, 0 or more');
+    throw new VoteEligibilityValidationError(
+      'Age must be a whole number of years, 0 or more',
+      'validation.age_out_of_range'
+    );
   }
   if (input.age > MAX_AGE) {
-    throw new VoteEligibilityValidationError(VALIDATION_MESSAGES.ageOutOfRange);
+    throw new VoteEligibilityValidationError(
+      VALIDATION_MESSAGES.ageOutOfRange,
+      'validation.age_out_of_range'
+    );
   }
   if (!/^[A-Za-z]{2}$/.test(input.countryCode)) {
-    throw new VoteEligibilityValidationError(VALIDATION_MESSAGES.invalidCountryCode);
+    throw new VoteEligibilityValidationError(
+      VALIDATION_MESSAGES.invalidCountryCode,
+      'validation.invalid_country_code'
+    );
   }
-  if (input.birthdate !== undefined && parseIsoDate(input.birthdate) > parseIsoDate(reference)) {
-    throw new VoteEligibilityValidationError(VALIDATION_MESSAGES.birthdateInFuture);
+  if (input.birthdate !== undefined) {
+    if (parseIsoDate(input.birthdate) > parseIsoDate(reference)) {
+      throw new VoteEligibilityValidationError(
+        VALIDATION_MESSAGES.birthdateInFuture,
+        'validation.birthdate_in_future'
+      );
+    }
+    // The derived age replaces `age`, so it must pass the same limit (REQ-ROB-001).
+    if (ageFromBirthdate(input.birthdate, reference) > MAX_AGE) {
+      throw new VoteEligibilityValidationError(
+        VALIDATION_MESSAGES.ageOutOfRange,
+        'validation.age_out_of_range'
+      );
+    }
   }
 }
 

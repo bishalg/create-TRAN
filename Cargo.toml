@@ -14,6 +14,15 @@ authors = ["Bishal Ghimire <bishal.ghimire@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/bishalg/create-TRAN"
 
+# ADR-0029: no ad-hoc output and no unexplained panics outside tests (`clippy.toml` allows them in
+# tests). A justified `expect` carries `#[allow(clippy::expect_used, reason = "…")]`.
+[workspace.lints.clippy]
+print_stdout = "deny"
+print_stderr = "deny"
+dbg_macro = "deny"
+unwrap_used = "deny"
+expect_used = "deny"
+
 [workspace.dependencies]
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
@@ -23,11 +32,11 @@ serde_json = "1.0"
 tokio = { version = "1.40", features = ["full"] }
 axum = { version = "0.8", features = ["macros"] }
 tower = "0.5"
-tower-http = { version = "0.6", features = ["cors", "trace"] }
+tower-http = { version = "0.6", features = ["cors", "catch-panic"] }
 
 # Tracing & Observability
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 
 # Error Handling & Utilities
 thiserror = "2.0"

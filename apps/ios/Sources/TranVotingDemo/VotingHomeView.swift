@@ -8,6 +8,9 @@ struct VotingHomeView: View {
     @State private var countryCode = "NP"
     @State private var resultText = L10n.Eligibility.resultPlaceholder
     @State private var apiStatus: TranApiStatus = .checking
+    /// A connectivity failure shown until a call succeeds (REQ-ERR-006).
+    @State private var banner: TranRequestFailure?
+    @Environment(TranFeedback.self) private var feedback
     var onSignOut: (() -> Void)? = nil
     var api: TranApiClient = TranApiClient()
 
@@ -68,8 +71,8 @@ struct VotingHomeView: View {
                         // REQ-NAT-011: the status pill mirrors the web footer; it never gates the device check.
                         TranText(statusLabel, variant: .caption, live: true)
                             .accessibilityIdentifier("api-status")
-                        if apiStatus == .offline {
-                            TranText(L10n.Eligibility.offlineNotice, variant: .caption)
+                        if let banner {
+                            TranBanner(message: TranFeedback.message(banner.spec.messageKey))
                                 .accessibilityIdentifier("offline-notice")
                         }
                     }
@@ -93,22 +96,39 @@ struct VotingHomeView: View {
     private func refreshApiStatus() async {
         do {
             try await api.checkHealth()
-            apiStatus = .online
+            succeeded()
         } catch {
-            apiStatus = TranApiStatus.from(error)
+            // A background call the user did not start: log it, never toast.
+            let failure = TranRequestFailure.classify(error)
+            feedback.log(failure)
+            failed(failure)
         }
     }
 
-    /// The verdict is already on screen; the API call only moves the status pill (REQ-NAT-011).
+    /// The verdict is already on screen (REQ-NAT-002); the server confirms it in the background,
+    /// retrying transient failures, and the catalogue decides how the outcome is shown.
     private func confirmWithApi(age: UInt16) {
         Task {
             do {
                 try await api.confirmEligibility(age: age, countryCode: countryCode)
-                apiStatus = .online
+                succeeded()
+                feedback.acknowledge(.serverCheckSucceeded)
             } catch {
-                apiStatus = TranApiStatus.from(error)
+                let failure = TranRequestFailure.classify(error)
+                feedback.report(failure)
+                failed(failure)
             }
         }
+    }
+
+    private func succeeded() {
+        apiStatus = .online
+        banner = nil
+    }
+
+    private func failed(_ failure: TranRequestFailure) {
+        apiStatus = TranApiStatus.from(failure)
+        if case .banner = failure.spec.presentation { banner = failure }
     }
 
     private func checkOffline() {

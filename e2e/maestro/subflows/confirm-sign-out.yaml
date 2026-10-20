@@ -1,0 +1,17 @@
+# Confirms the sign-out dialog (REQ-ERR-007). Android tags the confirm button; the iOS system alert
+# exposes it by its label only (the alert hides the header's own "Sign out" button).
+appId: com.tran.voting
+---
+- assertVisible: 'Sign out\?'
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          id: dialog-confirm
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: 'Sign out'
+- assertNotVisible: 'Sign out\?'

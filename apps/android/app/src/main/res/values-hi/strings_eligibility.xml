@@ -25,6 +25,7 @@
     <string name="eligibility_result_reason_meets">आयु %1$s न्यूनतम मतदान आयु %2$s को पूरा करती है (%3$s)।</string>
     <string name="eligibility_result_source_device">इसी डिवाइस पर जाँच की गई</string>
     <string name="eligibility_result_source_server">सर्वर द्वारा जाँच की गई</string>
+    <string name="eligibility_server_check_done">सर्वर जाँच पूरी हुई</string>
     <string name="eligibility_submit">पात्रता जाँचें</string>
     <string name="eligibility_submitting">जाँच हो रही है…</string>
     <string name="eligibility_subtitle">ऑफ़लाइन मतदान (UniFFI → rust-core)</string>

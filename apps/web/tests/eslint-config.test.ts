@@ -14,4 +14,13 @@ describe('eslint config', () => {
     expect(config).toContain("forbid: ['style']");
     expect(config).toContain('shared/ui');
   });
+
+  // Verifies: REQ-ROB-008
+  it('forbids the console in feature code', () => {
+    const config = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), '../eslint.config.js'),
+      'utf8'
+    );
+    expect(config).toContain("'no-console': 'error'");
+  });
 });

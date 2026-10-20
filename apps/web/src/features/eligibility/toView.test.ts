@@ -42,6 +42,12 @@ describe('toView', () => {
     });
   });
 
+  // Verifies: REQ-ERR-005
+  it('shows the device fallback in server mode after the server check failed', () => {
+    expect(toView('server', null, server, device)).toMatchObject({ source: 'device', age: 20 });
+    expect(toView('device', null, server, device)).toBeNull();
+  });
+
   it('returns null until the active mode has a result', () => {
     expect(toView('device', null, server)).toBeNull();
     expect(toView('server', device, null)).toBeNull();

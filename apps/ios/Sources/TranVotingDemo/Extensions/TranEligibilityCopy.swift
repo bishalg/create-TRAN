@@ -17,20 +17,11 @@ extension VoteEligibilityOfflineResult {
 
 /// App-side copy for the generated error variants.
 ///
-/// English `Display` text from Rust never reaches a voter; each variant maps to a shared string
-/// resource instead.
+/// English `Display` text from Rust never reaches a voter: each variant maps to its catalogue
+/// code, and the code to the shared message the server's rejection would show (REQ-ERR-009).
 extension TranValidationError {
     /// Localized, user-facing message for a validation failure.
     var localizedMessage: String {
-        switch self {
-        case .AgeOutOfRange:
-            return L10n.Errors.ageOutOfRange
-        case .BirthdateInFuture, .InvalidBirthdate, .InvalidReferenceDate:
-            return L10n.Errors.ageInvalid
-        case .InvalidCountryCode:
-            return L10n.Errors.countryInvalid
-        case .Internal:
-            return L10n.Errors.ageAndCountry
-        }
+        TranFeedback.message(errorSpec(code: errorCodeForValidation(error: self)).messageKey)
     }
 }

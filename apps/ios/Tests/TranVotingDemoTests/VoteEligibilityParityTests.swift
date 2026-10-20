@@ -16,7 +16,6 @@ final class VoteEligibilityParityTests: XCTestCase {
         case .InvalidBirthdate: return "invalid_birthdate"
         case .InvalidReferenceDate: return "invalid_reference_date"
         case .InvalidCountryCode: return "invalid_country_code"
-        case .Internal: return "internal"
         }
     }
 

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { isNetworkError, TranApiClient, TranApiError } from '../src/client.js';
+import { TranApiClient, TranApiError } from '../src/client.js';
+import { classifyError } from '../src/feedback.js';
 
 const validEligibility = {
   eligibility_id: '550e8400-e29b-41d4-a716-446655440000',
@@ -34,7 +35,7 @@ function clientWith(fetchFn: ReturnType<typeof vi.fn>, extra = {}) {
 describe('TranApiClient transport', () => {
   it('strips trailing slashes from baseUrl', async () => {
     const fetchFn = vi.fn().mockResolvedValue(jsonResponse({ overall_status: 'HEALTHY' }));
-    await clientWith(fetchFn).getHealth();
+    await clientWith(fetchFn, { baseUrl: 'http://api.test//' }).getHealth();
     expect(fetchFn.mock.calls[0][0]).toBe('http://api.test/api/health');
   });
 
@@ -58,7 +59,7 @@ describe('TranApiClient transport', () => {
     await expect(clientWith(fetchFn).getHealth()).rejects.toThrow('Age must be 150 or less');
   });
 
-  it('falls back to status text when the error body is not the envelope', async () => {
+  it('falls back to the status when the error body is not the envelope', async () => {
     const fetchFn = vi.fn().mockResolvedValue({
       ok: false,
       status: 502,
@@ -67,10 +68,11 @@ describe('TranApiClient transport', () => {
         throw new SyntaxError('not json');
       },
     });
-    await expect(clientWith(fetchFn).getHealth()).rejects.toThrow('HTTP error 502: Bad Gateway');
+    await expect(clientWith(fetchFn).getHealth()).rejects.toThrow('HTTP 502');
   });
 
-  it('aborts and rejects when the server is slower than timeoutMs', async () => {
+  // Verifies: REQ-ERR-004
+  it('turns its own deadline into a TimeoutError (network.timeout), on every route', async () => {
     const fetchFn = vi.fn(
       (_url: string, init: RequestInit) =>
         new Promise((_resolve, reject) => {
@@ -82,7 +84,11 @@ describe('TranApiClient transport', () => {
       timeoutMs: 10,
       fetchFn: fetchFn as unknown as typeof fetch,
     });
-    await expect(client.getHealth()).rejects.toThrow('aborted');
+    const err = await client.getHealth().catch((e) => e);
+    expect(err).toMatchObject({ name: 'TimeoutError', message: 'No response within 10 ms' });
+    expect(classifyError(err).code).toBe('network.timeout');
+    const eligibility = await client.checkVoteEligibility({ age: 21 }).catch((e) => e);
+    expect(classifyError(eligibility).code).toBe('network.timeout');
   });
 
   it('propagates network failures', async () => {
@@ -180,18 +186,6 @@ describe('TranApiClient.withHeaders', () => {
 
     await base.getInfo();
     expect(fetchFn.mock.calls[1][1].headers).not.toHaveProperty('X-B');
-  });
-});
-
-describe('isNetworkError', () => {
-  it('is true for fetch failures and aborts, false for HTTP and validation errors', () => {
-    const abort = new Error('aborted');
-    abort.name = 'AbortError';
-    expect(isNetworkError(new TypeError('Failed to fetch'))).toBe(true);
-    expect(isNetworkError(abort)).toBe(true);
-    expect(isNetworkError(new TranApiError('bad', 400))).toBe(false);
-    expect(isNetworkError(new Error('other'))).toBe(false);
-    expect(isNetworkError('string')).toBe(false);
   });
 });
 

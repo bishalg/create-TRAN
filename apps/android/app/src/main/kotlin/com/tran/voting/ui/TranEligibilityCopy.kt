@@ -3,7 +3,10 @@ package com.tran.voting.ui
 import android.content.Context
 import com.tran.voting.generated.TranStrings
 import uniffi.tran_uniffi.TranValidationException
+import com.tran.voting.ui.feedback.TranFeedback
 import uniffi.tran_uniffi.VoteEligibilityOfflineResult
+import uniffi.tran_uniffi.errorCodeForValidation
+import uniffi.tran_uniffi.errorSpec
 
 /**
  * App-side behaviour for the generated UniFFI record.
@@ -23,14 +26,9 @@ fun VoteEligibilityOfflineResult.localizedReason(context: Context): String =
         countryCode,
     )
 
-/** Localized, user-facing message for a generated validation failure. */
+/**
+ * Localized, user-facing message for a generated validation failure: the variant's catalogue code,
+ * then the code's shared message — the same copy a server rejection shows (REQ-ERR-009).
+ */
 fun TranValidationException.localizedMessageRes(): Int =
-    when (this) {
-        is TranValidationException.AgeOutOfRange -> TranStrings.Errors.ageOutOfRange
-        is TranValidationException.BirthdateInFuture,
-        is TranValidationException.InvalidBirthdate,
-        is TranValidationException.InvalidReferenceDate,
-        -> TranStrings.Errors.ageInvalid
-        is TranValidationException.InvalidCountryCode -> TranStrings.Errors.countryInvalid
-        is TranValidationException.Internal -> TranStrings.Errors.ageAndCountry
-    }
+    TranFeedback.messageRes(errorSpec(errorCodeForValidation(this)).messageKey)

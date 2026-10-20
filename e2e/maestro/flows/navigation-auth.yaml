@@ -1,4 +1,4 @@
-# Verifies: REQ-NAV-001 REQ-NAV-002 REQ-NAV-003 REQ-NAV-004 REQ-NAV-005
+# Verifies: REQ-NAV-001 REQ-NAV-002 REQ-NAV-003 REQ-NAV-004 REQ-NAV-005 REQ-ERR-007
 # Feature: Navigation Director and Role Branching
 appId: com.tran.voting
 tags: [navigation, auth, smoke]
@@ -10,9 +10,20 @@ tags: [navigation, auth, smoke]
 - assertVisible:
     id: age-field
 
+# Signing out is destructive, so it asks first; Cancel keeps the session (REQ-ERR-007)
+- tapOn:
+    id: sign-out-button
+- assertVisible: 'Sign out\?'
+- tapOn: 'Cancel'
+- assertNotVisible: 'Sign out\?'
+- assertVisible:
+    id: age-field
+
 # Sign out to return to Auth Welcome screen
 - tapOn:
     id: sign-out-button
+- runFlow:
+    file: ../subflows/confirm-sign-out.yaml
 
 # Verify role branching options are present
 - assertVisible:
@@ -30,6 +41,8 @@ tags: [navigation, auth, smoke]
 # Sign out from Election Auditor back to Auth Welcome
 - tapOn:
     id: sign-out-button
+- runFlow:
+    file: ../subflows/confirm-sign-out.yaml
 
 # Branch A: Select Citizen Voter
 - tapOn:

@@ -1,4 +1,4 @@
-// Verifies: REQ-FFI-003
+// Verifies: REQ-FFI-003 REQ-ERR-009
 import XCTest
 
 final class TranEligibilityCopyTests: XCTestCase {
@@ -28,15 +28,16 @@ final class TranEligibilityCopyTests: XCTestCase {
         )
     }
 
-    func testErrorExtensionMapsVariantsToSharedCopy() {
+    func testErrorExtensionUsesTheCatalogueCopyForEachCode() {
         XCTAssertEqual(TranValidationError.AgeOutOfRange.localizedMessage, L10n.Errors.ageOutOfRange)
-        XCTAssertEqual(TranValidationError.BirthdateInFuture.localizedMessage, L10n.Errors.ageInvalid)
-        XCTAssertEqual(TranValidationError.InvalidBirthdate.localizedMessage, L10n.Errors.ageInvalid)
-        XCTAssertEqual(TranValidationError.InvalidReferenceDate.localizedMessage, L10n.Errors.ageInvalid)
+        XCTAssertEqual(
+            TranValidationError.BirthdateInFuture.localizedMessage, L10n.Errors.birthdateInFuture)
+        XCTAssertEqual(TranValidationError.InvalidBirthdate.localizedMessage, L10n.Errors.dateInvalid)
+        XCTAssertEqual(
+            TranValidationError.InvalidReferenceDate.localizedMessage, L10n.Errors.dateInvalid)
         XCTAssertEqual(
             TranValidationError.InvalidCountryCode.localizedMessage,
             L10n.Errors.countryInvalid
         )
-        XCTAssertEqual(TranValidationError.Internal.localizedMessage, L10n.Errors.ageAndCountry)
     }
 }

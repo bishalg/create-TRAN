@@ -21,3 +21,17 @@ export const CrossIcon = () => (
     <path d="M6 6l12 12M18 6L6 18" />
   </svg>
 );
+
+export const InfoIcon = () => (
+  <svg {...base}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 11v5M12 7.5v.5" />
+  </svg>
+);
+
+export const WarningIcon = () => (
+  <svg {...base}>
+    <path d="M12 4l9 16H3z" />
+    <path d="M12 10v4M12 17v.5" />
+  </svg>
+);

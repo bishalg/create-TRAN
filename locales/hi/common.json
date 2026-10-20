@@ -5,5 +5,8 @@
   "role": {
     "citizenVoter": "नागरिक मतदाता",
     "electionAuditor": "चुनाव ऑडिटर"
-  }
+  },
+  "cancel": "रद्द करें",
+  "dismiss": "बंद करें",
+  "notifications": "सूचनाएँ"
 }

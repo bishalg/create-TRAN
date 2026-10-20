@@ -49,4 +49,16 @@ mod tests {
     fn default_state_starts_with_zero_uptime() {
         assert_eq!(AppState::default().uptime_seconds(), 0);
     }
+
+    #[test]
+    fn uptime_counts_whole_seconds_since_start() {
+        let five_seconds_ago = Instant::now()
+            .checked_sub(std::time::Duration::from_secs(5))
+            .unwrap();
+        let state = AppState {
+            start_time: five_seconds_ago,
+            ..AppState::default()
+        };
+        assert_eq!(state.uptime_seconds(), 5);
+    }
 }

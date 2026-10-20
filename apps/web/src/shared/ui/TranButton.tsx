@@ -1,6 +1,6 @@
 import { forwardRef, type ComponentPropsWithoutRef } from 'react';
 
-export type TranButtonVariant = 'primary' | 'secondary';
+export type TranButtonVariant = 'primary' | 'secondary' | 'danger';
 export type TranButtonSize = 'md' | 'lg';
 
 export interface TranButtonProps extends ComponentPropsWithoutRef<'button'> {

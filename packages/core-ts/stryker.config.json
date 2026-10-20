@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "_comment": "Mutation testing (ADR-0029): run nightly by .github/workflows/mutation.yml; locally `pnpm --filter @tran/core mutation`. A surviving mutant is a missing test. Baseline 97.7% (Oct 2026); the survivors are equivalent mutants behind the `client.unexpected` fallback. Raise `break` with the baseline; never lower it. `inPlace`: the tests read `fixtures/` relative to the repo, which a sandbox copy would break; Stryker restores the sources when it exits.",
+  "testRunner": "vitest",
+  "plugins": ["@stryker-mutator/vitest-runner"],
+  "vitest": { "configFile": "vitest.mutation.config.ts" },
+  "inPlace": true,
+  "mutate": ["src/**/*.ts", "!src/generated/**", "!src/index.ts", "!src/types.ts"],
+  "coverageAnalysis": "perTest",
+  "reporters": ["clear-text", "progress", "html", "json"],
+  "thresholds": { "high": 98, "low": 95, "break": 95 }
+}

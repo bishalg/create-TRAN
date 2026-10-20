@@ -686,6 +686,28 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_voting_age_for_country_offline(
     ): Int
+    external fun uniffi_tran_uniffi_checksum_func_action_spec(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_error_catalogue(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_error_code_for_http_status(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_error_code_for_validation(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_error_code_from_wire(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_error_spec(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_is_valid_request_id(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_retry_after_ms(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_retry_delay_ms(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_retry_policy(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_toast_duration_ms(
+    ): Int
     external fun ffi_tran_uniffi_uniffi_contract_version(
     ): Int
 
@@ -713,6 +735,28 @@ internal object UniffiLib {
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_voting_age_for_country_offline(`countryCode`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Int
+    external fun uniffi_tran_uniffi_fn_func_action_spec(`action`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_error_catalogue(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_error_code_for_http_status(`status`: Short,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_error_code_for_validation(`error`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_error_code_from_wire(`raw`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_error_spec(`code`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_is_valid_request_id(`value`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    external fun uniffi_tran_uniffi_fn_func_retry_after_ms(`header`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_retry_delay_ms(`retry`: Int,`random`: Double,uniffi_out_err: UniffiRustCallStatus, 
+    ): Long
+    external fun uniffi_tran_uniffi_fn_func_retry_policy(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_toast_duration_ms(`duration`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Long
     external fun ffi_tran_uniffi_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun ffi_tran_uniffi_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -850,6 +894,39 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_tran_uniffi_checksum_func_voting_age_for_country_offline() and 0xFFFF) != 55415) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_tran_uniffi_checksum_func_action_spec() and 0xFFFF) != 29757) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_error_catalogue() and 0xFFFF) != 60106) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_error_code_for_http_status() and 0xFFFF) != 44936) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_error_code_for_validation() and 0xFFFF) != 63980) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_error_code_from_wire() and 0xFFFF) != 22728) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_error_spec() and 0xFFFF) != 41162) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_is_valid_request_id() and 0xFFFF) != 24842) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_retry_after_ms() and 0xFFFF) != 54130) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_retry_delay_ms() and 0xFFFF) != 18892) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_retry_policy() and 0xFFFF) != 41459) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_toast_duration_ms() and 0xFFFF) != 56817) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
 }
 
 /**
@@ -973,6 +1050,75 @@ public object FfiConverterUShort: FfiConverter<UShort, Short> {
 /**
  * @suppress
  */
+public object FfiConverterUInt: FfiConverter<UInt, Int> {
+    override fun lift(value: Int): UInt {
+        return value.toUInt()
+    }
+
+    override fun read(buf: ByteBuffer): UInt {
+        return lift(buf.getInt())
+    }
+
+    override fun lower(value: UInt): Int {
+        return value.toInt()
+    }
+
+    override fun allocationSize(value: UInt) = 4UL
+
+    override fun write(value: UInt, buf: ByteBuffer) {
+        buf.putInt(value.toInt())
+    }
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterULong: FfiConverter<ULong, Long> {
+    override fun lift(value: Long): ULong {
+        return value.toULong()
+    }
+
+    override fun read(buf: ByteBuffer): ULong {
+        return lift(buf.getLong())
+    }
+
+    override fun lower(value: ULong): Long {
+        return value.toLong()
+    }
+
+    override fun allocationSize(value: ULong) = 8UL
+
+    override fun write(value: ULong, buf: ByteBuffer) {
+        buf.putLong(value.toLong())
+    }
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterDouble: FfiConverter<Double, Double> {
+    override fun lift(value: Double): Double {
+        return value
+    }
+
+    override fun read(buf: ByteBuffer): Double {
+        return buf.getDouble()
+    }
+
+    override fun lower(value: Double): Double {
+        return value
+    }
+
+    override fun allocationSize(value: Double) = 8UL
+
+    override fun write(value: Double, buf: ByteBuffer) {
+        buf.putDouble(value)
+    }
+}
+
+/**
+ * @suppress
+ */
 public object FfiConverterBoolean: FfiConverter<Boolean, Byte> {
     override fun lift(value: Byte): Boolean {
         return value.toInt() != 0
@@ -1053,6 +1199,69 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
 
 
 /**
+ * How a [`TranUserAction`] is presented.
+ */
+data class TranActionSpec (
+    /**
+     * The action this spec describes.
+     */
+    var `action`: TranUserAction
+    , 
+    /**
+     * The action's stable name, as in `fixtures/feedback.json`.
+     */
+    var `wireName`: kotlin.String
+    , 
+    /**
+     * How the user is asked or told.
+     */
+    var `presentation`: TranPresentation
+    , 
+    /**
+     * Locale key of the headline (the dialog title or the toast text).
+     */
+    var `messageKey`: kotlin.String
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranActionSpec: FfiConverterRustBuffer<TranActionSpec> {
+    override fun read(buf: ByteBuffer): TranActionSpec {
+        return TranActionSpec(
+            FfiConverterTypeTranUserAction.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterTypeTranPresentation.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranActionSpec) = (
+            FfiConverterTypeTranUserAction.allocationSize(value.`action`) +
+            FfiConverterString.allocationSize(value.`wireName`) +
+            FfiConverterTypeTranPresentation.allocationSize(value.`presentation`) +
+            FfiConverterString.allocationSize(value.`messageKey`)
+    )
+
+    override fun write(value: TranActionSpec, buf: ByteBuffer) {
+            FfiConverterTypeTranUserAction.write(value.`action`, buf)
+            FfiConverterString.write(value.`wireName`, buf)
+            FfiConverterTypeTranPresentation.write(value.`presentation`, buf)
+            FfiConverterString.write(value.`messageKey`, buf)
+    }
+}
+
+
+
+/**
  * One row of the supported-country table.
  */
 data class TranCountryVotingAge (
@@ -1094,6 +1303,156 @@ public object FfiConverterTypeTranCountryVotingAge: FfiConverterRustBuffer<TranC
     override fun write(value: TranCountryVotingAge, buf: ByteBuffer) {
             FfiConverterString.write(value.`countryCode`, buf)
             FfiConverterUShort.write(value.`minimumAge`, buf)
+    }
+}
+
+
+
+/**
+ * Everything a native app needs to know about one [`TranErrorCode`].
+ */
+data class TranErrorSpec (
+    /**
+     * The code this spec describes.
+     */
+    var `code`: TranErrorCode
+    , 
+    /**
+     * The code as it travels in the API envelope's `code` field.
+     */
+    var `wireCode`: kotlin.String
+    , 
+    /**
+     * Status the API answers with; `None` for failures only a client can observe.
+     */
+    var `httpStatus`: kotlin.UShort?
+    , 
+    /**
+     * Whether an idempotent request failing with this code may be retried.
+     */
+    var `retryable`: kotlin.Boolean
+    , 
+    /**
+     * Level to log at.
+     */
+    var `logLevel`: TranLogLevel
+    , 
+    /**
+     * How the user hears about it.
+     */
+    var `presentation`: TranPresentation
+    , 
+    /**
+     * Locale key of the message (`L10n.feedback(_:)` on iOS, `feedbackMessageRes` on Android).
+     */
+    var `messageKey`: kotlin.String
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranErrorSpec: FfiConverterRustBuffer<TranErrorSpec> {
+    override fun read(buf: ByteBuffer): TranErrorSpec {
+        return TranErrorSpec(
+            FfiConverterTypeTranErrorCode.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterOptionalUShort.read(buf),
+            FfiConverterBoolean.read(buf),
+            FfiConverterTypeTranLogLevel.read(buf),
+            FfiConverterTypeTranPresentation.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranErrorSpec) = (
+            FfiConverterTypeTranErrorCode.allocationSize(value.`code`) +
+            FfiConverterString.allocationSize(value.`wireCode`) +
+            FfiConverterOptionalUShort.allocationSize(value.`httpStatus`) +
+            FfiConverterBoolean.allocationSize(value.`retryable`) +
+            FfiConverterTypeTranLogLevel.allocationSize(value.`logLevel`) +
+            FfiConverterTypeTranPresentation.allocationSize(value.`presentation`) +
+            FfiConverterString.allocationSize(value.`messageKey`)
+    )
+
+    override fun write(value: TranErrorSpec, buf: ByteBuffer) {
+            FfiConverterTypeTranErrorCode.write(value.`code`, buf)
+            FfiConverterString.write(value.`wireCode`, buf)
+            FfiConverterOptionalUShort.write(value.`httpStatus`, buf)
+            FfiConverterBoolean.write(value.`retryable`, buf)
+            FfiConverterTypeTranLogLevel.write(value.`logLevel`, buf)
+            FfiConverterTypeTranPresentation.write(value.`presentation`, buf)
+            FfiConverterString.write(value.`messageKey`, buf)
+    }
+}
+
+
+
+/**
+ * Retry budget for idempotent requests (REQ-ERR-005).
+ */
+data class TranRetryPolicy (
+    /**
+     * Total attempts, including the first.
+     */
+    var `maxAttempts`: kotlin.UInt
+    , 
+    /**
+     * Base of the exponential backoff.
+     */
+    var `baseDelayMs`: kotlin.ULong
+    , 
+    /**
+     * Ceiling for any single wait, including `Retry-After`.
+     */
+    var `maxDelayMs`: kotlin.ULong
+    , 
+    /**
+     * Per-attempt timeout; exceeding it is [`TranErrorCode::NetworkTimeout`].
+     */
+    var `requestTimeoutMs`: kotlin.ULong
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranRetryPolicy: FfiConverterRustBuffer<TranRetryPolicy> {
+    override fun read(buf: ByteBuffer): TranRetryPolicy {
+        return TranRetryPolicy(
+            FfiConverterUInt.read(buf),
+            FfiConverterULong.read(buf),
+            FfiConverterULong.read(buf),
+            FfiConverterULong.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranRetryPolicy) = (
+            FfiConverterUInt.allocationSize(value.`maxAttempts`) +
+            FfiConverterULong.allocationSize(value.`baseDelayMs`) +
+            FfiConverterULong.allocationSize(value.`maxDelayMs`) +
+            FfiConverterULong.allocationSize(value.`requestTimeoutMs`)
+    )
+
+    override fun write(value: TranRetryPolicy, buf: ByteBuffer) {
+            FfiConverterUInt.write(value.`maxAttempts`, buf)
+            FfiConverterULong.write(value.`baseDelayMs`, buf)
+            FfiConverterULong.write(value.`maxDelayMs`, buf)
+            FfiConverterULong.write(value.`requestTimeoutMs`, buf)
     }
 }
 
@@ -1269,6 +1628,454 @@ public object FfiConverterTypeTranEligibilityReason: FfiConverterRustBuffer<Tran
 
 
 /**
+ * A stable failure code. Its wire form (for example `validation.invalid_country_code`) is
+ * [`TranErrorSpec::wire_code`]; everything else about it is in [`error_spec`].
+ */
+
+enum class TranErrorCode {
+    
+    /**
+     * The age is negative, fractional or above 150.
+     */
+    VALIDATION_AGE_OUT_OF_RANGE,
+    /**
+     * The birthdate is after the reference date.
+     */
+    VALIDATION_BIRTHDATE_IN_FUTURE,
+    /**
+     * The country code is not two ASCII letters.
+     */
+    VALIDATION_INVALID_COUNTRY_CODE,
+    /**
+     * A date is not `YYYY-MM-DD`.
+     */
+    VALIDATION_INVALID_DATE,
+    /**
+     * The server could not read the request body.
+     */
+    REQUEST_MALFORMED,
+    /**
+     * The request was not sent as JSON.
+     */
+    REQUEST_UNSUPPORTED_MEDIA_TYPE,
+    /**
+     * The request body is larger than the server accepts.
+     */
+    REQUEST_TOO_LARGE,
+    /**
+     * The app cancelled the request itself (for example, the screen closed).
+     */
+    REQUEST_CANCELLED,
+    /**
+     * The server has no such route.
+     */
+    ROUTE_NOT_FOUND,
+    /**
+     * The route exists but not for this method.
+     */
+    ROUTE_METHOD_NOT_ALLOWED,
+    /**
+     * Too many requests; retry later.
+     */
+    SERVER_RATE_LIMITED,
+    /**
+     * The server failed unexpectedly.
+     */
+    SERVER_INTERNAL,
+    /**
+     * The server (or a proxy in front of it) is temporarily down.
+     */
+    SERVER_UNAVAILABLE,
+    /**
+     * No response at all: no network, or the server is unreachable.
+     */
+    NETWORK_OFFLINE,
+    /**
+     * The request exceeded [`TranRetryPolicy::request_timeout_ms`].
+     */
+    NETWORK_TIMEOUT,
+    /**
+     * A bug in the app itself.
+     */
+    CLIENT_UNEXPECTED;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranErrorCode: FfiConverterRustBuffer<TranErrorCode> {
+    override fun read(buf: ByteBuffer) = try {
+        TranErrorCode.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TranErrorCode) = 4UL
+
+    override fun write(value: TranErrorCode, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
+ * How loudly to log a failure where it is handled.
+ */
+
+enum class TranLogLevel {
+    
+    /**
+     * Expected and harmless (validation).
+     */
+    DEBUG,
+    /**
+     * Expected but worth knowing (offline).
+     */
+    INFO,
+    /**
+     * Unexpected, recoverable.
+     */
+    WARN,
+    /**
+     * A bug or an outage; always investigate.
+     */
+    ERROR;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranLogLevel: FfiConverterRustBuffer<TranLogLevel> {
+    override fun read(buf: ByteBuffer) = try {
+        TranLogLevel.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TranLogLevel) = 4UL
+
+    override fun write(value: TranLogLevel, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
+ * The one way an outcome reaches the user (REQ-ERR-006).
+ */
+sealed class TranPresentation {
+    
+    /**
+     * Log only; do not interrupt the user.
+     */
+    object Silent : TranPresentation()
+    
+    
+    /**
+     * Show next to the field that caused it, until the input is fixed.
+     */
+    object Inline : TranPresentation()
+    
+    
+    /**
+     * Non-blocking and self-dismissing; pause while the user interacts with it.
+     */
+    data class Toast(
+        /**
+         * Colour and icon.
+         */
+        val `tone`: uniffi.tran_uniffi.TranToastTone, 
+        /**
+         * How long it stays up.
+         */
+        val `duration`: uniffi.tran_uniffi.TranToastDuration) : TranPresentation()
+        
+    {
+        
+
+        companion object
+    }
+    
+    /**
+     * Persistent and non-blocking; remove it when the condition clears.
+     */
+    object Banner : TranPresentation()
+    
+    
+    /**
+     * Blocking; the user must choose.
+     */
+    data class Dialog(
+        /**
+         * Style the confirm button as destructive and focus Cancel first.
+         */
+        val `destructive`: kotlin.Boolean) : TranPresentation()
+        
+    {
+        
+
+        companion object
+    }
+    
+
+    
+
+    
+    
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranPresentation : FfiConverterRustBuffer<TranPresentation>{
+    override fun read(buf: ByteBuffer): TranPresentation {
+        return when(buf.getInt()) {
+            1 -> TranPresentation.Silent
+            2 -> TranPresentation.Inline
+            3 -> TranPresentation.Toast(
+                FfiConverterTypeTranToastTone.read(buf),
+                FfiConverterTypeTranToastDuration.read(buf),
+                )
+            4 -> TranPresentation.Banner
+            5 -> TranPresentation.Dialog(
+                FfiConverterBoolean.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: TranPresentation): ULong = when(value) {
+        is TranPresentation.Silent -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is TranPresentation.Inline -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is TranPresentation.Toast -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeTranToastTone.allocationSize(value.`tone`)
+                + FfiConverterTypeTranToastDuration.allocationSize(value.`duration`)
+            )
+        }
+        is TranPresentation.Banner -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is TranPresentation.Dialog -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterBoolean.allocationSize(value.`destructive`)
+            )
+        }
+    }
+
+    override fun write(value: TranPresentation, buf: ByteBuffer) {
+        when(value) {
+            is TranPresentation.Silent -> {
+                buf.putInt(1)
+                Unit
+            }
+            is TranPresentation.Inline -> {
+                buf.putInt(2)
+                Unit
+            }
+            is TranPresentation.Toast -> {
+                buf.putInt(3)
+                FfiConverterTypeTranToastTone.write(value.`tone`, buf)
+                FfiConverterTypeTranToastDuration.write(value.`duration`, buf)
+                Unit
+            }
+            is TranPresentation.Banner -> {
+                buf.putInt(4)
+                Unit
+            }
+            is TranPresentation.Dialog -> {
+                buf.putInt(5)
+                FfiConverterBoolean.write(value.`destructive`, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+/**
+ * How long a toast stays up; [`toast_duration_ms`] gives the milliseconds.
+ */
+
+enum class TranToastDuration {
+    
+    /**
+     * 3 s — acknowledgements.
+     */
+    SHORT,
+    /**
+     * 5 s — something to read once.
+     */
+    MEDIUM,
+    /**
+     * 10 s — failures that carry a reference id.
+     */
+    LONG;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranToastDuration: FfiConverterRustBuffer<TranToastDuration> {
+    override fun read(buf: ByteBuffer) = try {
+        TranToastDuration.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TranToastDuration) = 4UL
+
+    override fun write(value: TranToastDuration, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
+ * Colour and icon of a toast.
+ */
+
+enum class TranToastTone {
+    
+    /**
+     * Green check mark: something finished.
+     */
+    SUCCESS,
+    /**
+     * Neutral information.
+     */
+    INFO,
+    /**
+     * Something to watch.
+     */
+    WARNING,
+    /**
+     * Something failed.
+     */
+    ERROR;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranToastTone: FfiConverterRustBuffer<TranToastTone> {
+    override fun read(buf: ByteBuffer) = try {
+        TranToastTone.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TranToastTone) = 4UL
+
+    override fun write(value: TranToastTone, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
+ * A notable outcome of a user action that is not a failure.
+ */
+
+enum class TranUserAction {
+    
+    /**
+     * Ends the session — destructive, so it asks first (REQ-ERR-007).
+     */
+    SIGN_OUT,
+    /**
+     * A server eligibility check completed (REQ-ERR-008).
+     */
+    SERVER_CHECK_SUCCEEDED;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranUserAction: FfiConverterRustBuffer<TranUserAction> {
+    override fun read(buf: ByteBuffer) = try {
+        TranUserAction.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TranUserAction) = 4UL
+
+    override fun write(value: TranUserAction, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
  * A signed-in role. The app stores the session; Rust decides where it leads.
  */
 
@@ -1366,18 +2173,6 @@ sealed class TranValidationException: kotlin.Exception() {
             get() = ""
     }
     
-    /**
-     * An unexpected failure came back from the shared core.
-     *
-     * The app has already validated its inputs, so this indicates a programming error rather than
-     * something the voter can fix.
-     */
-    class Internal(
-        ) : TranValidationException() {
-        override val message
-            get() = ""
-    }
-    
 
     
 
@@ -1402,7 +2197,6 @@ public object FfiConverterTypeTranValidationError : FfiConverterRustBuffer<TranV
             3 -> TranValidationException.InvalidBirthdate()
             4 -> TranValidationException.InvalidReferenceDate()
             5 -> TranValidationException.InvalidCountryCode()
-            6 -> TranValidationException.Internal()
             else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
         }
     }
@@ -1426,10 +2220,6 @@ public object FfiConverterTypeTranValidationError : FfiConverterRustBuffer<TranV
                 4UL
             )
             is TranValidationException.InvalidCountryCode -> (
-                // Add the size for the Int that specifies the variant plus the size needed for all fields
-                4UL
-            )
-            is TranValidationException.Internal -> (
                 // Add the size for the Int that specifies the variant plus the size needed for all fields
                 4UL
             )
@@ -1458,13 +2248,73 @@ public object FfiConverterTypeTranValidationError : FfiConverterRustBuffer<TranV
                 buf.putInt(5)
                 Unit
             }
-            is TranValidationException.Internal -> {
-                buf.putInt(6)
-                Unit
-            }
         }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
     }
 
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalUShort: FfiConverterRustBuffer<kotlin.UShort?> {
+    override fun read(buf: ByteBuffer): kotlin.UShort? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterUShort.read(buf)
+    }
+
+    override fun allocationSize(value: kotlin.UShort?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterUShort.allocationSize(value)
+        }
+    }
+
+    override fun write(value: kotlin.UShort?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterUShort.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalULong: FfiConverterRustBuffer<kotlin.ULong?> {
+    override fun read(buf: ByteBuffer): kotlin.ULong? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterULong.read(buf)
+    }
+
+    override fun allocationSize(value: kotlin.ULong?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterULong.allocationSize(value)
+        }
+    }
+
+    override fun write(value: kotlin.ULong?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterULong.write(value, buf)
+        }
+    }
 }
 
 
@@ -1495,6 +2345,38 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
         } else {
             buf.put(1)
             FfiConverterString.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeTranErrorCode: FfiConverterRustBuffer<TranErrorCode?> {
+    override fun read(buf: ByteBuffer): TranErrorCode? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeTranErrorCode.read(buf)
+    }
+
+    override fun allocationSize(value: TranErrorCode?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeTranErrorCode.allocationSize(value)
+        }
+    }
+
+    override fun write(value: TranErrorCode?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeTranErrorCode.write(value, buf)
         }
     }
 }
@@ -1555,6 +2437,34 @@ public object FfiConverterSequenceTypeTranCountryVotingAge: FfiConverterRustBuff
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeTranCountryVotingAge.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeTranErrorSpec: FfiConverterRustBuffer<List<TranErrorSpec>> {
+    override fun read(buf: ByteBuffer): List<TranErrorSpec> {
+        val len = buf.getInt()
+        return List<TranErrorSpec>(len) {
+            FfiConverterTypeTranErrorSpec.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<TranErrorSpec>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeTranErrorSpec.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<TranErrorSpec>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeTranErrorSpec.write(it, buf)
         }
     }
 }
@@ -1711,6 +2621,178 @@ public object FfiConverterSequenceTypeTranCountryVotingAge: FfiConverterRustBuff
     
         
         FfiConverterString.lower(`countryCode`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * How `action` is presented.
+         */ fun `actionSpec`(`action`: TranUserAction): TranActionSpec {
+            return FfiConverterTypeTranActionSpec.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_action_spec(
+    
+        
+        FfiConverterTypeTranUserAction.lower(`action`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Every catalogue entry, in catalogue order (parity tests walk it against the fixture).
+         */ fun `errorCatalogue`(): List<TranErrorSpec> {
+            return FfiConverterSequenceTypeTranErrorSpec.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_error_catalogue(
+    
+        _status)
+}
+    )
+    }
+    
+
+        /**
+         * Classifies a non-2xx response whose body carries no `code` (REQ-ERR-004).
+         */ fun `errorCodeForHttpStatus`(`status`: kotlin.UShort): TranErrorCode {
+            return FfiConverterTypeTranErrorCode.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_error_code_for_http_status(
+    
+        
+        FfiConverterUShort.lower(`status`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * The code for an offline validation failure, so device and server rejections look the same.
+         */ fun `errorCodeForValidation`(`error`: TranValidationException): TranErrorCode {
+            return FfiConverterTypeTranErrorCode.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_error_code_for_validation(
+    
+        
+        FfiConverterTypeTranValidationError.lower(`error`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Reads the envelope's `code` field.
+         *
+         * # Returns
+         *
+         * The code, or `None` for a code this build does not know (a newer server) — then classify by
+         * status with [`error_code_for_http_status`].
+         */ fun `errorCodeFromWire`(`raw`: kotlin.String): TranErrorCode? {
+            return FfiConverterOptionalTypeTranErrorCode.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_error_code_from_wire(
+    
+        
+        FfiConverterString.lower(`raw`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * The catalogue entry for `code`.
+         *
+         * # Returns
+         *
+         * Status, retryability, log level, presentation and message key, pinned by
+         * `fixtures/feedback.json`.
+         */ fun `errorSpec`(`code`: TranErrorCode): TranErrorSpec {
+            return FfiConverterTypeTranErrorSpec.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_error_spec(
+    
+        
+        FfiConverterTypeTranErrorCode.lower(`code`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Whether a request id (from the envelope or the `x-request-id` header) is safe to log and show:
+         * 1–64 characters of `[A-Za-z0-9._-]`. Drop any other id (REQ-ROB-010).
+         */ fun `isValidRequestId`(`value`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_is_valid_request_id(
+    
+        
+        FfiConverterString.lower(`value`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * A `Retry-After` header in whole seconds, capped at [`TranRetryPolicy::max_delay_ms`].
+         *
+         * # Returns
+         *
+         * `None` for HTTP dates and junk; then use [`retry_delay_ms`].
+         */ fun `retryAfterMs`(`header`: kotlin.String): kotlin.ULong? {
+            return FfiConverterOptionalULong.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_retry_after_ms(
+    
+        
+        FfiConverterString.lower(`header`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Wait before retry number `retry` (1 = the first retry).
+         *
+         * # Arguments
+         *
+         * * `random` — a value in `[0, 1)`; inject it in tests so the schedule is deterministic.
+         */ fun `retryDelayMs`(`retry`: kotlin.UInt, `random`: kotlin.Double): kotlin.ULong {
+            return FfiConverterULong.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_retry_delay_ms(
+    
+        
+        FfiConverterUInt.lower(`retry`),
+        FfiConverterDouble.lower(`random`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * The retry budget every client uses.
+         */ fun `retryPolicy`(): TranRetryPolicy {
+            return FfiConverterTypeTranRetryPolicy.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_retry_policy(
+    
+        _status)
+}
+    )
+    }
+    
+
+        /**
+         * Milliseconds a toast of `duration` stays up.
+         */ fun `toastDurationMs`(`duration`: TranToastDuration): kotlin.ULong {
+            return FfiConverterULong.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_toast_duration_ms(
+    
+        
+        FfiConverterTypeTranToastDuration.lower(`duration`),_status)
 }
     )
     }
