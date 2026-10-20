@@ -550,6 +550,75 @@ fileprivate struct FfiConverterString: FfiConverter {
 
 
 /**
+ * One row of the supported-country table.
+ */
+public struct TranCountryVotingAge: Equatable, Hashable {
+    /**
+     * Upper-case ISO 3166-1 alpha-2 code.
+     */
+    public var countryCode: String
+    /**
+     * Minimum voting age in whole years.
+     */
+    public var minimumAge: UInt16
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Upper-case ISO 3166-1 alpha-2 code.
+         */countryCode: String, 
+        /**
+         * Minimum voting age in whole years.
+         */minimumAge: UInt16) {
+        self.countryCode = countryCode
+        self.minimumAge = minimumAge
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranCountryVotingAge: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranCountryVotingAge: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranCountryVotingAge {
+        return
+            try TranCountryVotingAge(
+                countryCode: FfiConverterString.read(from: &buf), 
+                minimumAge: FfiConverterUInt16.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranCountryVotingAge, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.countryCode, into: &buf)
+        FfiConverterUInt16.write(value.minimumAge, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranCountryVotingAge_lift(_ buf: RustBuffer) throws -> TranCountryVotingAge {
+    return try FfiConverterTypeTranCountryVotingAge.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranCountryVotingAge_lower(_ value: TranCountryVotingAge) -> RustBuffer {
+    return FfiConverterTypeTranCountryVotingAge.lower(value)
+}
+
+
+/**
  * Offline eligibility result produced by the shared Rust rules.
  */
 public struct VoteEligibilityOfflineResult: Equatable, Hashable {
@@ -649,6 +718,102 @@ public func FfiConverterTypeVoteEligibilityOfflineResult_lower(_ value: VoteElig
 
 
 /**
+ * The screen the navigation director routes to.
+ */
+
+public enum TranAppDestination: Equatable, Hashable {
+    
+    /**
+     * Launch screen shown while the stored session is read. Never returned by
+     * [`resolve_destination_offline`]; the app shows it before asking.
+     */
+    case splash
+    /**
+     * Role selection for a visitor without a session.
+     */
+    case authWelcome
+    /**
+     * The citizen voter's eligibility checker.
+     */
+    case voterDashboard
+    /**
+     * The election auditor's country rule table.
+     */
+    case auditorDashboard
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranAppDestination: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranAppDestination: FfiConverterRustBuffer {
+    typealias SwiftType = TranAppDestination
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranAppDestination {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .splash
+        
+        case 2: return .authWelcome
+        
+        case 3: return .voterDashboard
+        
+        case 4: return .auditorDashboard
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranAppDestination, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .splash:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .authWelcome:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .voterDashboard:
+            writeInt(&buf, Int32(3))
+        
+        
+        case .auditorDashboard:
+            writeInt(&buf, Int32(4))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranAppDestination_lift(_ buf: RustBuffer) throws -> TranAppDestination {
+    return try FfiConverterTypeTranAppDestination.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranAppDestination_lower(_ value: TranAppDestination) -> RustBuffer {
+    return FfiConverterTypeTranAppDestination.lower(value)
+}
+
+
+
+/**
  * Why the eligibility verdict is what it is.
  *
  * The native layer turns this into a localized sentence; the bridge never returns a
@@ -722,6 +887,81 @@ public func FfiConverterTypeTranEligibilityReason_lift(_ buf: RustBuffer) throws
 #endif
 public func FfiConverterTypeTranEligibilityReason_lower(_ value: TranEligibilityReason) -> RustBuffer {
     return FfiConverterTypeTranEligibilityReason.lower(value)
+}
+
+
+
+/**
+ * A signed-in role. The app stores the session; Rust decides where it leads.
+ */
+
+public enum TranUserRole: Equatable, Hashable {
+    
+    /**
+     * A voter checking their own eligibility.
+     */
+    case citizenVoter
+    /**
+     * An auditor reviewing the country rule table.
+     */
+    case electionAuditor
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranUserRole: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranUserRole: FfiConverterRustBuffer {
+    typealias SwiftType = TranUserRole
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranUserRole {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .citizenVoter
+        
+        case 2: return .electionAuditor
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranUserRole, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .citizenVoter:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .electionAuditor:
+            writeInt(&buf, Int32(2))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranUserRole_lift(_ buf: RustBuffer) throws -> TranUserRole {
+    return try FfiConverterTypeTranUserRole.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranUserRole_lower(_ value: TranUserRole) -> RustBuffer {
+    return FfiConverterTypeTranUserRole.lower(value)
 }
 
 
@@ -876,6 +1116,55 @@ fileprivate struct FfiConverterOptionString: FfiConverterRustBuffer {
         }
     }
 }
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionTypeTranUserRole: FfiConverterRustBuffer {
+    typealias SwiftType = TranUserRole?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeTranUserRole.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeTranUserRole.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeTranCountryVotingAge: FfiConverterRustBuffer {
+    typealias SwiftType = [TranCountryVotingAge]
+
+    public static func write(_ value: [TranCountryVotingAge], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeTranCountryVotingAge.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [TranCountryVotingAge] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [TranCountryVotingAge]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeTranCountryVotingAge.read(from: &buf))
+        }
+        return seq
+    }
+}
 /**
  * Whole years between two ISO 8601 dates, using the shared leap-day rules from `rust-core`.
  *
@@ -959,6 +1248,41 @@ public func evaluateVoteEligibilityOffline(age: UInt16, birthdateIso: String?, c
 })
 }
 /**
+ * Where the app should go for the stored session.
+ *
+ * # Arguments
+ *
+ * * `role` — the signed-in role, or `None` when there is no session or the user signed out.
+ *
+ * # Returns
+ *
+ * The destination screen. The rules live in `rust-core` and are pinned by
+ * `fixtures/navigation.json`.
+ */
+public func resolveDestinationOffline(role: TranUserRole?) -> TranAppDestination  {
+    return try!  FfiConverterTypeTranAppDestination_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_resolve_destination_offline(
+        FfiConverterOptionTypeTranUserRole.lower(role),uniffiCallStatus
+    )
+})
+}
+/**
+ * Every supported country with its minimum voting age, sorted by code.
+ *
+ * # Returns
+ *
+ * The same table that [`voting_age_for_country_offline`] reads, so screens that list the rules
+ * can never disagree with the verdict.
+ */
+public func supportedCountriesOffline() -> [TranCountryVotingAge]  {
+    return try!  FfiConverterSequenceTypeTranCountryVotingAge.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_supported_countries_offline(uniffiCallStatus
+    )
+})
+}
+/**
  * Minimum voting age for an ISO 3166-1 alpha-2 country code (case-insensitive).
  *
  * Unknown but well-formed codes fall back to the default voting age of 18.
@@ -1002,6 +1326,12 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_evaluate_vote_eligibility_offline() != 62236) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_resolve_destination_offline() != 24425) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_supported_countries_offline() != 29597) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_voting_age_for_country_offline() != 55415) {

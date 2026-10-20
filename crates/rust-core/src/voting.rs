@@ -1,17 +1,58 @@
 //! Voting eligibility rules — source of truth for web/native offline mirrors.
-//! After edits: `cargo test -p rust-core` and sync `packages/core-ts/src/voting.ts`.
+//! After edits: `cargo test -p rust-core`, then `pnpm tokens:sync` regenerates the TypeScript rule data.
 
 use chrono::{Datelike, NaiveDate};
+use serde::Serialize;
 
 pub const DEFAULT_VOTING_AGE: u16 = 18;
 
-/// Returns the minimum voting age for a country (ISO 3166-1 alpha-2).
+/// One row of the supported-country table.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+pub struct CountryVotingAge {
+    pub country_code: &'static str,
+    pub minimum_age: u16,
+}
+
+/// Supported countries (ISO 3166-1 alpha-2), sorted by code. The only table behind
+/// [`voting_age_for_country`]; TypeScript and native read it through codegen and UniFFI.
+pub const SUPPORTED_COUNTRIES: &[CountryVotingAge] = &[
+    CountryVotingAge {
+        country_code: "BR",
+        minimum_age: 16,
+    },
+    CountryVotingAge {
+        country_code: "DE",
+        minimum_age: 18,
+    },
+    CountryVotingAge {
+        country_code: "FR",
+        minimum_age: 18,
+    },
+    CountryVotingAge {
+        country_code: "GB",
+        minimum_age: 18,
+    },
+    CountryVotingAge {
+        country_code: "IN",
+        minimum_age: 18,
+    },
+    CountryVotingAge {
+        country_code: "NP",
+        minimum_age: 18,
+    },
+    CountryVotingAge {
+        country_code: "US",
+        minimum_age: 18,
+    },
+];
+
+/// Returns the minimum voting age for a country (ISO 3166-1 alpha-2, case-insensitive).
+/// Well-formed codes that are not supported fall back to [`DEFAULT_VOTING_AGE`].
 pub fn voting_age_for_country(country_code: &str) -> u16 {
-    match country_code.to_uppercase().as_str() {
-        "US" | "IN" | "NP" | "GB" | "DE" | "FR" => 18,
-        "BR" => 16,
-        _ => DEFAULT_VOTING_AGE,
-    }
+    SUPPORTED_COUNTRIES
+        .iter()
+        .find(|c| c.country_code.eq_ignore_ascii_case(country_code))
+        .map_or(DEFAULT_VOTING_AGE, |c| c.minimum_age)
 }
 
 /// Whether `age` meets the minimum voting age for a jurisdiction.
@@ -79,6 +120,16 @@ mod tests {
         let march_first = NaiveDate::from_ymd_opt(2022, 3, 1).unwrap();
         assert_eq!(age_from_birthdate(birth, day_before), 17);
         assert_eq!(age_from_birthdate(birth, march_first), 18);
+    }
+
+    // Verifies: REQ-RULE-009
+    #[test]
+    fn supported_countries_are_unique_upper_case_and_sorted() {
+        let codes: Vec<&str> = SUPPORTED_COUNTRIES.iter().map(|c| c.country_code).collect();
+        assert!(codes.windows(2).all(|pair| pair[0] < pair[1]), "{codes:?}");
+        assert!(codes
+            .iter()
+            .all(|code| code.len() == 2 && code.bytes().all(|b| b.is_ascii_uppercase())));
     }
 
     #[test]

@@ -33,6 +33,18 @@ pub enum AppDestination {
     AuditorDashboard,
 }
 
+impl AppDestination {
+    /// Stable snake_case name, matching `fixtures/navigation.json` and `@tran/core`.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Splash => "splash",
+            Self::AuthWelcome => "auth_welcome",
+            Self::VoterDashboard => "voter_dashboard",
+            Self::AuditorDashboard => "auditor_dashboard",
+        }
+    }
+}
+
 /// Central Navigation Director resolving the target destination from stored session state.
 pub fn resolve_destination(session: Option<&AuthSession>) -> AppDestination {
     match session {

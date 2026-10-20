@@ -1,11 +1,11 @@
-// Verifies: REQ-RULE-001 REQ-RULE-002 REQ-RULE-003 REQ-RULE-004 REQ-RULE-005 REQ-RULE-006 REQ-RULE-007 REQ-RULE-008
+// Verifies: REQ-RULE-001 REQ-RULE-002 REQ-RULE-003 REQ-RULE-004 REQ-RULE-005 REQ-RULE-006 REQ-RULE-007 REQ-RULE-008 REQ-RULE-009 REQ-RULE-010
 //! Golden-fixture parity: `fixtures/vote-eligibility.json` is shared with the TypeScript
 //! mirror (`packages/core-ts/tests/parity.test.ts`). If a rule changes, edit the fixture first.
 
 use chrono::NaiveDate;
 use rust_core::{
     age_from_birthdate, can_vote_by_age, voting_age_for_country, CoreError, TranEngine,
-    VoteEligibilityRequest,
+    VoteEligibilityRequest, SUPPORTED_COUNTRIES,
 };
 use serde::Deserialize;
 
@@ -15,6 +15,7 @@ const FIXTURE: &str = include_str!("../../../fixtures/vote-eligibility.json");
 #[serde(rename_all = "camelCase")]
 struct Fixtures {
     voting_ages: Vec<VotingAgeCase>,
+    countries: Vec<CountryCase>,
     can_vote: Vec<CanVoteCase>,
     age_from_birthdate: Vec<AgeCase>,
     invalid_birthdates: Vec<String>,
@@ -26,6 +27,13 @@ struct Fixtures {
 #[serde(rename_all = "camelCase")]
 struct VotingAgeCase {
     country: String,
+    minimum_age: u16,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CountryCase {
+    country_code: String,
     minimum_age: u16,
 }
 
@@ -89,6 +97,21 @@ fn voting_ages_match_fixture() {
             case.country
         );
     }
+}
+
+#[test]
+fn supported_countries_match_fixture() {
+    let actual: Vec<(&str, u16)> = SUPPORTED_COUNTRIES
+        .iter()
+        .map(|c| (c.country_code, c.minimum_age))
+        .collect();
+    let fixtures = fixtures();
+    let expected: Vec<(&str, u16)> = fixtures
+        .countries
+        .iter()
+        .map(|c| (c.country_code.as_str(), c.minimum_age))
+        .collect();
+    assert_eq!(actual, expected);
 }
 
 #[test]

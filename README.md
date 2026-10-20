@@ -16,7 +16,7 @@ Conventions are aligned with [create-t3-turbo](https://github.com/t3-oss/create-
 
 | Letter | Layer          | In this repo today                                                                                                                                                                                                         |
 | :----: | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **T**  | TanStack (web) | **Vite + React SPA** (`apps/web`). `@tanstack/react-start` / router packages are listed but **not imported** — no SSR, file routes, or server functions yet. See [docs/REVIEW.md](./docs/REVIEW.md).                       |
+| **T**  | TanStack (web) | **Vite + React SPA** (`apps/web`). TanStack Start SSR is **planned**, not built ([ADR-0010](./docs/adr/0010-tanstack-start-ssr.md), `REQ-SEO-*`).                                                                          |
 | **R**  | Rust core      | `crates/rust-core` — voting rules, validation, design tokens (source of truth).                                                                                                                                            |
 | **A**  | Axum           | `apps/api` — REST handlers, stub geo, unified error envelope.                                                                                                                                                              |
 | **N**  | Native mobile  | **SwiftUI** (`apps/ios`) + **Jetpack Compose** (`apps/android`). Offline voting via **UniFFI** (`crates/tran-uniffi`). The old React Native sketch was removed; retrieve it with `git checkout archive/react-native-demo`. |
@@ -139,7 +139,7 @@ graph TD
 
 | create-t3-turbo              | create-TRAN                                                        |
 | :--------------------------- | :----------------------------------------------------------------- |
-| `apps/web`                   | `apps/web` (Vite + React; TanStack Start not wired yet)            |
+| `apps/web`                   | `apps/web` (Vite + React; TanStack Start planned)                  |
 | `apps/native` (Expo)         | `apps/ios` + `apps/android` (real **N**)                           |
 | `packages/api` (tRPC router) | `packages/api` (oRPC contract + Zod; Axum implements REST)         |
 | `packages/ui`                | Design tokens in `@tran/core`; web styles in `apps/web/src/styles` |
@@ -197,24 +197,25 @@ Every behaviour starts as a numbered requirement, not as code.
 
 ### Architecture decisions
 
-| ADR                                                     | Decision                               |
-| :------------------------------------------------------ | :------------------------------------- |
-| [0001](./docs/adr/0001-rust-is-the-source-of-truth.md)  | Rust is the source of truth for rules  |
-| [0002](./docs/adr/0002-golden-fixtures.md)              | Golden fixtures prove parity           |
-| [0003](./docs/adr/0003-error-envelope.md)               | One error envelope                     |
-| [0004](./docs/adr/0004-inject-time-and-config.md)       | Inject time and configuration          |
-| [0005](./docs/adr/0005-generated-design-tokens.md)      | Design tokens are generated            |
-| [0006](./docs/adr/0006-coverage-gate.md)                | 100% coverage gate                     |
-| [0007](./docs/adr/0007-bdd-as-acceptance.md)            | BDD scenarios are acceptance criteria  |
-| [0008](./docs/adr/0008-accessibility-is-tested.md)      | Accessibility is tested                |
-| [0009](./docs/adr/0009-spec-driven-workflow.md)         | Spec-driven workflow                   |
-| [0010](./docs/adr/0010-tanstack-start-ssr.md)           | TanStack Start for SSR                 |
-| [0011](./docs/adr/0011-seo-metadata-pure-functions.md)  | SEO metadata from pure functions       |
-| [0012](./docs/adr/0012-browser-calls-api-directly.md)   | Browser calls the API directly         |
-| [0013](./docs/adr/0013-feature-based-web-structure.md)  | Feature-based web structure            |
-| [0014](./docs/adr/0014-native-swift-kotlin-uniffi.md)   | Native = Swift/Kotlin with UniFFI      |
-| [0025](./docs/adr/0025-tokens-codegen-stays-in-repo.md) | Token codegen stays in this monorepo   |
-| [0026](./docs/adr/0026-design-md-from-rust.md)          | Emit Google DESIGN.md from Rust tokens |
+| ADR                                                      | Decision                               |
+| :------------------------------------------------------- | :------------------------------------- |
+| [0001](./docs/adr/0001-rust-is-the-source-of-truth.md)   | Rust is the source of truth for rules  |
+| [0002](./docs/adr/0002-golden-fixtures.md)               | Golden fixtures prove parity           |
+| [0003](./docs/adr/0003-error-envelope.md)                | One error envelope                     |
+| [0004](./docs/adr/0004-inject-time-and-config.md)        | Inject time and configuration          |
+| [0005](./docs/adr/0005-generated-design-tokens.md)       | Design tokens are generated            |
+| [0006](./docs/adr/0006-coverage-gate.md)                 | 100% coverage gate                     |
+| [0007](./docs/adr/0007-bdd-as-acceptance.md)             | BDD scenarios are acceptance criteria  |
+| [0008](./docs/adr/0008-accessibility-is-tested.md)       | Accessibility is tested                |
+| [0009](./docs/adr/0009-spec-driven-workflow.md)          | Spec-driven workflow                   |
+| [0010](./docs/adr/0010-tanstack-start-ssr.md)            | TanStack Start for SSR (proposed)      |
+| [0011](./docs/adr/0011-seo-metadata-pure-functions.md)   | SEO metadata from pure functions       |
+| [0012](./docs/adr/0012-browser-calls-api-directly.md)    | Browser calls the API directly         |
+| [0013](./docs/adr/0013-feature-based-web-structure.md)   | Feature-based web structure            |
+| [0014](./docs/adr/0014-native-swift-kotlin-uniffi.md)    | Native = Swift/Kotlin with UniFFI      |
+| [0025](./docs/adr/0025-tokens-codegen-stays-in-repo.md)  | Token codegen stays in this monorepo   |
+| [0026](./docs/adr/0026-design-md-from-rust.md)           | Emit Google DESIGN.md from Rust tokens |
+| [0027](./docs/adr/0027-rule-data-generated-from-rust.md) | Rule data generated from Rust          |
 
 Requirements marked `planned` are specified but not built yet; they are the roadmap.
 

@@ -1,30 +1,27 @@
 /**
- * TypeScript mirror of `crates/rust-core/src/voting.rs`.
- * Keep rules in sync — parity tests assert the same cases as Rust unit tests.
+ * TypeScript logic over rule data generated from `crates/rust-core` (`./generated/rules.ts`).
+ * Never hand-edit a table or message here: change Rust, run `pnpm tokens:sync`. The functions below
+ * are pinned to Rust by `fixtures/vote-eligibility.json` (parity tests).
  */
 
-export const DEFAULT_VOTING_AGE = 18;
+import {
+  DEFAULT_VOTING_AGE,
+  MAX_AGE,
+  SUPPORTED_COUNTRIES,
+  VALIDATION_MESSAGES,
+} from './generated/rules.js';
 
-export const COUNTRY_VOTING_AGES: Record<string, number> = {
-  US: 18,
-  IN: 18,
-  NP: 18,
-  GB: 18,
-  DE: 18,
-  FR: 18,
-  BR: 16,
-};
+export { DEFAULT_VOTING_AGE, MAX_AGE, SUPPORTED_COUNTRIES, VALIDATION_MESSAGES };
+export type { CountryVotingAge } from './generated/rules.js';
 
 export function votingAgeForCountry(countryCode: string): number {
   const upper = countryCode.toUpperCase();
-  return COUNTRY_VOTING_AGES[upper] ?? DEFAULT_VOTING_AGE;
+  return SUPPORTED_COUNTRIES.find((c) => c.countryCode === upper)?.minimumAge ?? DEFAULT_VOTING_AGE;
 }
 
 export function canVoteByAge(age: number, minimumAge: number): boolean {
   return age >= minimumAge;
 }
-
-export const MAX_AGE = 150;
 
 /** Mirrors `CoreError::ValidationError` in Rust; the API maps the same condition to HTTP 400. */
 export class VoteEligibilityValidationError extends Error {
@@ -83,15 +80,13 @@ function validateInput(input: OfflineEligibilityInput, reference: string): void 
     throw new VoteEligibilityValidationError('Age must be a whole number of years, 0 or more');
   }
   if (input.age > MAX_AGE) {
-    throw new VoteEligibilityValidationError(`Age must be ${MAX_AGE} or less`);
+    throw new VoteEligibilityValidationError(VALIDATION_MESSAGES.ageOutOfRange);
   }
   if (!/^[A-Za-z]{2}$/.test(input.countryCode)) {
-    throw new VoteEligibilityValidationError(
-      'Country code must be two ASCII letters (ISO 3166-1 alpha-2)'
-    );
+    throw new VoteEligibilityValidationError(VALIDATION_MESSAGES.invalidCountryCode);
   }
   if (input.birthdate !== undefined && parseIsoDate(input.birthdate) > parseIsoDate(reference)) {
-    throw new VoteEligibilityValidationError('Birthdate cannot be in the future');
+    throw new VoteEligibilityValidationError(VALIDATION_MESSAGES.birthdateInFuture);
   }
 }
 

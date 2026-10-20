@@ -12,7 +12,9 @@
 		13A67E2C80FD4C70DE81D7F9 /* VotingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B85C1ED9728B5EF5BE132CA8 /* VotingUITests.swift */; };
 		17034A4EEF322B292273DBFF /* AuditorHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C6A6C2C513D02BF5CA544BA /* AuditorHomeView.swift */; };
 		19CA24A80BCFC281901579BA /* TranField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A926F22DCF183846E1B15619 /* TranField.swift */; };
+		2BC0881F6DD845E68232CF34 /* AuthSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A96B8BC4B8BA52D4C42F94 /* AuthSession.swift */; };
 		2CB2ACAC69F7FE66BFDE7E9C /* Common.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = D69AA90B4D08AF2C8F3EECEC /* Common.xcstrings */; };
+		31D20A7EDFB22768A01A4CE2 /* AuthSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A96B8BC4B8BA52D4C42F94 /* AuthSession.swift */; };
 		32038BD93305E28AFB04E12C /* TranEligibilityCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47C76ED62E3611F59F70019A /* TranEligibilityCopy.swift */; };
 		32D7B18E48987AF2E572833B /* TranEligibilityCopyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6F7FB11DBE49C89653F1A4 /* TranEligibilityCopyTests.swift */; };
 		35029F36F963C08522B3A153 /* TranButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13296B1C87BC71AF04BF997B /* TranButton.swift */; };
@@ -33,7 +35,7 @@
 		8BB20B45D9FEB4BFA71F57D9 /* Shell.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 4F832E35AE5EDE8C70E518BF /* Shell.xcstrings */; };
 		9552E3DBE5C4F862E353CCE4 /* TranEligibilityCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47C76ED62E3611F59F70019A /* TranEligibilityCopy.swift */; };
 		9A6A23BA00B03719BE715994 /* TranLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = DABDD20CECDFABD9AD5AAA49 /* TranLayout.swift */; };
-		A3B9B607F8FAB9B2688590A9 /* NavigationDirector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 312E02DE098663B7CE24DEEA /* NavigationDirector.swift */; };
+		A7D7682FF87B6131E4D7B724 /* NavigationParityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843D7B0C3D41329248AA92A8 /* NavigationParityTests.swift */; };
 		AFEB6F75711555ECA349D6D0 /* TranApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 644FEE3DC9747F2D704B4936 /* TranApiClient.swift */; };
 		BC74160BB1E1B371BB4D663B /* Auditor.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F12124FF6470EDFA0A353BF5 /* Auditor.xcstrings */; };
 		C52F1FC2C50EF718E0AD42AA /* TranApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 644FEE3DC9747F2D704B4936 /* TranApiClient.swift */; };
@@ -68,7 +70,6 @@
 		13296B1C87BC71AF04BF997B /* TranButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranButton.swift; sourceTree = "<group>"; };
 		1A659AC166910DCC044847A5 /* TranApiClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranApiClientTests.swift; sourceTree = "<group>"; };
 		2416105BFC37987133B79587 /* VoteEligibilityParityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoteEligibilityParityTests.swift; sourceTree = "<group>"; };
-		312E02DE098663B7CE24DEEA /* NavigationDirector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationDirector.swift; sourceTree = "<group>"; };
 		3540F3A0BA2FD3D74BC4C9E0 /* tran_uniffiFFI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tran_uniffiFFI.h; sourceTree = "<group>"; };
 		38199D7451B1B2BB4BD67EF8 /* TranVotingDemoUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TranVotingDemoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		42977EDB13DB5E5A2C6BA2B6 /* TranPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranPalette.swift; sourceTree = "<group>"; };
@@ -82,6 +83,7 @@
 		6FDDB6781B9D06EEBF5A4459 /* TranText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranText.swift; sourceTree = "<group>"; };
 		7C6A6C2C513D02BF5CA544BA /* AuditorHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuditorHomeView.swift; sourceTree = "<group>"; };
 		80AD0CC17ECB82BFFFD53D53 /* TranSegmented.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranSegmented.swift; sourceTree = "<group>"; };
+		843D7B0C3D41329248AA92A8 /* NavigationParityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationParityTests.swift; sourceTree = "<group>"; };
 		8E88174C22C857E2C4A32A1C /* AuthWelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthWelcomeView.swift; sourceTree = "<group>"; };
 		909818B002EAE3A6B7CF3660 /* TranGap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranGap.swift; sourceTree = "<group>"; };
 		A926F22DCF183846E1B15619 /* TranField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranField.swift; sourceTree = "<group>"; };
@@ -96,6 +98,7 @@
 		EF2AF051840CF2BCD45F86C7 /* tran_uniffi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = tran_uniffi.swift; sourceTree = "<group>"; };
 		F12124FF6470EDFA0A353BF5 /* Auditor.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Auditor.xcstrings; sourceTree = "<group>"; };
 		F21974D5F6A0ED5EE34F605E /* TranVotingDemo.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TranVotingDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F3A96B8BC4B8BA52D4C42F94 /* AuthSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSession.swift; sourceTree = "<group>"; };
 		F8C57904C226928C1009850D /* Auth.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Auth.xcstrings; sourceTree = "<group>"; };
 		FBC16B5C9AA459E81F099892 /* tran_uniffiFFI.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = tran_uniffiFFI.modulemap; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -137,6 +140,7 @@
 		5A10610A4FE9FD79FD5ED948 /* TranVotingDemoTests */ = {
 			isa = PBXGroup;
 			children = (
+				843D7B0C3D41329248AA92A8 /* NavigationParityTests.swift */,
 				1A659AC166910DCC044847A5 /* TranApiClientTests.swift */,
 				CE6F7FB11DBE49C89653F1A4 /* TranEligibilityCopyTests.swift */,
 				67E4D3E701D250552E7DA222 /* TranMotionTests.swift */,
@@ -175,9 +179,9 @@
 			isa = PBXGroup;
 			children = (
 				7C6A6C2C513D02BF5CA544BA /* AuditorHomeView.swift */,
+				F3A96B8BC4B8BA52D4C42F94 /* AuthSession.swift */,
 				8E88174C22C857E2C4A32A1C /* AuthWelcomeView.swift */,
 				E48F532295512AFE483F2438 /* NavigationCoordinatorView.swift */,
-				312E02DE098663B7CE24DEEA /* NavigationDirector.swift */,
 				10BA7AEEF263598B8C38A9B8 /* TranMotion.swift */,
 				50205EBE0EB7A80BE144F622 /* TranVotingDemoApp.swift */,
 				D67D27EB3D5D770789B21FDF /* VotingHomeView.swift */,
@@ -404,8 +408,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				31D20A7EDFB22768A01A4CE2 /* AuthSession.swift in Sources */,
 				CD2B4681BCD8C9AEE8303A9D /* BrandTokens.swift in Sources */,
 				0826DFF6755A336094EC46D2 /* L10n.swift in Sources */,
+				A7D7682FF87B6131E4D7B724 /* NavigationParityTests.swift in Sources */,
 				C52F1FC2C50EF718E0AD42AA /* TranApiClient.swift in Sources */,
 				4FEF69E87E2281A47A026A3C /* TranApiClientTests.swift in Sources */,
 				32038BD93305E28AFB04E12C /* TranEligibilityCopy.swift in Sources */,
@@ -422,11 +428,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				17034A4EEF322B292273DBFF /* AuditorHomeView.swift in Sources */,
+				2BC0881F6DD845E68232CF34 /* AuthSession.swift in Sources */,
 				F23C19D070B4D46967F1F757 /* AuthWelcomeView.swift in Sources */,
 				5DD2E1C9E78542434F8F0DDC /* BrandTokens.swift in Sources */,
 				033C5EFE87867769BC85393E /* L10n.swift in Sources */,
 				E06715EB17C0CF5EC9358484 /* NavigationCoordinatorView.swift in Sources */,
-				A3B9B607F8FAB9B2688590A9 /* NavigationDirector.swift in Sources */,
 				AFEB6F75711555ECA349D6D0 /* TranApiClient.swift in Sources */,
 				35029F36F963C08522B3A153 /* TranButton.swift in Sources */,
 				9552E3DBE5C4F862E353CCE4 /* TranEligibilityCopy.swift in Sources */,

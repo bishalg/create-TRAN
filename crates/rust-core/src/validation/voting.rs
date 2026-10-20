@@ -24,6 +24,24 @@ pub enum VoteValidationError {
     InvalidCountryCode,
 }
 
+impl VoteValidationError {
+    /// Every variant, in declaration order (codegen emits one message per entry).
+    pub const ALL: [Self; 3] = [
+        Self::AgeOutOfRange,
+        Self::BirthdateInFuture,
+        Self::InvalidCountryCode,
+    ];
+
+    /// Stable camelCase key used by generated TypeScript (`VALIDATION_MESSAGES.<key>`).
+    pub fn key(self) -> &'static str {
+        match self {
+            Self::AgeOutOfRange => "ageOutOfRange",
+            Self::BirthdateInFuture => "birthdateInFuture",
+            Self::InvalidCountryCode => "invalidCountryCode",
+        }
+    }
+}
+
 /// Rejects requests the rules cannot reason about, returning a stable domain code.
 ///
 /// `today` is injected so the check is pure.
@@ -96,5 +114,17 @@ mod tests {
             Err(VoteValidationError::InvalidCountryCode)
         );
         assert_eq!(validate_country_code_format("np"), Ok(()));
+    }
+
+    // Verifies: REQ-RULE-010
+    #[test]
+    fn every_error_has_a_unique_key_and_message() {
+        let keys: std::collections::BTreeSet<&str> =
+            VoteValidationError::ALL.iter().map(|e| e.key()).collect();
+        assert_eq!(keys.len(), VoteValidationError::ALL.len());
+        assert_eq!(
+            VoteValidationError::AgeOutOfRange.to_string(),
+            "Age must be 150 or less"
+        );
     }
 }

@@ -55,8 +55,6 @@ fun VotingHomeScreen(
     var resultText by remember { mutableStateOf(resultPlaceholder) }
     var apiStatus by remember { mutableStateOf(TranApiStatus.CHECKING) }
     val invalidAge = stringResource(TranStrings.Errors.ageInvalid)
-    val ageOutOfRange = stringResource(TranStrings.Errors.ageOutOfRange)
-    val invalidCountry = stringResource(TranStrings.Errors.countryInvalid)
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -110,7 +108,7 @@ fun VotingHomeScreen(
             TranButton(
                 label = stringResource(TranStrings.Eligibility.checkOffline),
                 onClick = {
-                    val check = runOfflineCheck(context, ageText, countryCode, invalidAge, ageOutOfRange, invalidCountry)
+                    val check = runOfflineCheck(context, ageText, countryCode, invalidAge)
                     resultText = check.text
                     // REQ-NAT-011: the verdict is already on screen; the API call only moves the status pill.
                     check.age?.let { age ->
@@ -159,8 +157,6 @@ fun VotingHomeScreen(
     }
 }
 
-private const val MAX_AGE = 150
-
 /** The verdict text plus the validated age, when the input was good enough for the API call. */
 private data class OfflineCheck(val text: String, val age: Int?)
 
@@ -180,12 +176,9 @@ private fun runOfflineCheck(
     ageText: String,
     countryCode: String,
     invalidAge: String,
-    ageOutOfRange: String,
-    invalidCountry: String,
 ): OfflineCheck {
+    // Only parsing happens here; every rule (age range, country shape) is checked once, in Rust.
     val age = ageText.toUShortOrNull() ?: return OfflineCheck(invalidAge, null)
-    if (age.toInt() > MAX_AGE) return OfflineCheck(ageOutOfRange, null)
-    if (countryCode.length != 2 || !countryCode.all { it.isLetter() }) return OfflineCheck(invalidCountry, null)
     val reference = LocalDate.now().toString()
     return try {
         val result = evaluateVoteEligibilityOffline(age, null, countryCode, reference)

@@ -18,14 +18,14 @@ import androidx.core.view.WindowCompat
 import com.tran.voting.generated.TranBrandTokens
 import com.tran.voting.generated.TranTheme
 import com.tran.voting.generated.tranColorScheme
-import com.tran.voting.ui.AppDestination
 import com.tran.voting.ui.AuditorScreen
 import com.tran.voting.ui.AuthSession
 import com.tran.voting.ui.AuthWelcomeScreen
-import com.tran.voting.ui.NavigationDirector
-import com.tran.voting.ui.UserRole
 import com.tran.voting.ui.VotingHomeScreen
 import com.tran.voting.ui.atoms.LocalTranPalette
+import com.tran.voting.ui.destination
+import uniffi.tran_uniffi.TranAppDestination
+import uniffi.tran_uniffi.TranUserRole
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,7 +46,7 @@ class MainActivity : ComponentActivity() {
 fun NavigationCoordinator() {
     var session by remember {
         mutableStateOf<AuthSession>(
-            AuthSession.Authenticated(userId = "voter-001", role = UserRole.CITIZEN_VOTER)
+            AuthSession.Authenticated(userId = "voter-001", role = TranUserRole.CITIZEN_VOTER)
         )
     }
     // Any theme in the rust-core registry can be selected — no light/dark boolean.
@@ -66,13 +66,13 @@ fun NavigationCoordinator() {
     MaterialTheme(colorScheme = tranColorScheme(palette)) {
         // Atoms read the registry palette from the composition (web's CSS-variable analogue).
         CompositionLocalProvider(LocalTranPalette provides palette) {
-            when (NavigationDirector.resolveDestination(session)) {
-                AppDestination.SPLASH, AppDestination.AUTH_WELCOME -> {
+            when (session.destination) {
+                TranAppDestination.SPLASH, TranAppDestination.AUTH_WELCOME -> {
                     AuthWelcomeScreen { role ->
                         session = AuthSession.Authenticated(userId = "user-001", role = role)
                     }
                 }
-                AppDestination.VOTER_DASHBOARD -> {
+                TranAppDestination.VOTER_DASHBOARD -> {
                     VotingHomeScreen(
                         theme = theme,
                         onThemeChange = { theme = it },
@@ -81,7 +81,7 @@ fun NavigationCoordinator() {
                         }
                     )
                 }
-                AppDestination.AUDITOR_DASHBOARD -> {
+                TranAppDestination.AUDITOR_DASHBOARD -> {
                     AuditorScreen(onSignOut = {
                         session = AuthSession.Unauthenticated
                     })

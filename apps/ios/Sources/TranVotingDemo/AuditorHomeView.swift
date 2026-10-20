@@ -5,15 +5,8 @@ import SwiftUI
 struct AuditorHomeView: View {
     let onSignOut: () -> Void
 
-    private let countryRules: [(String, Int)] = [
-        ("BR", 16),
-        ("NP", 18),
-        ("US", 18),
-        ("IN", 18),
-        ("DE", 18),
-        ("FR", 18),
-        ("GB", 18)
-    ]
+    /// The rule table from `rust-core` — the same rows the verdict reads.
+    private let countryRules = supportedCountriesOffline()
 
     var body: some View {
         TranScreen {
@@ -38,11 +31,11 @@ struct AuditorHomeView: View {
 
                                 // Table-like rows compose from the stack/inline atoms (no native
                                 // `TranTable` — the web table is a CSS grid with no native analogue).
-                                ForEach(countryRules, id: \.0) { item in
+                                ForEach(countryRules, id: \.countryCode) { rule in
                                     TranInline(gap: .md) {
-                                        TranText(item.0, bold: true)
+                                        TranText(rule.countryCode, bold: true)
                                         Spacer()
-                                        TranText(L10n.Auditor.years(String(item.1)), variant: .muted)
+                                        TranText(L10n.Auditor.years(String(rule.minimumAge)), variant: .muted)
                                     }
                                     .frame(maxWidth: .infinity)
                                     TranDivider()

@@ -3,7 +3,7 @@ import SwiftUI
 /// Welcome and role-selection screen providing the two branching navigation options.
 /// Verifies: REQ-NAV-002 REQ-NAV-003 REQ-NAV-004
 struct AuthWelcomeView: View {
-    let onSelectRole: (UserRole) -> Void
+    let onSelectRole: (TranUserRole) -> Void
 
     var body: some View {
         TranScreen {

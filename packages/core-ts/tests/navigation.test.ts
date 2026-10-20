@@ -1,5 +1,33 @@
+// Verifies: REQ-NAV-006
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { resolveDestination, type AuthSession } from '../src/navigation.js';
+import { resolveDestination, type AuthSession, type UserRole } from '../src/navigation.js';
+
+interface NavigationFixtures {
+  destinations: {
+    name: string;
+    session: 'none' | 'unauthenticated' | UserRole;
+    destination: string;
+  }[];
+}
+
+const fixtures: NavigationFixtures = JSON.parse(
+  readFileSync(new URL('../../../fixtures/navigation.json', import.meta.url), 'utf8')
+);
+
+function sessionFrom(
+  raw: NavigationFixtures['destinations'][number]['session']
+): AuthSession | null {
+  if (raw === 'none') return null;
+  if (raw === 'unauthenticated') return { status: 'unauthenticated' };
+  return { status: 'authenticated', userId: 'fixture-user', role: raw };
+}
+
+describe('golden navigation fixtures (shared with Rust and native)', () => {
+  it.each(fixtures.destinations)('$name -> $destination', (c) => {
+    expect(resolveDestination(sessionFrom(c.session))).toBe(c.destination);
+  });
+});
 
 describe('Navigation Director (resolveDestination)', () => {
   it('[REQ-NAV-001] resolves unauthenticated when no session exists', () => {

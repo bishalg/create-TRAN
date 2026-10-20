@@ -1,37 +1,24 @@
 package com.tran.voting.ui
 
+import uniffi.tran_uniffi.TranAppDestination
+import uniffi.tran_uniffi.TranUserRole
+import uniffi.tran_uniffi.resolveDestinationOffline
+
 /**
- * Navigation Director and role-based branching models for TRAN Android.
- *
- * Verifies: REQ-NAV-001 REQ-NAV-002 REQ-NAV-003 REQ-NAV-004 REQ-NAV-005
+ * Session state the app stores. Where a session leads is decided by `rust-core` through UniFFI
+ * (`resolveDestinationOffline`, pinned by `fixtures/navigation.json`) — never re-implemented here.
  */
-enum class UserRole(val label: String) {
-    CITIZEN_VOTER("Citizen Voter"),
-    ELECTION_AUDITOR("Election Auditor")
-}
-
 sealed interface AuthSession {
-    data object Unauthenticated : AuthSession
-    data class Authenticated(val userId: String, val role: UserRole) : AuthSession
-}
+    /** The signed-in role, or `null` after sign-out. */
+    val role: TranUserRole?
 
-enum class AppDestination {
-    SPLASH,
-    AUTH_WELCOME,
-    VOTER_DASHBOARD,
-    AUDITOR_DASHBOARD
-}
-
-object NavigationDirector {
-    fun resolveDestination(session: AuthSession): AppDestination {
-        return when (session) {
-            is AuthSession.Unauthenticated -> AppDestination.AUTH_WELCOME
-            is AuthSession.Authenticated -> {
-                when (session.role) {
-                    UserRole.CITIZEN_VOTER -> AppDestination.VOTER_DASHBOARD
-                    UserRole.ELECTION_AUDITOR -> AppDestination.AUDITOR_DASHBOARD
-                }
-            }
-        }
+    data object Unauthenticated : AuthSession {
+        override val role: TranUserRole? = null
     }
+
+    data class Authenticated(val userId: String, override val role: TranUserRole) : AuthSession
 }
+
+/** The screen this session leads to, resolved by the shared Rust navigation director. */
+val AuthSession.destination: TranAppDestination
+    get() = resolveDestinationOffline(role)

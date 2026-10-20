@@ -1,4 +1,4 @@
-// Verifies: REQ-RULE-001 REQ-RULE-002 REQ-RULE-003 REQ-RULE-004 REQ-RULE-005 REQ-RULE-006 REQ-RULE-007 REQ-RULE-008
+// Verifies: REQ-RULE-001 REQ-RULE-002 REQ-RULE-003 REQ-RULE-004 REQ-RULE-005 REQ-RULE-006 REQ-RULE-007 REQ-RULE-008 REQ-RULE-009 REQ-RULE-010
 /**
  * Parity with Rust: runs the exact same golden cases as
  * `crates/rust-core/tests/parity_fixtures.rs` from `fixtures/vote-eligibility.json`.
@@ -9,12 +9,14 @@ import {
   ageFromBirthdate,
   canVoteByAge,
   evaluateVoteEligibilityOffline,
+  SUPPORTED_COUNTRIES,
   VoteEligibilityValidationError,
   votingAgeForCountry,
 } from '../src/voting.js';
 
 interface Fixtures {
   votingAges: { country: string; minimumAge: number }[];
+  countries: { countryCode: string; minimumAge: number }[];
   canVote: { age: number; minimumAge: number; expected: boolean }[];
   ageFromBirthdate: { name: string; birthdate: string; reference: string; expected: number }[];
   invalidBirthdates: string[];
@@ -50,6 +52,10 @@ const fixtures: Fixtures = JSON.parse(
 describe('golden fixtures (shared with Rust)', () => {
   it.each(fixtures.votingAges)('votingAgeForCountry($country) = $minimumAge', (c) => {
     expect(votingAgeForCountry(c.country)).toBe(c.minimumAge);
+  });
+
+  it('SUPPORTED_COUNTRIES is the fixture table, sorted by code', () => {
+    expect(SUPPORTED_COUNTRIES).toEqual(fixtures.countries);
   });
 
   it.each(fixtures.canVote)('canVoteByAge($age, $minimumAge) = $expected', (c) => {

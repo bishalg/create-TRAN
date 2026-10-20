@@ -27,3 +27,11 @@ Selecting the Election Auditor role MUST transition the navigation stack to the 
 
 Invoking Sign Out from either dashboard branch MUST clear the active session and reset the navigation stack to the Auth Welcome screen.
 **Verified by:** unit test `App.test.tsx` / BDD `@REQ-NAV-005`.
+
+### REQ-NAV-006 [verified] One navigation director, pinned by a fixture
+
+The session → destination decision MUST be defined once, in `crates/rust-core` (`resolve_destination`). iOS and Android
+MUST call it through UniFFI (`resolveDestinationOffline`) rather than re-implementing it; the TypeScript director MUST
+agree with it. Every implementation MUST pass `fixtures/navigation.json`.
+**Verified by:** `crates/rust-core/tests/navigation_fixtures.rs`, `crates/tran-uniffi/tests/navigation_fixtures.rs`,
+`packages/core-ts/tests/navigation.test.ts`, `NavigationParityTests.swift`, `NavigationParityTest.kt`.

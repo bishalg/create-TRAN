@@ -10,7 +10,7 @@ use rust_core::tokens_json_snapshot;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
-use tran_tokens_codegen::{render_design_md, CodegenConfig};
+use tran_tokens_codegen::{render_design_md, render_rules_ts, CodegenConfig};
 
 /// Base language under `locales/`. Other locales fall back to it at runtime: web in `t()`,
 /// iOS through the String Catalog development language, Android through the default `values/`.
@@ -49,6 +49,9 @@ fn run() -> Result<(), String> {
     let ts_path = paths.core_generated_dir.join("tokens.ts");
     write_file(&ts_path, render_tokens_ts(&snapshot))?;
 
+    let rules_path = paths.core_generated_dir.join("rules.ts");
+    write_file(&rules_path, render_rules_ts())?;
+
     let css_path = paths.web_generated_dir.join("theme.css");
     write_file(&css_path, render_theme_css(&snapshot))?;
 
@@ -73,6 +76,7 @@ fn run() -> Result<(), String> {
 
     println!("tran-tokens-codegen: wrote {}", json_path.display());
     println!("tran-tokens-codegen: wrote {}", ts_path.display());
+    println!("tran-tokens-codegen: wrote {}", rules_path.display());
     println!("tran-tokens-codegen: wrote {}", css_path.display());
     println!("tran-tokens-codegen: wrote {}", swift_path.display());
     println!("tran-tokens-codegen: wrote {}", kotlin_path.display());

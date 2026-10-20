@@ -112,16 +112,9 @@ struct VotingHomeView: View {
     }
 
     private func checkOffline() {
+        // Only parsing happens here; every rule (age range, country shape) is checked once, in Rust.
         guard let age = UInt16(ageText), !countryCode.isEmpty else {
             resultText = L10n.Errors.ageAndCountry
-            return
-        }
-        guard age <= 150 else {
-            resultText = L10n.Errors.ageOutOfRange
-            return
-        }
-        guard countryCode.count == 2, countryCode.allSatisfy({ $0.isLetter }) else {
-            resultText = L10n.Errors.countryInvalid
             return
         }
         let formatter = DateFormatter()
@@ -138,7 +131,7 @@ struct VotingHomeView: View {
             resultText = res.localizedReason
             confirmWithApi(age: age)
         } catch let error as TranValidationError {
-            // Pre-validated above; map the typed variant to shared copy instead of Rust prose.
+            // Map the typed Rust variant to shared copy instead of Rust prose.
             resultText = error.localizedMessage
         } catch {
             resultText = L10n.Errors.ageAndCountry

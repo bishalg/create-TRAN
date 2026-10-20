@@ -8,6 +8,15 @@
     { "country": "br", "minimumAge": 16 },
     { "country": "XX", "minimumAge": 18 }
   ],
+  "countries": [
+    { "countryCode": "BR", "minimumAge": 16 },
+    { "countryCode": "DE", "minimumAge": 18 },
+    { "countryCode": "FR", "minimumAge": 18 },
+    { "countryCode": "GB", "minimumAge": 18 },
+    { "countryCode": "IN", "minimumAge": 18 },
+    { "countryCode": "NP", "minimumAge": 18 },
+    { "countryCode": "US", "minimumAge": 18 }
+  ],
   "canVote": [
     { "age": 0, "minimumAge": 18, "expected": false },
     { "age": 17, "minimumAge": 18, "expected": false },

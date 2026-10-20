@@ -1,4 +1,4 @@
-import { COUNTRY_VOTING_AGES, type SupportedLocale, t } from '@tran/core';
+import { SUPPORTED_COUNTRIES, type SupportedLocale, t } from '@tran/core';
 import { TranBox } from '../../shared/ui/TranBox.js';
 import { TranButton } from '../../shared/ui/TranButton.js';
 import { TranStack } from '../../shared/ui/TranStack.js';
@@ -11,8 +11,6 @@ export interface AuditorPageProps {
 }
 
 export function AuditorPage({ locale, onBackToVoter }: AuditorPageProps) {
-  const entries = Object.entries(COUNTRY_VOTING_AGES);
-
   return (
     <div className="auditor-page card">
       <TranText variant="title" as="h2">
@@ -29,10 +27,10 @@ export function AuditorPage({ locale, onBackToVoter }: AuditorPageProps) {
             </tr>
           </thead>
           <tbody>
-            {entries.map(([country, minAge]) => (
-              <tr key={country}>
-                <TranTd>{country}</TranTd>
-                <TranTd>{t('auditor.years', locale, { years: minAge })}</TranTd>
+            {SUPPORTED_COUNTRIES.map(({ countryCode, minimumAge }) => (
+              <tr key={countryCode}>
+                <TranTd>{countryCode}</TranTd>
+                <TranTd>{t('auditor.years', locale, { years: minimumAge })}</TranTd>
                 <TranTd>{t('auditor.table.verified', locale)}</TranTd>
               </tr>
             ))}

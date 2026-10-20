@@ -680,6 +680,10 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_evaluate_vote_eligibility_offline(
     ): Int
+    external fun uniffi_tran_uniffi_checksum_func_resolve_destination_offline(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_supported_countries_offline(
+    ): Int
     external fun uniffi_tran_uniffi_checksum_func_voting_age_for_country_offline(
     ): Int
     external fun ffi_tran_uniffi_uniffi_contract_version(
@@ -702,6 +706,10 @@ internal object UniffiLib {
     external fun uniffi_tran_uniffi_fn_func_can_vote_by_age_offline(`age`: Short,`minimumAge`: Short,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     external fun uniffi_tran_uniffi_fn_func_evaluate_vote_eligibility_offline(`age`: Short,`birthdateIso`: RustBuffer.ByValue,`countryCode`: RustBuffer.ByValue,`referenceDateIso`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_resolve_destination_offline(`role`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_supported_countries_offline(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_voting_age_for_country_offline(`countryCode`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Int
@@ -831,6 +839,12 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_tran_uniffi_checksum_func_evaluate_vote_eligibility_offline() and 0xFFFF) != 62236) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_resolve_destination_offline() and 0xFFFF) != 24425) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_supported_countries_offline() and 0xFFFF) != 29597) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_tran_uniffi_checksum_func_voting_age_for_country_offline() and 0xFFFF) != 55415) {
@@ -1039,6 +1053,53 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
 
 
 /**
+ * One row of the supported-country table.
+ */
+data class TranCountryVotingAge (
+    /**
+     * Upper-case ISO 3166-1 alpha-2 code.
+     */
+    var `countryCode`: kotlin.String
+    , 
+    /**
+     * Minimum voting age in whole years.
+     */
+    var `minimumAge`: kotlin.UShort
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranCountryVotingAge: FfiConverterRustBuffer<TranCountryVotingAge> {
+    override fun read(buf: ByteBuffer): TranCountryVotingAge {
+        return TranCountryVotingAge(
+            FfiConverterString.read(buf),
+            FfiConverterUShort.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranCountryVotingAge) = (
+            FfiConverterString.allocationSize(value.`countryCode`) +
+            FfiConverterUShort.allocationSize(value.`minimumAge`)
+    )
+
+    override fun write(value: TranCountryVotingAge, buf: ByteBuffer) {
+            FfiConverterString.write(value.`countryCode`, buf)
+            FfiConverterUShort.write(value.`minimumAge`, buf)
+    }
+}
+
+
+
+/**
  * Offline eligibility result produced by the shared Rust rules.
  */
 data class VoteEligibilityOfflineResult (
@@ -1110,6 +1171,58 @@ public object FfiConverterTypeVoteEligibilityOfflineResult: FfiConverterRustBuff
 
 
 /**
+ * The screen the navigation director routes to.
+ */
+
+enum class TranAppDestination {
+    
+    /**
+     * Launch screen shown while the stored session is read. Never returned by
+     * [`resolve_destination_offline`]; the app shows it before asking.
+     */
+    SPLASH,
+    /**
+     * Role selection for a visitor without a session.
+     */
+    AUTH_WELCOME,
+    /**
+     * The citizen voter's eligibility checker.
+     */
+    VOTER_DASHBOARD,
+    /**
+     * The election auditor's country rule table.
+     */
+    AUDITOR_DASHBOARD;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranAppDestination: FfiConverterRustBuffer<TranAppDestination> {
+    override fun read(buf: ByteBuffer) = try {
+        TranAppDestination.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TranAppDestination) = 4UL
+
+    override fun write(value: TranAppDestination, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
  * Why the eligibility verdict is what it is.
  *
  * The native layer turns this into a localized sentence; the bridge never returns a
@@ -1147,6 +1260,49 @@ public object FfiConverterTypeTranEligibilityReason: FfiConverterRustBuffer<Tran
     override fun allocationSize(value: TranEligibilityReason) = 4UL
 
     override fun write(value: TranEligibilityReason, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
+ * A signed-in role. The app stores the session; Rust decides where it leads.
+ */
+
+enum class TranUserRole {
+    
+    /**
+     * A voter checking their own eligibility.
+     */
+    CITIZEN_VOTER,
+    /**
+     * An auditor reviewing the country rule table.
+     */
+    ELECTION_AUDITOR;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranUserRole: FfiConverterRustBuffer<TranUserRole> {
+    override fun read(buf: ByteBuffer) = try {
+        TranUserRole.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TranUserRole) = 4UL
+
+    override fun write(value: TranUserRole, buf: ByteBuffer) {
         buf.putInt(value.ordinal + 1)
     }
 }
@@ -1342,6 +1498,66 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
         }
     }
 }
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeTranUserRole: FfiConverterRustBuffer<TranUserRole?> {
+    override fun read(buf: ByteBuffer): TranUserRole? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeTranUserRole.read(buf)
+    }
+
+    override fun allocationSize(value: TranUserRole?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeTranUserRole.allocationSize(value)
+        }
+    }
+
+    override fun write(value: TranUserRole?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeTranUserRole.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeTranCountryVotingAge: FfiConverterRustBuffer<List<TranCountryVotingAge>> {
+    override fun read(buf: ByteBuffer): List<TranCountryVotingAge> {
+        val len = buf.getInt()
+        return List<TranCountryVotingAge>(len) {
+            FfiConverterTypeTranCountryVotingAge.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<TranCountryVotingAge>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeTranCountryVotingAge.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<TranCountryVotingAge>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeTranCountryVotingAge.write(it, buf)
+        }
+    }
+}
         /**
          * Whole years between two ISO 8601 dates, using the shared leap-day rules from `rust-core`.
          *
@@ -1430,6 +1646,47 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
         FfiConverterOptionalString.lower(`birthdateIso`),
         FfiConverterString.lower(`countryCode`),
         FfiConverterString.lower(`referenceDateIso`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Where the app should go for the stored session.
+         *
+         * # Arguments
+         *
+         * * `role` — the signed-in role, or `None` when there is no session or the user signed out.
+         *
+         * # Returns
+         *
+         * The destination screen. The rules live in `rust-core` and are pinned by
+         * `fixtures/navigation.json`.
+         */ fun `resolveDestinationOffline`(`role`: TranUserRole?): TranAppDestination {
+            return FfiConverterTypeTranAppDestination.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_resolve_destination_offline(
+    
+        
+        FfiConverterOptionalTypeTranUserRole.lower(`role`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Every supported country with its minimum voting age, sorted by code.
+         *
+         * # Returns
+         *
+         * The same table that [`voting_age_for_country_offline`] reads, so screens that list the rules
+         * can never disagree with the verdict.
+         */ fun `supportedCountriesOffline`(): List<TranCountryVotingAge> {
+            return FfiConverterSequenceTypeTranCountryVotingAge.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_supported_countries_offline(
+    
+        _status)
 }
     )
     }

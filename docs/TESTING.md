@@ -9,7 +9,7 @@ easy to copy. Every layer below has one reference file. Copy its shape, not its 
 | :-------------------- | :-------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------- |
 | Rule unit tests       | `cargo test`                                        | `crates/rust-core/src/voting.rs` (`mod tests`)                                                                          | Pure functions, boundaries (17/18, leap day)                                               |
 | **Golden fixtures**   | `cargo test` + `vitest`                             | `fixtures/vote-eligibility.json` → `crates/rust-core/tests/parity_fixtures.rs`, `packages/core-ts/tests/parity.test.ts` | Rust and TypeScript give **identical** answers                                             |
-| UniFFI parity         | `cargo test -p tran-uniffi`                         | `crates/tran-uniffi/tests/parity_fixtures.rs` + `src/lib.rs` unit tests                                                 | Native FFI surface matches the same fixture table                                          |
+| UniFFI parity         | `cargo test -p tran-uniffi`                         | `crates/tran-uniffi/tests/{parity,navigation}_fixtures.rs` + `src/lib.rs` unit tests                                    | Native FFI surface matches the same fixture tables (rules, countries, navigation)          |
 | **FFI surface**       | vitest source/bindings guard                        | `packages/core-ts/tests/ffi-surface.test.ts`                                                                            | Docs crossed into both bindings, typed enums, generated types extended not redeclared      |
 | HTTP integration      | `tower::oneshot`                                    | `apps/api/tests/api_test.rs`                                                                                            | Routes, headers, status codes, one error envelope                                          |
 | Real socket smoke     | tokio `TcpListener`                                 | `apps/api/tests/server_test.rs`                                                                                         | `run_server` really serves                                                                 |
@@ -23,9 +23,10 @@ easy to copy. Every layer below has one reference file. Copy its shape, not its 
 
 ## TDD loop (do this for every change)
 
-1. **Red** – write the failing test first. Rule change? Edit `fixtures/vote-eligibility.json` first; both
-   languages go red.
-2. **Green** – smallest change that passes. Rust is the source of truth; mirror in `packages/core-ts`.
+1. **Red** – write the failing test first. Rule change? Edit `fixtures/vote-eligibility.json` (or
+   `fixtures/navigation.json`) first; every language goes red.
+2. **Green** – smallest change that passes in Rust, then `pnpm tokens:sync` (TS rule data, ADR-0027) and
+   `pnpm uniffi:generate` (native). Never hand-copy a table, limit or message into another language.
 3. **Refactor** with the suite green.
 4. `pnpm test:all` before pushing.
 

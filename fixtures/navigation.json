@@ -1,0 +1,13 @@
+{
+  "$comment": "Golden navigation cases shared by Rust (crates/rust-core/tests/navigation_fixtures.rs), TypeScript (packages/core-ts/tests/navigation.test.ts), UniFFI (crates/tran-uniffi/tests/navigation_fixtures.rs), iOS and Android parity tests. `session` is `none` (nothing stored), `unauthenticated`, or the signed-in role.",
+  "destinations": [
+    { "name": "no stored session", "session": "none", "destination": "auth_welcome" },
+    { "name": "signed out", "session": "unauthenticated", "destination": "auth_welcome" },
+    { "name": "citizen voter", "session": "citizen_voter", "destination": "voter_dashboard" },
+    {
+      "name": "election auditor",
+      "session": "election_auditor",
+      "destination": "auditor_dashboard"
+    }
+  ]
+}

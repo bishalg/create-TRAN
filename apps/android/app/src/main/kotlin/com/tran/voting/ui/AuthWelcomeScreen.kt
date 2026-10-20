@@ -15,6 +15,7 @@ import com.tran.voting.ui.atoms.TranScreen
 import com.tran.voting.ui.atoms.TranStack
 import com.tran.voting.ui.atoms.TranText
 import com.tran.voting.ui.atoms.TranTextVariant
+import uniffi.tran_uniffi.TranUserRole
 
 /**
  * Welcome screen presenting the two branching navigation options.
@@ -22,7 +23,7 @@ import com.tran.voting.ui.atoms.TranTextVariant
  * Verifies: REQ-NAV-002 REQ-NAV-003 REQ-NAV-004
  */
 @Composable
-fun AuthWelcomeScreen(onSelectRole: (UserRole) -> Unit) {
+fun AuthWelcomeScreen(onSelectRole: (TranUserRole) -> Unit) {
     TranScreen(modifier = Modifier.padding(TranSpace.lg)) {
         TranStack(gap = TranGap.LG) {
             TranStack(gap = TranGap.SM) {
@@ -39,12 +40,12 @@ fun AuthWelcomeScreen(onSelectRole: (UserRole) -> Unit) {
             TranStack(gap = TranGap.MD) {
                 TranButton(
                     label = stringResource(TranStrings.Auth.continueAsVoter),
-                    onClick = { onSelectRole(UserRole.CITIZEN_VOTER) },
+                    onClick = { onSelectRole(TranUserRole.CITIZEN_VOTER) },
                     modifier = Modifier.fillMaxWidth().testTag("voter-branch-button"),
                 )
                 TranButton(
                     label = stringResource(TranStrings.Auth.continueAsAuditor),
-                    onClick = { onSelectRole(UserRole.ELECTION_AUDITOR) },
+                    onClick = { onSelectRole(TranUserRole.ELECTION_AUDITOR) },
                     variant = TranButtonVariant.SECONDARY,
                     modifier = Modifier.fillMaxWidth().testTag("auditor-branch-button"),
                 )

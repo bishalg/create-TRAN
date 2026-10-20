@@ -51,8 +51,15 @@ The result MUST carry a reason in the form `Age {age} meets the minimum voting a
 `Age {age} is below the minimum voting age of {min} in {CC}.`, with the country code upper-cased.
 **Verified by:** fixture `evaluations`.
 
-### REQ-RULE-009 [planned] Supported countries
+### REQ-RULE-009 [verified] Supported countries
 
 The core MUST expose the ordered list of supported countries (code and minimum age), sorted by code. The voting-age
 lookup (REQ-RULE-002) and this list MUST come from one table.
-**Verified by:** fixture `countries`.
+**Verified by:** fixture `countries` (`parity_fixtures.rs`, `parity.test.ts`), `voting.rs` sorted/unique unit test.
+
+### REQ-RULE-010 [verified] Rule data is generated, not copied
+
+Rule data — `DEFAULT_VOTING_AGE`, `MAX_AGE`, the supported-country table and the validation messages — MUST be
+defined once in `crates/rust-core`. TypeScript MUST import it from `packages/core-ts/src/generated/rules.ts`, written by
+`pnpm tokens:sync`; CI MUST fail when the generated file differs from Rust. Rationale: [ADR-0027](../adr/0027-rule-data-generated-from-rust.md).
+**Verified by:** `validation/voting.rs` (`every_error_has_a_unique_key_and_message`), `tran-tokens-codegen` `rules_ts` tests, `parity.test.ts` (messages and table via fixtures), CI drift check.

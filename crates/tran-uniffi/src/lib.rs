@@ -6,8 +6,9 @@
 
 use chrono::NaiveDate;
 use rust_core::{
-    age_from_birthdate, can_vote_by_age, validate_country_code_format, validate_vote_eligibility,
-    voting_age_for_country, CoreError, TranEngine, VoteEligibilityRequest, VoteValidationError,
+    age_from_birthdate, can_vote_by_age, resolve_destination, validate_country_code_format,
+    validate_vote_eligibility, voting_age_for_country, AppDestination, AuthSession, CoreError,
+    TranEngine, UserRole, VoteEligibilityRequest, VoteValidationError, SUPPORTED_COUNTRIES,
 };
 use thiserror::Error as ThisError;
 
@@ -222,6 +223,87 @@ pub fn evaluate_vote_eligibility_offline(
         country_code: response.country_code,
         reason,
     })
+}
+
+/// A signed-in role. The app stores the session; Rust decides where it leads.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, uniffi::Enum)]
+pub enum TranUserRole {
+    /// A voter checking their own eligibility.
+    CitizenVoter,
+
+    /// An auditor reviewing the country rule table.
+    ElectionAuditor,
+}
+
+/// The screen the navigation director routes to.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, uniffi::Enum)]
+pub enum TranAppDestination {
+    /// Launch screen shown while the stored session is read. Never returned by
+    /// [`resolve_destination_offline`]; the app shows it before asking.
+    Splash,
+
+    /// Role selection for a visitor without a session.
+    AuthWelcome,
+
+    /// The citizen voter's eligibility checker.
+    VoterDashboard,
+
+    /// The election auditor's country rule table.
+    AuditorDashboard,
+}
+
+/// Where the app should go for the stored session.
+///
+/// # Arguments
+///
+/// * `role` — the signed-in role, or `None` when there is no session or the user signed out.
+///
+/// # Returns
+///
+/// The destination screen. The rules live in `rust-core` and are pinned by
+/// `fixtures/navigation.json`.
+#[uniffi::export]
+pub fn resolve_destination_offline(role: Option<TranUserRole>) -> TranAppDestination {
+    let session = role.map(|role| AuthSession::Authenticated {
+        user_id: String::new(),
+        role: match role {
+            TranUserRole::CitizenVoter => UserRole::CitizenVoter,
+            TranUserRole::ElectionAuditor => UserRole::ElectionAuditor,
+        },
+    });
+    match resolve_destination(session.as_ref()) {
+        AppDestination::Splash => TranAppDestination::Splash,
+        AppDestination::AuthWelcome => TranAppDestination::AuthWelcome,
+        AppDestination::VoterDashboard => TranAppDestination::VoterDashboard,
+        AppDestination::AuditorDashboard => TranAppDestination::AuditorDashboard,
+    }
+}
+
+/// One row of the supported-country table.
+#[derive(uniffi::Record, Debug, Clone, PartialEq, Eq)]
+pub struct TranCountryVotingAge {
+    /// Upper-case ISO 3166-1 alpha-2 code.
+    pub country_code: String,
+
+    /// Minimum voting age in whole years.
+    pub minimum_age: u16,
+}
+
+/// Every supported country with its minimum voting age, sorted by code.
+///
+/// # Returns
+///
+/// The same table that [`voting_age_for_country_offline`] reads, so screens that list the rules
+/// can never disagree with the verdict.
+#[uniffi::export]
+pub fn supported_countries_offline() -> Vec<TranCountryVotingAge> {
+    SUPPORTED_COUNTRIES
+        .iter()
+        .map(|c| TranCountryVotingAge {
+            country_code: c.country_code.to_string(),
+            minimum_age: c.minimum_age,
+        })
+        .collect()
 }
 
 #[cfg(test)]

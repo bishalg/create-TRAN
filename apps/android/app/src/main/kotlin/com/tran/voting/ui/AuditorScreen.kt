@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -22,6 +23,7 @@ import com.tran.voting.ui.atoms.TranScreen
 import com.tran.voting.ui.atoms.TranStack
 import com.tran.voting.ui.atoms.TranText
 import com.tran.voting.ui.atoms.TranTextVariant
+import uniffi.tran_uniffi.supportedCountriesOffline
 
 /**
  * Auditor dashboard screen displaying the global voting rules matrix.
@@ -30,15 +32,8 @@ import com.tran.voting.ui.atoms.TranTextVariant
  */
 @Composable
 fun AuditorScreen(onSignOut: () -> Unit) {
-    val rules = listOf(
-        "BR" to 16,
-        "NP" to 18,
-        "US" to 18,
-        "IN" to 18,
-        "DE" to 18,
-        "FR" to 18,
-        "GB" to 18,
-    )
+    // The rule table from rust-core — the same rows the verdict reads.
+    val rules = remember { supportedCountriesOffline() }
 
     TranScreen(modifier = Modifier.padding(TranSpace.lg)) {
         TranStack(gap = TranGap.LG) {
@@ -72,15 +67,15 @@ fun AuditorScreen(onSignOut: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(TranSpace.sm),
             ) {
-                items(rules) { (country, age) ->
+                items(rules) { rule ->
                     TranInline(
                         gap = TranGap.MD,
                         modifier = Modifier.fillMaxWidth().padding(vertical = TranSpace.xs),
                     ) {
-                        TranText(text = country, bold = true)
+                        TranText(text = rule.countryCode, bold = true)
                         Spacer(Modifier.weight(1f))
                         TranText(
-                            text = stringResource(TranStrings.Auditor.years, age),
+                            text = stringResource(TranStrings.Auditor.years, rule.minimumAge.toInt()),
                             variant = TranTextVariant.MUTED,
                         )
                     }

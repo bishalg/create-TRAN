@@ -3,7 +3,9 @@
 This is a **template**: keep the sample tiny, exemplary and fully tested.
 
 - Read [docs/TESTING.md](docs/TESTING.md) first. Work test-first (red → green → refactor).
-- Business rules live in `crates/rust-core` and are mirrored in `packages/core-ts`. Native offline
+- Business rules live in `crates/rust-core`. Rule **data** (tables, limits, messages) reaches TypeScript only via
+  `pnpm tokens:sync` → `packages/core-ts/src/generated/rules.ts` (ADR-0027) — never hand-copy it. The few TS functions
+  over that data are pinned by fixtures. Native offline
   voting uses `crates/tran-uniffi` (`pnpm uniffi:generate` after export changes). Change
   `fixtures/vote-eligibility.json` first; Rust, TypeScript, and UniFFI parity tests consume it.
 - Coverage is a gate: 100% for Rust (`pnpm test:rust:coverage`) and sample TypeScript

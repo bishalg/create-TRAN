@@ -50,7 +50,7 @@ struct NavigationCoordinatorView: View {
                     }
                 }
             } else {
-                switch NavigationDirector.resolveDestination(session: session) {
+                switch session.destination {
                 case .splash, .authWelcome:
                     AuthWelcomeView { selectedRole in
                         withAnimation(TranMotion.animation(reduceMotion: reduceMotion)) {
