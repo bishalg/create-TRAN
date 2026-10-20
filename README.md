@@ -49,7 +49,7 @@ One small domain you can extend:
 | Path        | Web                                                                    | Native (**N**)                                                |
 | :---------- | :--------------------------------------------------------------------- | :------------------------------------------------------------ |
 | **Offline** | `evaluateVoteEligibilityOffline` in `@tran/core` (mirrors `voting.rs`) | `evaluate_vote_eligibility_offline` via UniFFI → `TranEngine` |
-| **API**     | `checkVoteEligibility` / `TranApiClient` + Zod                         | Not wired yet (stretch: URLSession / OkHttp)                  |
+| **API**     | `checkVoteEligibility` / `TranApiClient` + Zod                         | `TranApiClient` (URLSession / OkHttp) — health + confirmation |
 
 **API (async)** — `POST /api/vote/eligibility` uses Rust Core plus a stub geo resolver:
 
@@ -84,7 +84,7 @@ Full endpoint reference: [docs/API.md](./docs/API.md).
 4. **On this device** — **On this device**, age `20`, country `NP`, **Check eligibility** (`evaluateVoteEligibilityOffline`).
 5. **Ask the server** — **Ask the server** (`checkVoteEligibility`; country sent as `X-Debug-Country`).
 6. **Theme / locale** — header controls; colours from `theme.css` / tokens.
-7. **Native (optional)** — `pnpm tokens:sync` then `pnpm uniffi:generate` after FFI changes; open iOS Xcode project or build Android APK (`pnpm ios:build`, `pnpm android:build`).
+7. **Native (optional)** — `pnpm tokens:sync` then `pnpm uniffi:generate` after FFI changes; open iOS Xcode project or build Android APK (`pnpm ios:build`, `pnpm android:build`). Both native apps confirm verdicts against `pnpm dev:api` — the iOS simulator defaults to `http://127.0.0.1:3001`, the Android emulator to `http://10.0.2.2:3001`; override with `TRAN_API_BASE_URL` (iOS build setting / Android Gradle property). Cleartext is debug-only and `X-Debug-Country` is never sent by release builds (REQ-NAT-011).
 8. **Customize** — `crates/rust-core/src/tokens.rs` → `pnpm tokens:sync`; `voting.rs` → edit fixture first → `cargo test -p rust-core`.
 
 More detail: [docs/SAMPLE_APP.md](./docs/SAMPLE_APP.md). Testing: [docs/TESTING.md](./docs/TESTING.md). UI/a11y notes: [docs/UI.md](./docs/UI.md).

@@ -10,11 +10,13 @@ Offline eligibility on iOS and Android MUST come from the Rust core via UniFFI a
 
 ### REQ-NAT-002 [verified] Works offline
 
-The device check MUST work with no network.
+The device check MUST work with no network: the verdict is computed and shown before any API call
+and MUST NOT wait for it or be replaced by it (see REQ-NAT-011).
 **Verified by:** XCUITest journeys and Compose instrumentation through the real Rust core
 ([`VotingUITests.swift`](../../apps/ios/Tests/TranVotingDemoUITests/VotingUITests.swift),
-[`VotingHomeAccessibilityTest.kt`](../../apps/android/app/src/androidTest/kotlin/com/tran/voting/ui/VotingHomeAccessibilityTest.kt));
-neither app contains networking code.
+[`VotingHomeAccessibilityTest.kt`](../../apps/android/app/src/androidTest/kotlin/com/tran/voting/ui/VotingHomeAccessibilityTest.kt)),
+including journeys that point the client at an unreachable port and still assert the verdict; the
+client unit tests stub every network call.
 
 ### REQ-NAT-003 [verified] Screen reader labels
 
@@ -83,3 +85,20 @@ never hand-rolls them ([ADR-0022](../adr/0022-native-atoms.md)).
 `Text`/`Button`/`TextField`/`Picker`/`Divider` (iOS) and their Material3 counterparts (Android) outside the atoms
 directories fail a regex guard; atom names are identical on both platforms, and `TranGap` is pinned to
 `tokens.json` — plus the XCUITest and Compose assertions on the atoms themselves.
+
+### REQ-NAT-011 [verified] API clients
+
+Both apps MUST reach the Axum API through a small client (`GET /api/health`, `POST /api/vote/eligibility`) whose base
+URL is configurable per build — iOS `TranApiBaseUrl` (launch argument → Info.plist `$(TRAN_API_BASE_URL)`), Android
+`tranApiBaseUrl` Gradle property / `TRAN_API_BASE_URL` (BuildConfig) — defaulting to `http://127.0.0.1:3001` on iOS
+and `http://10.0.2.2:3001` on the Android emulator, with an `https://` release default and **debug-only cleartext**
+(Android debug `networkSecurityConfig` scoped to the emulator host and loopback; iOS `NSAllowsLocalNetworking`
+instead of `NSAllowsArbitraryLoads`). `X-Debug-Country` MUST be sent only by debug builds, and an unreachable API
+MUST only flip the status pill to `shell.status.offline` and show the web's `eligibility.offlineNotice` — never the
+verdict (REQ-NAT-002).
+**Verified by:** iOS unit tests with a stubbed `URLSession` and Android unit tests on `MockWebServer`
+([`TranApiClientTests.swift`](../../apps/ios/Tests/TranVotingDemoTests/TranApiClientTests.swift),
+[`TranApiClientTests.kt`](../../apps/android/app/src/test/kotlin/com/tran/voting/api/TranApiClientTests.kt)),
+offline UI journeys through an unreachable base URL, and
+[`native-networking.test.ts`](../../packages/core-ts/tests/native-networking.test.ts) guarding the manifests,
+Gradle config and generated Info.plist.

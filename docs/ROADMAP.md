@@ -11,7 +11,7 @@ Platform-native iOS (`apps/ios`) and Android (`apps/android`) are the real **N**
 - [x] Document **N** = SwiftUI + Compose (not React Native as the stack definition).
 - [x] Scaffold `apps/ios` and `apps/android` with placeholder screens + `pnpm tokens:sync` → Swift/Kotlin `BrandTokens`.
 - [x] Voting parity on native: offline rules via `crates/tran-uniffi` + fixture parity tests (`94f2e3b`).
-- [ ] Native HTTP client matching `@tran/api` (URLSession / OkHttp + Zod-equivalent validation).
+- [x] Native HTTP client matching `@tran/api` (`TranApiClient` on URLSession / OkHttp; thin confirmation client with stubbed transport tests — REQ-NAT-011, [ADR-0023](./adr/0023-native-api-clients.md)).
 - [x] Xcode / Gradle CI smoke (build only — no device farm required) — `ios-smoke` + `android-smoke` jobs.
 - [x] Remove `apps/native` (done; see section 2).
 

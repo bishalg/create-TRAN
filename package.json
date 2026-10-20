@@ -23,7 +23,7 @@
     "ios:build": "xcodebuild -project apps/ios/TranVotingDemo.xcodeproj -scheme TranVotingDemo -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO",
     "android:build": "cd apps/android && ./gradlew assembleDebug",
     "ios:test": "xcodebuild test -project apps/ios/TranVotingDemo.xcodeproj -scheme TranVotingDemo -destination \"platform=iOS Simulator,name=$(xcrun simctl list devices available | grep -m1 -oE 'iPhone [A-Za-z0-9 ]+' | sed 's/ *$//')\" CODE_SIGNING_ALLOWED=NO",
-    "android:test": "cd apps/android && ./gradlew connectedDebugAndroidTest",
+    "android:test": "cd apps/android && ./gradlew testDebugUnitTest connectedDebugAndroidTest",
     "build:libs": "pnpm --filter @tran/api build && pnpm --filter @tran/core build",
     "test:coverage": "pnpm run test:rust:coverage && pnpm run test:ts:coverage",
     "test:ts:coverage": "pnpm run build:libs && vitest run --coverage",

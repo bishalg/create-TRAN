@@ -1,4 +1,4 @@
-// Verifies: REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006 REQ-NAT-007 REQ-NAT-010
+// Verifies: REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006 REQ-NAT-007 REQ-NAT-010 REQ-NAT-011
 package com.tran.voting.ui
 
 import androidx.compose.material3.MaterialTheme
@@ -20,6 +20,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.Density
 import androidx.core.graphics.ColorUtils
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.tran.voting.api.TranApiClient
 import com.tran.voting.generated.TranBrandTokens
 import com.tran.voting.generated.TranTheme
 import com.tran.voting.generated.labelRes
@@ -54,7 +56,7 @@ class VotingHomeAccessibilityTest {
     private fun label(mode: TranTheme): String = context.getString(mode.labelRes)
 
     /** Mirrors MainActivity: the screen receives a registry palette, never a light/dark flag. */
-    private fun setVotingScreen(fontScale: Float = 1f) {
+    private fun setVotingScreen(fontScale: Float = 1f, api: TranApiClient = TranApiClient()) {
         compose.setContent {
             val current = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(current.density, fontScale)) {
@@ -62,7 +64,7 @@ class VotingHomeAccessibilityTest {
                 val palette = TranBrandTokens.palette(theme)
                 MaterialTheme(colorScheme = tranColorScheme(palette)) {
                     CompositionLocalProvider(LocalTranPalette provides palette) {
-                        VotingHomeScreen(theme = theme, onThemeChange = { theme = it })
+                        VotingHomeScreen(theme = theme, onThemeChange = { theme = it }, api = api)
                     }
                 }
             }
@@ -89,6 +91,23 @@ class VotingHomeAccessibilityTest {
         compose.onNodeWithTag("offline-result")
             .assertTextEquals("Age 20 meets the minimum voting age of 18 in NP.")
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
+    }
+
+    @Test
+    fun theDeviceVerdictSurvivesAnUnreachableApi() {
+        // 127.0.0.1:1 refuses connections on the device; the debug network config still allows
+        // loopback, so only the reachability check fails (REQ-NAT-011).
+        setVotingScreen(api = TranApiClient(baseUrl = "http://127.0.0.1:1"))
+
+        compose.waitUntil(timeoutMillis = 5_000) {
+            compose.onAllNodesWithTag("offline-notice").fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithTag("api-status").assertTextEquals("API offline")
+
+        // REQ-NAT-002: the verdict does not wait for the API.
+        compose.onNodeWithTag("check-button").performClick()
+        compose.onNodeWithTag("offline-result")
+            .assertTextEquals("Age 20 meets the minimum voting age of 18 in NP.")
     }
 
     @Test

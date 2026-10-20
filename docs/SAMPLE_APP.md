@@ -28,13 +28,13 @@ flowchart LR
   end
 
   Web --> CoreTS
-  LegacyRN --> CoreTS
   CoreTS --> APIPkg
   Web -->|REST| Axum
   IOS -.->|offline| Uni
   Android -.->|offline| Uni
+  IOS -->|REST confirm| Axum
+  Android -->|REST confirm| Axum
   Uni --> Engine
-  LegacyRN -->|REST| Axum
   Axum --> Engine
   Engine --> Voting
   Tokens -->|pnpm tokens:sync| CoreTS
@@ -42,11 +42,12 @@ flowchart LR
 
 ## Offline vs API
 
-| Path                        | Where rules run                                                            | Country source                       |
-| :-------------------------- | :------------------------------------------------------------------------- | :----------------------------------- |
-| **Offline (web)**           | `evaluateVoteEligibilityOffline` in `@tran/core` (mirrors `voting.rs`)     | User picks country in the UI         |
-| **Offline (iOS / Android)** | `evaluate_vote_eligibility_offline` in `crates/tran-uniffi` → `TranEngine` | User picks country in native UI      |
-| **API**                     | `TranEngine::evaluate_vote_eligibility` in Rust                            | Stub geo from IP + `X-Debug-Country` |
+| Path                        | Where rules run                                                            | Country source                                   |
+| :-------------------------- | :------------------------------------------------------------------------- | :----------------------------------------------- |
+| **Offline (web)**           | `evaluateVoteEligibilityOffline` in `@tran/core` (mirrors `voting.rs`)     | User picks country in the UI                     |
+| **Offline (iOS / Android)** | `evaluate_vote_eligibility_offline` in `crates/tran-uniffi` → `TranEngine` | User picks country in native UI                  |
+| **API**                     | `TranEngine::evaluate_vote_eligibility` in Rust                            | Stub geo from IP + `X-Debug-Country`             |
+| **API (iOS / Android)**     | Same endpoint, confirmation only — the verdict stays the device's          | `X-Debug-Country` in debug builds, geo otherwise |
 
 Web hook: `apps/web/src/shared/api/useTranApi.ts`
 
@@ -102,7 +103,7 @@ cd apps/android && ./gradlew installDebug  # install on emulator/device
 1. Open web — try **Offline** with country `NP` and age `20`, then **API** with `X-Debug-Country` from the country field.
 2. Pick any theme (`light`, `dark`, `black`, `sepia`) — eligibility cards use token semantics (`canVote` / `cannotVote`).
 3. Status footer shows `GET /api/health` via `TranApiClient.getHealth()`.
-4. On iOS/Android — offline eligibility uses UniFFI (same fixture table as Rust core).
+4. On iOS/Android — offline eligibility uses UniFFI (same fixture table as Rust core); the same screen confirms the verdict against the API and shows `API online` / `API offline` with the shared offline notice (REQ-NAT-011).
 
 See [TESTING.md](./TESTING.md) for the TDD / BDD / E2E / coverage playbook.
 

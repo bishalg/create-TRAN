@@ -18,13 +18,28 @@ targets:
     platform: iOS
     sources:
       - Sources/TranVotingDemo
+    # Explicit Info.plist (XcodeGen generates it): ATS exempts loopback only, and the API base URL
+    # comes from the TRAN_API_BASE_URL build setting, so builds stay configurable (REQ-NAT-011).
+    info:
+      path: Support/Info.plist
+      properties:
+        CFBundleDisplayName: TRAN Voting
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleInfoDictionaryVersion: '6.0'
+        CFBundleName: $(PRODUCT_NAME)
+        CFBundlePackageType: $(PRODUCT_BUNDLE_PACKAGE_TYPE)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSRequiresIPhoneOS: true
+        UILaunchScreen: {}
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        TranApiBaseUrl: $(TRAN_API_BASE_URL)
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tran.voting
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: TRAN Voting
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        TRAN_API_BASE_URL: http://127.0.0.1:3001
         SWIFT_VERSION: '5.0'
         MARKETING_VERSION: '0.1.0'
         CURRENT_PROJECT_VERSION: '1'
@@ -48,6 +63,7 @@ targets:
     sources:
       - Tests/TranVotingDemoTests
       - Sources/TranVotingDemo/Generated/UniFFI
+      - Sources/TranVotingDemo/Api
       - Sources/TranVotingDemo/TranMotion.swift
     dependencies:
       - target: TranVotingDemo

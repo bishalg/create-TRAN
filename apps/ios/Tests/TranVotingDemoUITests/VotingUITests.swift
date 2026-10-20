@@ -1,4 +1,4 @@
-// Verifies: REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006 REQ-NAT-007 REQ-NAT-010
+// Verifies: REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006 REQ-NAT-007 REQ-NAT-010 REQ-NAT-011
 import XCTest
 
 /// Native UI + accessibility tests. Journeys mirror e2e/maestro/flows and e2e/features.
@@ -45,6 +45,26 @@ final class VotingUITests: XCTestCase {
     func testInvalidAgeIsExplained() {
         check(age: "", country: "NP")
         XCTAssertEqual(app.staticTexts["offline-result"].label, "Enter age and country")
+    }
+
+    func testDeviceVerdictSurvivesAnUnreachableApi() {
+        // The launch argument points the client at a refused port; the debug ATS exception still
+        // applies, so only the reachability check fails (REQ-NAT-011).
+        app.terminate()
+        app.launchArguments += ["-TranApiBaseUrl", "http://127.0.0.1:1"]
+        app.launch()
+
+        let status = app.staticTexts["api-status"]
+        XCTAssertTrue(status.waitForExistence(timeout: 5))
+        XCTAssertEqual(status.label, "API offline")
+        XCTAssertTrue(app.staticTexts["offline-notice"].waitForExistence(timeout: 5))
+
+        // REQ-NAT-002: the verdict does not wait for the API.
+        check(age: "20", country: "NP")
+        XCTAssertEqual(
+            app.staticTexts["offline-result"].label,
+            "Age 20 meets the minimum voting age of 18 in NP."
+        )
     }
 
     func testControlsAreAtLeast44PointsAndLabelled() {

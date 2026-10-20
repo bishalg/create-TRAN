@@ -7,14 +7,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import com.tran.voting.api.TranApiClient
+import com.tran.voting.api.TranApiStatus
+import com.tran.voting.api.tranApiStatusFrom
 import com.tran.voting.generated.TranSpace
 import com.tran.voting.generated.TranStrings
 import com.tran.voting.generated.TranTheme
@@ -31,6 +36,8 @@ import com.tran.voting.ui.atoms.TranStack
 import com.tran.voting.ui.atoms.TranText
 import com.tran.voting.ui.atoms.TranTextVariant
 import java.time.LocalDate
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 import uniffi.tran_uniffi.TranValidationException
 import uniffi.tran_uniffi.evaluateVoteEligibilityOffline
 
@@ -40,15 +47,23 @@ fun VotingHomeScreen(
     theme: TranTheme,
     onThemeChange: (TranTheme) -> Unit,
     onSignOut: (() -> Unit)? = null,
+    api: TranApiClient = TranApiClient(),
 ) {
     var ageText by remember { mutableStateOf("20") }
     var countryCode by remember { mutableStateOf("NP") }
     val resultPlaceholder = stringResource(TranStrings.Eligibility.resultPlaceholder)
     var resultText by remember { mutableStateOf(resultPlaceholder) }
+    var apiStatus by remember { mutableStateOf(TranApiStatus.CHECKING) }
     val invalidAge = stringResource(TranStrings.Errors.ageInvalid)
     val ageOutOfRange = stringResource(TranStrings.Errors.ageOutOfRange)
     val invalidCountry = stringResource(TranStrings.Errors.countryInvalid)
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    // REQ-NAT-011: the status pill mirrors the web footer; it never gates the device check.
+    LaunchedEffect(Unit) {
+        apiStatus = statusOf { api.checkHealth() }
+    }
 
     TranScreen(
         modifier = Modifier
@@ -95,7 +110,14 @@ fun VotingHomeScreen(
             TranButton(
                 label = stringResource(TranStrings.Eligibility.checkOffline),
                 onClick = {
-                    resultText = runOfflineCheck(context, ageText, countryCode, invalidAge, ageOutOfRange, invalidCountry)
+                    val check = runOfflineCheck(context, ageText, countryCode, invalidAge, ageOutOfRange, invalidCountry)
+                    resultText = check.text
+                    // REQ-NAT-011: the verdict is already on screen; the API call only moves the status pill.
+                    check.age?.let { age ->
+                        scope.launch {
+                            apiStatus = statusOf { api.confirmEligibility(age, countryCode) }
+                        }
+                    }
                 },
                 modifier = Modifier.testTag("check-button"),
             )
@@ -114,11 +136,43 @@ fun VotingHomeScreen(
             ) { mode ->
                 stringResource(mode.labelRes)
             }
+            TranText(
+                text = stringResource(
+                    when (apiStatus) {
+                        TranApiStatus.CHECKING -> TranStrings.Shell.statusChecking
+                        TranApiStatus.ONLINE -> TranStrings.Shell.statusOnline
+                        TranApiStatus.OFFLINE -> TranStrings.Shell.statusOffline
+                    },
+                ),
+                variant = TranTextVariant.CAPTION,
+                live = true,
+                modifier = Modifier.testTag("api-status"),
+            )
+            if (apiStatus == TranApiStatus.OFFLINE) {
+                TranText(
+                    text = stringResource(TranStrings.Eligibility.offlineNotice),
+                    variant = TranTextVariant.CAPTION,
+                    modifier = Modifier.testTag("offline-notice"),
+                )
+            }
         }
     }
 }
 
 private const val MAX_AGE = 150
+
+/** The verdict text plus the validated age, when the input was good enough for the API call. */
+private data class OfflineCheck(val text: String, val age: Int?)
+
+/** Maps a call outcome to the pill; unknown failures read as offline instead of crashing the dashboard. */
+private suspend fun statusOf(block: suspend () -> Unit): TranApiStatus = try {
+    block()
+    TranApiStatus.ONLINE
+} catch (cancelled: CancellationException) {
+    throw cancelled
+} catch (error: Exception) {
+    tranApiStatusFrom(error)
+}
 
 /** Every message shown comes from string resources; the core's English `reason`/`detail` is never displayed. */
 private fun runOfflineCheck(
@@ -128,20 +182,21 @@ private fun runOfflineCheck(
     invalidAge: String,
     ageOutOfRange: String,
     invalidCountry: String,
-): String {
-    val age = ageText.toUShortOrNull() ?: return invalidAge
-    if (age.toInt() > MAX_AGE) return ageOutOfRange
-    if (countryCode.length != 2 || !countryCode.all { it.isLetter() }) return invalidCountry
+): OfflineCheck {
+    val age = ageText.toUShortOrNull() ?: return OfflineCheck(invalidAge, null)
+    if (age.toInt() > MAX_AGE) return OfflineCheck(ageOutOfRange, null)
+    if (countryCode.length != 2 || !countryCode.all { it.isLetter() }) return OfflineCheck(invalidCountry, null)
     val reference = LocalDate.now().toString()
     return try {
         val result = evaluateVoteEligibilityOffline(age, null, countryCode, reference)
-        context.getString(
+        val text = context.getString(
             if (result.eligible) TranStrings.Eligibility.resultReasonMeets else TranStrings.Eligibility.resultReasonBelow,
             result.age.toString(),
             result.minimumAge.toString(),
             result.countryCode,
         )
+        OfflineCheck(text, age.toInt())
     } catch (e: TranValidationException.ValidationException) {
-        invalidCountry
+        OfflineCheck(invalidCountry, null)
     }
 }

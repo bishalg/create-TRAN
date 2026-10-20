@@ -19,6 +19,30 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
+    }
+
+    // REQ-NAT-011: the API base URL is configurable per build — `-PtranApiBaseUrl=…` or
+    // `TRAN_API_BASE_URL=…` wins, otherwise debug targets the emulator host and release HTTPS.
+    val configuredApiBaseUrl =
+        (findProperty("tranApiBaseUrl") as String?) ?: System.getenv("TRAN_API_BASE_URL")
+
+    buildTypes {
+        debug {
+            buildConfigField(
+                "String",
+                "TRAN_API_BASE_URL",
+                "\"${configuredApiBaseUrl ?: "http://10.0.2.2:3001"}\"",
+            )
+        }
+        release {
+            isMinifyEnabled = false
+            buildConfigField(
+                "String",
+                "TRAN_API_BASE_URL",
+                "\"${configuredApiBaseUrl ?: "https://api.tran.example"}\"",
+            )
+        }
     }
 
     compileOptions {
@@ -40,9 +64,11 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
     implementation("net.java.dev.jna:jna:5.15.0@aar")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("net.java.dev.jna:jna:5.15.0")
     testImplementation("org.json:json:20240303")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     androidTestImplementation(composeBom)
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     androidTestImplementation("androidx.test:runner:1.6.2")

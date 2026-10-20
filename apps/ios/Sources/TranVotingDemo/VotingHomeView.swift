@@ -7,7 +7,9 @@ struct VotingHomeView: View {
     @State private var ageText = "20"
     @State private var countryCode = "NP"
     @State private var resultText = L10n.Eligibility.resultPlaceholder
+    @State private var apiStatus: TranApiStatus = .checking
     var onSignOut: (() -> Void)? = nil
+    var api: TranApiClient = TranApiClient()
 
     var body: some View {
         TranScreen {
@@ -62,9 +64,49 @@ struct VotingHomeView: View {
                             accessibilityLabel: L10n.Shell.themeLabel
                         )
                         .accessibilityIdentifier("theme-picker")
+
+                        // REQ-NAT-011: the status pill mirrors the web footer; it never gates the device check.
+                        TranText(statusLabel, variant: .caption, live: true)
+                            .accessibilityIdentifier("api-status")
+                        if apiStatus == .offline {
+                            TranText(L10n.Eligibility.offlineNotice, variant: .caption)
+                                .accessibilityIdentifier("offline-notice")
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
+            }
+        }
+        .task {
+            await refreshApiStatus()
+        }
+    }
+
+    private var statusLabel: String {
+        switch apiStatus {
+        case .checking: return L10n.Shell.statusChecking
+        case .online: return L10n.Shell.statusOnline
+        case .offline: return L10n.Shell.statusOffline
+        }
+    }
+
+    private func refreshApiStatus() async {
+        do {
+            try await api.checkHealth()
+            apiStatus = .online
+        } catch {
+            apiStatus = TranApiStatus.from(error)
+        }
+    }
+
+    /// The verdict is already on screen; the API call only moves the status pill (REQ-NAT-011).
+    private func confirmWithApi(age: UInt16) {
+        Task {
+            do {
+                try await api.confirmEligibility(age: age, countryCode: countryCode)
+                apiStatus = .online
+            } catch {
+                apiStatus = TranApiStatus.from(error)
             }
         }
     }
@@ -96,6 +138,7 @@ struct VotingHomeView: View {
             resultText = res.eligible
                 ? L10n.Eligibility.resultReasonMeets(String(res.age), String(res.minimumAge), res.countryCode)
                 : L10n.Eligibility.resultReasonBelow(String(res.age), String(res.minimumAge), res.countryCode)
+            confirmWithApi(age: age)
         } catch {
             // Pre-validated above; the core's English detail is never shown to users.
             resultText = L10n.Errors.countryInvalid
