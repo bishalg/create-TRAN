@@ -55,6 +55,15 @@ describe('stem rewrite', () => {
     expect(out).not.toContain('@tran/');
   });
 
+  // Verifies: REQ-GEN-004 — source paths name the same folders the package names do.
+  it('rewrites the Android package in source paths too', () => {
+    const out = applyStemRewrite(
+      'apps/android/app/src/main/kotlin/com/tran/voting/generated',
+      'acme'
+    );
+    expect(out).toBe('apps/android/app/src/main/kotlin/com/acme/voting/generated');
+  });
+
   it('is a no-op for the default stem', () => {
     const sample = '@tran/core and TranEngine';
     expect(applyStemRewrite(sample, 'tran')).toBe(sample);

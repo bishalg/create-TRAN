@@ -27,7 +27,7 @@
     "build:libs": "pnpm --filter @tran/api build && pnpm --filter @tran/core build",
     "test:coverage": "pnpm run test:rust:coverage && pnpm run test:ts:coverage",
     "test:ts:coverage": "pnpm run build:libs && vitest run --coverage",
-    "test:rust:coverage": "cargo llvm-cov --workspace --ignore-filename-regex 'tran-tokens-codegen|main.rs|tran-uniffi' --fail-under-lines 100 --fail-under-regions 100",
+    "test:rust:coverage": "cargo llvm-cov --workspace --ignore-filename-regex 'main.rs|tran-uniffi' --fail-under-lines 100 --fail-under-regions 100",
     "test:e2e": "pnpm --filter e2e test",
     "e2e:maestro": "maestro test e2e/maestro",
     "spec:check": "node --test tooling/spec-check/spec-check.test.mjs && node tooling/spec-check/spec-check.mjs",

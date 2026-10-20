@@ -30,7 +30,7 @@ duplicate English value across modules, a raw `%` in a value, invalid locale fol
 Android resource / Swift-Kotlin member collision, missing theme label keys).
 **Verified by:** [`i18n.test.ts`](../../packages/core-ts/tests/i18n.test.ts),
 [`native-strings.test.ts`](../../packages/core-ts/tests/native-strings.test.ts), and the unit
-tests in `crates/tran-tokens-codegen/src/main.rs`.
+tests in `crates/tran-tokens-codegen/src/locales.rs` and `generate.rs` (one broken `locales/` tree per rule).
 
 ### REQ-I18N-004 [verified] Typed accessors only — no literals, no dead keys
 
@@ -48,7 +48,8 @@ key union, the per-module iOS String Catalogs and `L10n.swift`, the Android
 `strings_<module>.xml` files and `TranStrings.kt`, MUST delete stale generated files when a
 locale or module is removed, and CI MUST fail on drift.
 **Verified by:** [`native-strings.test.ts`](../../packages/core-ts/tests/native-strings.test.ts);
-the `rust-check` workflow's `git diff --exit-code` drift gate.
+`crates/tran-tokens-codegen/tests/generated_files.rs` (drift and stale files, in `cargo test`) and `src/files.rs`
+(pruning); the `rust-check` workflow's `git diff --exit-code` drift gate.
 
 ### REQ-I18N-006 [verified] The locale set is data-driven
 

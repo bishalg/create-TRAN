@@ -110,7 +110,9 @@ function walkFiles(root: string): string[] {
   return results;
 }
 
-function walkDirs(root: string): string[] {
+/** Every file and folder under `root`, children before their folder, so renaming in this order
+ * never invalidates a path still to be visited. */
+function walkEntriesDeepestFirst(root: string): string[] {
   const results: string[] = [];
 
   function visit(dir: string): void {
@@ -121,11 +123,13 @@ function walkDirs(root: string): string[] {
       return;
     }
     for (const entry of entries) {
-      if (!entry.isDirectory() || shouldSkipDir(entry.name)) {
+      if (entry.isDirectory() && shouldSkipDir(entry.name)) {
         continue;
       }
       const full = path.join(dir, entry.name);
-      visit(full);
+      if (entry.isDirectory()) {
+        visit(full);
+      }
       results.push(full);
     }
   }
@@ -188,48 +192,27 @@ function rewriteFileContents(root: string, stem: string): void {
   }
 }
 
-function renameMatchingDirs(root: string, stem: string): void {
-  const forms = stemForms(stem);
-  if (forms.lower === DEFAULT_STEM) {
+/**
+ * Renames files and folders by the same rules as their contents (`TranApiClient.swift`,
+ * `build-tran-uniffi.sh`, `TranVotingDemo/`, `com/tran/`), so every rewritten reference still
+ * names a path that exists.
+ */
+function renamePaths(root: string, stem: string): void {
+  const { lower } = stemForms(stem);
+  if (lower === DEFAULT_STEM) {
     return;
   }
 
-  const { lower, pascal } = forms;
-  const basenameMap: Array<[string, string]> = [
-    ['TranVotingDemoUITests', `${pascal}VotingDemoUITests`],
-    ['TranVotingDemoTests', `${pascal}VotingDemoTests`],
-    ['TranVotingDemo', `${pascal}VotingDemo`],
-    ['tran-tokens-codegen', `${lower}-tokens-codegen`],
-    ['tran-uniffi', `${lower}-uniffi`],
-    ['create-tran', `create-${lower}`],
-  ];
-
-  const dirs = walkDirs(root).sort((a, b) => b.length - a.length);
-
-  for (const dir of dirs) {
-    const base = path.basename(dir);
-    const parent = path.dirname(dir);
-
-    for (const [from, to] of basenameMap) {
-      if (base === from) {
-        const dest = path.join(parent, to);
-        if (!fs.existsSync(dest)) {
-          fs.renameSync(dir, dest);
-        }
-        break;
-      }
-    }
-  }
-
-  const refreshed = walkDirs(root).sort((a, b) => b.length - a.length);
-  for (const dir of refreshed) {
-    const base = path.basename(dir);
-    const parent = path.dirname(dir);
-    if (base === DEFAULT_STEM && path.basename(parent) === 'com') {
-      const dest = path.join(parent, lower);
-      if (!fs.existsSync(dest)) {
-        fs.renameSync(dir, dest);
-      }
+  for (const from of walkEntriesDeepestFirst(root)) {
+    const base = path.basename(from);
+    const parent = path.dirname(from);
+    const renamed =
+      base === DEFAULT_STEM && path.basename(parent) === 'com'
+        ? lower
+        : applyStemRewrite(base, lower);
+    const to = path.join(parent, renamed);
+    if (renamed !== base && !fs.existsSync(to)) {
+      fs.renameSync(from, to);
     }
   }
 }
@@ -263,7 +246,7 @@ export function customizeIdentity(root: string, options: CustomizeOptions): void
   }
 
   rewriteFileContents(root, stem);
-  renameMatchingDirs(root, stem);
+  renamePaths(root, stem);
   patchTokensFile(root, primary, options.defaultTheme);
   if (options.displayName && options.displayName.trim()) {
     patchDisplayName(root, options.displayName.trim());

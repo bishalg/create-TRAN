@@ -143,6 +143,12 @@ mod tests {
     }
 
     #[test]
+    fn load_names_a_missing_config_file() {
+        let err = CodegenConfig::load_from_path(Path::new("/no/such/codegen.json")).unwrap_err();
+        assert!(err.starts_with("read /no/such/codegen.json"));
+    }
+
+    #[test]
     fn load_rejects_unknown_fields() {
         let dir = std::env::temp_dir().join(format!("tran-codegen-bad-{}", std::process::id()));
         fs::create_dir_all(&dir).expect("temp dir");

@@ -125,6 +125,7 @@ export function applyStemRewrite(content: string, stem: string): string {
     [/@tran\//g, `@${lower}/`],
     [/--tran-/g, `--${lower}-`],
     [/com\.tran\./g, `com.${lower}.`],
+    [/com\/tran\//g, `com/${lower}/`],
     [/create-tran/g, `create-${lower}`],
     [/tran-tokens-codegen/g, `${lower}-tokens-codegen`],
     [/tran-uniffi/g, `${lower}-uniffi`],

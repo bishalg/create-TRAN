@@ -11,7 +11,8 @@ This is a **template**: keep the sample tiny, exemplary and fully tested.
 - Coverage is a gate: 100% for Rust (`pnpm test:rust:coverage`) and sample TypeScript
   (`pnpm test:ts:coverage`). Do not lower thresholds or add excludes without a reason in `vitest.config.ts`.
 - **N** in TRAN means **iOS (SwiftUI)** and **Android (Compose)** under `apps/ios` and `apps/android`, not React Native. The old React Native sketch was removed; retrieve it with `git checkout archive/react-native-demo`.
-- Design tokens: edit `crates/rust-core/src/tokens.rs`, then `pnpm tokens:sync` (TS, CSS, Swift, Kotlin, root `DESIGN.md` for agents/Stitch). Destinations live in `tooling/design-tokens/codegen.json`; keep the binary in this monorepo (ADR-0025). Pipeline playbook: `docs/DESIGN.md`; do not hand-edit generated `DESIGN.md` (ADR-0026).
+- Design tokens: edit `crates/rust-core/src/tokens.rs`, then `pnpm tokens:sync` (TS, CSS, Swift, Kotlin, root `DESIGN.md` for agents/Stitch). Destinations live in `tooling/design-tokens/codegen.json`; keep the binary in this monorepo (ADR-0025). Pipeline playbook: `docs/DESIGN.md`; do not hand-edit generated `DESIGN.md` (ADR-0026). `cargo test`
+  fails while any generated file is stale (ADR-0030).
 - Web UI: token-bound atoms in `apps/web/src/shared/ui/` only (no inline `style` / raw semantic tags in features; see [docs/ATOMIC.md](docs/ATOMIC.md)).
 - New user-visible behaviour needs a Gherkin scenario in `e2e/features/`.
 - Native apps: `pnpm ios:build` (XcodeGen; regenerate with `pnpm ios:project`) and `pnpm android:build` stay part of the loop when touching `apps/ios` or `apps/android`.

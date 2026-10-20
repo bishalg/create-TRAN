@@ -20,3 +20,9 @@ path = "src/main.rs"
 rust-core = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+tempfile = "3"

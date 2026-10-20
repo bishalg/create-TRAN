@@ -21,8 +21,7 @@ fn theme_by_mode<'a>(snapshot: &'a TokensJsonSnapshot, mode: &str) -> Option<&'a
 
 fn default_palette(snapshot: &TokensJsonSnapshot) -> &ThemeJson {
     theme_by_mode(snapshot, &snapshot.default_theme)
-        .or_else(|| snapshot.themes.first())
-        .expect("tokens snapshot always has at least one theme")
+        .expect("rust-core tests that the default theme is in the registry")
 }
 
 /// Render a root `DESIGN.md` (Google Labs / Stitch format) from the token snapshot.
