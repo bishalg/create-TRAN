@@ -30,7 +30,7 @@
     "test:rust:coverage": "cargo llvm-cov --workspace --ignore-filename-regex 'tran-tokens-codegen|main.rs|tran-uniffi' --fail-under-lines 100 --fail-under-regions 100",
     "test:e2e": "pnpm --filter e2e test",
     "e2e:maestro": "maestro test e2e/maestro",
-    "spec:check": "node tooling/spec-check/spec-check.mjs",
+    "spec:check": "node --test tooling/spec-check/spec-check.test.mjs && node tooling/spec-check/spec-check.mjs",
     "test:all": "pnpm run lint && pnpm run test:coverage && pnpm run test:e2e",
     "check:quick": "pnpm spec:check && pnpm format:check && pnpm typecheck && pnpm lint",
     "hooks:install": "git config core.hooksPath .githooks && echo '✓ Git hooks installed (.githooks)'",

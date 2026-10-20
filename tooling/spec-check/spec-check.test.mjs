@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { checkSpecs, parseRequirements } from './spec-check.mjs';
+import { checkSpecs, isCitingSource, parseRequirements } from './spec-check.mjs';
 
 const spec = `
 # Spec
@@ -73,5 +73,32 @@ describe('checkSpecs', () => {
     ]);
     assert.deepEqual(result.unknown, [{ id: 'REQ-NOPE-009', file: 't.ts' }]);
     assert.equal(result.ok, false);
+  });
+});
+
+describe('isCitingSource', () => {
+  it('counts tests in every language, Gherkin and Maestro flows', () => {
+    for (const path of [
+      'packages/core-ts/tests/parity.test.ts',
+      'e2e/features/vote-eligibility.feature',
+      'e2e/maestro/flows/offline-eligibility.yaml',
+      'crates/rust-core/tests/parity_fixtures.rs',
+      'crates/rust-core/src/voting.rs',
+      'apps/ios/Tests/TranVotingDemoTests/NavigationParityTests.swift',
+      'apps/android/app/src/test/kotlin/com/tran/voting/parity/NavigationParityTest.kt',
+    ]) {
+      assert.equal(isCitingSource(path), true, path);
+    }
+  });
+
+  it('ignores app sources, config YAML and the checker itself', () => {
+    for (const path of [
+      'apps/ios/Sources/TranVotingDemo/AuthSession.swift',
+      'apps/ios/project.yml',
+      '.github/workflows/ci.yml',
+      'tooling/spec-check/spec-check.test.mjs',
+    ]) {
+      assert.equal(isCitingSource(path), false, path);
+    }
   });
 });

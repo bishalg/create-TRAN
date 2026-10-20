@@ -51,7 +51,13 @@ const SKIP_DIRS = new Set([
   'DerivedData',
 ]);
 const SOURCE_FILE =
-  /\.(test|spec)\.[cm]?[jt]sx?$|\.feature$|_test\.rs$|Tests?\.(swift|kt)$|\/tests\/.+\.rs$/;
+  /\.(test|spec)\.[cm]?[jt]sx?$|\.feature$|_test\.rs$|Tests?\.(swift|kt)$|\/tests\/.+\.rs$|^\/e2e\/maestro\/flows\/.+\.ya?ml$/;
+
+/** Files whose `REQ-…` ids count as citations: tests in every language, Gherkin, Maestro flows, Rust `src`. */
+export function isCitingSource(path) {
+  if (path.startsWith('tooling/spec-check/')) return false;
+  return SOURCE_FILE.test(`/${path}`) || /^(crates|apps)\/.+\/src\/.+\.rs$/.test(path);
+}
 
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
@@ -71,11 +77,7 @@ function main(root) {
 
   const sources = walk(root)
     .map((p) => relative(root, p))
-    .filter(
-      (p) =>
-        (!p.startsWith('tooling/spec-check/') && SOURCE_FILE.test(`/${p}`)) ||
-        /^(crates|apps)\/.+\/src\/.+\.rs$/.test(p)
-    )
+    .filter(isCitingSource)
     .map((file) => ({ file, text: readFileSync(join(root, file), 'utf8') }));
 
   const { uncovered, unknown, ok } = checkSpecs(requirements, sources);
