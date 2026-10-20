@@ -63,7 +63,10 @@ targets:
     sources:
       - Tests/TranVotingDemoTests
       - Sources/TranVotingDemo/Generated/UniFFI
+      - Sources/TranVotingDemo/Generated/L10n.swift
+      - Sources/TranVotingDemo/Generated/BrandTokens.swift
       - Sources/TranVotingDemo/Api
+      - Sources/TranVotingDemo/Extensions
       - Sources/TranVotingDemo/TranMotion.swift
     dependencies:
       - target: TranVotingDemo

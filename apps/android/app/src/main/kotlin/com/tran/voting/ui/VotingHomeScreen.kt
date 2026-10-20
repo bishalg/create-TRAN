@@ -189,14 +189,8 @@ private fun runOfflineCheck(
     val reference = LocalDate.now().toString()
     return try {
         val result = evaluateVoteEligibilityOffline(age, null, countryCode, reference)
-        val text = context.getString(
-            if (result.eligible) TranStrings.Eligibility.resultReasonMeets else TranStrings.Eligibility.resultReasonBelow,
-            result.age.toString(),
-            result.minimumAge.toString(),
-            result.countryCode,
-        )
-        OfflineCheck(text, age.toInt())
-    } catch (e: TranValidationException.ValidationException) {
-        OfflineCheck(invalidCountry, null)
+        OfflineCheck(result.localizedReason(context), age.toInt())
+    } catch (e: TranValidationException) {
+        OfflineCheck(context.getString(e.localizedMessageRes()), null)
     }
 }

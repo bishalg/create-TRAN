@@ -549,16 +549,49 @@ fileprivate struct FfiConverterString: FfiConverter {
 }
 
 
+/**
+ * Offline eligibility result produced by the shared Rust rules.
+ */
 public struct VoteEligibilityOfflineResult: Equatable, Hashable {
+    /**
+     * Whether the voter meets the country's minimum voting age.
+     */
     public var eligible: Bool
+    /**
+     * Age used for the decision, in whole years.
+     */
     public var age: UInt16
+    /**
+     * Minimum voting age for the supplied country.
+     */
     public var minimumAge: UInt16
+    /**
+     * Normalized ISO 3166-1 alpha-2 country code (upper case).
+     */
     public var countryCode: String
-    public var reason: String
+    /**
+     * Stable reason code for the verdict; map it to localized copy in the app.
+     */
+    public var reason: TranEligibilityReason
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
-    public init(eligible: Bool, age: UInt16, minimumAge: UInt16, countryCode: String, reason: String) {
+    public init(
+        /**
+         * Whether the voter meets the country's minimum voting age.
+         */eligible: Bool, 
+        /**
+         * Age used for the decision, in whole years.
+         */age: UInt16, 
+        /**
+         * Minimum voting age for the supplied country.
+         */minimumAge: UInt16, 
+        /**
+         * Normalized ISO 3166-1 alpha-2 country code (upper case).
+         */countryCode: String, 
+        /**
+         * Stable reason code for the verdict; map it to localized copy in the app.
+         */reason: TranEligibilityReason) {
         self.eligible = eligible
         self.age = age
         self.minimumAge = minimumAge
@@ -586,7 +619,7 @@ public struct FfiConverterTypeVoteEligibilityOfflineResult: FfiConverterRustBuff
                 age: FfiConverterUInt16.read(from: &buf), 
                 minimumAge: FfiConverterUInt16.read(from: &buf), 
                 countryCode: FfiConverterString.read(from: &buf), 
-                reason: FfiConverterString.read(from: &buf)
+                reason: FfiConverterTypeTranEligibilityReason.read(from: &buf)
         )
     }
 
@@ -595,7 +628,7 @@ public struct FfiConverterTypeVoteEligibilityOfflineResult: FfiConverterRustBuff
         FfiConverterUInt16.write(value.age, into: &buf)
         FfiConverterUInt16.write(value.minimumAge, into: &buf)
         FfiConverterString.write(value.countryCode, into: &buf)
-        FfiConverterString.write(value.reason, into: &buf)
+        FfiConverterTypeTranEligibilityReason.write(value.reason, into: &buf)
     }
 }
 
@@ -615,13 +648,122 @@ public func FfiConverterTypeVoteEligibilityOfflineResult_lower(_ value: VoteElig
 }
 
 
+/**
+ * Why the eligibility verdict is what it is.
+ *
+ * The native layer turns this into a localized sentence; the bridge never returns a
+ * pre-formatted English reason.
+ */
+
+public enum TranEligibilityReason: Equatable, Hashable {
+    
+    /**
+     * The voter meets the minimum voting age for the country.
+     */
+    case meetsMinimumAge
+    /**
+     * The voter is below the minimum voting age for the country.
+     */
+    case belowMinimumAge
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranEligibilityReason: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranEligibilityReason: FfiConverterRustBuffer {
+    typealias SwiftType = TranEligibilityReason
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranEligibilityReason {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .meetsMinimumAge
+        
+        case 2: return .belowMinimumAge
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranEligibilityReason, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .meetsMinimumAge:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .belowMinimumAge:
+            writeInt(&buf, Int32(2))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranEligibilityReason_lift(_ buf: RustBuffer) throws -> TranEligibilityReason {
+    return try FfiConverterTypeTranEligibilityReason.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranEligibilityReason_lower(_ value: TranEligibilityReason) -> RustBuffer {
+    return FfiConverterTypeTranEligibilityReason.lower(value)
+}
+
+
+
+/**
+ * A validation failure that native code can branch on without parsing English prose.
+ *
+ * Map these variants to localized copy in the app layer. The `Display` text is for Rust logs
+ * only; it is never meant to be shown to a voter.
+ */
 public 
 enum TranValidationError: Swift.Error, Equatable, Hashable, Foundation.LocalizedError {
 
     
     
-    case ValidationError(detail: String
-    )
+    /**
+     * The supplied age is above the supported maximum (150).
+     */
+    case AgeOutOfRange
+    /**
+     * The birthdate is later than the reference date used for evaluation.
+     */
+    case BirthdateInFuture
+    /**
+     * The birthdate is not a valid ISO 8601 calendar date (`YYYY-MM-DD`).
+     */
+    case InvalidBirthdate
+    /**
+     * The reference date is not a valid ISO 8601 calendar date (`YYYY-MM-DD`).
+     */
+    case InvalidReferenceDate
+    /**
+     * The country code is not two ASCII letters (ISO 3166-1 alpha-2 shape).
+     */
+    case InvalidCountryCode
+    /**
+     * An unexpected failure came back from the shared core.
+     *
+     * The app has already validated its inputs, so this indicates a programming error rather than
+     * something the voter can fix.
+     */
+    case Internal
 
     
 
@@ -651,9 +793,12 @@ public struct FfiConverterTypeTranValidationError: FfiConverterRustBuffer {
         
 
         
-        case 1: return .ValidationError(
-            detail: try FfiConverterString.read(from: &buf)
-            )
+        case 1: return .AgeOutOfRange
+        case 2: return .BirthdateInFuture
+        case 3: return .InvalidBirthdate
+        case 4: return .InvalidReferenceDate
+        case 5: return .InvalidCountryCode
+        case 6: return .Internal
 
          default: throw UniffiInternalError.unexpectedEnumCase
         }
@@ -666,10 +811,29 @@ public struct FfiConverterTypeTranValidationError: FfiConverterRustBuffer {
 
         
         
-        case let .ValidationError(detail):
+        case .AgeOutOfRange:
             writeInt(&buf, Int32(1))
-            FfiConverterString.write(detail, into: &buf)
-            
+        
+        
+        case .BirthdateInFuture:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .InvalidBirthdate:
+            writeInt(&buf, Int32(3))
+        
+        
+        case .InvalidReferenceDate:
+            writeInt(&buf, Int32(4))
+        
+        
+        case .InvalidCountryCode:
+            writeInt(&buf, Int32(5))
+        
+        
+        case .Internal:
+            writeInt(&buf, Int32(6))
+        
         }
     }
 }
@@ -713,10 +877,24 @@ fileprivate struct FfiConverterOptionString: FfiConverterRustBuffer {
     }
 }
 /**
- * Whole years between ISO birth and reference dates (shared leap-day rules with rust-core).
+ * Whole years between two ISO 8601 dates, using the shared leap-day rules from `rust-core`.
+ *
+ * # Arguments
+ *
+ * * `birthdate_iso` — birthdate in `YYYY-MM-DD` form.
+ * * `reference_date_iso` — the date to measure against, in `YYYY-MM-DD` form.
+ *
+ * # Returns
+ *
+ * Age in whole years; a birthdate after the reference date returns `0`.
+ *
+ * # Errors
+ *
+ * Returns [`TranValidationError::InvalidBirthdate`] or
+ * [`TranValidationError::InvalidReferenceDate`] when either input is not a real calendar date.
  */
-public func ageFromBirthdateOffline(birthdateIso: String, referenceDateIso: String) -> UInt16  {
-    return try!  FfiConverterUInt16.lift(try! rustCall() {
+public func ageFromBirthdateOffline(birthdateIso: String, referenceDateIso: String)throws  -> UInt16  {
+    return try  FfiConverterUInt16.lift(try rustCallWithError(FfiConverterTypeTranValidationError_lift) {
         uniffiCallStatus in
     uniffi_tran_uniffi_fn_func_age_from_birthdate_offline(
         FfiConverterString.lower(birthdateIso),
@@ -726,6 +904,17 @@ public func ageFromBirthdateOffline(birthdateIso: String, referenceDateIso: Stri
 }
 /**
  * Whether `age` meets `minimum_age`.
+ *
+ * This is a pure comparison; it does not validate that `minimum_age` belongs to a real country.
+ *
+ * # Arguments
+ *
+ * * `age` — age in whole years.
+ * * `minimum_age` — minimum voting age in whole years.
+ *
+ * # Returns
+ *
+ * `true` when `age` is greater than or equal to `minimum_age`.
  */
 public func canVoteByAgeOffline(age: UInt16, minimumAge: UInt16) -> Bool  {
     return try!  FfiConverterBool.lift(try! rustCall() {
@@ -737,9 +926,26 @@ public func canVoteByAgeOffline(age: UInt16, minimumAge: UInt16) -> Bool  {
 })
 }
 /**
- * Offline eligibility using the same engine path as Axum (`evaluate_vote_eligibility_on`).
+ * Evaluate voting eligibility offline with the same rules as the Axum endpoint.
  *
- * `birthdate_iso` wins over `age` when present. `reference_date_iso` injects “today” for tests.
+ * `birthdate_iso` wins over `age` when present. `reference_date_iso` injects "today" so tests are
+ * deterministic; the apps pass the device date.
+ *
+ * # Arguments
+ *
+ * * `age` — age in whole years, used when `birthdate_iso` is absent or empty.
+ * * `birthdate_iso` — optional birthdate in `YYYY-MM-DD` form; wins over `age`.
+ * * `country_code` — two-letter ISO 3166-1 alpha-2 code; matching is case-insensitive.
+ * * `reference_date_iso` — the date to evaluate against, in `YYYY-MM-DD` form.
+ *
+ * # Returns
+ *
+ * A [`VoteEligibilityOfflineResult`] with the verdict and the facts used to reach it.
+ *
+ * # Errors
+ *
+ * Returns [`TranValidationError`] when a date is malformed, the birthdate is in the future, the
+ * age exceeds 150, or the country code is not two ASCII letters.
  */
 public func evaluateVoteEligibilityOffline(age: UInt16, birthdateIso: String?, countryCode: String, referenceDateIso: String)throws  -> VoteEligibilityOfflineResult  {
     return try  FfiConverterTypeVoteEligibilityOfflineResult_lift(try rustCallWithError(FfiConverterTypeTranValidationError_lift) {
@@ -754,6 +960,16 @@ public func evaluateVoteEligibilityOffline(age: UInt16, birthdateIso: String?, c
 }
 /**
  * Minimum voting age for an ISO 3166-1 alpha-2 country code (case-insensitive).
+ *
+ * Unknown but well-formed codes fall back to the default voting age of 18.
+ *
+ * # Arguments
+ *
+ * * `country_code` — two-letter ISO 3166-1 alpha-2 code; matching is case-insensitive.
+ *
+ * # Returns
+ *
+ * The minimum age in whole years.
  */
 public func votingAgeForCountryOffline(countryCode: String) -> UInt16  {
     return try!  FfiConverterUInt16.lift(try! rustCall() {
@@ -779,16 +995,16 @@ private let initializationResult: InitializationResult = {
     if bindings_contract_version != scaffolding_contract_version {
         return InitializationResult.contractVersionMismatch
     }
-    if (uniffi_tran_uniffi_checksum_func_age_from_birthdate_offline() != 32693) {
+    if (uniffi_tran_uniffi_checksum_func_age_from_birthdate_offline() != 30165) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_tran_uniffi_checksum_func_can_vote_by_age_offline() != 6010) {
+    if (uniffi_tran_uniffi_checksum_func_can_vote_by_age_offline() != 51571) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_tran_uniffi_checksum_func_evaluate_vote_eligibility_offline() != 53569) {
+    if (uniffi_tran_uniffi_checksum_func_evaluate_vote_eligibility_offline() != 62236) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_tran_uniffi_checksum_func_voting_age_for_country_offline() != 60957) {
+    if (uniffi_tran_uniffi_checksum_func_voting_age_for_country_offline() != 55415) {
         return InitializationResult.apiChecksumMismatch
     }
 

@@ -1,78 +1,191 @@
-//! Thin UniFFI surface over `rust-core` voting rules for iOS (Swift) and Android (Kotlin).
+//! Thin, documented UniFFI surface over `rust-core` voting rules for iOS (Swift) and Android (Kotlin).
+//!
+//! The generated bindings are the native developers' API: every exported item carries a rustdoc
+//! comment so Xcode Quick Help and Android Studio KDoc show it without opening the Rust crate.
+#![deny(missing_docs)]
 
 use chrono::NaiveDate;
 use rust_core::{
-    age_from_birthdate, can_vote_by_age, voting_age_for_country, CoreError, TranEngine,
-    VoteEligibilityRequest,
+    age_from_birthdate, can_vote_by_age, validate_country_code_format, validate_vote_eligibility,
+    voting_age_for_country, CoreError, TranEngine, VoteEligibilityRequest, VoteValidationError,
 };
 use thiserror::Error as ThisError;
-use uniffi::Record;
 
 uniffi::setup_scaffolding!("tran_uniffi");
 
-#[derive(Debug, ThisError, uniffi::Error)]
+/// A validation failure that native code can branch on without parsing English prose.
+///
+/// Map these variants to localized copy in the app layer. The `Display` text is for Rust logs
+/// only; it is never meant to be shown to a voter.
+#[derive(Debug, Clone, PartialEq, Eq, ThisError, uniffi::Error)]
 pub enum TranValidationError {
-    #[error("{detail}")]
-    ValidationError { detail: String },
+    /// The supplied age is above the supported maximum (150).
+    #[error("Age must be 150 or less")]
+    AgeOutOfRange,
+
+    /// The birthdate is later than the reference date used for evaluation.
+    #[error("Birthdate cannot be in the future")]
+    BirthdateInFuture,
+
+    /// The birthdate is not a valid ISO 8601 calendar date (`YYYY-MM-DD`).
+    #[error("Birthdate must be a valid ISO 8601 date (YYYY-MM-DD)")]
+    InvalidBirthdate,
+
+    /// The reference date is not a valid ISO 8601 calendar date (`YYYY-MM-DD`).
+    #[error("Reference date must be a valid ISO 8601 date (YYYY-MM-DD)")]
+    InvalidReferenceDate,
+
+    /// The country code is not two ASCII letters (ISO 3166-1 alpha-2 shape).
+    #[error("Country code must be two ASCII letters (ISO 3166-1 alpha-2)")]
+    InvalidCountryCode,
+
+    /// An unexpected failure came back from the shared core.
+    ///
+    /// The app has already validated its inputs, so this indicates a programming error rather than
+    /// something the voter can fix.
+    #[error("Unexpected core failure")]
+    Internal,
 }
 
 impl TranValidationError {
-    fn from_core(err: CoreError) -> Self {
+    /// Convert an untyped core failure into the stable native error surface.
+    ///
+    /// All expected validation failures are raised before the core runs, so anything reaching this
+    /// point is unexpected.
+    fn from_core(_err: CoreError) -> Self {
+        Self::Internal
+    }
+}
+
+impl From<VoteValidationError> for TranValidationError {
+    fn from(err: VoteValidationError) -> Self {
         match err {
-            CoreError::ValidationError(detail) => Self::ValidationError { detail },
-            other => Self::ValidationError {
-                detail: other.to_string(),
-            },
-        }
-    }
-
-    pub fn detail(&self) -> &str {
-        match self {
-            Self::ValidationError { detail } => detail,
+            VoteValidationError::AgeOutOfRange => Self::AgeOutOfRange,
+            VoteValidationError::BirthdateInFuture => Self::BirthdateInFuture,
+            VoteValidationError::InvalidCountryCode => Self::InvalidCountryCode,
         }
     }
 }
 
-#[derive(Record, Debug, Clone, PartialEq, Eq)]
+/// Why the eligibility verdict is what it is.
+///
+/// The native layer turns this into a localized sentence; the bridge never returns a
+/// pre-formatted English reason.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, uniffi::Enum)]
+pub enum TranEligibilityReason {
+    /// The voter meets the minimum voting age for the country.
+    MeetsMinimumAge,
+
+    /// The voter is below the minimum voting age for the country.
+    BelowMinimumAge,
+}
+
+/// Offline eligibility result produced by the shared Rust rules.
+#[derive(uniffi::Record, Debug, Clone, PartialEq, Eq)]
 pub struct VoteEligibilityOfflineResult {
+    /// Whether the voter meets the country's minimum voting age.
     pub eligible: bool,
+
+    /// Age used for the decision, in whole years.
     pub age: u16,
+
+    /// Minimum voting age for the supplied country.
     pub minimum_age: u16,
+
+    /// Normalized ISO 3166-1 alpha-2 country code (upper case).
     pub country_code: String,
-    pub reason: String,
+
+    /// Stable reason code for the verdict; map it to localized copy in the app.
+    pub reason: TranEligibilityReason,
 }
 
-fn parse_iso_date(label: &str, value: &str) -> Result<NaiveDate, TranValidationError> {
-    NaiveDate::parse_from_str(value, "%Y-%m-%d").map_err(|_| TranValidationError::ValidationError {
-        detail: format!("{label} must be ISO YYYY-MM-DD"),
-    })
+fn parse_reference_date(value: &str) -> Result<NaiveDate, TranValidationError> {
+    NaiveDate::parse_from_str(value, "%Y-%m-%d")
+        .map_err(|_| TranValidationError::InvalidReferenceDate)
+}
+
+fn parse_birthdate(value: &str) -> Result<NaiveDate, TranValidationError> {
+    NaiveDate::parse_from_str(value, "%Y-%m-%d").map_err(|_| TranValidationError::InvalidBirthdate)
 }
 
 /// Minimum voting age for an ISO 3166-1 alpha-2 country code (case-insensitive).
+///
+/// Unknown but well-formed codes fall back to the default voting age of 18.
+///
+/// # Arguments
+///
+/// * `country_code` — two-letter ISO 3166-1 alpha-2 code; matching is case-insensitive.
+///
+/// # Returns
+///
+/// The minimum age in whole years.
 #[uniffi::export]
 pub fn voting_age_for_country_offline(country_code: String) -> u16 {
     voting_age_for_country(&country_code)
 }
 
 /// Whether `age` meets `minimum_age`.
+///
+/// This is a pure comparison; it does not validate that `minimum_age` belongs to a real country.
+///
+/// # Arguments
+///
+/// * `age` — age in whole years.
+/// * `minimum_age` — minimum voting age in whole years.
+///
+/// # Returns
+///
+/// `true` when `age` is greater than or equal to `minimum_age`.
 #[uniffi::export]
 pub fn can_vote_by_age_offline(age: u16, minimum_age: u16) -> bool {
     can_vote_by_age(age, minimum_age)
 }
 
-/// Whole years between ISO birth and reference dates (shared leap-day rules with rust-core).
+/// Whole years between two ISO 8601 dates, using the shared leap-day rules from `rust-core`.
+///
+/// # Arguments
+///
+/// * `birthdate_iso` — birthdate in `YYYY-MM-DD` form.
+/// * `reference_date_iso` — the date to measure against, in `YYYY-MM-DD` form.
+///
+/// # Returns
+///
+/// Age in whole years; a birthdate after the reference date returns `0`.
+///
+/// # Errors
+///
+/// Returns [`TranValidationError::InvalidBirthdate`] or
+/// [`TranValidationError::InvalidReferenceDate`] when either input is not a real calendar date.
 #[uniffi::export]
-pub fn age_from_birthdate_offline(birthdate_iso: String, reference_date_iso: String) -> u16 {
-    let birth = NaiveDate::parse_from_str(&birthdate_iso, "%Y-%m-%d")
-        .unwrap_or_else(|_| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap());
-    let reference = NaiveDate::parse_from_str(&reference_date_iso, "%Y-%m-%d")
-        .unwrap_or_else(|_| NaiveDate::from_ymd_opt(1970, 1, 1).unwrap());
-    age_from_birthdate(birth, reference)
+pub fn age_from_birthdate_offline(
+    birthdate_iso: String,
+    reference_date_iso: String,
+) -> Result<u16, TranValidationError> {
+    let birthdate = parse_birthdate(&birthdate_iso)?;
+    let reference = parse_reference_date(&reference_date_iso)?;
+    Ok(age_from_birthdate(birthdate, reference))
 }
 
-/// Offline eligibility using the same engine path as Axum (`evaluate_vote_eligibility_on`).
+/// Evaluate voting eligibility offline with the same rules as the Axum endpoint.
 ///
-/// `birthdate_iso` wins over `age` when present. `reference_date_iso` injects “today” for tests.
+/// `birthdate_iso` wins over `age` when present. `reference_date_iso` injects "today" so tests are
+/// deterministic; the apps pass the device date.
+///
+/// # Arguments
+///
+/// * `age` — age in whole years, used when `birthdate_iso` is absent or empty.
+/// * `birthdate_iso` — optional birthdate in `YYYY-MM-DD` form; wins over `age`.
+/// * `country_code` — two-letter ISO 3166-1 alpha-2 code; matching is case-insensitive.
+/// * `reference_date_iso` — the date to evaluate against, in `YYYY-MM-DD` form.
+///
+/// # Returns
+///
+/// A [`VoteEligibilityOfflineResult`] with the verdict and the facts used to reach it.
+///
+/// # Errors
+///
+/// Returns [`TranValidationError`] when a date is malformed, the birthdate is in the future, the
+/// age exceeds 150, or the country code is not two ASCII letters.
 #[uniffi::export]
 pub fn evaluate_vote_eligibility_offline(
     age: u16,
@@ -80,58 +193,46 @@ pub fn evaluate_vote_eligibility_offline(
     country_code: String,
     reference_date_iso: String,
 ) -> Result<VoteEligibilityOfflineResult, TranValidationError> {
-    let reference = parse_iso_date("reference_date", &reference_date_iso)?;
+    let reference = parse_reference_date(&reference_date_iso)?;
     let birthdate = match birthdate_iso {
         None => None,
         Some(raw) if raw.is_empty() => None,
-        Some(raw) => Some(parse_iso_date("birthdate", &raw)?),
+        Some(raw) => Some(parse_birthdate(&raw)?),
     };
 
     let request = VoteEligibilityRequest { age, birthdate };
+    validate_vote_eligibility(&request, reference)?;
+    validate_country_code_format(&country_code)?;
+
     let engine = TranEngine::new();
     let response = engine
         .evaluate_vote_eligibility_on(request, &country_code, "offline", "127.0.0.1", reference)
         .map_err(TranValidationError::from_core)?;
+
+    let reason = if response.eligible {
+        TranEligibilityReason::MeetsMinimumAge
+    } else {
+        TranEligibilityReason::BelowMinimumAge
+    };
 
     Ok(VoteEligibilityOfflineResult {
         eligible: response.eligible,
         age: response.age,
         minimum_age: response.minimum_age,
         country_code: response.country_code,
-        reason: response.reason,
+        reason,
     })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rust_core::CoreError;
-
-    #[test]
-    fn validation_error_detail_is_exposed() {
-        let err = TranValidationError::ValidationError {
-            detail: "bad field".into(),
-        };
-        assert_eq!(err.detail(), "bad field");
-    }
-
-    #[test]
-    fn from_core_preserves_validation_errors() {
-        let err = TranValidationError::from_core(CoreError::ValidationError("age".into()));
-        assert_eq!(err.detail(), "age");
-    }
-
-    #[test]
-    fn from_core_stringifies_non_validation_core_errors() {
-        let err = TranValidationError::from_core(CoreError::NotFound("gone".into()));
-        assert!(err.detail().contains("gone"));
-    }
 
     #[test]
     fn invalid_reference_date_is_rejected() {
         let err = evaluate_vote_eligibility_offline(18, None, "US".into(), "not-a-date".into())
             .expect_err("reference must be ISO");
-        assert_eq!(err.detail(), "reference_date must be ISO YYYY-MM-DD");
+        assert!(matches!(err, TranValidationError::InvalidReferenceDate));
     }
 
     #[test]
@@ -143,7 +244,7 @@ mod tests {
             "2026-10-18".into(),
         )
         .expect_err("birthdate must be ISO");
-        assert_eq!(err.detail(), "birthdate must be ISO YYYY-MM-DD");
+        assert!(matches!(err, TranValidationError::InvalidBirthdate));
     }
 
     #[test]
@@ -157,27 +258,58 @@ mod tests {
         .expect("eligible adult");
         assert!(res.eligible);
         assert_eq!(res.age, 25);
+        assert_eq!(res.reason, TranEligibilityReason::MeetsMinimumAge);
     }
 
     #[test]
-    fn age_from_birthdate_offline_clamps_unparseable_dates() {
-        assert_eq!(
-            age_from_birthdate_offline("not-a-date".into(), "also-bad".into()),
-            0,
-        );
-        assert_eq!(
-            age_from_birthdate_offline("not-iso".into(), "2026-10-18".into()),
-            age_from_birthdate(
-                NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
-                NaiveDate::from_ymd_opt(2026, 10, 18).unwrap(),
-            ),
-        );
-        assert_eq!(
+    fn age_and_country_failures_use_domain_variants() {
+        let too_old =
+            evaluate_vote_eligibility_offline(151, None, "US".into(), "2026-10-18".into())
+                .expect_err("age must be <= 150");
+        assert!(matches!(too_old, TranValidationError::AgeOutOfRange));
+
+        let bad_country =
+            evaluate_vote_eligibility_offline(30, None, "USA".into(), "2026-10-18".into())
+                .expect_err("country must be two letters");
+        assert!(matches!(
+            bad_country,
+            TranValidationError::InvalidCountryCode
+        ));
+    }
+
+    #[test]
+    fn future_birthdate_uses_domain_variant() {
+        let err = evaluate_vote_eligibility_offline(
+            5,
+            Some("2026-10-19".into()),
+            "US".into(),
+            "2026-10-18".into(),
+        )
+        .expect_err("birthdate cannot be in the future");
+        assert!(matches!(err, TranValidationError::BirthdateInFuture));
+    }
+
+    #[test]
+    fn underage_reason_is_typed() {
+        let res = evaluate_vote_eligibility_offline(17, None, "US".into(), "2026-10-18".into())
+            .expect("valid request");
+        assert!(!res.eligible);
+        assert_eq!(res.reason, TranEligibilityReason::BelowMinimumAge);
+    }
+
+    #[test]
+    fn age_from_birthdate_reports_bad_dates() {
+        assert!(matches!(
+            age_from_birthdate_offline("not-a-date".into(), "2026-10-18".into()),
+            Err(TranValidationError::InvalidBirthdate)
+        ));
+        assert!(matches!(
             age_from_birthdate_offline("2000-06-15".into(), "bad".into()),
-            age_from_birthdate(
-                NaiveDate::from_ymd_opt(2000, 6, 15).unwrap(),
-                NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
-            ),
+            Err(TranValidationError::InvalidReferenceDate)
+        ));
+        assert_eq!(
+            age_from_birthdate_offline("2000-06-15".into(), "2026-06-15".into()),
+            Ok(26)
         );
     }
 }

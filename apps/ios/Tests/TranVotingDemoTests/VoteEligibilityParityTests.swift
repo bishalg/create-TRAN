@@ -1,7 +1,25 @@
-// Verifies: REQ-NAT-001
+// Verifies: REQ-NAT-001 REQ-FFI-002
 import XCTest
 
 final class VoteEligibilityParityTests: XCTestCase {
+    private func reasonCode(_ reason: TranEligibilityReason) -> String {
+        switch reason {
+        case .meetsMinimumAge: return "meets_minimum_age"
+        case .belowMinimumAge: return "below_minimum_age"
+        }
+    }
+
+    private func errorCode(_ error: TranValidationError) -> String {
+        switch error {
+        case .AgeOutOfRange: return "age_out_of_range"
+        case .BirthdateInFuture: return "birthdate_in_future"
+        case .InvalidBirthdate: return "invalid_birthdate"
+        case .InvalidReferenceDate: return "invalid_reference_date"
+        case .InvalidCountryCode: return "invalid_country_code"
+        case .Internal: return "internal"
+        }
+    }
+
     private func fixtureData() throws -> Data {
         let repoRoot = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -36,7 +54,7 @@ final class VoteEligibilityParityTests: XCTestCase {
             XCTAssertEqual(result.age, UInt16(expected["age"] as! Int), name)
             XCTAssertEqual(result.minimumAge, UInt16(expected["minimumAge"] as! Int), name)
             XCTAssertEqual(result.countryCode, expected["countryCode"] as! String, name)
-            XCTAssertEqual(result.reason, expected["reason"] as! String, name)
+            XCTAssertEqual(reasonCode(result.reason), expected["reasonCode"] as! String, name)
         }
     }
 
@@ -49,7 +67,7 @@ final class VoteEligibilityParityTests: XCTestCase {
             let birth = input["birthdate"] as? String
             let country = row["countryCode"] as! String
             let reference = row["referenceDate"] as! String
-            let expectedError = row["error"] as! String
+            let expectedCode = row["code"] as! String
 
             do {
                 _ = try evaluateVoteEligibilityOffline(
@@ -60,11 +78,9 @@ final class VoteEligibilityParityTests: XCTestCase {
                 )
                 XCTFail("Expected error for \(row["name"] ?? "")")
             } catch let err as TranValidationError {
-                if case .ValidationError(let detail) = err {
-                    XCTAssertEqual(detail, expectedError, row["name"] as? String ?? "case")
-                } else {
-                    XCTFail("Unexpected error variant")
-                }
+                XCTAssertEqual(errorCode(err), expectedCode, row["name"] as? String ?? "case")
+            } catch {
+                XCTFail("Unexpected error type: \(error)")
             }
         }
     }

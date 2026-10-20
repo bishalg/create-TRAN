@@ -30,6 +30,8 @@ interface Fixtures {
       minimumAge: number;
       countryCode: string;
       reason: string;
+      /** FFI-only metadata; the HTTP response shape has no such field. */
+      reasonCode?: string;
     };
   }[];
   rejectedEvaluations: {
@@ -69,7 +71,8 @@ describe('golden fixtures (shared with Rust)', () => {
       countryCode: c.countryCode,
       referenceDate: c.referenceDate,
     });
-    expect(result).toEqual(c.expected);
+    const { reasonCode: _ffiReasonCode, ...httpExpected } = c.expected;
+    expect(result).toEqual(httpExpected);
   });
 
   it.each(fixtures.rejectedEvaluations)('rejects: $name', (c) => {

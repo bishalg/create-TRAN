@@ -1,4 +1,4 @@
-// Verifies: REQ-NAT-001
+// Verifies: REQ-NAT-001 REQ-FFI-002
 package com.tran.voting.parity
 
 import org.json.JSONObject
@@ -6,9 +6,26 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.BeforeClass
 import org.junit.Test
+import uniffi.tran_uniffi.TranEligibilityReason
 import uniffi.tran_uniffi.TranValidationException
 import uniffi.tran_uniffi.evaluateVoteEligibilityOffline
 import java.io.File
+
+private fun TranEligibilityReason.code(): String =
+    when (this) {
+        TranEligibilityReason.MEETS_MINIMUM_AGE -> "meets_minimum_age"
+        TranEligibilityReason.BELOW_MINIMUM_AGE -> "below_minimum_age"
+    }
+
+private fun TranValidationException.code(): String =
+    when (this) {
+        is TranValidationException.AgeOutOfRange -> "age_out_of_range"
+        is TranValidationException.BirthdateInFuture -> "birthdate_in_future"
+        is TranValidationException.InvalidBirthdate -> "invalid_birthdate"
+        is TranValidationException.InvalidReferenceDate -> "invalid_reference_date"
+        is TranValidationException.InvalidCountryCode -> "invalid_country_code"
+        is TranValidationException.Internal -> "internal"
+    }
 
 class VoteEligibilityParityTest {
     companion object {
@@ -54,7 +71,7 @@ class VoteEligibilityParityTest {
             assertEquals(row.getString("name"), expected.getInt("age"), result.age.toInt())
             assertEquals(row.getString("name"), expected.getInt("minimumAge"), result.minimumAge.toInt())
             assertEquals(row.getString("name"), expected.getString("countryCode"), result.countryCode)
-            assertEquals(row.getString("name"), expected.getString("reason"), result.reason)
+            assertEquals(row.getString("name"), expected.getString("reasonCode"), result.reason.code())
         }
     }
 
@@ -68,13 +85,13 @@ class VoteEligibilityParityTest {
             val birth = if (input.has("birthdate")) input.getString("birthdate") else null
             val country = row.getString("countryCode")
             val reference = row.getString("referenceDate")
-            val expectedError = row.getString("error")
+            val expectedCode = row.getString("code")
 
             try {
                 evaluateVoteEligibilityOffline(age, birth, country, reference)
                 fail("Expected validation error for ${row.getString("name")}")
-            } catch (e: TranValidationException.ValidationException) {
-                assertEquals(expectedError, e.detail)
+            } catch (e: TranValidationException) {
+                assertEquals(row.getString("name"), expectedCode, e.code())
             }
         }
     }

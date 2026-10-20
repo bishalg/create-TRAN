@@ -135,13 +135,13 @@ struct VotingHomeView: View {
                 countryCode: countryCode,
                 referenceDateIso: String(reference)
             )
-            resultText = res.eligible
-                ? L10n.Eligibility.resultReasonMeets(String(res.age), String(res.minimumAge), res.countryCode)
-                : L10n.Eligibility.resultReasonBelow(String(res.age), String(res.minimumAge), res.countryCode)
+            resultText = res.localizedReason
             confirmWithApi(age: age)
+        } catch let error as TranValidationError {
+            // Pre-validated above; map the typed variant to shared copy instead of Rust prose.
+            resultText = error.localizedMessage
         } catch {
-            // Pre-validated above; the core's English detail is never shown to users.
-            resultText = L10n.Errors.countryInvalid
+            resultText = L10n.Errors.ageAndCountry
         }
     }
 }

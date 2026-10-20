@@ -1,4 +1,4 @@
-// Verifies: REQ-RULE-001
+// Verifies: REQ-RULE-001, REQ-FFI-002
 //! Golden fixtures exercised through the UniFFI export surface (same data as rust-core parity).
 
 use chrono::NaiveDate;
@@ -6,7 +6,7 @@ use rust_core::VoteEligibilityRequest;
 use serde::Deserialize;
 use tran_uniffi::{
     age_from_birthdate_offline, can_vote_by_age_offline, evaluate_vote_eligibility_offline,
-    voting_age_for_country_offline, TranValidationError,
+    voting_age_for_country_offline, TranEligibilityReason, TranValidationError,
 };
 
 const FIXTURE: &str = include_str!("../../../fixtures/vote-eligibility.json");
@@ -51,7 +51,7 @@ struct Expected {
     age: u16,
     minimum_age: u16,
     country_code: String,
-    reason: String,
+    reason_code: String,
 }
 
 #[derive(Deserialize)]
@@ -71,15 +71,29 @@ struct RejectedCase {
     input: VoteEligibilityRequest,
     country_code: String,
     reference_date: NaiveDate,
-    error: String,
+    code: String,
 }
 
 fn fixtures() -> Fixtures {
     serde_json::from_str(FIXTURE).expect("fixtures/vote-eligibility.json must be valid")
 }
 
-fn validation_message(err: TranValidationError) -> String {
-    err.detail().to_string()
+fn reason_code(reason: TranEligibilityReason) -> &'static str {
+    match reason {
+        TranEligibilityReason::MeetsMinimumAge => "meets_minimum_age",
+        TranEligibilityReason::BelowMinimumAge => "below_minimum_age",
+    }
+}
+
+fn validation_code(err: &TranValidationError) -> &'static str {
+    match err {
+        TranValidationError::AgeOutOfRange => "age_out_of_range",
+        TranValidationError::BirthdateInFuture => "birthdate_in_future",
+        TranValidationError::InvalidBirthdate => "invalid_birthdate",
+        TranValidationError::InvalidReferenceDate => "invalid_reference_date",
+        TranValidationError::InvalidCountryCode => "invalid_country_code",
+        TranValidationError::Internal => "internal",
+    }
 }
 
 #[test]
@@ -110,7 +124,7 @@ fn uniffi_age_from_birthdate_matches_fixture() {
                 case.birthdate.format("%Y-%m-%d").to_string(),
                 case.reference.format("%Y-%m-%d").to_string(),
             ),
-            case.expected,
+            Ok(case.expected),
             "{}",
             case.name
         );
@@ -140,7 +154,12 @@ fn uniffi_evaluations_match_fixture() {
             "{}",
             case.name
         );
-        assert_eq!(res.reason, case.expected.reason, "{}", case.name);
+        assert_eq!(
+            reason_code(res.reason),
+            case.expected.reason_code,
+            "{}",
+            case.name
+        );
     }
 }
 
@@ -158,6 +177,6 @@ fn uniffi_rejected_evaluations_match_fixture() {
             case.reference_date.format("%Y-%m-%d").to_string(),
         )
         .expect_err(&case.name);
-        assert_eq!(validation_message(err), case.error, "{}", case.name);
+        assert_eq!(validation_code(&err), case.code, "{}", case.name);
     }
 }

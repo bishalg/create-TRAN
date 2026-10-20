@@ -89,7 +89,8 @@
         "age": 20,
         "minimumAge": 18,
         "countryCode": "NP",
-        "reason": "Age 20 meets the minimum voting age of 18 in NP."
+        "reason": "Age 20 meets the minimum voting age of 18 in NP.",
+        "reasonCode": "meets_minimum_age"
       }
     },
     {
@@ -102,7 +103,8 @@
         "age": 17,
         "minimumAge": 18,
         "countryCode": "US",
-        "reason": "Age 17 is below the minimum voting age of 18 in US."
+        "reason": "Age 17 is below the minimum voting age of 18 in US.",
+        "reasonCode": "below_minimum_age"
       }
     },
     {
@@ -115,7 +117,8 @@
         "age": 16,
         "minimumAge": 16,
         "countryCode": "BR",
-        "reason": "Age 16 meets the minimum voting age of 16 in BR."
+        "reason": "Age 16 meets the minimum voting age of 16 in BR.",
+        "reasonCode": "meets_minimum_age"
       }
     },
     {
@@ -128,7 +131,8 @@
         "age": 30,
         "minimumAge": 18,
         "countryCode": "NP",
-        "reason": "Age 30 meets the minimum voting age of 18 in NP."
+        "reason": "Age 30 meets the minimum voting age of 18 in NP.",
+        "reasonCode": "meets_minimum_age"
       }
     },
     {
@@ -141,7 +145,8 @@
         "age": 17,
         "minimumAge": 18,
         "countryCode": "US",
-        "reason": "Age 17 is below the minimum voting age of 18 in US."
+        "reason": "Age 17 is below the minimum voting age of 18 in US.",
+        "reasonCode": "below_minimum_age"
       }
     },
     {
@@ -154,7 +159,8 @@
         "age": 18,
         "minimumAge": 18,
         "countryCode": "US",
-        "reason": "Age 18 meets the minimum voting age of 18 in US."
+        "reason": "Age 18 meets the minimum voting age of 18 in US.",
+        "reasonCode": "meets_minimum_age"
       }
     },
     {
@@ -167,7 +173,8 @@
         "age": 18,
         "minimumAge": 18,
         "countryCode": "ZZ",
-        "reason": "Age 18 meets the minimum voting age of 18 in ZZ."
+        "reason": "Age 18 meets the minimum voting age of 18 in ZZ.",
+        "reasonCode": "meets_minimum_age"
       }
     }
   ],
@@ -177,21 +184,24 @@
       "input": { "age": 151 },
       "countryCode": "US",
       "referenceDate": "2026-10-18",
-      "error": "Age must be 150 or less"
+      "error": "Age must be 150 or less",
+      "code": "age_out_of_range"
     },
     {
       "name": "birthdate in the future",
       "input": { "age": 5, "birthdate": "2026-10-19" },
       "countryCode": "US",
       "referenceDate": "2026-10-18",
-      "error": "Birthdate cannot be in the future"
+      "error": "Birthdate cannot be in the future",
+      "code": "birthdate_in_future"
     },
     {
       "name": "malformed country code",
       "input": { "age": 30 },
       "countryCode": "USA",
       "referenceDate": "2026-10-18",
-      "error": "Country code must be two ASCII letters (ISO 3166-1 alpha-2)"
+      "error": "Country code must be two ASCII letters (ISO 3166-1 alpha-2)",
+      "code": "invalid_country_code"
     }
   ]
 }

@@ -824,16 +824,16 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
 }
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
-    if ((lib.uniffi_tran_uniffi_checksum_func_age_from_birthdate_offline() and 0xFFFF) != 32693) {
+    if ((lib.uniffi_tran_uniffi_checksum_func_age_from_birthdate_offline() and 0xFFFF) != 30165) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if ((lib.uniffi_tran_uniffi_checksum_func_can_vote_by_age_offline() and 0xFFFF) != 6010) {
+    if ((lib.uniffi_tran_uniffi_checksum_func_can_vote_by_age_offline() and 0xFFFF) != 51571) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if ((lib.uniffi_tran_uniffi_checksum_func_evaluate_vote_eligibility_offline() and 0xFFFF) != 53569) {
+    if ((lib.uniffi_tran_uniffi_checksum_func_evaluate_vote_eligibility_offline() and 0xFFFF) != 62236) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if ((lib.uniffi_tran_uniffi_checksum_func_voting_age_for_country_offline() and 0xFFFF) != 60957) {
+    if ((lib.uniffi_tran_uniffi_checksum_func_voting_age_for_country_offline() and 0xFFFF) != 55415) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
 }
@@ -1038,16 +1038,34 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
 
 
 
+/**
+ * Offline eligibility result produced by the shared Rust rules.
+ */
 data class VoteEligibilityOfflineResult (
+    /**
+     * Whether the voter meets the country's minimum voting age.
+     */
     var `eligible`: kotlin.Boolean
     , 
+    /**
+     * Age used for the decision, in whole years.
+     */
     var `age`: kotlin.UShort
     , 
+    /**
+     * Minimum voting age for the supplied country.
+     */
     var `minimumAge`: kotlin.UShort
     , 
+    /**
+     * Normalized ISO 3166-1 alpha-2 country code (upper case).
+     */
     var `countryCode`: kotlin.String
     , 
-    var `reason`: kotlin.String
+    /**
+     * Stable reason code for the verdict; map it to localized copy in the app.
+     */
+    var `reason`: TranEligibilityReason
     
 ){
     
@@ -1068,7 +1086,7 @@ public object FfiConverterTypeVoteEligibilityOfflineResult: FfiConverterRustBuff
             FfiConverterUShort.read(buf),
             FfiConverterUShort.read(buf),
             FfiConverterString.read(buf),
-            FfiConverterString.read(buf),
+            FfiConverterTypeTranEligibilityReason.read(buf),
         )
     }
 
@@ -1077,7 +1095,7 @@ public object FfiConverterTypeVoteEligibilityOfflineResult: FfiConverterRustBuff
             FfiConverterUShort.allocationSize(value.`age`) +
             FfiConverterUShort.allocationSize(value.`minimumAge`) +
             FfiConverterString.allocationSize(value.`countryCode`) +
-            FfiConverterString.allocationSize(value.`reason`)
+            FfiConverterTypeTranEligibilityReason.allocationSize(value.`reason`)
     )
 
     override fun write(value: VoteEligibilityOfflineResult, buf: ByteBuffer) {
@@ -1085,7 +1103,51 @@ public object FfiConverterTypeVoteEligibilityOfflineResult: FfiConverterRustBuff
             FfiConverterUShort.write(value.`age`, buf)
             FfiConverterUShort.write(value.`minimumAge`, buf)
             FfiConverterString.write(value.`countryCode`, buf)
-            FfiConverterString.write(value.`reason`, buf)
+            FfiConverterTypeTranEligibilityReason.write(value.`reason`, buf)
+    }
+}
+
+
+
+/**
+ * Why the eligibility verdict is what it is.
+ *
+ * The native layer turns this into a localized sentence; the bridge never returns a
+ * pre-formatted English reason.
+ */
+
+enum class TranEligibilityReason {
+    
+    /**
+     * The voter meets the minimum voting age for the country.
+     */
+    MEETS_MINIMUM_AGE,
+    /**
+     * The voter is below the minimum voting age for the country.
+     */
+    BELOW_MINIMUM_AGE;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranEligibilityReason: FfiConverterRustBuffer<TranEligibilityReason> {
+    override fun read(buf: ByteBuffer) = try {
+        TranEligibilityReason.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TranEligibilityReason) = 4UL
+
+    override fun write(value: TranEligibilityReason, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
     }
 }
 
@@ -1093,14 +1155,71 @@ public object FfiConverterTypeVoteEligibilityOfflineResult: FfiConverterRustBuff
 
 
 
+
+
+/**
+ * A validation failure that native code can branch on without parsing English prose.
+ *
+ * Map these variants to localized copy in the app layer. The `Display` text is for Rust logs
+ * only; it is never meant to be shown to a voter.
+ */
 sealed class TranValidationException: kotlin.Exception() {
     
-    class ValidationException(
-        
-        val `detail`: kotlin.String
+    /**
+     * The supplied age is above the supported maximum (150).
+     */
+    class AgeOutOfRange(
         ) : TranValidationException() {
         override val message
-            get() = "detail=${ `detail` }"
+            get() = ""
+    }
+    
+    /**
+     * The birthdate is later than the reference date used for evaluation.
+     */
+    class BirthdateInFuture(
+        ) : TranValidationException() {
+        override val message
+            get() = ""
+    }
+    
+    /**
+     * The birthdate is not a valid ISO 8601 calendar date (`YYYY-MM-DD`).
+     */
+    class InvalidBirthdate(
+        ) : TranValidationException() {
+        override val message
+            get() = ""
+    }
+    
+    /**
+     * The reference date is not a valid ISO 8601 calendar date (`YYYY-MM-DD`).
+     */
+    class InvalidReferenceDate(
+        ) : TranValidationException() {
+        override val message
+            get() = ""
+    }
+    
+    /**
+     * The country code is not two ASCII letters (ISO 3166-1 alpha-2 shape).
+     */
+    class InvalidCountryCode(
+        ) : TranValidationException() {
+        override val message
+            get() = ""
+    }
+    
+    /**
+     * An unexpected failure came back from the shared core.
+     *
+     * The app has already validated its inputs, so this indicates a programming error rather than
+     * something the voter can fix.
+     */
+    class Internal(
+        ) : TranValidationException() {
+        override val message
+            get() = ""
     }
     
 
@@ -1122,28 +1241,69 @@ public object FfiConverterTypeTranValidationError : FfiConverterRustBuffer<TranV
         
 
         return when(buf.getInt()) {
-            1 -> TranValidationException.ValidationException(
-                FfiConverterString.read(buf),
-                )
+            1 -> TranValidationException.AgeOutOfRange()
+            2 -> TranValidationException.BirthdateInFuture()
+            3 -> TranValidationException.InvalidBirthdate()
+            4 -> TranValidationException.InvalidReferenceDate()
+            5 -> TranValidationException.InvalidCountryCode()
+            6 -> TranValidationException.Internal()
             else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
         }
     }
 
     override fun allocationSize(value: TranValidationException): ULong {
         return when(value) {
-            is TranValidationException.ValidationException -> (
+            is TranValidationException.AgeOutOfRange -> (
                 // Add the size for the Int that specifies the variant plus the size needed for all fields
                 4UL
-                + FfiConverterString.allocationSize(value.`detail`)
+            )
+            is TranValidationException.BirthdateInFuture -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+            )
+            is TranValidationException.InvalidBirthdate -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+            )
+            is TranValidationException.InvalidReferenceDate -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+            )
+            is TranValidationException.InvalidCountryCode -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+            )
+            is TranValidationException.Internal -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
             )
         }
     }
 
     override fun write(value: TranValidationException, buf: ByteBuffer) {
         when(value) {
-            is TranValidationException.ValidationException -> {
+            is TranValidationException.AgeOutOfRange -> {
                 buf.putInt(1)
-                FfiConverterString.write(value.`detail`, buf)
+                Unit
+            }
+            is TranValidationException.BirthdateInFuture -> {
+                buf.putInt(2)
+                Unit
+            }
+            is TranValidationException.InvalidBirthdate -> {
+                buf.putInt(3)
+                Unit
+            }
+            is TranValidationException.InvalidReferenceDate -> {
+                buf.putInt(4)
+                Unit
+            }
+            is TranValidationException.InvalidCountryCode -> {
+                buf.putInt(5)
+                Unit
+            }
+            is TranValidationException.Internal -> {
+                buf.putInt(6)
                 Unit
             }
         }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
@@ -1183,10 +1343,25 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
     }
 }
         /**
-         * Whole years between ISO birth and reference dates (shared leap-day rules with rust-core).
-         */ fun `ageFromBirthdateOffline`(`birthdateIso`: kotlin.String, `referenceDateIso`: kotlin.String): kotlin.UShort {
+         * Whole years between two ISO 8601 dates, using the shared leap-day rules from `rust-core`.
+         *
+         * # Arguments
+         *
+         * * `birthdate_iso` — birthdate in `YYYY-MM-DD` form.
+         * * `reference_date_iso` — the date to measure against, in `YYYY-MM-DD` form.
+         *
+         * # Returns
+         *
+         * Age in whole years; a birthdate after the reference date returns `0`.
+         *
+         * # Errors
+         *
+         * Returns [`TranValidationError::InvalidBirthdate`] or
+         * [`TranValidationError::InvalidReferenceDate`] when either input is not a real calendar date.
+         */
+    @Throws(TranValidationException::class) fun `ageFromBirthdateOffline`(`birthdateIso`: kotlin.String, `referenceDateIso`: kotlin.String): kotlin.UShort {
             return FfiConverterUShort.lift(
-    uniffiRustCall() { _status ->
+    uniffiRustCallWithError(TranValidationException) { _status ->
     UniffiLib.uniffi_tran_uniffi_fn_func_age_from_birthdate_offline(
     
         
@@ -1199,6 +1374,17 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
 
         /**
          * Whether `age` meets `minimum_age`.
+         *
+         * This is a pure comparison; it does not validate that `minimum_age` belongs to a real country.
+         *
+         * # Arguments
+         *
+         * * `age` — age in whole years.
+         * * `minimum_age` — minimum voting age in whole years.
+         *
+         * # Returns
+         *
+         * `true` when `age` is greater than or equal to `minimum_age`.
          */ fun `canVoteByAgeOffline`(`age`: kotlin.UShort, `minimumAge`: kotlin.UShort): kotlin.Boolean {
             return FfiConverterBoolean.lift(
     uniffiRustCall() { _status ->
@@ -1213,9 +1399,26 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
     
 
         /**
-         * Offline eligibility using the same engine path as Axum (`evaluate_vote_eligibility_on`).
+         * Evaluate voting eligibility offline with the same rules as the Axum endpoint.
          *
-         * `birthdate_iso` wins over `age` when present. `reference_date_iso` injects “today” for tests.
+         * `birthdate_iso` wins over `age` when present. `reference_date_iso` injects "today" so tests are
+         * deterministic; the apps pass the device date.
+         *
+         * # Arguments
+         *
+         * * `age` — age in whole years, used when `birthdate_iso` is absent or empty.
+         * * `birthdate_iso` — optional birthdate in `YYYY-MM-DD` form; wins over `age`.
+         * * `country_code` — two-letter ISO 3166-1 alpha-2 code; matching is case-insensitive.
+         * * `reference_date_iso` — the date to evaluate against, in `YYYY-MM-DD` form.
+         *
+         * # Returns
+         *
+         * A [`VoteEligibilityOfflineResult`] with the verdict and the facts used to reach it.
+         *
+         * # Errors
+         *
+         * Returns [`TranValidationError`] when a date is malformed, the birthdate is in the future, the
+         * age exceeds 150, or the country code is not two ASCII letters.
          */
     @Throws(TranValidationException::class) fun `evaluateVoteEligibilityOffline`(`age`: kotlin.UShort, `birthdateIso`: kotlin.String?, `countryCode`: kotlin.String, `referenceDateIso`: kotlin.String): VoteEligibilityOfflineResult {
             return FfiConverterTypeVoteEligibilityOfflineResult.lift(
@@ -1234,6 +1437,16 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
 
         /**
          * Minimum voting age for an ISO 3166-1 alpha-2 country code (case-insensitive).
+         *
+         * Unknown but well-formed codes fall back to the default voting age of 18.
+         *
+         * # Arguments
+         *
+         * * `country_code` — two-letter ISO 3166-1 alpha-2 code; matching is case-insensitive.
+         *
+         * # Returns
+         *
+         * The minimum age in whole years.
          */ fun `votingAgeForCountryOffline`(`countryCode`: kotlin.String): kotlin.UShort {
             return FfiConverterUShort.lift(
     uniffiRustCall() { _status ->

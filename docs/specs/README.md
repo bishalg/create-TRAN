@@ -44,6 +44,7 @@ ID that no spec defines.
 | [007 Git Quality Hooks](./007-git-quality-hooks.md)         | Pre-commit lint/typecheck & pre-push testing | `REQ-HOOK`            |
 | [008 Localization](./008-localization.md)                   | Dictionaries, modules and fallback           | `REQ-I18N`            |
 | [009 Native tests in CI](./009-native-tests-in-ci.md)       | Nightly iOS/Android suites, flake policy     | `REQ-CI`              |
+| [010 Native FFI surface](./010-ffi-surface.md)              | UniFFI docs, typed errors, native extensions | `REQ-FFI`             |
 
 ## Template
 

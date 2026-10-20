@@ -43,6 +43,13 @@ jobs:
             apps/android/app/src/main/kotlin/com/tran/voting/generated \
             apps/android/app/src/main/res
 
+      - name: Regenerate UniFFI bindings and verify no drift
+        run: |
+          bash scripts/uniffi-generate.sh
+          git diff --exit-code -- \
+            apps/ios/Sources/TranVotingDemo/Generated/UniFFI \
+            apps/android/app/src/main/kotlin/com/tran/voting/uniffi
+
   node-check:
     name: TypeScript & Frontend Monorepo
     runs-on: ubuntu-latest
