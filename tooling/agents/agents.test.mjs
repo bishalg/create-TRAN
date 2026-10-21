@@ -1,4 +1,4 @@
-// Verifies: REQ-AGT-001, REQ-AGT-002, REQ-AGT-003, REQ-AGT-004, REQ-AGT-005, REQ-AGT-006, REQ-AGT-007, REQ-AGT-008, REQ-AGT-009
+// Verifies: REQ-AGT-001, REQ-AGT-002, REQ-AGT-003, REQ-AGT-004, REQ-AGT-005, REQ-AGT-006, REQ-AGT-007, REQ-AGT-008, REQ-AGT-009, REQ-AGT-010
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -10,6 +10,7 @@ import {
   checkAll,
   checkLearnings,
   checkSchedules,
+  chooseHarness,
   evaluateSignal,
   globToRegExp,
   guardChanges,
@@ -799,6 +800,23 @@ describe('hand-off', () => {
     });
     assert.deepEqual(readHandoff('  \n'), { missing: true });
     assert.deepEqual(readHandoff(null), { missing: true });
+  });
+});
+
+describe('default harness (REQ-AGT-010)', () => {
+  it('takes --harness, then AGENT_HARNESS, then the policy, then claude', () => {
+    const policy = { defaultHarness: 'codex' };
+    assert.equal(chooseHarness('pi', { AGENT_HARNESS: 'gemini' }, policy), 'pi');
+    assert.equal(chooseHarness(undefined, { AGENT_HARNESS: 'gemini' }, policy), 'gemini');
+    assert.equal(chooseHarness(undefined, {}, policy), 'codex');
+    assert.equal(chooseHarness(undefined, {}, {}), 'claude');
+  });
+
+  it('check rejects a policy that names an unknown harness', () => {
+    assert.deepEqual(checkAll(ROOT, { defaultHarness: 'claude' }).errors, []);
+    assert.deepEqual(checkAll(ROOT, { defaultHarness: 'copilot' }).errors, [
+      `.agents/policy.json: defaultHarness "copilot" is not one of ${HARNESSES.join(', ')}`,
+    ]);
   });
 });
 

@@ -12,7 +12,7 @@
  *   pnpm agents due --cron '<expr>'               tasks a workflow cron should run
  *
  * Harnesses: claude, codex, gemini, pi, jules, custom (AGENT_CMD, prompt on stdin).
- * AGENT_HARNESS sets the default harness; AGENT_HARNESS_ARGS adds arguments (a model, a profile).
+ * AGENT_HARNESS overrides the policy's defaultHarness; AGENT_HARNESS_ARGS adds arguments (a model, a profile).
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -870,10 +870,19 @@ function context(root) {
   };
 }
 
-export function checkAll(root) {
+/** `--harness`, then `AGENT_HARNESS`, then the policy's `defaultHarness`, then Claude Code. */
+export function chooseHarness(flagValue, env, policy) {
+  return flagValue ?? env.AGENT_HARNESS ?? policy.defaultHarness ?? 'claude';
+}
+
+export function checkAll(root, policy = readJson(join(root, '.agents/policy.json')) ?? {}) {
   const tasks = loadTasks(root);
   const ctx = context(root);
   const errors = tasks.flatMap((task) => validateTask(task, ctx));
+  if (policy.defaultHarness !== undefined && !HARNESSES.includes(policy.defaultHarness))
+    errors.push(
+      `.agents/policy.json: defaultHarness "${policy.defaultHarness}" is not one of ${HARNESSES.join(', ')}`
+    );
   const workflow = join(root, WORKFLOW);
   errors.push(
     ...checkSchedules(
@@ -1090,7 +1099,7 @@ function main(root, argv) {
     }
     case 'run': {
       const task = byName(target);
-      const harness = flag(argv, '--harness') ?? process.env.AGENT_HARNESS ?? 'claude';
+      const harness = chooseHarness(flag(argv, '--harness'), process.env, policy);
       const origin =
         spawnSync('git', ['remote', 'get-url', 'origin'], { cwd: root, encoding: 'utf8' }).stdout ??
         '';

@@ -1,6 +1,17 @@
 import * as readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import {
+  AGENT_HARNESSES,
+  AGENT_SETUPS,
+  type AgentHarness,
+  type AgentSetup,
+  CI_AGENT_HARNESSES,
+  DEFAULT_AGENT_HARNESS,
+  DEFAULT_AGENT_SETUP,
+  validateAgentHarness,
+  validateAgentSetup,
+} from './agents.js';
+import {
   DEFAULT_THEME_MODE,
   deriveDisplayName,
   formatStarterPalette,
@@ -29,6 +40,8 @@ export interface PromptAnswers {
   initGit: boolean;
   defaultTheme: ThemeMode;
   displayName: string;
+  agentSetup: AgentSetup;
+  agentHarness: AgentHarness;
 }
 
 function isInteractive(): boolean {
@@ -81,6 +94,8 @@ export async function collectOnboardingAnswers(partial: {
   initGit?: boolean;
   defaultTheme?: ThemeMode;
   displayName?: string;
+  agentSetup?: AgentSetup;
+  agentHarness?: AgentHarness;
   skipPrompts?: boolean;
   /** Injected for tests. */
   random?: () => number;
@@ -101,6 +116,8 @@ export async function collectOnboardingAnswers(partial: {
       initGit: partial.initGit ?? true,
       defaultTheme: partial.defaultTheme || DEFAULT_THEME_MODE,
       displayName: partial.displayName || deriveDisplayName(projectName),
+      agentSetup: partial.agentSetup || DEFAULT_AGENT_SETUP,
+      agentHarness: partial.agentHarness || DEFAULT_AGENT_HARNESS,
     };
   }
 
@@ -188,6 +205,44 @@ export async function collectOnboardingAnswers(partial: {
       }
     }
 
+    let agentSetup = partial.agentSetup;
+    if (!agentSetup) {
+      process.stdout.write(
+        '\nCoding agents (.agents/): task files any harness can run — Claude Code, Codex, Gemini CLI, pi.\n' +
+          '  sample  the setup and docs, nothing scheduled (adapt it, then pick a scheduler)\n' +
+          '  github  the same, with scheduled runs on GitHub Actions (draft pull requests only)\n' +
+          '  none    leave it out\n'
+      );
+      for (;;) {
+        const setup = validateAgentSetup(
+          await ask(rl, `Coding agents (${AGENT_SETUPS.join('/')})`, DEFAULT_AGENT_SETUP)
+        );
+        if (setup) {
+          agentSetup = setup;
+          break;
+        }
+        process.stdout.write(`  ⚠ Choose one of: ${AGENT_SETUPS.join(', ')}.\n`);
+      }
+    }
+
+    let agentHarness = partial.agentHarness || DEFAULT_AGENT_HARNESS;
+    // Ask unless a flag already chose a harness this setup can run.
+    const chosen = partial.agentHarness && validateAgentHarness(partial.agentHarness, agentSetup);
+    if (agentSetup !== 'none' && !chosen) {
+      const choices = agentSetup === 'github' ? CI_AGENT_HARNESSES : AGENT_HARNESSES;
+      for (;;) {
+        const harness = validateAgentHarness(
+          await ask(rl, `Default agent harness (${choices.join('/')})`, DEFAULT_AGENT_HARNESS),
+          agentSetup
+        );
+        if (harness) {
+          agentHarness = harness;
+          break;
+        }
+        process.stdout.write(`  ⚠ Choose one of: ${choices.join(', ')}.\n`);
+      }
+    }
+
     let initGit = partial.initGit ?? true;
     let defaultTheme: ThemeMode = partial.defaultTheme || DEFAULT_THEME_MODE;
     let displayName = partial.displayName || deriveDisplayName(projectName);
@@ -224,6 +279,8 @@ export async function collectOnboardingAnswers(partial: {
       initGit,
       defaultTheme,
       displayName,
+      agentSetup,
+      agentHarness,
     };
   } finally {
     rl.close();

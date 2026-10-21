@@ -64,3 +64,9 @@ recurring task never piles up duplicates.
 Agents and people MUST record durable lessons in one file, `docs/LEARNINGS.md`, each entry a dated heading with
 **Learning:** and **Action:** lines. `pnpm agents:check` MUST fail on an entry that breaks this format.
 **Verified by:** unit tests.
+
+### REQ-AGT-010 [verified] The policy names the default harness
+
+Without `--harness` or `AGENT_HARNESS`, the runner and the scheduled workflow MUST use `defaultHarness` from
+`.agents/policy.json`, else Claude Code. `pnpm agents:check` MUST fail when it names an unknown harness.
+**Verified by:** unit tests.

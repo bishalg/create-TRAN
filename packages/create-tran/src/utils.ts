@@ -1,5 +1,14 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import {
+  AGENT_HARNESSES,
+  AGENT_SETUPS,
+  type AgentHarness,
+  type AgentSetup,
+  CI_AGENT_HARNESSES,
+  validateAgentHarness,
+  validateAgentSetup,
+} from './agents.js';
 import { DEFAULT_THEME_MODE, type ThemeMode, validateThemeMode } from './palette.js';
 import {
   DEFAULT_STEM,
@@ -25,6 +34,10 @@ export interface CliOptions {
   primaryColorLabel?: string;
   defaultTheme: ThemeMode;
   displayName: string;
+  /** Coding-agent setup (ADR-0032): sample (default), github or none. */
+  agentSetup?: AgentSetup;
+  /** Written as `defaultHarness` in `.agents/policy.json`; default claude. */
+  agentHarness?: AgentHarness;
   /** Skip interactive prompts (CI / flags-only). */
   skipPrompts: boolean;
   /** Override template source (git URL or local path). Useful for tests. */
@@ -47,6 +60,20 @@ export function parseArgs(
       options.initGit = false;
     } else if (arg === '--no-native') {
       options.includeNative = false;
+    } else if (arg === '--no-agents') {
+      options.agentSetup = 'none';
+    } else if (arg === '--agents') {
+      const setup = validateAgentSetup(rawArgs[++i] ?? '');
+      if (!setup) {
+        throw new Error(`Invalid --agents (use ${AGENT_SETUPS.join('|')})`);
+      }
+      options.agentSetup = setup;
+    } else if (arg === '--agent-harness') {
+      const harness = validateAgentHarness(rawArgs[++i] ?? '', 'sample');
+      if (!harness) {
+        throw new Error(`Invalid --agent-harness (use ${AGENT_HARNESSES.join('|')})`);
+      }
+      options.agentHarness = harness;
     } else if (arg === '--yes' || arg === '-y') {
       options.skipPrompts = true;
     } else if (arg === '--pm' || arg === '--package-manager') {
@@ -100,6 +127,17 @@ export function parseArgs(
 
   if (positional.length > 0) {
     options.projectName = positional[0];
+  }
+
+  if (
+    options.agentSetup === 'github' &&
+    options.agentHarness &&
+    !CI_AGENT_HARNESSES.includes(options.agentHarness)
+  ) {
+    throw new Error(
+      `--agents github runs ${CI_AGENT_HARNESSES.join('|')} on GitHub Actions; ` +
+        `use --agents sample to run ${options.agentHarness} yourself`
+    );
   }
 
   return options;

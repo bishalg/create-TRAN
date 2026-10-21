@@ -1,4 +1,5 @@
 import * as path from 'node:path';
+import { AGENT_SECRETS, DEFAULT_AGENT_HARNESS, DEFAULT_AGENT_SETUP } from './agents.js';
 import { printBanner } from './banner.js';
 import { describeCustomization, generateTranProject } from './generator.js';
 import { DEFAULT_THEME_MODE } from './palette.js';
@@ -29,6 +30,12 @@ Options:
   --template <url-or-path>        Template git URL or local path
   --no-git                        Skip git repository initialization
   --no-native                     Exclude mobile apps (iOS, Android)
+  --agents <setup>                Coding agents: sample|github|none (default: sample)
+                                    sample: task files, runner and docs in .agents/, nothing scheduled
+                                    github: the same, scheduled on GitHub Actions (draft PRs only)
+  --no-agents                     Same as --agents none
+  --agent-harness <name>          Default harness: claude|codex|gemini|pi (default: claude;
+                                    github runs claude, codex or gemini)
   -y, --yes                       Non-interactive; defaults only (no random color)
   -v, --version                   Show version
   -h, --help                      Show this help message
@@ -37,6 +44,7 @@ Examples:
   npx create-tran
   npx create-tran my-app --prefix acme --primary '#0ea5e9' --theme light
   npx create-tran my-app --yes --no-native
+  npx create-tran my-app --agents github --agent-harness codex
   pnpm create tran my-app --pm pnpm
 `);
     return;
@@ -58,6 +66,8 @@ Examples:
     initGit: parsed.initGit,
     defaultTheme: parsed.defaultTheme,
     displayName: parsed.displayName,
+    agentSetup: parsed.agentSetup,
+    agentHarness: parsed.agentHarness,
     skipPrompts: parsed.skipPrompts,
   });
 
@@ -74,6 +84,8 @@ Examples:
     primaryColorLabel: answers.primaryColorLabel,
     defaultTheme: answers.defaultTheme,
     displayName: answers.displayName,
+    agentSetup: answers.agentSetup,
+    agentHarness: answers.agentHarness,
     skipPrompts: parsed.skipPrompts ?? false,
     templateUrl: parsed.templateUrl,
   };
@@ -103,4 +115,35 @@ Examples:
   process.stdout.write(
     'Tip: edit crates/rust-core/src/tokens.rs then run tokens:sync to evolve the brand.\n'
   );
+  for (const line of agentNextSteps(options)) {
+    process.stdout.write(`${line}\n`);
+  }
+}
+
+/** What to do next with the chosen agent setup; nothing for `none`. */
+export function agentNextSteps(
+  options: Pick<CliOptions, 'agentSetup' | 'agentHarness' | 'packageManager'>
+): string[] {
+  const setup = options.agentSetup ?? DEFAULT_AGENT_SETUP;
+  const harness = options.agentHarness ?? DEFAULT_AGENT_HARNESS;
+  if (setup === 'none') {
+    return [];
+  }
+  const agents =
+    options.packageManager === 'npm' ? 'npm run agents --' : `${options.packageManager} agents`;
+  const lines = [
+    '',
+    `Coding agents (.agents/README.md), default harness ${harness}:`,
+    `  ${agents} list                       # the tasks and when they run`,
+    `  ${agents} run code-review --dry-run  # read the exact prompt; nothing starts`,
+  ];
+  if (setup === 'github') {
+    lines.push(
+      '  After pushing to GitHub, the schedules start once the key is set:',
+      `  gh secret set ${AGENT_SECRETS[harness]}`,
+      '  gh secret set AGENT_GITHUB_TOKEN     # optional: CI also runs on agent pull requests',
+      '  gh variable set AGENTS_ENABLED --body false   # to pause them'
+    );
+  }
+  return lines;
 }

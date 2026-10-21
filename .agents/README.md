@@ -67,6 +67,10 @@ on the agent branch with the change and the reasons in `.agents/out/<task>/verif
 
 ## Adopting it in your project
 
+Starting a new project with `npx create-tran`? It asks for the setup: `sample` (this, idle), `github` (schedules on)
+or `none`, plus the default harness; `--agents` and `--agent-harness` do the same without prompts. Then continue at
+step 2.
+
 The runner is generic; the task files, policy and signals are this repo's. In a fork, or when you copy the setup into
 another repo:
 
@@ -84,7 +88,8 @@ another repo:
 5. **Try it by hand:** `pnpm agents signal <task>`, then `pnpm agents run <task> --dry-run` and read
    `.agents/out/<task>/prompt.md`. That file is exactly what any harness receives.
 6. **Pick a harness and a scheduler** ([Harnesses](#harnesses), [Scheduling](#scheduling)). On GitHub: add the API key
-   secret, `AGENT_GITHUB_TOKEN`, and the repository variable `AGENTS_ENABLED=true`.
+   secret, `AGENT_GITHUB_TOKEN`, and the repository variable `AGENTS_ENABLED=true` (a project created with
+   `create-tran --agents github` has the schedules on already).
 7. **Watch the first pull requests closely.** When an agent gets something wrong, fix the cause where it belongs: a
    sharper task body, a tighter scope, a new protected path, or a `docs/LEARNINGS.md` entry. Not a longer prompt.
 
@@ -165,7 +170,8 @@ Run `pnpm agents run <task> --dry-run` and read `.agents/out/<task>/prompt.md` t
 
 ## Harnesses
 
-`--harness <name>`, or `AGENT_HARNESS` for a default. `AGENT_HARNESS_ARGS` adds arguments, such as a model.
+`--harness <name>`, else `AGENT_HARNESS`, else `defaultHarness` in `.agents/policy.json`, else `claude`.
+`AGENT_HARNESS_ARGS` adds arguments, such as a model.
 
 | Harness  | Started as                            | Read-only tasks                 | Notes                                                        |
 | :------- | :------------------------------------ | :------------------------------ | :----------------------------------------------------------- |
@@ -230,8 +236,10 @@ Persistent=true
 
 **GitHub Actions.** [`agents.yml`](../.github/workflows/agents.yml) runs the scheduled tasks, any task by hand
 (`gh workflow run agents.yml -f task=spec-gap -f harness=codex`), the guard on every `agent/` pull request, and the
-read-only review when a maintainer labels a pull request `agent-review`. Schedules stay off until you set the
-repository variable `AGENTS_ENABLED` to `true`; manual runs and the label need only the key. Add the secret for your harness
+read-only review when a maintainer labels a pull request `agent-review`. The repository variable `AGENTS_ENABLED`
+switches the schedules: the template ships them off until it is `true`, and a project created with
+`create-tran --agents github` ships them on until it is `false`. Manual runs and the label need only the key. Scheduled
+runs use `defaultHarness` from `policy.json`. Add the secret for your harness
 (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY` or `GEMINI_API_KEY`); without it, runs skip with a notice. Add
 `AGENT_GITHUB_TOKEN` (fine-grained, contents and pull-requests write) so CI also runs on the agent's pull requests:
 pull requests opened with the default token do not trigger other workflows.

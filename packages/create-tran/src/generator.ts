@@ -1,6 +1,12 @@
 import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import {
+  applyAgentSetup,
+  DEFAULT_AGENT_HARNESS,
+  DEFAULT_AGENT_SETUP,
+  describeAgentSetup,
+} from './agents.js';
 import { customizeIdentity } from './customize.js';
 import { DEFAULT_STEM } from './stem.js';
 import {
@@ -26,7 +32,15 @@ function writeJson(filePath: string, value: unknown): void {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf-8');
 }
 
-function customizeProject(options: CliOptions): void {
+/** Returns the template edits that no longer matched (see `applyAgentSetup`). */
+function customizeProject(options: CliOptions): string[] {
+  // Before the identity rewrite, so the agent edits match the template's own text.
+  const missed = applyAgentSetup(
+    options.targetDir,
+    options.agentSetup ?? DEFAULT_AGENT_SETUP,
+    options.agentHarness ?? DEFAULT_AGENT_HARNESS
+  );
+
   customizeIdentity(options.targetDir, {
     stem: options.stem,
     primaryColor: options.primaryColor,
@@ -59,6 +73,7 @@ function customizeProject(options: CliOptions): void {
       fs.rmSync(artifactPath, { recursive: true, force: true });
     }
   }
+  return missed;
 }
 
 function resetGitHistory(options: CliOptions): void {
@@ -120,7 +135,9 @@ export async function generateTranProject(options: CliOptions): Promise<void> {
     run('git', ['clone', '--depth', '1', templateUrl, options.targetDir]);
   }
 
-  customizeProject(options);
+  for (const miss of customizeProject(options)) {
+    process.stderr.write(`  ⚠ agent setup: ${miss}; please adjust it by hand\n`);
+  }
   resetGitHistory(options);
 }
 
@@ -134,6 +151,10 @@ export function describeCustomization(options: CliOptions): string[] {
     `  Default theme:   ${options.defaultTheme}`,
     `  Package manager: ${options.packageManager}`,
     `  Native mobile:   ${options.includeNative ? 'Included' : 'Skipped'}`,
+    `  Coding agents:   ${describeAgentSetup(
+      options.agentSetup ?? DEFAULT_AGENT_SETUP,
+      options.agentHarness ?? DEFAULT_AGENT_HARNESS
+    )}`,
     `  Git init:        ${options.initGit ? 'Yes' : 'No'}`,
   ];
 }

@@ -28,3 +28,11 @@ colour, default theme and display name MUST: replace both template primaries in 
 rename the prefix in package names, crate names, the iOS target folders and the Android package path; leave
 `tooling/design-tokens/codegen.json` pointing at folders that exist; and leave a Cargo workspace that `cargo metadata`
 accepts.
+
+### REQ-GEN-005 [verified] New projects choose their agent setup
+
+`create-tran` MUST offer three agent setups: `sample` (the template's files, GitHub Actions schedules off),
+`github` (schedules on unless the repository variable `AGENTS_ENABLED` is `false`) and `none` (the runner, tasks,
+workflow and their docs removed, with no reference to them left outside the scaffolder). It MUST write the chosen
+harness as `defaultHarness` in `.agents/policy.json`, and MUST report a template edit that no longer applies.
+**Verified by:** `packages/create-tran/tests/agents.test.ts` and the scaffold smoke test.

@@ -21,6 +21,8 @@ Every question shows a default in parentheses. Press **Enter** to accept and mov
 | Primary color   | _(random)_    | Random from Ocean / Sky / Indigo / Violet / Sepia |
 | Native apps     | Yes           | Include iOS + Android                             |
 | Package manager | `pnpm`        | Accept                                            |
+| Coding agents   | `sample`      | Keep the agent setup, nothing scheduled           |
+| Agent harness   | `claude`      | Accept (asked unless agents are `none`)           |
 | Advanced?       | No            | Skip advanced and scaffold                        |
 
 Or type `1`–`5` for a specific swatch, or a custom `#hex`.
@@ -33,6 +35,21 @@ Answer **y** to “Configure advanced options?” for:
 - Default theme (`light` / `dark` / `black` / `sepia`)
 - Git init yes/no
 
+## Coding agents
+
+The template ships harness-neutral agent tasks in `.agents/` (any of Claude Code, Codex, Gemini CLI, pi or your own;
+see [`.agents/README.md`](../../.agents/README.md)). Pick how a new project starts:
+
+| Setup    | What you get                                                                              |
+| -------- | ----------------------------------------------------------------------------------------- |
+| `sample` | Task files, runner, docs and a GitHub Actions workflow whose schedules stay off           |
+| `github` | The same with the schedules on: add the harness's API key secret and they open draft PRs  |
+| `none`   | Runner, tasks, workflow and their docs removed; `.agents/skills/` and `LEARNINGS.md` stay |
+
+The harness is written as `defaultHarness` in `.agents/policy.json`. `github` offers `claude`, `codex` and `gemini`, the
+CLIs the workflow installs; `sample` also offers `pi`. To pause a `github` project's schedules, set the repository
+variable `AGENTS_ENABLED` to `false`.
+
 ## Flags (non-interactive)
 
 | Flag                    | Effect                                                               |
@@ -43,6 +60,9 @@ Answer **y** to “Configure advanced options?” for:
 | `--display-name`        | Locale brand / app name                                              |
 | `--no-native`           | Drop iOS + Android                                                   |
 | `--no-git`              | Skip `git init`                                                      |
+| `--agents <setup>`      | Coding agents: `sample` (default), `github` or `none`                |
+| `--no-agents`           | Same as `--agents none`                                              |
+| `--agent-harness <h>`   | Default agent harness: `claude` (default), `codex`, `gemini`, `pi`   |
 | `--yes`                 | No prompts; deterministic (keeps template colors unless `--primary`) |
 
 ## After scaffold

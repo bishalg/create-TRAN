@@ -1,5 +1,6 @@
 {
   "$comment": "Limits every agent task inherits (ADR-0032). Only people change this file: .agents/ is itself protected.",
+  "defaultHarness": "claude",
   "branchPrefix": "agent/",
   "maxChangedLines": 300,
   "evidenceMaxLines": 200,
