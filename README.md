@@ -42,6 +42,7 @@ npx create-tran
 # optional Advanced: display name, default theme, git
 
 npx create-tran my-app --prefix acme --primary '#0ea5e9' --theme light --yes
+npx create-tran my-app --agents github --agent-harness codex   # coding agents: sample|github|none
 ```
 
 See [`packages/create-tran`](./packages/create-tran/README.md).
@@ -167,7 +168,7 @@ create-TRAN/
 │   ├── core-ts/             # @tran/core — SDK, i18n, themes, offline mirror
 │   └── create-tran/         # CLI
 ├── fixtures/                # vote-eligibility.json (Rust + TS + UniFFI parity)
-├── e2e/                     # Playwright + Gherkin
+├── e2e/                     # Playwright + Gherkin; visual, perf and smoke suites
 ├── tooling/                 # spec-check, metrics, agents runner, shared tsconfig
 ├── docs/                    # API, DESIGN, SAMPLE_APP, TESTING, LEARNINGS, specs, ADRs, reports
 ├── .agents/                 # agent tasks, policy and skills (any harness)
@@ -271,28 +272,34 @@ This gives tRPC-like ergonomics on the TypeScript side without a Rust oRPC runti
 
 ## Commands
 
-| Command                | Action                                                         |
-| :--------------------- | :------------------------------------------------------------- |
-| `pnpm dev`             | Run apps via Nx                                                |
-| `pnpm dev:web`         | Vite web app                                                   |
-| `pnpm dev:api`         | Axum API                                                       |
-| `pnpm test`            | `cargo test` + Vitest (fast)                                   |
-| `pnpm test:coverage`   | Rust + TS with **100% coverage gates**                         |
-| `pnpm test:e2e`        | Playwright Gherkin (starts API + web)                          |
-| `pnpm test:all`        | Coverage + E2E (what CI runs for tests)                        |
-| `pnpm typecheck`       | TypeScript                                                     |
-| `pnpm lint`            | Clippy                                                         |
-| `pnpm tokens:sync`     | Regenerate tokens + strings → TS/CSS, Swift, Kotlin, DESIGN.md |
-| `pnpm i18n:sync`       | Same codegen, after editing `locales/`                         |
-| `pnpm uniffi:generate` | Regenerate Swift/Kotlin bindings from `crates/tran-uniffi`     |
-| `pnpm ios:build`       | Build SwiftUI app for iOS Simulator (no signing)               |
-| `pnpm ios:project`     | Regenerate Xcode project from `apps/ios/project.yml`           |
-| `pnpm android:build`   | Build Compose debug APK                                        |
-| `pnpm ios:test`        | Unit + XCUITest accessibility suite (simulator)                |
-| `pnpm android:test`    | Compose accessibility suite (emulator/device)                  |
-| `pnpm e2e:maestro`     | Maestro smoke flows on a running simulator/emulator            |
-| `pnpm check:quick`     | Quick local check (specs, formatting, types, linter)           |
-| `pnpm hooks:install`   | Configure Git hooks path to `.githooks`                        |
+| Command                    | Action                                                                           |
+| :------------------------- | :------------------------------------------------------------------------------- |
+| `pnpm dev`                 | Run apps via Nx                                                                  |
+| `pnpm dev:web`             | Vite web app                                                                     |
+| `pnpm dev:api`             | Axum API                                                                         |
+| `pnpm test`                | `cargo test` + Vitest (fast)                                                     |
+| `pnpm test:coverage`       | Rust + TS with **100% coverage gates**                                           |
+| `pnpm test:e2e`            | Playwright Gherkin (starts API + web)                                            |
+| `pnpm test:all`            | Coverage + E2E (what CI runs for tests)                                          |
+| `pnpm typecheck`           | TypeScript                                                                       |
+| `pnpm lint`                | Clippy                                                                           |
+| `pnpm tokens:sync`         | Regenerate tokens + strings → TS/CSS, Swift, Kotlin, DESIGN.md                   |
+| `pnpm i18n:sync`           | Same codegen, after editing `locales/`                                           |
+| `pnpm uniffi:generate`     | Regenerate Swift/Kotlin bindings from `crates/tran-uniffi`                       |
+| `pnpm ios:build`           | Build SwiftUI app for iOS Simulator (no signing)                                 |
+| `pnpm ios:project`         | Regenerate Xcode project from `apps/ios/project.yml`                             |
+| `pnpm android:build`       | Build Compose debug APK                                                          |
+| `pnpm ios:test`            | Unit + XCUITest accessibility suite (simulator)                                  |
+| `pnpm android:test`        | Compose accessibility suite (emulator/device)                                    |
+| `pnpm e2e:maestro`         | Maestro smoke flows on a running simulator/emulator                              |
+| `pnpm visual`              | Web screenshot comparison against local references (gitignored)                  |
+| `pnpm ios:screenshots`     | iOS screenshot tests (XCUITest); `:record` refreshes references                  |
+| `pnpm android:screenshots` | Android screenshot tests (Roborazzi); `:record` refreshes references             |
+| `pnpm metrics`             | Lighthouse, load timings and sizes vs budgets; `--record` writes `docs/reports/` |
+| `pnpm smoke`               | Build the release web, APK and iOS app and check each starts                     |
+| `pnpm agents`              | Agent tasks: `list`, `run <task> --dry-run`, … (see `.agents/README.md`)         |
+| `pnpm check:quick`         | Quick local check (specs, formatting, types, linter)                             |
+| `pnpm hooks:install`       | Configure Git hooks path to `.githooks`                                          |
 
 Brand semantics: `crates/rust-core/src/tokens.rs` → `tran-tokens-codegen`. See [docs/DESIGN.md](./docs/DESIGN.md).
 

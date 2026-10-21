@@ -78,6 +78,7 @@ const NONE_EDITS: Edit[] = [
     from: '- **Agents:** [setup](../.agents/README.md) · **Lessons learned:**',
     to: '- **Lessons learned:**',
   },
+  { file: 'README.md', line: '| `pnpm agents` ' },
   { file: 'docs/specs/README.md', line: '| [015 Agents](./015-agents.md)' },
   {
     file: '.github/workflows/ci.yml',
