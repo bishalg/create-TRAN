@@ -6,8 +6,10 @@ import SwiftUI
 struct NavigationCoordinatorView: View {
     @State private var session: AuthSession
     @State private var isBootstrapping: Bool
-    /// Any theme in the rust-core registry can be selected — no light/dark boolean.
-    @State private var theme: TranTheme = .dark
+    /// Any theme in the rust-core registry can be selected — no light/dark boolean. A launch
+    /// argument (`-TranTheme sepia`, used by the screenshot tests) picks the starting one.
+    @State private var theme: TranTheme =
+        UserDefaults.standard.string(forKey: "TranTheme").flatMap(TranTheme.init(rawValue:)) ?? .dark
     /// One feedback center for the app: toasts and confirmations render above every screen.
     @State private var feedback = TranFeedback()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

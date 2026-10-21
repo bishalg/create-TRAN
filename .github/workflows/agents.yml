@@ -1,0 +1,186 @@
+name: Agents
+
+# Evidence-driven agent tasks (ADR-0032, spec 015). The task files in .agents/tasks/ are the source of truth;
+# `pnpm agents:check` fails when a task's cron is missing below or a cron below belongs to no task.
+#
+#   gh workflow run agents.yml -f task=spec-gap -f harness=claude
+#
+# Every run starts with the task's signal; no signal, no agent, no cost. An edit task's change is kept only if the
+# runner's guard and gates pass, and then opens a DRAFT pull request. Nothing merges itself.
+#
+# Off by default: this repo ships the setup as a sample. Schedules run only when the repository variable
+# AGENTS_ENABLED is 'true' (Settings → Secrets and variables → Actions → Variables). A manual run or the
+# `agent-review` label is explicit intent and needs only the key. The guard job always runs; it costs no model calls.
+#
+# Secrets (a missing key skips the run with a notice, so forks and fresh clones stay green):
+#   ANTHROPIC_API_KEY (claude) · OPENAI_API_KEY (codex) · GEMINI_API_KEY (gemini)
+#   AGENT_GITHUB_TOKEN (optional): a fine-grained token or GitHub App token with contents and pull-requests write.
+#     Pull requests opened with the default GITHUB_TOKEN do not trigger other workflows, so CI would not run on them.
+#
+# Every action is pinned by commit SHA, and every harness CLI by version; bumps are deliberate commits.
+
+on:
+  schedule:
+    - cron: '17 5 * * 1' # spec-gap
+    - cron: '29 5 * * 2' # dependency-audit
+    - cron: '37 5 * * 6' # translation-review
+  workflow_dispatch:
+    inputs:
+      task:
+        description: Task name (a file in .agents/tasks/)
+        required: true
+      harness:
+        description: Harness
+        type: choice
+        options: [claude, codex, gemini]
+        default: claude
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    name: Which tasks are due
+    if: >-
+      github.event_name == 'workflow_dispatch' || (github.event_name == 'schedule' && vars.AGENTS_ENABLED == 'true')
+    runs-on: ubuntu-latest
+    outputs:
+      tasks: ${{ steps.due.outputs.tasks }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - id: due
+        env:
+          TASK: ${{ inputs.task }}
+          CRON: ${{ github.event.schedule }}
+        run: |
+          if [ -n "$TASK" ]; then names="$TASK"; else names="$(node tooling/agents/agents.mjs due --cron "$CRON")"; fi
+          echo "tasks=$(printf '%s\n' "$names" | jq -R . | jq -cs 'map(select(length > 0))')" >> "$GITHUB_OUTPUT"
+
+  run:
+    name: Run ${{ matrix.task }}
+    needs: plan
+    if: needs.plan.outputs.tasks != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        task: ${{ fromJSON(needs.plan.outputs.tasks) }}
+    env:
+      HARNESS: ${{ inputs.harness || 'claude' }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+    steps:
+      - name: Check the harness key
+        id: key
+        run: |
+          case "$HARNESS" in
+            claude) key="$ANTHROPIC_API_KEY" ;; codex) key="$OPENAI_API_KEY" ;; gemini) key="$GEMINI_API_KEY" ;;
+          esac
+          if [ -z "$key" ]; then
+            echo "::notice::No API key for $HARNESS; skipping ${{ matrix.task }}. See .agents/README.md."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: steps.key.outputs.skip != 'true'
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.AGENT_GITHUB_TOKEN || github.token }}
+      - name: Install Rust toolchain
+        if: steps.key.outputs.skip != 'true'
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+      - name: Rust cache
+        if: steps.key.outputs.skip != 'true'
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - name: Install pnpm
+        if: steps.key.outputs.skip != 'true'
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - name: Set up Node.js
+        if: steps.key.outputs.skip != 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace dependencies and the harness
+        if: steps.key.outputs.skip != 'true'
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build:libs
+          case "$HARNESS" in
+            claude) npm install -g @anthropic-ai/claude-code@2.1.305 ;;
+            codex) npm install -g @openai/codex@0.161.0 ;;
+            gemini) npm install -g @google/gemini-cli@0.53.1 ;;
+          esac
+          git config user.name "tran-agent"
+          git config user.email "tran-agent@users.noreply.github.com"
+      - name: Signal, agent, guard, gates, draft pull request
+        if: steps.key.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.AGENT_GITHUB_TOKEN || github.token }}
+        run: node tooling/agents/agents.mjs run "${{ matrix.task }}" --harness "$HARNESS" --publish
+      - name: Upload the prompt, log and verification
+        if: always() && steps.key.outputs.skip != 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: agent-${{ matrix.task }}
+          path: .agents/out
+          if-no-files-found: ignore
+          retention-days: 14
+
+  guard:
+    name: Agent guard (scope, protected paths, line budget)
+    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'agent/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      # Run the base branch's guard: a pull request must not judge itself with code it changed. The guard
+      # then reads the policy and task files from the base commit too (`--committed`).
+      - name: Use the runner from the base branch
+        run: git checkout "origin/${{ github.base_ref }}" -- tooling/agents tooling/spec-check
+      - name: Guard
+        env:
+          AGENT_BRANCH: ${{ github.head_ref }}
+          AGENT_BASE: origin/${{ github.base_ref }}
+        run: node tooling/agents/agents.mjs guard --committed
+
+  review:
+    name: Agent code review (read-only)
+    # Opt-in per pull request: a maintainer adds the `agent-review` label. Re-add it to review again.
+    if: >-
+      github.event_name == 'pull_request' && github.event.action == 'labeled' &&
+      github.event.label.name == 'agent-review' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - name: Check the key
+        id: key
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then echo "::notice::No ANTHROPIC_API_KEY; skipping the review."; echo "skip=true" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: steps.key.outputs.skip != 'true'
+        with:
+          fetch-depth: 0
+      - name: Review
+        if: steps.key.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENT_BASE: origin/${{ github.base_ref }}
+        run: |
+          npm install -g @anthropic-ai/claude-code@2.1.305
+          node tooling/agents/agents.mjs run code-review --harness claude --publish --pr "${{ github.event.pull_request.number }}"

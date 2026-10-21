@@ -6,5 +6,12 @@
     "moduleResolution": "bundler",
     "types": ["node"]
   },
-  "include": ["steps", "playwright.config.ts"]
+  "include": [
+    "steps",
+    "visual",
+    "perf",
+    "smoke",
+    "playwright.config.ts",
+    "playwright.metrics.config.ts"
+  ]
 }

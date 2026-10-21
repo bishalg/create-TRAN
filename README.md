@@ -168,12 +168,32 @@ create-TRAN/
 │   └── create-tran/         # CLI
 ├── fixtures/                # vote-eligibility.json (Rust + TS + UniFFI parity)
 ├── e2e/                     # Playwright + Gherkin
-├── tooling/typescript/
-├── docs/                    # API, DESIGN, SAMPLE_APP, TESTING, REVIEW, ROADMAP, UI
-├── AGENTS.md                # Guidance for AI agents
+├── tooling/                 # spec-check, metrics, agents runner, shared tsconfig
+├── docs/                    # API, DESIGN, SAMPLE_APP, TESTING, LEARNINGS, specs, ADRs, reports
+├── .agents/                 # agent tasks, policy and skills (any harness)
+├── AGENTS.md                # Rules for AI agents and people
 ├── CONTRIBUTING.md
 └── Cargo.toml
 ```
+
+---
+
+## Unattended agents
+
+Scheduled and micro-task agents are defined once in [`.agents/tasks/`](./.agents/tasks/) and run by any harness:
+Claude Code, Codex, Gemini CLI, pi, Jules or your own. Each task starts only when its signal finds evidence: a
+`[planned]` requirement, an audit advisory, a metrics regression, a surviving mutant. The runner, not the agent, runs
+the gates before it opens a draft pull request. It ships as a sample and runs nothing on its own: copy and adapt it
+with [Adopting it in your project](./.agents/README.md#adopting-it-in-your-project).
+
+```sh
+pnpm agents list                         # the tasks
+pnpm agents run spec-gap --dry-run       # see the exact prompt
+pnpm agents run code-review --harness codex
+```
+
+Setup for cron, a VPS, GitHub Actions or Jules: [.agents/README.md](./.agents/README.md). Why:
+[ADR-0032](./docs/adr/0032-evidence-driven-agents.md).
 
 ---
 

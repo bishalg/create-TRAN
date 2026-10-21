@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+    id("io.github.takahirom.roborazzi")
 }
 
 android {
@@ -50,6 +51,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    // Robolectric renders the real resources (strings, fonts) in the JVM screenshot tests.
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+
     kotlinOptions {
         jvmTarget = "17"
         freeCompilerArgs +=
@@ -69,6 +75,12 @@ dependencies {
     testImplementation("net.java.dev.jna:jna:5.15.0")
     testImplementation("org.json:json:20240303")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    // Screenshots (ADR-0031): Google's Robolectric renders Compose on the JVM; Roborazzi compares.
+    testImplementation(composeBom)
+    testImplementation("androidx.compose.ui:ui-test-junit4")
+    testImplementation("org.robolectric:robolectric:4.17")
+    testImplementation("io.github.takahirom.roborazzi:roborazzi:1.60.0")
+    testImplementation("io.github.takahirom.roborazzi:roborazzi-compose:1.60.0")
     androidTestImplementation(composeBom)
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     androidTestImplementation("androidx.test:runner:1.6.2")
@@ -93,4 +105,9 @@ tasks.withType<Test> {
     val libDir = repoRoot.resolve("target/release").absolutePath
     environment("UNIFFI_LIB_DIR", libDir)
     environment("REPO_ROOT", repoRoot.absolutePath)
+}
+
+// References are per machine and gitignored (ADR-0031): the first run records, later runs verify.
+roborazzi {
+    outputDir.set(file(".screenshots"))
 }

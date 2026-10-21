@@ -98,7 +98,29 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
+  # Screenshot comparison (REQ-PERF-007, ADR-0031): its own scheme, so `pnpm ios:test` never
+  # records images; run it with `pnpm ios:screenshots`. Reads the theme registry from the
+  # generated tokens; no third-party code.
+  TranVotingDemoScreenshotTests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - Tests/TranVotingDemoScreenshotTests
+      - Sources/TranVotingDemo/Generated/BrandTokens.swift
+    dependencies:
+      - target: TranVotingDemo
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
+  TranVotingDemoScreenshots:
+    build:
+      targets:
+        TranVotingDemo: all
+        TranVotingDemoScreenshotTests: [test]
+    test:
+      targets:
+        - TranVotingDemoScreenshotTests
   TranVotingDemo:
     build:
       targets:

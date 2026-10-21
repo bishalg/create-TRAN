@@ -5,26 +5,28 @@ easy to copy. Every layer below has one reference file. Copy its shape, not its 
 
 ## The pyramid
 
-| Layer                  | Tool                                                | Reference file                                                                                                          | What it proves                                                                             |
-| :--------------------- | :-------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------- |
-| Rule unit tests        | `cargo test`                                        | `crates/rust-core/src/voting.rs` (`mod tests`)                                                                          | Pure functions, boundaries (17/18, leap day)                                               |
-| **Golden fixtures**    | `cargo test` + `vitest`                             | `fixtures/vote-eligibility.json` → `crates/rust-core/tests/parity_fixtures.rs`, `packages/core-ts/tests/parity.test.ts` | Rust and TypeScript give **identical** answers                                             |
-| UniFFI parity          | `cargo test -p tran-uniffi`                         | `crates/tran-uniffi/tests/{parity,navigation}_fixtures.rs` + `src/lib.rs` unit tests                                    | Native FFI surface matches the same fixture tables (rules, countries, navigation)          |
-| **FFI surface**        | vitest source/bindings guard                        | `packages/core-ts/tests/ffi-surface.test.ts`                                                                            | Docs crossed into both bindings, typed enums, generated types extended not redeclared      |
-| **Codegen drift**      | `cargo test`                                        | `crates/tran-tokens-codegen/tests/generated_files.rs` + `src/*` unit tests                                              | Every committed generated file is exactly what Rust renders; nothing stale left (ADR-0030) |
-| **Failure modes**      | `cargo test` + vitest + XCTest/JUnit                | `fixtures/failure-modes.json` → `apps/api/tests/failure_modes.rs`, `packages/core-ts/tests/failure-modes.test.ts`       | Hostile requests rejected with the right code; every client reads every odd answer alike   |
-| **Properties**         | `proptest` + `fast-check`                           | `crates/rust-core/tests/properties.rs`, `packages/core-ts/tests/properties.test.ts`                                     | Invariants over generated input (ages, dates, delays, ids) — the cases nobody writes       |
-| Robustness + logs      | `tower::oneshot` + log capture                      | `apps/api/tests/robustness_test.rs` (`tests/support`), `packages/core-ts/tests/robustness.test.ts`                      | Panics, deadline, cancellation; exactly one log event per failure, no payload              |
-| **Mutation** (nightly) | `cargo-mutants` + Stryker                           | `.github/workflows/mutation.yml`, `.cargo/mutants.toml`, `packages/core-ts/stryker.config.json`                         | A planted bug makes some test fail — coverage proves code ran, this proves tests notice    |
-| HTTP integration       | `tower::oneshot`                                    | `apps/api/tests/api_test.rs`                                                                                            | Routes, headers, status codes, one error envelope                                          |
-| Real socket smoke      | tokio `TcpListener`                                 | `apps/api/tests/server_test.rs`                                                                                         | `run_server` really serves                                                                 |
-| Client / contract      | vitest + fake `fetch`                               | `packages/core-ts/tests/client.test.ts`                                                                                 | Timeouts, error mapping, Zod contract                                                      |
-| **Native API client**  | XCTest stubbed `URLSession` / JUnit `MockWebServer` | `apps/ios/Tests/TranVotingDemoTests/TranApiClientTests.swift`, `apps/android/app/src/test/…/api/TranApiClientTests.kt`  | Base-URL resolution, debug-header gating, offline split — no live API                      |
-| Hook / component       | vitest + Testing Library                            | `apps/web/tests/{useTranApi,App}.test.tsx`                                                                              | Behaviour via roles and labels, never CSS                                                  |
-| **BDD + E2E**          | Playwright + Gherkin                                | `e2e/features/vote-eligibility.feature`                                                                                 | Real browser → real Vite → real Axum (incl. CORS)                                          |
-| **iOS UI + a11y**      | XCTest / XCUITest                                   | `apps/ios/Tests/TranVotingDemoUITests/VotingUITests.swift`                                                              | Journeys on a simulator, `performAccessibilityAudit` per theme, 44pt targets, Dynamic Type |
-| **Android + a11y**     | Compose instrumentation                             | `apps/android/app/src/androidTest/…/VotingHomeAccessibilityTest.kt`                                                     | Semantics, `liveRegion`, 48dp touch bounds, 200% font scale, every theme, contrast         |
-| **Native smoke**       | Maestro                                             | `e2e/maestro/flows/*.yaml`                                                                                              | The same journeys on a booted simulator/emulator                                           |
+| Layer                   | Tool                                                | Reference file                                                                                                                         | What it proves                                                                                  |
+| :---------------------- | :-------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------- |
+| Rule unit tests         | `cargo test`                                        | `crates/rust-core/src/voting.rs` (`mod tests`)                                                                                         | Pure functions, boundaries (17/18, leap day)                                                    |
+| **Golden fixtures**     | `cargo test` + `vitest`                             | `fixtures/vote-eligibility.json` → `crates/rust-core/tests/parity_fixtures.rs`, `packages/core-ts/tests/parity.test.ts`                | Rust and TypeScript give **identical** answers                                                  |
+| UniFFI parity           | `cargo test -p tran-uniffi`                         | `crates/tran-uniffi/tests/{parity,navigation}_fixtures.rs` + `src/lib.rs` unit tests                                                   | Native FFI surface matches the same fixture tables (rules, countries, navigation)               |
+| **FFI surface**         | vitest source/bindings guard                        | `packages/core-ts/tests/ffi-surface.test.ts`                                                                                           | Docs crossed into both bindings, typed enums, generated types extended not redeclared           |
+| **Codegen drift**       | `cargo test`                                        | `crates/tran-tokens-codegen/tests/generated_files.rs` + `src/*` unit tests                                                             | Every committed generated file is exactly what Rust renders; nothing stale left (ADR-0030)      |
+| **Failure modes**       | `cargo test` + vitest + XCTest/JUnit                | `fixtures/failure-modes.json` → `apps/api/tests/failure_modes.rs`, `packages/core-ts/tests/failure-modes.test.ts`                      | Hostile requests rejected with the right code; every client reads every odd answer alike        |
+| **Properties**          | `proptest` + `fast-check`                           | `crates/rust-core/tests/properties.rs`, `packages/core-ts/tests/properties.test.ts`                                                    | Invariants over generated input (ages, dates, delays, ids) — the cases nobody writes            |
+| Robustness + logs       | `tower::oneshot` + log capture                      | `apps/api/tests/robustness_test.rs` (`tests/support`), `packages/core-ts/tests/robustness.test.ts`                                     | Panics, deadline, cancellation; exactly one log event per failure, no payload                   |
+| **Mutation** (nightly)  | `cargo-mutants` + Stryker                           | `.github/workflows/mutation.yml`, `.cargo/mutants.toml`, `packages/core-ts/stryker.config.json`                                        | A planted bug makes some test fail — coverage proves code ran, this proves tests notice         |
+| HTTP integration        | `tower::oneshot`                                    | `apps/api/tests/api_test.rs`                                                                                                           | Routes, headers, status codes, one error envelope                                               |
+| Real socket smoke       | tokio `TcpListener`                                 | `apps/api/tests/server_test.rs`                                                                                                        | `run_server` really serves                                                                      |
+| Client / contract       | vitest + fake `fetch`                               | `packages/core-ts/tests/client.test.ts`                                                                                                | Timeouts, error mapping, Zod contract                                                           |
+| **Native API client**   | XCTest stubbed `URLSession` / JUnit `MockWebServer` | `apps/ios/Tests/TranVotingDemoTests/TranApiClientTests.swift`, `apps/android/app/src/test/…/api/TranApiClientTests.kt`                 | Base-URL resolution, debug-header gating, offline split — no live API                           |
+| Hook / component        | vitest + Testing Library                            | `apps/web/tests/{useTranApi,App}.test.tsx`                                                                                             | Behaviour via roles and labels, never CSS                                                       |
+| **BDD + E2E**           | Playwright + Gherkin                                | `e2e/features/vote-eligibility.feature`                                                                                                | Real browser → real Vite → real Axum (incl. CORS)                                               |
+| **iOS UI + a11y**       | XCTest / XCUITest                                   | `apps/ios/Tests/TranVotingDemoUITests/VotingUITests.swift`                                                                             | Journeys on a simulator, `performAccessibilityAudit` per theme, 44pt targets, Dynamic Type      |
+| **Android + a11y**      | Compose instrumentation                             | `apps/android/app/src/androidTest/…/VotingHomeAccessibilityTest.kt`                                                                    | Semantics, `liveRegion`, 48dp touch bounds, 200% font scale, every theme, contrast              |
+| **Native smoke**        | Maestro                                             | `e2e/maestro/flows/*.yaml`                                                                                                             | The same journeys on a booted simulator/emulator                                                |
+| **Screenshots** (local) | Playwright + Roborazzi on Robolectric + XCUITest    | `e2e/visual/web.spec.ts`, `apps/android/app/src/test/…/screenshots/ScreenshotTest.kt`, `apps/ios/Tests/TranVotingDemoScreenshotTests/` | Every theme × locale looks as it did; references per machine, gitignored (ADR-0031)             |
+| **Metrics** (on demand) | Lighthouse + Navigation Timing + size collector     | `e2e/perf/web.spec.ts`, `tooling/metrics/metrics.mjs`, `tooling/metrics/budgets.json`                                                  | Scores, paint times and bundle sizes within budget and not drifting; history in `docs/reports/` |
 
 ## TDD loop (do this for every change)
 
@@ -45,6 +47,12 @@ pnpm ios:test             # XCTest + XCUITest (client stubs, accessibility audit
 pnpm android:test         # JVM unit tests + Compose instrumentation on a booted emulator (builds the Rust .so first)
 pnpm e2e:maestro          # Maestro smoke flows on the booted simulator/emulator (--device to choose)
 pnpm test:all             # everything CI runs
+pnpm visual               # web screenshots, every theme × locale (first run on a machine records the references)
+pnpm android:screenshots  # Android screenshots on the JVM, no emulator (same: first run records)
+pnpm ios:screenshots      # iOS screenshots on a simulator, status bar pinned (same; IOS_SCREENSHOT_DEVICE picks one)
+pnpm smoke                # release web, APK and iOS app build, start and stay running (skips what has no device)
+pnpm metrics              # Lighthouse, load timings, bundle sizes vs budgets and the last record (--native: APK + iOS app)
+pnpm metrics --record     # …and append the run to docs/reports/metrics.{json,md} — commit both
 pnpm check:quick          # spec check + formatting + typecheck + clippy (matches pre-commit hook)
 pnpm hooks:install        # configure git core.hooksPath .githooks (runs automatically on pnpm install)
 ```
@@ -111,6 +119,31 @@ Coverage says a line ran; it does not say a test would notice the line breaking.
 - **Logging is linted.** Clippy denies `println!`/`dbg!`/`unwrap()`/`expect()` outside tests (an `expect` that cannot
   fail carries `#[allow(…, reason = "…")]`); ESLint denies `console`; `logging-guards.test.ts` holds Swift and Kotlin to
   their one logger.
+
+## Screenshots and metrics (ADR-0031)
+
+Behaviour tests miss two kinds of drift: a screen that _looks_ wrong while every assertion passes, and a product that
+slowly gets heavier or slower. Both are measured here, with opposite storage rules:
+
+- **Screenshots never reach git.** References live in `e2e/.screenshots/`, `apps/android/app/.screenshots/` and
+  `apps/ios/.screenshots/<model>-<iOS>/` (gitignored): the first run on a machine records them, later runs compare.
+  On a failure, look at the diff images (`e2e/test-results/`, `apps/android/app/build/outputs/roborazzi/*_compare.png`,
+  `apps/ios/build/screenshots/`); if the change is intended, re-record with `pnpm visual:update` /
+  `pnpm android:screenshots:record` / `pnpm ios:screenshots:record`. `TRAN_SCREENSHOTS_ONLY=sepia-ne` runs one iOS
+  combination while you work on a screen. The matrix comes from the generated theme
+  and locale registry, so a new theme or language needs no test edit.
+- **Numbers do reach git.** `pnpm metrics` prints every metric against `tooling/metrics/budgets.json` and the last
+  comparable record, and fails naming the metric that is over budget or regressed. Record before a release or a PR
+  that may move a number (`pnpm metrics --native --record`), and commit `docs/reports/metrics.{json,md}` with it. A
+  failing run is not recorded unless you pass `--accept` and say why in the commit; raising a budget is a reviewed
+  change too.
+- **Release builds are smoke-tested.** `pnpm smoke` builds the release web, APK and iOS app and checks each starts
+  and stays up (REQ-PERF-008). The Android check installs the release build over the debug one; reinstall the debug
+  APK before Maestro.
+- **Nightly.** `.github/workflows/baselines.yml` runs the web and Android screenshots, `pnpm metrics` and the web
+  smoke test, with references cached per OS (`gh workflow run baselines.yml --ref <branch>`).
+- **Generated output stays untracked.** `output-guards.test.ts` fails if a report, screenshot, log or coverage file
+  is tracked or not ignored, or if `docs/reports/` holds anything but text.
 
 ## Adding a feature (checklist)
 

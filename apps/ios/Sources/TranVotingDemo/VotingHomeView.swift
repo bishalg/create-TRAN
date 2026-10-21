@@ -137,16 +137,12 @@ struct VotingHomeView: View {
             resultText = L10n.Errors.ageAndCountry
             return
         }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
-        let reference = formatter.string(from: Date())
         do {
             let res = try evaluateVoteEligibilityOffline(
                 age: age,
                 birthdateIso: nil,
                 countryCode: countryCode,
-                referenceDateIso: String(reference)
+                referenceDateIso: TranReferenceDate.string()
             )
             resultText = res.localizedReason
             confirmWithApi(age: age)

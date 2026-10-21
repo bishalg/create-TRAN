@@ -102,3 +102,9 @@ verdict (REQ-NAT-002).
 offline UI journeys through an unreachable base URL, and
 [`native-networking.test.ts`](../../packages/core-ts/tests/native-networking.test.ts) guarding the manifests,
 Gradle config and generated Info.plist.
+
+### REQ-NAT-012 [verified] The device check works in every locale
+
+The reference date a native app hands the Rust core MUST be ISO 8601 (`YYYY-MM-DD`, Gregorian, ASCII digits, UTC)
+whatever the device's language, numbering system or calendar. Found by the iOS screenshots (REQ-PERF-007): in Nepali,
+a locale-following formatter wrote Devanagari digits and every check answered "enter a valid date".

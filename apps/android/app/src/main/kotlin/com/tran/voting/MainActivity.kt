@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import com.tran.voting.api.TranApiClient
 import com.tran.voting.generated.TranBrandTokens
 import com.tran.voting.generated.TranTheme
 import com.tran.voting.generated.tranColorScheme
@@ -47,14 +48,18 @@ class MainActivity : ComponentActivity() {
  * Verifies: REQ-NAV-001 REQ-NAV-002 REQ-NAV-003 REQ-NAV-004 REQ-NAV-005
  */
 @Composable
-fun NavigationCoordinator() {
+fun NavigationCoordinator(
+    // Screenshot tests start in each registry theme and talk to a canned API (ADR-0031).
+    initialTheme: TranTheme = TranTheme.DARK,
+    api: TranApiClient = TranApiClient(),
+) {
     var session by remember {
         mutableStateOf<AuthSession>(
             AuthSession.Authenticated(userId = "voter-001", role = TranUserRole.CITIZEN_VOTER)
         )
     }
     // Any theme in the rust-core registry can be selected — no light/dark boolean.
-    var theme by remember { mutableStateOf(TranTheme.DARK) }
+    var theme by remember { mutableStateOf(initialTheme) }
     val palette = TranBrandTokens.palette(theme)
     // One feedback center for the app: toasts and confirmations render above every screen.
     val feedback = remember { TranFeedback() }
@@ -86,6 +91,7 @@ fun NavigationCoordinator() {
                         theme = theme,
                         onThemeChange = { theme = it },
                         onSignOut = signOut,
+                        api = api,
                     )
                 }
                 TranAppDestination.AUDITOR_DASHBOARD -> {

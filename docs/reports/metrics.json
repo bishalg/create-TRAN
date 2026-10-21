@@ -1,0 +1,205 @@
+{
+  "schema": 1,
+  "records": [
+    {
+      "date": "2026-10-20T11:34:42.549Z",
+      "commit": "c9a8c59-dirty",
+      "machine": {
+        "label": "darwin-arm64 · Apple M4 Pro · 14 cores",
+        "platform": "darwin-arm64"
+      },
+      "metrics": {
+        "web.lighthouse.performance": {
+          "value": 100,
+          "unit": "score",
+          "kind": "score"
+        },
+        "web.lighthouse.accessibility": {
+          "value": 100,
+          "unit": "score",
+          "kind": "score"
+        },
+        "web.lighthouse.best-practices": {
+          "value": 100,
+          "unit": "score",
+          "kind": "score"
+        },
+        "web.lighthouse.seo": {
+          "value": 91,
+          "unit": "score",
+          "kind": "score"
+        },
+        "web.fcp": {
+          "value": 364.886,
+          "unit": "ms",
+          "kind": "timing"
+        },
+        "web.lcp": {
+          "value": 477.376,
+          "unit": "ms",
+          "kind": "timing"
+        },
+        "web.tbt": {
+          "value": 0,
+          "unit": "ms",
+          "kind": "timing"
+        },
+        "web.cls": {
+          "value": 0,
+          "unit": "ratio",
+          "kind": "score"
+        },
+        "web.speed-index": {
+          "value": 364.886,
+          "unit": "ms",
+          "kind": "timing"
+        },
+        "web.ttfb": {
+          "value": 2.1,
+          "unit": "ms",
+          "kind": "timing"
+        },
+        "web.dom-content-loaded": {
+          "value": 29.2,
+          "unit": "ms",
+          "kind": "timing"
+        },
+        "web.load": {
+          "value": 29.2,
+          "unit": "ms",
+          "kind": "timing"
+        },
+        "web.js.gzip": {
+          "value": 96222,
+          "unit": "bytes",
+          "kind": "size"
+        },
+        "web.css.gzip": {
+          "value": 3711,
+          "unit": "bytes",
+          "kind": "size"
+        },
+        "android.apk": {
+          "value": 9133025,
+          "unit": "bytes",
+          "kind": "size"
+        },
+        "ios.app": {
+          "value": 3053726,
+          "unit": "bytes",
+          "kind": "size"
+        },
+        "api.binary": {
+          "value": 3303280,
+          "unit": "bytes",
+          "kind": "binary"
+        },
+        "core.native-lib": {
+          "value": 660352,
+          "unit": "bytes",
+          "kind": "binary"
+        }
+      }
+    },
+    {
+      "date": "2026-10-20T17:33:58.265Z",
+      "commit": "c9a8c59-dirty",
+      "machine": {
+        "label": "darwin-arm64 · Apple M4 Pro · 14 cores",
+        "platform": "darwin-arm64"
+      },
+      "metrics": {
+        "web.lighthouse.performance": {
+          "value": 100,
+          "unit": "score",
+          "kind": "score"
+        },
+        "web.lighthouse.accessibility": {
+          "value": 100,
+          "unit": "score",
+          "kind": "score"
+        },
+        "web.lighthouse.best-practices": {
+          "value": 100,
+          "unit": "score",
+          "kind": "score"
+        },
+        "web.lighthouse.seo": {
+          "value": 100,
+          "unit": "score",
+          "kind": "score"
+        },
+        "web.fcp": {
+          "value": 366.451,
+          "unit": "ms",
+          "kind": "timing"
+        },
+        "web.lcp": {
+          "value": 479.219,
+          "unit": "ms",
+          "kind": "timing"
+        },
+        "web.tbt": {
+          "value": 0,
+          "unit": "ms",
+          "kind": "timing"
+        },
+        "web.cls": {
+          "value": 0,
+          "unit": "ratio",
+          "kind": "score"
+        },
+        "web.speed-index": {
+          "value": 366.451,
+          "unit": "ms",
+          "kind": "timing"
+        },
+        "web.ttfb": {
+          "value": 1.5,
+          "unit": "ms",
+          "kind": "timing"
+        },
+        "web.dom-content-loaded": {
+          "value": 27,
+          "unit": "ms",
+          "kind": "timing"
+        },
+        "web.load": {
+          "value": 27,
+          "unit": "ms",
+          "kind": "timing"
+        },
+        "web.js.gzip": {
+          "value": 96222,
+          "unit": "bytes",
+          "kind": "size"
+        },
+        "web.css.gzip": {
+          "value": 3711,
+          "unit": "bytes",
+          "kind": "size"
+        },
+        "android.apk": {
+          "value": 9133025,
+          "unit": "bytes",
+          "kind": "size"
+        },
+        "ios.app": {
+          "value": 3055294,
+          "unit": "bytes",
+          "kind": "size"
+        },
+        "api.binary": {
+          "value": 3303280,
+          "unit": "bytes",
+          "kind": "binary"
+        },
+        "core.native-lib": {
+          "value": 660352,
+          "unit": "bytes",
+          "kind": "binary"
+        }
+      }
+    }
+  ]
+}

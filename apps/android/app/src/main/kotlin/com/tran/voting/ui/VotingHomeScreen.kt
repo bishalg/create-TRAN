@@ -39,7 +39,6 @@ import com.tran.voting.ui.atoms.TranText
 import com.tran.voting.ui.atoms.TranTextVariant
 import com.tran.voting.ui.feedback.LocalTranFeedback
 import com.tran.voting.ui.feedback.TranFeedback
-import java.time.LocalDate
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import uniffi.tran_uniffi.TranPresentation
@@ -201,7 +200,7 @@ private fun runOfflineCheck(
 ): OfflineCheck {
     // Only parsing happens here; every rule (age range, country shape) is checked once, in Rust.
     val age = ageText.toUShortOrNull() ?: return OfflineCheck(invalidAge, null)
-    val reference = LocalDate.now().toString()
+    val reference = tranReferenceDate()
     return try {
         val result = evaluateVoteEligibilityOffline(age, null, countryCode, reference)
         OfflineCheck(result.localizedReason(context), age.toInt())

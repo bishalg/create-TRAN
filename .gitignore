@@ -90,3 +90,11 @@ coverage/
 **/reports/mutation/
 **/.stryker-tmp/
 mutants.out*/
+
+# Screenshots and local metrics (ADR-0031): per machine, never committed. The text report
+# in docs/reports/ is the committed record.
+**/.screenshots/
+.metrics/
+
+# Agent runs (ADR-0032): prompts, harness logs, hand-offs and reports, per run, never committed.
+.agents/out/

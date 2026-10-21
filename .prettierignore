@@ -8,5 +8,5 @@ pnpm-lock.yaml
 **/generated/
 DESIGN.md
 
-# Mutation-testing reports (ADR-0029)
+# Generated reports: mutation (ADR-0029) and docs/reports/ metrics, written by `pnpm metrics --record` (ADR-0031)
 reports/

@@ -1,0 +1,17 @@
+{
+  "$comment": "Hard limits for `pnpm metrics` (ADR-0031). Raising one is a reviewed commit that says why.",
+  "web.lighthouse.performance": { "min": 90 },
+  "web.lighthouse.accessibility": { "min": 95 },
+  "web.lighthouse.best-practices": { "min": 95 },
+  "web.lighthouse.seo": { "min": 100 },
+  "web.fcp": { "max": 1800 },
+  "web.lcp": { "max": 2500 },
+  "web.tbt": { "max": 200 },
+  "web.cls": { "max": 0.1 },
+  "web.js.gzip": { "max": 153600 },
+  "web.css.gzip": { "max": 16384 },
+  "android.apk": { "max": 12582912 },
+  "ios.app": { "max": 5242880 },
+  "api.binary": { "max": 8388608 },
+  "core.native-lib": { "max": 2097152 }
+}

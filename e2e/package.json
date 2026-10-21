@@ -6,11 +6,15 @@
   "scripts": {
     "test": "pnpm --dir .. build:libs && bddgen && playwright test",
     "test:headed": "pnpm --dir .. build:libs && bddgen && playwright test --headed",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "visual": "pnpm --dir .. build:libs && playwright test -c playwright.metrics.config.ts --project visual",
+    "visual:update": "pnpm --dir .. build:libs && playwright test -c playwright.metrics.config.ts --project visual --update-snapshots"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
     "@playwright/test": "^1.55.0",
+    "@tran/core": "workspace:*",
+    "lighthouse": "13.5.0",
     "playwright-bdd": "^9.2.1",
     "typescript": "^5.8.2"
   }

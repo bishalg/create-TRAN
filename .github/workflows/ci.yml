@@ -83,6 +83,9 @@ jobs:
       - name: Spec traceability (every verified requirement has a citing test)
         run: pnpm run spec:check
 
+      - name: Agent tasks, workflow crons and learnings are valid (ADR-0032)
+        run: pnpm run agents:check
+
       - name: Tests + 100% coverage gate (unit, parity fixtures, components)
         run: pnpm run test:ts:coverage
 

@@ -49,6 +49,8 @@ const SKIP_DIRS = new Set([
   'playwright-report',
   '.output',
   'DerivedData',
+  '.metrics',
+  '.screenshots',
 ]);
 const SOURCE_FILE =
   /\.(test|spec)\.[cm]?[jt]sx?$|\.feature$|_test\.rs$|Tests?\.(swift|kt)$|\/tests\/.+\.rs$|^\/e2e\/maestro\/flows\/.+\.ya?ml$/;
@@ -95,4 +97,4 @@ function main(root) {
   console.log('spec-check: ok');
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) main(process.cwd());
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main(process.cwd());

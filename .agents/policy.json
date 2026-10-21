@@ -1,0 +1,39 @@
+{
+  "$comment": "Limits every agent task inherits (ADR-0032). Only people change this file: .agents/ is itself protected.",
+  "branchPrefix": "agent/",
+  "maxChangedLines": 300,
+  "evidenceMaxLines": 200,
+  "timeoutMinutes": 30,
+  "protected": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    ".agents/",
+    ".gemini/",
+    ".github/",
+    ".githooks/",
+    ".cargo/",
+    "**/package.json",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "**/Cargo.toml",
+    "Cargo.lock",
+    "**/*.gradle.kts",
+    "apps/ios/project.yml",
+    "apps/ios/TranVotingDemo.xcodeproj/",
+    "docs/adr/",
+    "docs/reports/",
+    "**/generated/",
+    "**/Generated/",
+    "DESIGN.md",
+    "tooling/agents/",
+    "vitest.config.ts",
+    "tooling/metrics/budgets.json",
+    "packages/core-ts/stryker.config.json"
+  ],
+  "signals": {
+    "untranslated-strings": {
+      "$comment": "Keys that are meant to read the same in every language.",
+      "allow": ["common.brand", "shell.header"]
+    }
+  }
+}

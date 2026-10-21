@@ -1,0 +1,124 @@
+name: Screenshots and metrics
+
+# Drift that behaviour tests miss (ADR-0031): screens that look different, bundles that grow,
+# pages that score lower. Nightly + manual dispatch only, like the native suites (ADR-0021).
+#
+#   gh workflow run baselines.yml --ref <branch>
+#
+# Screenshot references are never committed. CI keeps its own in the Actions cache, per OS: the
+# first run records them, later runs compare. A failure uploads the diff images. Metrics are judged
+# against tooling/metrics/budgets.json and docs/reports/metrics.json; CI never records history.
+# Every action is pinned by commit SHA below; bumps are deliberate commits.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Nightly at 04:47 UTC; scheduled runs execute the default branch.
+    - cron: '47 4 * * *'
+
+concurrency:
+  group: baselines-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    name: Web screenshots, metrics and release smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
+      - name: Rust cache
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm --filter e2e exec playwright install --with-deps chromium
+      # A new key every run, restored from the latest: references recorded once stay the baseline.
+      - name: Restore screenshot references
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: e2e/.screenshots
+          key: screenshots-web-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: screenshots-web-${{ runner.os }}-
+      - name: Screenshots (every theme × locale)
+        run: pnpm visual
+      - name: Metrics (Lighthouse, timings, sizes vs budgets and history)
+        run: pnpm metrics
+      - name: Web release smoke
+        run: pnpm --filter e2e exec playwright test -c playwright.metrics.config.ts --project smoke --grep web
+      - name: Upload metrics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: metrics
+          path: .metrics/latest.json
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Upload screenshot diffs on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: web-screenshot-diffs
+          path: e2e/test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+  android:
+    name: Android screenshots (Robolectric)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
+          targets: aarch64-linux-android, x86_64-linux-android
+      - name: Rust cache
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Restore screenshot references
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: apps/android/app/.screenshots
+          key: screenshots-android-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: screenshots-android-${{ runner.os }}-
+      - name: Screenshots (every screen × theme × locale)
+        run: pnpm android:screenshots
+      - name: Upload screenshot diffs on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: android-screenshot-diffs
+          path: apps/android/app/build/outputs/roborazzi
+          if-no-files-found: ignore
+          retention-days: 14

@@ -15,6 +15,7 @@ This is a **template**: keep the sample tiny, exemplary and fully tested.
   fails while any generated file is stale (ADR-0030).
 - Web UI: token-bound atoms in `apps/web/src/shared/ui/` only (no inline `style` / raw semantic tags in features; see [docs/ATOMIC.md](docs/ATOMIC.md)).
 - New user-visible behaviour needs a Gherkin scenario in `e2e/features/`.
+- UI changes: `pnpm visual` / `pnpm android:screenshots` / `pnpm ios:screenshots` (references are local and gitignored — never commit images). A change that may move performance or size: `pnpm metrics`, and `--record` to commit the numbers in `docs/reports/` (ADR-0031). Never hand-edit `docs/reports/`. Release builds: `pnpm smoke`.
 - Native apps: `pnpm ios:build` (XcodeGen; regenerate with `pnpm ios:project`) and `pnpm android:build` stay part of the loop when touching `apps/ios` or `apps/android`.
 - Before finishing: `pnpm test:all`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo fmt --all`.
 
@@ -27,3 +28,15 @@ This is a **template**: keep the sample tiny, exemplary and fully tested.
 5. Run `pnpm spec:check` plus `pnpm test:coverage` before committing.
 
 Never mark a requirement `verified` without a test that cites it.
+
+## Unattended agents
+
+Scheduled and micro-task agents (Jules, Claude Code, Codex, Gemini CLI, pi or any harness) run the task files in
+[`.agents/tasks/`](.agents/tasks/) through `pnpm agents run <task> --harness <name>`; setup in
+[`.agents/README.md`](.agents/README.md), rationale in ADR-0032.
+
+- No signal, no change: work only from the evidence a task's signal produced. Making no change is a correct outcome.
+- Never weaken a test, threshold, budget or gate; never edit `.agents/`, CI or dependency manifests unless the task
+  allows it. The runner's guard enforces this.
+- Read [`docs/LEARNINGS.md`](docs/LEARNINGS.md) before starting. Add an entry only for a lesson that changes how the
+  next person or agent works here.

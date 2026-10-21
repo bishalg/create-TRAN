@@ -7,6 +7,7 @@ import java.io.InterruptedIOException
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -145,6 +146,8 @@ class TranApiClient(
     private val includeDebugCountry: Boolean = TranApiConfig.includeDebugCountry,
     private val http: OkHttpClient = sharedHttpClient,
     private val retry: TranRetry = TranRetry(),
+    /** Where the blocking call runs; a JVM screenshot test passes `Unconfined` to stay on one thread. */
+    private val io: CoroutineDispatcher = Dispatchers.IO,
 ) {
     suspend fun checkHealth() {
         retry.run(idempotent = true) {
@@ -177,7 +180,7 @@ class TranApiClient(
             }
             .build()
 
-        withContext(Dispatchers.IO) {
+        withContext(io) {
             val response = try {
                 http.newCall(request).execute()
             } catch (error: IOException) {

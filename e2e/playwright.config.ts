@@ -6,9 +6,10 @@ const testDir = defineBddConfig({
   steps: 'steps/*.ts',
 });
 
-// `localhost:3000` is an allowed CORS origin of the API, so these tests also prove the
-// browser -> Axum preflight (including X-Debug-Country) works for real.
-const WEB_URL = 'http://localhost:3000';
+// `127.0.0.1:3000` is an allowed CORS origin of the API, so these tests also prove the
+// browser -> Axum preflight (including X-Debug-Country) works for real. Not `localhost`: it can
+// resolve to [::1], where another project's dev server may be listening.
+const WEB_URL = 'http://127.0.0.1:3000';
 const API_URL = 'http://127.0.0.1:3001';
 
 export default defineConfig({
@@ -29,7 +30,7 @@ export default defineConfig({
       timeout: 180_000,
     },
     {
-      command: 'pnpm --filter web dev --port 3000 --strictPort',
+      command: 'pnpm --filter web dev --host 127.0.0.1 --port 3000 --strictPort',
       cwd: '..',
       url: WEB_URL,
       reuseExistingServer: !process.env.CI,
