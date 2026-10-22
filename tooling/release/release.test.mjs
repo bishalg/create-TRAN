@@ -108,11 +108,28 @@ describe('one version everywhere (REQ-REL-001)', () => {
     assert.equal(next.get(pbx).match(/MARKETING_VERSION = 1\.3\.0;/g).length, 2);
   });
 
+  it('checks and writes the workspace crates in Cargo.lock, never a registry crate', () => {
+    const files = fixture();
+    const lock = (own) =>
+      `[[package]]\nname = "serde"\nversion = "1.0.0"\nsource = "registry+https://github.com/rust-lang/crates.io-index"\n\n` +
+      `[[package]]\nname = "api"\nversion = "${own}"\ndependencies = [\n "serde",\n]\n\n` +
+      `[[package]]\nname = "core"\nversion = "1.2.3"\n`;
+    files.set('Cargo.lock', lock('1.2.2'));
+    assert.deepEqual(checkVersions(files), [
+      'Cargo.lock: workspace crate version is 1.2.2, expected 1.2.3',
+    ]);
+    const next = setVersion(files, '1.3.0');
+    assert.deepEqual(checkVersions(next), []);
+    assert.equal(next.get('Cargo.lock').match(/version = "1\.3\.0"/g).length, 2);
+    assert.match(next.get('Cargo.lock'), /name = "serde"\nversion = "1\.0\.0"/);
+  });
+
   it('finds the version files of this repository, and they agree', () => {
     const paths = versionFiles(ROOT);
     for (const path of [
       'package.json',
       'Cargo.toml',
+      'Cargo.lock',
       'apps/ios/project.yml',
       'apps/ios/TranVotingDemo.xcodeproj/project.pbxproj',
       'packages/core-ts/package.json',
@@ -277,20 +294,29 @@ describe('version and changelog from history (REQ-REL-003)', () => {
 describe('release workflow (REQ-REL-004)', () => {
   const workflow = readFileSync(join(ROOT, '.github/workflows/release.yml'), 'utf8');
 
-  it('runs on version tags only', () => {
+  it('publishes on version tags only; a manual run is a dry run that builds but never publishes', () => {
     assert.match(workflow, /^on:\n {2}push:\n {4}tags: \['v\*'\]/m);
+    assert.match(workflow, /^ {2}workflow_dispatch:/m);
+    // A tag push releases that tag; a dry run uses the version in package.json.
+    assert.ok(workflow.includes('if [ "$GITHUB_REF_TYPE" = tag ]; then tag="$GITHUB_REF_NAME"'));
+    assert.ok(workflow.includes(`else tag="v$(node -p "require('./package.json').version")"; fi`));
     assert.doesNotMatch(workflow, /^ {2}pull_request:/m);
+    const publish = workflow.slice(workflow.indexOf('- name: Publish'));
+    assert.match(publish, /^ {8}if: github\.event_name == 'push'$/m);
+    assert.ok(
+      publish.indexOf("if: github.event_name == 'push'") < publish.indexOf('gh release create')
+    );
   });
 
   it('checks the tag, tests, builds, and publishes the changelog section with both artifacts', () => {
     for (const step of [
-      'node tooling/release/release.mjs check --tag "$GITHUB_REF_NAME"',
+      'node tooling/release/release.mjs check --tag "$TAG"',
       'cargo test --workspace',
       'pnpm run test:ts',
       'pnpm --filter web build',
       ':app:assembleRelease',
-      'node tooling/release/release.mjs notes "$GITHUB_REF_NAME"',
-      'gh release create "$GITHUB_REF_NAME"',
+      'node tooling/release/release.mjs notes "$TAG"',
+      'gh release create "$TAG"',
     ]) {
       assert.ok(workflow.includes(step), step);
     }

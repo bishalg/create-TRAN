@@ -102,7 +102,17 @@ tasks.named("preBuild") {
     dependsOn(stageRustLib)
 }
 
+// JVM tests (parity, screenshots) load the host build of the Rust core through JNA; build it so a clean
+// clone or CI runner does not depend on an earlier manual `cargo build`.
+val buildHostRustLib by tasks.registering(Exec::class) {
+    description = "Builds libtran_uniffi for the host into target/release for JVM tests"
+    group = "build"
+    commandLine("cargo", "build", "-p", "tran-uniffi", "--release", "--lib")
+    workingDir = rootProject.projectDir.parentFile.parentFile
+}
+
 tasks.withType<Test> {
+    dependsOn(buildHostRustLib)
     val repoRoot = rootProject.projectDir.parentFile.parentFile
     val libDir = repoRoot.resolve("target/release").absolutePath
     environment("UNIFFI_LIB_DIR", libDir)

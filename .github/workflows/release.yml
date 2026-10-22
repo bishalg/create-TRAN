@@ -7,17 +7,21 @@ name: Release
 # The job refuses a tag that does not match the version, runs the Rust and TypeScript tests, builds the web app and
 # the Android release APK, and publishes both with that version's CHANGELOG section as the notes. The APK is unsigned:
 # signing keys belong to the project, not the template. iOS is not attached; an unsigned build is not installable.
+#
+# Run it by hand (Actions → Release → Run workflow) for a dry run of the current version: every check and build runs
+# and the files are kept as workflow artifacts, but nothing is published.
 
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   release:
-    name: Test, build and publish ${{ github.ref_name }}
+    name: Test, build and publish (dry run unless a tag)
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -48,8 +52,14 @@ jobs:
       - name: Install workspace dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Release name (the pushed tag, or the current version on a dry run)
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then tag="$GITHUB_REF_NAME"
+          else tag="v$(node -p "require('./package.json').version")"; fi
+          echo "TAG=$tag" >> "$GITHUB_ENV"
+
       - name: The tag matches every version in the repo
-        run: node tooling/release/release.mjs check --tag "$GITHUB_REF_NAME"
+        run: node tooling/release/release.mjs check --tag "$TAG"
 
       - name: Rust tests
         run: cargo test --workspace
@@ -59,16 +69,28 @@ jobs:
       - name: Build the web app
         run: |
           pnpm --filter web build
-          tar -czf "web-$GITHUB_REF_NAME.tar.gz" -C apps/web dist
+          tar -czf "web-$TAG.tar.gz" -C apps/web dist
       - name: Build the Android release APK (stages the Rust core)
         run: |
           (cd apps/android && ./gradlew --no-daemon :app:assembleRelease)
-          cp apps/android/app/build/outputs/apk/release/app-release-unsigned.apk "android-$GITHUB_REF_NAME-unsigned.apk"
+          cp apps/android/app/build/outputs/apk/release/app-release-unsigned.apk "android-$TAG-unsigned.apk"
+
+      - name: Keep the files of a dry run
+        if: github.event_name != 'push'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-dry-run
+          path: |
+            web-*.tar.gz
+            android-*-unsigned.apk
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Publish the release with its CHANGELOG section
+        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          node tooling/release/release.mjs notes "$GITHUB_REF_NAME" > notes.md
-          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md \
-            "web-$GITHUB_REF_NAME.tar.gz" "android-$GITHUB_REF_NAME-unsigned.apk"
+          node tooling/release/release.mjs notes "$TAG" > notes.md
+          gh release create "$TAG" --title "$TAG" --notes-file notes.md \
+            "web-$TAG.tar.gz" "android-$TAG-unsigned.apk"

@@ -48,6 +48,17 @@ const FIELDS_BY_FILE = [
     fields: [field('workspace.package.version', CARGO_SECTION, (v) => v)],
   },
   {
+    // Workspace crates are the lock entries with no `source`; left stale, the next build rewrites the lock.
+    match: (path) => path === 'Cargo.lock',
+    fields: [
+      field(
+        'workspace crate version',
+        /(\[\[package\]\]\nname = "[^"]+"\nversion = ")([^"]*)("\n(?!source = ))/g,
+        (v) => v
+      ),
+    ],
+  },
+  {
     match: (path) => path.endsWith('project.yml'),
     fields: [
       field('MARKETING_VERSION', /(MARKETING_VERSION:\s*')([^']*)(')/, (v) => v),
@@ -150,7 +161,12 @@ export function versionFiles(root) {
       if (existsSync(join(root, dir, 'package.json'))) paths.push(`${dir}/package.json`);
     }
   }
-  for (const path of ['Cargo.toml', 'apps/ios/project.yml', 'apps/android/app/build.gradle.kts']) {
+  for (const path of [
+    'Cargo.toml',
+    'Cargo.lock',
+    'apps/ios/project.yml',
+    'apps/android/app/build.gradle.kts',
+  ]) {
     if (existsSync(join(root, path))) paths.push(path);
   }
   // The Xcode project is named after the app, which create-tran renames.

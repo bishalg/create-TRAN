@@ -9,6 +9,15 @@ when you learned something that is not obvious from the code, the specs or the A
 - Format, checked by `pnpm agents:check`: a `## YYYY-MM-DD - Title` heading, then a `**Learning:**` and an
   `**Action:**` line. Newest first. Delete an entry when the code makes it obsolete.
 
+## 2026-10-22 - Green locally can mean "built by hand earlier"
+
+**Learning:** The Android JVM parity and screenshot tests load the host build of `tran-uniffi` from `target/release`.
+Nothing in Gradle built it, so they passed on every machine where someone had once run `cargo build --release`, and
+failed with `UnsatisfiedLinkError` on the nightly CI runner for two nights before anyone looked.
+**Action:** A test that needs a build output declares the task that makes it (`buildHostRustLib` in
+`apps/android/app/build.gradle.kts`). To check, move the output aside and run the test; and read failing scheduled
+runs (`gh run list --workflow native-tests.yml`), not only the push checks.
+
 ## 2026-10-22 - A script's "am I main?" check must resolve symlinks
 
 **Learning:** `import.meta.url === pathToFileURL(process.argv[1]).href` is false when the script is started through a
