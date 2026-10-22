@@ -1,0 +1,40 @@
+# Dependency updates (ADR-0033, REQ-SUP-002). One grouped pull request per ecosystem per week, so a
+# fork sees a handful of reviewable PRs instead of one per package. Security updates are not grouped
+# and arrive as soon as an advisory is published; `pnpm audit` and `cargo audit` in CI catch the rest.
+version: 2
+updates:
+  - package-ecosystem: npm # pnpm workspace: the root lockfile covers every package
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      npm-minor-and-patch:
+        update-types: [minor, patch]
+    open-pull-requests-limit: 5
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      cargo-minor-and-patch:
+        update-types: [minor, patch]
+    open-pull-requests-limit: 5
+  - package-ecosystem: gradle
+    directory: /apps/android
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      gradle-minor-and-patch:
+        update-types: [minor, patch]
+    open-pull-requests-limit: 5
+  - package-ecosystem: github-actions # every `uses:` is pinned by commit SHA; Dependabot bumps the SHA and the version comment
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ['*']

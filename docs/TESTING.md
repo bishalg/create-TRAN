@@ -145,6 +145,16 @@ slowly gets heavier or slower. Both are measured here, with opposite storage rul
 - **Generated output stays untracked.** `output-guards.test.ts` fails if a report, screenshot, log or coverage file
   is tracked or not ignored, or if `docs/reports/` holds anything but text.
 
+## Dependencies (ADR-0033)
+
+- **Advisories fail CI.** `pnpm deps:audit` runs what CI runs: `pnpm audit --audit-level high` and
+  `cargo audit --deny warnings` (install it once: `cargo install cargo-audit --locked`).
+- **Fix by bumping, then by a ranged override.** `pnpm up <pkg>@<version>` first; when the dependant has not moved,
+  add `'name@<fixed': '>=fixed'` to `overrides:` in `pnpm-workspace.yaml`. The range is the expiry date. A Rust
+  advisory with no fix upstream is ignored in `.cargo/audit.toml` with the reason on the line above it.
+- **`pnpm supply:check`** fails on an action not pinned to a commit SHA, a Dependabot ecosystem missing for files the
+  repo has, a bare-name override, or a `SECURITY.md` without its sections.
+
 ## Adding a feature (checklist)
 
 1. Add rows to `fixtures/vote-eligibility.json` (or a new fixture file) — the rejected and failure-mode rows too.

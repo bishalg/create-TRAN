@@ -9,6 +9,14 @@ when you learned something that is not obvious from the code, the specs or the A
 - Format, checked by `pnpm agents:check`: a `## YYYY-MM-DD - Title` heading, then a `**Learning:**` and an
   `**Action:**` line. Newest first. Delete an entry when the code makes it obsolete.
 
+## 2026-10-22 - pnpm 11 ignores overrides in package.json
+
+**Learning:** pnpm 11 reads `overrides` only from `pnpm-workspace.yaml`. A `pnpm.overrides` block in the root
+`package.json` is silently ignored: `pnpm install` reports "Already up to date" and `pnpm audit` still lists the
+advisory, so it looks as if the override range is wrong.
+**Action:** Put overrides under `overrides:` in `pnpm-workspace.yaml`, keyed by the vulnerable range
+(`'name@<fixed': '>=fixed'`), and confirm with `pnpm audit` after `pnpm install`.
+
 ## 2026-10-21 - Static Stryker mutants show as survivors without being run
 
 **Learning:** Stryker reports mutants in module-level code (for example the `Map` built at the top of

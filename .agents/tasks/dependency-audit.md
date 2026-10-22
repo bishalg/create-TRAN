@@ -10,6 +10,7 @@ scope:
   [
     package.json,
     pnpm-lock.yaml,
+    pnpm-workspace.yaml,
     Cargo.lock,
     packages/,
     apps/,
@@ -18,7 +19,7 @@ scope:
     tooling/,
     docs/LEARNINGS.md,
   ]
-allow: ['**/package.json', pnpm-lock.yaml, '**/Cargo.toml', Cargo.lock]
+allow: ['**/package.json', pnpm-lock.yaml, pnpm-workspace.yaml, '**/Cargo.toml', Cargo.lock]
 gates: [pnpm test, pnpm typecheck, cargo clippy --workspace --all-targets -- -D warnings]
 max_changed_lines: 200
 ---

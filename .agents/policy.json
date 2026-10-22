@@ -16,6 +16,8 @@
     "**/package.json",
     "pnpm-lock.yaml",
     "pnpm-workspace.yaml",
+    "SECURITY.md",
+    "tooling/supply-chain/",
     "**/Cargo.toml",
     "Cargo.lock",
     "**/*.gradle.kts",

@@ -1,0 +1,8 @@
+# `cargo audit` settings (ADR-0033). Every ignored advisory carries its reason in a comment directly above it;
+# `pnpm supply:check` fails otherwise. Remove an entry as soon as the dependency moves on.
+[advisories]
+ignore = [
+  # basic-toml is unmaintained (warning, no vulnerability). It arrives through askama 0.16 <- uniffi_bindgen 0.32,
+  # runs only at build time to read uniffi.toml, and uniffi 0.32.2 is the latest release. Drop when uniffi updates.
+  "RUSTSEC-2026-0374",
+]

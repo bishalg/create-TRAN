@@ -17,6 +17,9 @@ This is a **template**: keep the sample tiny, exemplary and fully tested.
 - New user-visible behaviour needs a Gherkin scenario in `e2e/features/`.
 - UI changes: `pnpm visual` / `pnpm android:screenshots` / `pnpm ios:screenshots` (references are local and gitignored — never commit images). A change that may move performance or size: `pnpm metrics`, and `--record` to commit the numbers in `docs/reports/` (ADR-0031). Never hand-edit `docs/reports/`. Release builds: `pnpm smoke`.
 - Native apps: `pnpm ios:build` (XcodeGen; regenerate with `pnpm ios:project`) and `pnpm android:build` stay part of the loop when touching `apps/ios` or `apps/android`.
+- Dependencies: fix an advisory by the smallest bump; if upstream has not bumped, add a ranged override
+  (`name@<fixed`) in `pnpm-workspace.yaml`, never a bare name. Every GitHub Action stays pinned to a commit SHA with a
+  version comment (`pnpm supply:check`, ADR-0033).
 - Before finishing: `pnpm test:all`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo fmt --all`.
 
 ## Workflow: spec first

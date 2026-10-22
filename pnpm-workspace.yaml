@@ -13,3 +13,10 @@ autoInstallPeers: true
 strictPeerDependencies: false
 confirmModulesPurge: false
 shamefullyHoist: false
+
+# Advisory fixes for transitive dependencies the upstream packages have not bumped yet (REQ-SUP-001).
+# Each line names the vulnerable range so the override falls away once the dependant moves on.
+overrides:
+  'undici@>=7 <7.29.1': '>=7.29.1'
+  'qs@<6.16.0': '>=6.16.0'
+  'tinypool@<2.1.2': '>=2.1.2'

@@ -44,6 +44,7 @@ export const AGENT_PATHS = [
   'docs/specs/README.md',
   'docs/LEARNINGS.md',
   'package.json',
+  'SECURITY.md',
 ];
 
 /** Text that must not survive `none`: each names something it removed. */
@@ -58,6 +59,8 @@ export const AGENT_REFERENCES = [
   '0032-evidence',
   '015-agents',
   'REQ-AGT',
+  '.agents/policy',
+  'dependency-audit',
 ];
 
 type Edit =
@@ -88,6 +91,18 @@ const NONE_EDITS: Edit[] = [
   { file: '.gitignore', line: '# Agent runs (ADR-0032)' },
   { file: '.gitignore', line: '.agents/out/' },
   { file: 'docs/LEARNINGS.md', from: ' (ADR-0032, REQ-AGT-009)', to: '' },
+  {
+    file: 'SECURITY.md',
+    from: '; the `dependency-audit` agent task can propose the fix.',
+    to: '.',
+  },
+  {
+    file: 'SECURITY.md',
+    from: `- **Agents never edit manifests, lockfiles, CI or rules files** unless a task allows it; the guard job enforces this on
+  every agent pull request (\`.agents/policy.json\`).
+`,
+    to: '',
+  },
   {
     file: 'docs/LEARNINGS.md',
     from: `Format, checked by \`pnpm agents:check\`: a \`## YYYY-MM-DD - Title\` heading, then a \`**Learning:**\` and an
