@@ -15,12 +15,8 @@ import com.tran.voting.NavigationCoordinator
 import com.tran.voting.api.TranApiClient
 import com.tran.voting.generated.TranStrings
 import com.tran.voting.generated.TranTheme
-import kotlinx.coroutines.Dispatchers
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Protocol
-import okhttp3.Response
-import okhttp3.ResponseBody.Companion.toResponseBody
+import com.tran.voting.testing.FakeApis
+import org.junit.After
 import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
@@ -31,9 +27,10 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
+import uniffi.tran_uniffi.loadingPolicy
 
 /**
- * Verifies: REQ-PERF-003
+ * Verifies: REQ-PERF-003 REQ-LOAD-007
  *
  * The real app root in every registry theme × every locale, rendered on the JVM by Robolectric
  * with the Rust core loaded, compared by Roborazzi with this machine's references
@@ -51,12 +48,20 @@ class ScreenshotTest(private val theme: TranTheme, private val locale: String) {
     /** Requests the fake API has answered — reported when a wait times out. */
     private val answered = AtomicInteger()
 
-    private fun launch() {
+    /** Holds the eligibility call of the pending shot open; released after every test. */
+    private val hang = FakeApis.Hang()
+
+    @After
+    fun releaseHeldRequests() = hang.release()
+
+    private fun text(res: Int): String = RuntimeEnvironment.getApplication().getString(res)
+
+    private fun launch(api: TranApiClient = FakeApis.healthy(answered), status: Int = TranStrings.Shell.statusOnline) {
         // `en` is the default `values/` folder; others are a locale qualifier.
         if (locale != "en") RuntimeEnvironment.setQualifiers("+$locale")
-        compose.setContent { NavigationCoordinator(initialTheme = theme, api = healthyApi(answered)) }
-        // The startup health check runs off the main thread: wait for its answer, not a timer.
-        awaitNode(hasText(RuntimeEnvironment.getApplication().getString(TranStrings.Shell.statusOnline)))
+        compose.setContent { NavigationCoordinator(initialTheme = theme, api = api) }
+        // Wait for the startup health check's answer, not a timer.
+        awaitNode(hasText(text(status)))
     }
 
     /**
@@ -105,6 +110,30 @@ class ScreenshotTest(private val theme: TranTheme, private val locale: String) {
         awaitNode(hasTestTag("toast"))
         compose.mainClock.advanceTimeBy(SETTLE_MS)
         compose.onRoot().captureRoboImage("result-$name.png")
+    }
+
+    /** REQ-LOAD-002/003: a confirmation held open past the policy delay — verdict kept, caption pending. */
+    @Test
+    fun pending() {
+        launch(FakeApis.hanging(hang))
+        // Only the held call leaves the main thread; blocking it would freeze the screen.
+        hang.offMainThread = true
+        compose.mainClock.autoAdvance = false
+        compose.onNodeWithTag("check-button").performClick()
+        compose.mainClock.advanceTimeBy(loadingPolicy().indicatorDelayMs.toLong() + SETTLE_MS)
+        awaitNode(hasTestTag("verdict-source") and hasText(text(TranStrings.Eligibility.resultUpdating)))
+        compose.onRoot().captureRoboImage("pending-$name.png")
+    }
+
+    /** REQ-LOAD-005: no server at all — the banner, and the verdict labelled as the device's fallback. */
+    @Test
+    fun offline() {
+        launch(FakeApis.refusing(), status = TranStrings.Shell.statusOffline)
+        awaitNode(hasTestTag("offline-notice"))
+        compose.onNodeWithTag("check-button").performClick()
+        awaitNode(hasTestTag("verdict-source") and hasText(text(TranStrings.Eligibility.resultSourceFallback)))
+        compose.waitForIdle()
+        compose.onRoot().captureRoboImage("offline-$name.png")
     }
 
     @Test
@@ -157,29 +186,5 @@ class ScreenshotTest(private val theme: TranTheme, private val locale: String) {
             val libDir = System.getenv("UNIFFI_LIB_DIR") ?: File(repoRoot(), "target/release").path
             System.setProperty("jna.library.path", libDir)
         }
-
-        /**
-         * Answers every request with an empty 200, at once — the status pill shows "online". The
-         * call stays on the calling thread (`Unconfined`): a hop to `Dispatchers.IO` and back to
-         * Robolectric's main thread lost about one resume in fifty, leaving "Checking API…".
-         */
-        private fun healthyApi(answered: AtomicInteger) =
-            TranApiClient(
-                baseUrl = "http://api.test",
-                includeDebugCountry = false,
-                http = OkHttpClient.Builder()
-                    .addInterceptor { chain ->
-                        answered.incrementAndGet()
-                        Response.Builder()
-                            .request(chain.request())
-                            .protocol(Protocol.HTTP_1_1)
-                            .code(200)
-                            .message("OK")
-                            .body("{}".toResponseBody("application/json".toMediaType()))
-                            .build()
-                    }
-                    .build(),
-                io = Dispatchers.Unconfined,
-            )
     }
 }

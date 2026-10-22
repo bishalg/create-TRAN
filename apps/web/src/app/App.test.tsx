@@ -1,5 +1,5 @@
-// Verifies: REQ-ERR-005 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-WEB-001 REQ-WEB-002 REQ-WEB-003 REQ-WEB-006 REQ-A11Y-002 REQ-A11Y-003 REQ-A11Y-004 REQ-A11Y-006 REQ-NAV-001 REQ-NAV-002 REQ-NAV-003 REQ-NAV-004 REQ-NAV-005
-import { render, screen, waitFor, within } from '@testing-library/react';
+// Verifies: REQ-LOAD-002 REQ-LOAD-003 REQ-LOAD-004 REQ-LOAD-005 REQ-ERR-005 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-WEB-001 REQ-WEB-002 REQ-WEB-003 REQ-WEB-006 REQ-A11Y-002 REQ-A11Y-003 REQ-A11Y-004 REQ-A11Y-006 REQ-NAV-001 REQ-NAV-002 REQ-NAV-003 REQ-NAV-004 REQ-NAV-005
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeApi, envelope, REQUEST_ID } from '../../tests/helpers/fakeApi.js';
@@ -9,11 +9,11 @@ const instant: AppProps['retry'] = { sleep: async () => {}, random: () => 0 };
 
 type User = ReturnType<typeof userEvent.setup>;
 
-async function renderApp(opts: Parameters<typeof createFakeApi>[0] = {}) {
+async function renderApp(opts: Parameters<typeof createFakeApi>[0] = {}, props: AppProps = {}) {
   const api = createFakeApi(opts);
   vi.stubGlobal('fetch', api.fetchFn);
   const user = userEvent.setup();
-  render(<App retry={instant} />);
+  render(<App retry={instant} {...props} />);
   // Startup settles as "API online" or "API offline".
   await screen.findByText(/API (online|offline)/);
   return { api, user };
@@ -22,6 +22,26 @@ async function renderApp(opts: Parameters<typeof createFakeApi>[0] = {}) {
 const ageInput = () => screen.getByLabelText('Your age');
 const countryInput = () => screen.getByLabelText('Country code');
 const submit = () => screen.getByRole('button', { name: /Check eligibility|Checking/ });
+
+/** Holds every eligibility answer until `release()`; health and info answer at once. */
+function gateEligibility(api: ReturnType<typeof createFakeApi>) {
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => (release = resolve));
+  const real = createFakeApi();
+  api.fetchFn.mockImplementation(async (...args: Parameters<typeof real.fetchFn>) => {
+    if (new URL(String(args[0])).pathname === '/api/vote/eligibility') await gate;
+    return real.fetchFn(...args);
+  });
+  return () => release();
+}
+
+/** Lets every pending promise settle (one macrotask), without waiting on a clock. */
+const settle = () => act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+
+const fallbackLabel = 'The server could not answer — checked on this device.';
+
+const showNow: AppProps['loading'] = { indicatorDelayMs: 0 };
+const neverShow: AppProps['loading'] = { indicatorDelayMs: 1e9 };
 
 async function check(user: User, age: string, country?: string) {
   await user.clear(ageInput());
@@ -195,22 +215,82 @@ describe('App: ask the server', () => {
     expect((call[1]?.headers as Record<string, string>)['X-Debug-Country']).toBe('BR');
   });
 
-  it('disables the button and says "Checking…" while the request is in flight', async () => {
-    const { api, user } = await renderApp();
+  it('disables the button at once and says "Checking…" once the indicator delay has passed', async () => {
+    const { api, user } = await renderApp({}, { loading: showNow });
     await user.click(screen.getByRole('radio', { name: /Ask the server/ }));
-    let release!: () => void;
-    const gate = new Promise<void>((resolve) => (release = resolve));
-    const real = createFakeApi();
-    api.fetchFn.mockImplementation(async (...args: Parameters<typeof real.fetchFn>) => {
-      await gate;
-      return real.fetchFn(...args);
-    });
+    const release = gateEligibility(api);
 
     await user.click(submit());
-    expect(screen.getByRole('button', { name: 'Checking…' })).toBeDisabled();
+    expect(submit()).toBeDisabled();
+    expect(submit()).toHaveAttribute('aria-busy', 'true');
+    expect(await screen.findByRole('button', { name: 'Checking…' })).toBeDisabled();
+    // No verdict yet: the pending copy stands alone in the live region (REQ-LOAD-002).
+    const region = screen.getByRole('status', { name: 'Result' });
+    expect(region).toHaveAttribute('aria-busy', 'true');
+    expect(region).toHaveTextContent('Checking with the server…');
 
     release();
     expect(await screen.findByRole('button', { name: 'Check eligibility' })).toBeEnabled();
+    expect(region).toHaveAttribute('aria-busy', 'false');
+    expect(region).not.toHaveTextContent('Checking with the server…');
+  });
+
+  it('[REQ-LOAD-002] a check that settles within the delay never shows progress', async () => {
+    const { api, user } = await renderApp({}, { loading: neverShow });
+    await user.click(screen.getByRole('radio', { name: /Ask the server/ }));
+    const release = gateEligibility(api);
+
+    await user.click(submit());
+    const region = screen.getByRole('status', { name: 'Result' });
+    expect(screen.getByRole('button', { name: 'Check eligibility' })).toBeDisabled();
+    expect(region).toHaveAttribute('aria-busy', 'false');
+    expect(screen.queryByText('Checking with the server…')).toBeNull();
+    expect(screen.queryByText('Checking…')).toBeNull();
+
+    release();
+    expect(await screen.findByText('Checked by the server')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Check eligibility' })).toBeEnabled();
+  });
+
+  it('[REQ-LOAD-003] a second server check keeps the previous verdict visible and marks the region busy', async () => {
+    const { api, user } = await renderApp({}, { loading: showNow });
+    await user.click(screen.getByRole('radio', { name: /Ask the server/ }));
+    await check(user, '30', 'US');
+    const before = 'Age 30 meets the minimum voting age of 18 in US.';
+    expect(await screen.findByText('Checked by the server')).toBeVisible();
+
+    const release = gateEligibility(api);
+    await check(user, '17', 'US');
+    const region = screen.getByRole('status', { name: 'Result' });
+    await waitFor(() => expect(region).toHaveAttribute('aria-busy', 'true'));
+    expect(screen.getByText(before)).toBeVisible();
+    expect(screen.getByText('Checking with the server…')).toBeVisible();
+    expect(screen.queryByText('Checked by the server')).toBeNull();
+    expect(region.querySelector('article')).toHaveAttribute('data-updating', 'true');
+
+    release();
+    expect(
+      await screen.findByText('Age 17 is below the minimum voting age of 18 in US.')
+    ).toBeVisible();
+    expect(screen.queryByText(before)).toBeNull();
+    expect(region).toHaveAttribute('aria-busy', 'false');
+    expect(region.querySelector('article')).not.toHaveAttribute('data-updating');
+    expect(screen.getByText('Checked by the server')).toBeVisible();
+  });
+
+  it('[REQ-LOAD-003] a pending server check leaves the device result alone', async () => {
+    const { api, user } = await renderApp({}, { loading: showNow });
+    await check(user, '30'); // device result
+    await user.click(screen.getByRole('radio', { name: /Ask the server/ }));
+    gateEligibility(api);
+    await user.click(submit());
+    await screen.findByRole('button', { name: 'Checking…' });
+
+    await user.click(screen.getByRole('radio', { name: /On this device/ }));
+    const region = screen.getByRole('status', { name: 'Result' });
+    expect(region).toHaveAttribute('aria-busy', 'false');
+    expect(screen.getByText('Checked on this device')).toBeVisible();
+    expect(region.querySelector('article')).not.toHaveAttribute('data-updating');
   });
 
   it('shows a rejected input inline, in the user’s language, without claiming the API is offline', async () => {
@@ -265,7 +345,25 @@ describe('App: ask the server', () => {
     expect(toast).toHaveTextContent('Something went wrong on our side.');
     expect(toast).toHaveTextContent(`Reference: ${REQUEST_ID}`);
     expect(screen.getByRole('heading', { name: 'Not eligible to vote' })).toBeVisible();
-    expect(screen.getByText('Checked on this device')).toBeVisible();
+    expect(screen.getByText(fallbackLabel)).toBeVisible();
+  });
+
+  it('[REQ-LOAD-005] after the retries the card says the server could not answer, until the server answers again', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { api, user } = await renderApp();
+    await user.click(screen.getByRole('radio', { name: /Ask the server/ }));
+    api.fetchFn.mockResolvedValue(envelope(500, 'server.internal', true));
+
+    await check(user, '30', 'US');
+
+    expect(await screen.findByText(fallbackLabel)).toBeVisible();
+    expect(screen.queryByText('Checked on this device')).toBeNull();
+    expect(api.callsTo('/api/vote/eligibility')).toHaveLength(3);
+
+    api.fetchFn.mockImplementation(createFakeApi().fetchFn);
+    await user.click(submit());
+    expect(await screen.findByText('Checked by the server')).toBeVisible();
+    expect(screen.queryByText(fallbackLabel)).toBeNull();
   });
 
   it('keeps each mode’s last result separate', async () => {
@@ -302,7 +400,7 @@ describe('App: server down', () => {
 
     expect(await screen.findByText(/API unreachable/)).toBeVisible();
     expect(screen.queryByRole('alert')).toBeNull();
-    expect(screen.getByText('Checked on this device')).toBeVisible();
+    expect(screen.getByText(fallbackLabel)).toBeVisible();
     expect(screen.getByText('API offline')).toBeVisible();
   });
 });
@@ -358,6 +456,26 @@ describe('App: navigation and role branching', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(screen.getByTestId('role-badge')).toHaveTextContent('Citizen Voter');
+  });
+
+  it('[REQ-LOAD-004] signing out during a server check shows no late toast', async () => {
+    const { api, user } = await renderApp();
+    await user.click(screen.getByRole('radio', { name: /Ask the server/ }));
+    const release = gateEligibility(api);
+    await user.click(submit());
+
+    await user.click(screen.getByRole('button', { name: 'Sign out' }));
+    const dialog = screen.getByRole('dialog', { name: 'Sign out?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Sign out' }));
+    release();
+    await settle();
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Welcome to TRAN Voting' })).toBeVisible();
+    const [, init] = api.callsTo('/api/vote/eligibility')[0];
+    expect(init?.signal?.aborted).toBe(true);
+    const notifications = screen.getByRole('region', { name: 'Notifications' });
+    expect(within(notifications).queryByText('Server check complete')).toBeNull();
+    expect(screen.getByText(/API online/)).toBeVisible();
   });
 
   it('[REQ-NAV-005] confirming sign-out returns to the auth welcome screen', async () => {

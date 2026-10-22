@@ -38,7 +38,8 @@ where the check ran.
 
 ### REQ-WEB-006 [verified] In-flight state
 
-While a server check is running the submit button MUST be disabled, show a progress label and expose `aria-busy`.
+While a server check is running the submit button MUST be disabled and expose `aria-busy` at once; its progress label
+follows the indicator delay (REQ-LOAD-002, [018](./018-loading-and-offline.md)).
 **Verified by:** `App.test.tsx`, `useTranApi.test.tsx`.
 
 ### REQ-WEB-007 [verified] Theme preference

@@ -1,4 +1,4 @@
-// Verifies: REQ-PERF-002
+// Verifies: REQ-PERF-002 REQ-LOAD-007
 /**
  * Every registry theme × every locale, plus the states a user passes through. The matrix comes
  * from `@tran/core`, so a new theme or language is captured without editing this file.
@@ -12,6 +12,16 @@ async function open(page: Page, theme: string) {
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
   await expect(page.getByText(/API (online|offline)/)).toBeVisible();
+}
+
+const ELIGIBILITY = 'http://127.0.0.1:3001/api/vote/eligibility';
+
+/** Server mode, a valid age and country, submitted. */
+async function askServer(page: Page) {
+  await page.getByRole('radio', { name: /Ask the server/ }).check();
+  await page.getByLabel('Your age').fill('20');
+  await page.getByLabel('Country code').fill('NP');
+  await page.getByRole('button', { name: 'Check eligibility' }).click();
 }
 
 for (const theme of themeNames) {
@@ -32,6 +42,32 @@ for (const theme of themeNames) {
     await page.getByRole('button', { name: 'Check eligibility' }).click();
     await expect(page.getByText('Age 20 meets the minimum voting age of 18 in NP.')).toBeVisible();
     await expect(page).toHaveScreenshot(`result-${theme}.png`, { fullPage: true });
+  });
+
+  // A server check held open past the indicator delay (REQ-LOAD-007).
+  test(`pending · ${theme}`, async ({ page }) => {
+    await open(page, theme);
+    await page.route(ELIGIBILITY, (route) =>
+      route.request().method() === 'OPTIONS' ? route.continue() : new Promise<void>(() => {})
+    );
+    await askServer(page);
+    await expect(page.getByRole('status', { name: 'Result' })).toHaveAttribute('aria-busy', 'true');
+    await expect(page.getByText('Checking with the server…')).toBeVisible();
+    await expect(page).toHaveScreenshot(`pending-${theme}.png`, { fullPage: true });
+  });
+
+  // The server refused, so the device answered and says so (REQ-LOAD-005, REQ-LOAD-007).
+  test(`offline · ${theme}`, async ({ page }) => {
+    await open(page, theme);
+    await page.route(ELIGIBILITY, (route) =>
+      route.request().method() === 'OPTIONS' ? route.continue() : route.abort('connectionrefused')
+    );
+    await askServer(page);
+    await expect(
+      page.getByText('The server could not answer — checked on this device.')
+    ).toBeVisible();
+    await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
+    await expect(page).toHaveScreenshot(`offline-${theme}.png`, { fullPage: true });
   });
 
   test(`sign-out dialog · ${theme}`, async ({ page }) => {

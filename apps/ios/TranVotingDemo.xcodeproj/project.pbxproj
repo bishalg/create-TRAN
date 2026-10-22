@@ -19,7 +19,10 @@
 		32D7B18E48987AF2E572833B /* TranEligibilityCopyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6F7FB11DBE49C89653F1A4 /* TranEligibilityCopyTests.swift */; };
 		340BE7643F9655562284D9F7 /* TranFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E84A220EB4D0FDE8F0F9ED3 /* TranFeedback.swift */; };
 		35029F36F963C08522B3A153 /* TranButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13296B1C87BC71AF04BF997B /* TranButton.swift */; };
+		3A8B39AC561AF19A119D6CED /* ServerConfirmation.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCCE0CE297BF291A83E2AF8B /* ServerConfirmation.swift */; };
+		3C5A80F935B5ADEDDB2895E2 /* TranApiStub.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB6DC8233A9ED541C7A22F7D /* TranApiStub.swift */; };
 		3D08EBFB3CBC04C780A05C6C /* VoteEligibilityParityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2416105BFC37987133B79587 /* VoteEligibilityParityTests.swift */; };
+		3F5C9C2AC33FF4D365E265DE /* TranApiStubTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECA1515D07C3D2B19C4269EC /* TranApiStubTests.swift */; };
 		4064B4A0E18C8AA31EE28915 /* tran_uniffi.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2AF051840CF2BCD45F86C7 /* tran_uniffi.swift */; };
 		4BB5334E4B2D08172421A102 /* TranReferenceDate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B83934E01F2D9C881B1710ED /* TranReferenceDate.swift */; };
 		4CB4C37D325D68249243B486 /* TranDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2004B2EEC44B7971ED61E9C /* TranDialog.swift */; };
@@ -53,9 +56,12 @@
 		C85B94757DD630DBC497EC52 /* TranMotionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67E4D3E701D250552E7DA222 /* TranMotionTests.swift */; };
 		CC995C0D46F539DCC39C8BC4 /* TranMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10BA7AEEF263598B8C38A9B8 /* TranMotion.swift */; };
 		CD2B4681BCD8C9AEE8303A9D /* BrandTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6884D38FE0697CF8F8DE543A /* BrandTokens.swift */; };
+		D93E76FC13AEFA3757426F41 /* ServerConfirmationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFE247D65740ECEBEA9ED8C /* ServerConfirmationTests.swift */; };
 		DCED7FF96DAF77F43564EB88 /* tran_uniffi.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2AF051840CF2BCD45F86C7 /* tran_uniffi.swift */; };
 		E06715EB17C0CF5EC9358484 /* NavigationCoordinatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E48F532295512AFE483F2438 /* NavigationCoordinatorView.swift */; };
+		E351E28BA0FBDC110B73F48A /* ServerConfirmation.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCCE0CE297BF291A83E2AF8B /* ServerConfirmation.swift */; };
 		E6E4B0DD5D7970AF02B9341D /* ScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 734EFE5F216B96F7A6FCBD99 /* ScreenshotTests.swift */; };
+		F11ADDB7E97690CB7467B05C /* TranApiStub.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB6DC8233A9ED541C7A22F7D /* TranApiStub.swift */; };
 		F23C19D070B4D46967F1F757 /* AuthWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E88174C22C857E2C4A32A1C /* AuthWelcomeView.swift */; };
 /* End PBXBuildFile section */
 
@@ -116,19 +122,23 @@
 		B5575124847CD87F66535AE5 /* Eligibility.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Eligibility.xcstrings; sourceTree = "<group>"; };
 		B83934E01F2D9C881B1710ED /* TranReferenceDate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranReferenceDate.swift; sourceTree = "<group>"; };
 		B85C1ED9728B5EF5BE132CA8 /* VotingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VotingUITests.swift; sourceTree = "<group>"; };
+		BCCE0CE297BF291A83E2AF8B /* ServerConfirmation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerConfirmation.swift; sourceTree = "<group>"; };
 		CE6F7FB11DBE49C89653F1A4 /* TranEligibilityCopyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranEligibilityCopyTests.swift; sourceTree = "<group>"; };
 		D67D27EB3D5D770789B21FDF /* VotingHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VotingHomeView.swift; sourceTree = "<group>"; };
 		D69AA90B4D08AF2C8F3EECEC /* Common.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Common.xcstrings; sourceTree = "<group>"; };
 		D93EDFD29A6F2F73AC4A6743 /* TranVotingDemoScreenshotTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TranVotingDemoScreenshotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DABDD20CECDFABD9AD5AAA49 /* TranLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranLayout.swift; sourceTree = "<group>"; };
+		DB6DC8233A9ED541C7A22F7D /* TranApiStub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranApiStub.swift; sourceTree = "<group>"; };
 		E48F532295512AFE483F2438 /* NavigationCoordinatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationCoordinatorView.swift; sourceTree = "<group>"; };
 		E98C1BAC2E5E0E9359B1C94E /* TranReferenceDateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranReferenceDateTests.swift; sourceTree = "<group>"; };
+		ECA1515D07C3D2B19C4269EC /* TranApiStubTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranApiStubTests.swift; sourceTree = "<group>"; };
 		EF2AF051840CF2BCD45F86C7 /* tran_uniffi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = tran_uniffi.swift; sourceTree = "<group>"; };
 		F12124FF6470EDFA0A353BF5 /* Auditor.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Auditor.xcstrings; sourceTree = "<group>"; };
 		F21974D5F6A0ED5EE34F605E /* TranVotingDemo.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TranVotingDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3A96B8BC4B8BA52D4C42F94 /* AuthSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSession.swift; sourceTree = "<group>"; };
 		F8C57904C226928C1009850D /* Auth.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Auth.xcstrings; sourceTree = "<group>"; };
 		FBC16B5C9AA459E81F099892 /* tran_uniffiFFI.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = tran_uniffiFFI.modulemap; sourceTree = "<group>"; };
+		FBFE247D65740ECEBEA9ED8C /* ServerConfirmationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerConfirmationTests.swift; sourceTree = "<group>"; };
 		FC7E4BB3820E7C62D554ECAD /* TranFeedbackHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranFeedbackHost.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -181,7 +191,9 @@
 			children = (
 				9C81897D258076C9D6DAA915 /* FeedbackParityTests.swift */,
 				843D7B0C3D41329248AA92A8 /* NavigationParityTests.swift */,
+				FBFE247D65740ECEBEA9ED8C /* ServerConfirmationTests.swift */,
 				1A659AC166910DCC044847A5 /* TranApiClientTests.swift */,
+				ECA1515D07C3D2B19C4269EC /* TranApiStubTests.swift */,
 				CE6F7FB11DBE49C89653F1A4 /* TranEligibilityCopyTests.swift */,
 				67E4D3E701D250552E7DA222 /* TranMotionTests.swift */,
 				E98C1BAC2E5E0E9359B1C94E /* TranReferenceDateTests.swift */,
@@ -211,7 +223,9 @@
 		AB32CD1BAF24E68C58430743 /* Api */ = {
 			isa = PBXGroup;
 			children = (
+				BCCE0CE297BF291A83E2AF8B /* ServerConfirmation.swift */,
 				644FEE3DC9747F2D704B4936 /* TranApiClient.swift */,
+				DB6DC8233A9ED541C7A22F7D /* TranApiStub.swift */,
 			);
 			path = Api;
 			sourceTree = "<group>";
@@ -490,8 +504,12 @@
 				97F3F73EE97A02DD04AF51B1 /* FeedbackParityTests.swift in Sources */,
 				0826DFF6755A336094EC46D2 /* L10n.swift in Sources */,
 				A7D7682FF87B6131E4D7B724 /* NavigationParityTests.swift in Sources */,
+				3A8B39AC561AF19A119D6CED /* ServerConfirmation.swift in Sources */,
+				D93E76FC13AEFA3757426F41 /* ServerConfirmationTests.swift in Sources */,
 				C52F1FC2C50EF718E0AD42AA /* TranApiClient.swift in Sources */,
 				4FEF69E87E2281A47A026A3C /* TranApiClientTests.swift in Sources */,
+				F11ADDB7E97690CB7467B05C /* TranApiStub.swift in Sources */,
+				3F5C9C2AC33FF4D365E265DE /* TranApiStubTests.swift in Sources */,
 				32038BD93305E28AFB04E12C /* TranEligibilityCopy.swift in Sources */,
 				32D7B18E48987AF2E572833B /* TranEligibilityCopyTests.swift in Sources */,
 				340BE7643F9655562284D9F7 /* TranFeedback.swift in Sources */,
@@ -514,7 +532,9 @@
 				5DD2E1C9E78542434F8F0DDC /* BrandTokens.swift in Sources */,
 				033C5EFE87867769BC85393E /* L10n.swift in Sources */,
 				E06715EB17C0CF5EC9358484 /* NavigationCoordinatorView.swift in Sources */,
+				E351E28BA0FBDC110B73F48A /* ServerConfirmation.swift in Sources */,
 				AFEB6F75711555ECA349D6D0 /* TranApiClient.swift in Sources */,
+				3C5A80F935B5ADEDDB2895E2 /* TranApiStub.swift in Sources */,
 				986C167775B3BAD191B31F7E /* TranBanner.swift in Sources */,
 				35029F36F963C08522B3A153 /* TranButton.swift in Sources */,
 				4CB4C37D325D68249243B486 /* TranDialog.swift in Sources */,

@@ -20,6 +20,8 @@ export interface AppProps {
   initialSession?: AuthSession;
   /** Tests inject an instant `sleep` so retries do not wait for real backoff. */
   retry?: UseTranApiOptions['retry'];
+  /** Tests inject the indicator delay (`0` or huge) instead of using fake timers (REQ-LOAD-002). */
+  loading?: { indicatorDelayMs: number };
 }
 
 export function App(props: AppProps = {}) {
@@ -34,6 +36,7 @@ export function App(props: AppProps = {}) {
 function Shell({
   initialSession,
   retry,
+  loading,
   preferences: { locale, setLocale, theme, setTheme },
 }: AppProps & { preferences: ReturnType<typeof usePreferences> }) {
   const feedback = useFeedback();
@@ -94,7 +97,9 @@ function Shell({
           <AuthWelcomePage locale={locale} onSelectRole={handleSelectRole} />
         )}
 
-        {destination === 'voter_dashboard' && <EligibilityPage api={api} locale={locale} />}
+        {destination === 'voter_dashboard' && (
+          <EligibilityPage api={api} locale={locale} indicatorDelayMs={loading?.indicatorDelayMs} />
+        )}
 
         {destination === 'auditor_dashboard' && (
           <AuditorPage locale={locale} onBackToVoter={() => handleSelectRole('citizen_voter')} />

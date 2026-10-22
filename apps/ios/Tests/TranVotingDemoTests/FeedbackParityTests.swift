@@ -1,4 +1,4 @@
-// Verifies: REQ-ERR-001 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-009 REQ-ROB-007
+// Verifies: REQ-ERR-001 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-009 REQ-ROB-007 REQ-LOAD-001
 import XCTest
 
 /// `fixtures/feedback.json` through the UniFFI surface, plus the iOS feedback center that applies it.
@@ -62,6 +62,30 @@ final class FeedbackParityTests: XCTestCase {
         let durations = try fixture()["toastDurationsMs"] as! [String: Int]
         for duration in [TranToastDuration.short, .medium, .long] {
             XCTAssertEqual(Int(toastDurationMs(duration: duration)), durations["\(duration)"])
+        }
+    }
+
+    func testLoadingPolicyMatchesTheFixture() throws {
+        // [REQ-LOAD-001] the indicator delay and pending copy come from the Rust table
+        let row = try fixture()["loadingPolicy"] as! [String: Any]
+        let policy = loadingPolicy()
+        XCTAssertEqual(Int(policy.indicatorDelayMs), row["indicatorDelayMs"] as? Int)
+        XCTAssertEqual(policy.pendingMessageKey, row["pendingMessageKey"] as? String)
+        XCTAssertNotNil(L10n.feedback(policy.pendingMessageKey), "the pending copy has no iOS string")
+        XCTAssertLessThan(Int(policy.indicatorDelayMs), Int(retryPolicy().requestTimeoutMs))
+    }
+
+    func testVerdictSourcesMatchTheFixture() throws {
+        // [REQ-LOAD-001] every verdict source has its wire name and a localized label
+        let rows = try fixture()["verdictSources"] as! [[String: Any]]
+        let sources: [TranVerdictSource] = [.device, .server, .deviceFallback]
+        XCTAssertEqual(sources.count, rows.count)
+        for (source, row) in zip(sources, rows) {
+            let spec = verdictSourceSpec(source: source)
+            XCTAssertEqual(spec.source, source)
+            XCTAssertEqual(spec.wireName, row["source"] as? String)
+            XCTAssertEqual(spec.messageKey, row["messageKey"] as? String)
+            XCTAssertNotNil(L10n.feedback(spec.messageKey), "\(spec.messageKey) has no iOS string")
         }
     }
 

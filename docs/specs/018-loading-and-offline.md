@@ -15,7 +15,7 @@ Vocabulary used below:
 - The **source** of a verdict is who vouched for it: `device` (the device rules, no server involved), `server` (the
   server answered) or `device_fallback` (the server was asked and could not answer, so the device rules decided).
 
-### REQ-LOAD-001 [planned] The waiting policy is one Rust table
+### REQ-LOAD-001 [verified] The waiting policy is one Rust table
 
 `crates/rust-core/src/feedback.rs` MUST define `LOADING_POLICY` — `indicator_delay_ms` and `pending_message_key`, the
 locale key of the pending copy — and `VerdictSource` (`device`, `server`, `device_fallback`), each variant with the
@@ -28,7 +28,7 @@ source label, and every key the table names MUST exist in every locale (REQ-I18N
 `packages/core-ts/tests/feedback.test.ts`, `FeedbackParityTests.swift`, `FeedbackParityTest.kt`,
 `packages/core-ts/tests/i18n-guards.test.ts`.
 
-### REQ-LOAD-002 [planned] A progress indicator appears only after the delay
+### REQ-LOAD-002 [verified] A progress indicator appears only after the delay
 
 A check that settles within `indicator_delay_ms` MUST NOT show any progress indicator. Once a check has run longer,
 the result region MUST show the `pending_message_key` copy inside the live region that already announces results
@@ -41,7 +41,7 @@ switch to the progress label only together with the indicator, never earlier. Th
 shows progress after a moment" and "A fast server answer shows no progress indicator", `ServerConfirmationTests.swift`,
 `ServerConfirmationTest.kt`.
 
-### REQ-LOAD-003 [planned] The last verdict stays visible while a new check runs
+### REQ-LOAD-003 [verified] The last verdict stays visible while a new check runs
 
 Starting a check MUST NOT blank or replace the verdict on screen: on the web the previous server-mode result stays
 (device mode is synchronous); on iOS and Android the device verdict stays. While the check is pending the result MUST
@@ -52,17 +52,17 @@ update.
 **Verified by:** `ResultCard.test.tsx`, `App.test.tsx`, BDD "The last result stays visible while a new check runs",
 `VotingUITests.swift`, `VotingHomeAccessibilityTest.kt`.
 
-### REQ-LOAD-004 [planned] Submitting again or leaving cancels the check, and a cancelled check is silent
+### REQ-LOAD-004 [verified] Submitting again or leaving cancels the check, and a cancelled check is silent
 
 Starting a new check MUST cancel the one in flight (REQ-ROB-006), and leaving the eligibility screen MUST cancel it
 too — on the web signing out unmounts the page while the API hook lives on in the shell; on iOS and Android the view
 disappears. A cancelled check MUST NOT change the verdict, the source, the status pill, or show a toast or banner;
 `request.cancelled` is logged at `debug` only (its catalogue entry is `silent`).
-**Verified by:** `useTranApi.test.tsx` (`cancelCheck`), `App.test.tsx` ("signing out during a server check shows no
+**Verified by:** `useTranApi.cancel.test.tsx` (`cancelCheck`), `App.test.tsx` ("signing out during a server check shows no
 late toast"), BDD "Leaving the screen discards a late answer", `ServerConfirmationTests.swift`,
 `ServerConfirmationTest.kt`.
 
-### REQ-LOAD-005 [planned] When the server cannot answer, the device decides and the result says so
+### REQ-LOAD-005 [verified] When the server cannot answer, the device decides and the result says so
 
 "Cannot answer" is decided by the transport and the retry budget only: a transport failure (`network.offline`,
 `network.timeout`, REQ-ROB-002) or a retryable server failure once the attempts of REQ-ERR-005 are spent. No platform
@@ -75,7 +75,7 @@ return the source to `server`. Device-mode checks and the startup health check a
 says so" (and the two existing fallback scenarios in `error-feedback.feature`, updated), `VotingUITests.swift`,
 `VotingHomeAccessibilityTest.kt`.
 
-### REQ-LOAD-006 [planned] Motion comes from tokens and bows to reduced motion
+### REQ-LOAD-006 [verified] Motion comes from tokens and bows to reduced motion
 
 `crates/rust-core/src/tokens.rs` MUST define motion durations (`fast`, `base`); `pnpm tokens:sync` MUST emit them as
 `--tran-motion-fast` / `--tran-motion-base` (CSS), in `tokens.json` and `designMotion` (TypeScript), `TranMotionDuration`
@@ -87,7 +87,7 @@ Android animator duration scale `0`) the indicator and the result MUST appear wi
 (duration literals), `crates/tran-tokens-codegen/tests/generated_files.rs` (drift), `TranMotionTests.swift`,
 `TranMotionTest.kt`, BDD "Motion is removed when the user asks for less" (REQ-A11Y-009).
 
-### REQ-LOAD-007 [planned] Pending and fallback states are screenshot-compared on every platform
+### REQ-LOAD-007 [verified] Pending and fallback states are screenshot-compared on every platform
 
 The screenshot suites MUST capture, besides the existing screens, a **pending** state (a check held open past the
 indicator delay) and a **fallback** state (the server refused, the device answered): web `pending-<theme>.png` and
@@ -96,7 +96,8 @@ indicator delay) and a **fallback** state (the server refused, the device answer
 `result-…` shot is the fallback state). Each MUST show the pending copy or the `device_fallback` label; references stay
 gitignored (REQ-PERF-001).
 **Verified by:** `e2e/visual/web.spec.ts`, `apps/android/app/src/test/…/screenshots/ScreenshotTest.kt`,
-`apps/ios/Tests/TranVotingDemoScreenshotTests/ScreenshotTests.swift`.
+`apps/ios/Tests/TranVotingDemoScreenshotTests/ScreenshotTests.swift`, `TranApiStubTests.swift` (the stub behind the
+pending shots).
 
 ## Out of scope (deliberately)
 

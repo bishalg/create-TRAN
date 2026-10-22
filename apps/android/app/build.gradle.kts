@@ -75,6 +75,8 @@ dependencies {
     testImplementation("net.java.dev.jna:jna:5.15.0")
     testImplementation("org.json:json:20240303")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    // Virtual time for ServerConfirmation; the version the Compose BOM already resolves.
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     // Screenshots (ADR-0031): Google's Robolectric renders Compose on the JVM; Roborazzi compares.
     testImplementation(composeBom)
     testImplementation("androidx.compose.ui:ui-test-junit4")

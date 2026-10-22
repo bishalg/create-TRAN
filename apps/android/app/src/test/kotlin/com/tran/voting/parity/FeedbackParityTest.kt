@@ -19,9 +19,12 @@ import uniffi.tran_uniffi.TranPresentation
 import uniffi.tran_uniffi.TranToastDuration
 import uniffi.tran_uniffi.TranToastTone
 import uniffi.tran_uniffi.TranUserAction
+import uniffi.tran_uniffi.TranVerdictSource
 import uniffi.tran_uniffi.actionSpec
 import uniffi.tran_uniffi.errorCatalogue
+import uniffi.tran_uniffi.loadingPolicy
 import uniffi.tran_uniffi.toastDurationMs
+import uniffi.tran_uniffi.verdictSourceSpec
 
 /** `fixtures/feedback.json` through the UniFFI surface, plus the Android feedback center that applies it. */
 class FeedbackParityTest {
@@ -75,6 +78,31 @@ class FeedbackParityTest {
         val durations = fixture().getJSONObject("toastDurationsMs")
         for (duration in TranToastDuration.entries) {
             assertEquals(durations.getLong(duration.name.lowercase()), toastDurationMs(duration).toLong())
+        }
+    }
+
+    // Verifies: REQ-LOAD-001
+    @Test
+    fun loadingPolicyMatchesTheFixtureAndItsCopyHasAResource() {
+        val row = fixture().getJSONObject("loadingPolicy")
+        val policy = loadingPolicy()
+        assertEquals(row.getLong("indicatorDelayMs"), policy.indicatorDelayMs.toLong())
+        assertEquals(row.getString("pendingMessageKey"), policy.pendingMessageKey)
+        assertNotNull("${policy.pendingMessageKey} has no Android string", feedbackMessageRes[policy.pendingMessageKey])
+    }
+
+    // Verifies: REQ-LOAD-001
+    @Test
+    fun verdictSourcesMatchTheFixtureAndEveryLabelHasAResource() {
+        val rows = fixture().getJSONArray("verdictSources")
+        assertEquals(rows.length(), TranVerdictSource.entries.size)
+        TranVerdictSource.entries.forEachIndexed { index, source ->
+            val row = rows.getJSONObject(index)
+            val spec = verdictSourceSpec(source)
+            assertEquals(source, spec.source)
+            assertEquals(row.getString("source"), spec.wireName)
+            assertEquals(spec.wireName, row.getString("messageKey"), spec.messageKey)
+            assertNotNull("${spec.messageKey} has no Android string", feedbackMessageRes[spec.messageKey])
         }
     }
 

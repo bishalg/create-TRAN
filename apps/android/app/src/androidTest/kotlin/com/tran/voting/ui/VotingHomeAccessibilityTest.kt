@@ -1,4 +1,4 @@
-// Verifies: REQ-ERR-007 REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006 REQ-NAT-007 REQ-NAT-010 REQ-NAT-011
+// Verifies: REQ-ERR-007 REQ-LOAD-003 REQ-LOAD-005 REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006 REQ-NAT-007 REQ-NAT-010 REQ-NAT-011
 package com.tran.voting.ui
 
 import androidx.compose.material3.MaterialTheme
@@ -110,6 +110,18 @@ class VotingHomeAccessibilityTest {
 
         // REQ-NAT-002: the verdict does not wait for the API.
         compose.onNodeWithTag("check-button").performClick()
+        compose.onNodeWithTag("offline-result")
+            .assertTextEquals("Age 20 meets the minimum voting age of 18 in NP.")
+
+        // REQ-LOAD-005: once the retries are spent the device decides, and the caption says so;
+        // REQ-LOAD-003: the verdict itself reads exactly as before.
+        val fallback = "The server could not answer — checked on this device."
+        compose.waitUntil(timeoutMillis = 5_000) {
+            compose.onAllNodesWithText(fallback).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithTag("verdict-source")
+            .assertTextEquals(fallback)
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
         compose.onNodeWithTag("offline-result")
             .assertTextEquals("Age 20 meets the minimum voting age of 18 in NP.")
     }

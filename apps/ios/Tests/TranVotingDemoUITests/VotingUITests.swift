@@ -1,4 +1,5 @@
 // Verifies: REQ-ERR-007 REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006 REQ-NAT-007 REQ-NAT-010 REQ-NAT-011
+// Verifies: REQ-LOAD-002 REQ-LOAD-003 REQ-LOAD-005
 import XCTest
 
 /// Native UI + accessibility tests. Journeys mirror e2e/maestro/flows and e2e/features.
@@ -66,6 +67,42 @@ final class VotingUITests: XCTestCase {
         XCTAssertEqual(
             app.staticTexts["offline-result"].label,
             "Age 20 meets the minimum voting age of 18 in NP."
+        )
+
+        // [REQ-LOAD-005] once the retries are spent the device decides, and the result says so.
+        waitForLabel(
+            app.staticTexts["verdict-source"],
+            "The server could not answer — checked on this device."
+        )
+        // [REQ-LOAD-003] the verdict itself is untouched by the server's silence.
+        XCTAssertEqual(
+            app.staticTexts["offline-result"].label,
+            "Age 20 meets the minimum voting age of 18 in NP."
+        )
+    }
+
+    func testPendingCheckKeepsTheDeviceVerdictAndSaysItIsChecking() {
+        // [REQ-LOAD-002] [REQ-LOAD-003] a check that stalls (the debug transport stub never answers)
+        // shows the pending copy under the verdict, which stays as the device computed it.
+        app.terminate()
+        app.launchArguments += ["-TranApiStub", "hang"]
+        app.launch()
+
+        check(age: "20", country: "NP")
+        waitForLabel(app.staticTexts["verdict-source"], "Checking with the server…")
+        XCTAssertEqual(
+            app.staticTexts["offline-result"].label,
+            "Age 20 meets the minimum voting age of 18 in NP."
+        )
+        XCTAssertFalse(app.descendants(matching: .any)["toast"].exists)
+    }
+
+    private func waitForLabel(_ element: XCUIElement, _ label: String, timeout: TimeInterval = 10) {
+        let expectation = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "label == %@", label), object: element)
+        XCTAssertEqual(
+            XCTWaiter().wait(for: [expectation], timeout: timeout), .completed,
+            "expected \"\(label)\", got \"\(element.exists ? element.label : "nothing")\""
         )
     }
 

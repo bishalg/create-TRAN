@@ -76,11 +76,13 @@ failure modes are a fixture (ADR-0029). The _waiting_ side is improvised per pla
    keeps its name and reads the generated duration; Android gets the same two-line helper, reading the animator
    duration scale for "reduce motion". No easing token: one `ease-out` is not a brand decision.
 8. **Screenshots hang or refuse the transport, never a live API.** Web: a Playwright route that never fulfils
-   (pending) or aborts with `connectionrefused` (fallback). Android: an OkHttp interceptor that sleeps on
-   `Dispatchers.IO` (pending) or throws `IOException` (fallback) — the `Unconfined` dispatcher the other JVM
-   screenshots use would block the main thread on a hang. iOS: the launch argument points at the RFC 5737 TEST-NET
-   address `http://192.0.2.1:3001` (pending; ATS does not apply to IP addresses, the connect stalls until the 5 s
-   timeout, three times) and at `http://127.0.0.1:1` (fallback, as today).
+   (pending) or aborts with `connectionrefused` (fallback). Android: fake APIs in the JVM tests (`testing/FakeApis.kt`)
+   that refuse, or hold only the confirmation request on a background thread while the startup health check stays on
+   the main thread (a whole client on `Dispatchers.IO` brings back the lost-resume flake in `docs/LEARNINGS.md`). iOS:
+   a debug-only `-TranApiStub hang` launch argument that holds every request open (pending), and
+   `http://127.0.0.1:1` (fallback, as before). The first iOS idea, the RFC 5737 TEST-NET address `192.0.2.1`, does
+   not stall on iOS 27: App Transport Security blocks plain HTTP to it at once (error -1022), so it never shows the
+   pending state.
 
 ## Consequences
 

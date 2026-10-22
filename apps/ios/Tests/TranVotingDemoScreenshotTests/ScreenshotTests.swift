@@ -1,4 +1,4 @@
-// Verifies: REQ-PERF-007
+// Verifies: REQ-PERF-007 REQ-LOAD-007
 import CoreGraphics
 import UIKit
 import XCTest
@@ -9,7 +9,9 @@ import XCTest
 /// shot passes, so the first run on a machine is its baseline. `pnpm ios:screenshots:record`
 /// re-records all of them after an intended change.
 ///
-/// The API points at a refused port, so every run ends in the same state: "offline" pill and banner.
+/// The API points at a refused port, so every run ends in the same state: "offline" pill and banner,
+/// and the result labelled `device_fallback` (the fallback shot of REQ-LOAD-007). A second, short
+/// walk uses the debug transport stub that never answers (`-TranApiStub hang`) for the pending shot.
 /// `pnpm ios:screenshots` also pins the simulator's status bar, so the clock never differs.
 final class ScreenshotTests: XCTestCase {
     /// `apps/ios`, found from this file — the simulator shares the Mac's file system.
@@ -29,8 +31,11 @@ final class ScreenshotTests: XCTestCase {
     private static let only = ProcessInfo.processInfo.environment["TRAN_SCREENSHOTS_ONLY"].flatMap { $0.isEmpty ? nil : $0 }
 
     /// The same locale list every platform ships: the folders under `locales/`.
+    private static let localesDir = iosRoot.deletingLastPathComponent().deletingLastPathComponent()
+        .appendingPathComponent("locales")
+
     private static var locales: [String] {
-        let dir = iosRoot.deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("locales")
+        let dir = localesDir
         let names = (try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? []
         return names.filter { !$0.hasPrefix(".") }.sorted()
     }
@@ -45,29 +50,49 @@ final class ScreenshotTests: XCTestCase {
             for locale in locales where Self.only == nil || Self.only == "\(theme.rawValue)-\(locale)" {
                 XCTContext.runActivity(named: "\(theme.rawValue)-\(locale)") { _ in
                     walk(theme: theme.rawValue, locale: locale)
+                    pendingWalk(theme: theme.rawValue, locale: locale)
                 }
             }
         }
     }
 
-    /// Home → result → sign-out dialog → welcome → auditor, one shot each.
-    private func walk(theme: String, locale: String) {
-        let name = "\(theme)-\(locale)"
+    /// The result copy of `locale`, read from the shared dictionary (`eligibility.result.<key>`), so
+    /// the walk waits for the exact caption without hard-coding any language.
+    private static func resultCopy(_ key: String, locale: String) -> String? {
+        let file = localesDir.appendingPathComponent("\(locale)/eligibility.json")
+        guard let data = try? Data(contentsOf: file),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let result = json["result"] as? [String: Any]
+        else { return nil }
+        return result[key] as? String
+    }
+
+    private func launch(theme: String, locale: String, extra: [String]) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments += [
             "-TranTheme", theme,
             "-AppleLanguages", "(\(locale))",
             "-AppleLocale", locale,
-            "-TranApiBaseUrl", "http://127.0.0.1:1",
-        ]
+        ] + extra
         app.launch()
+        return app
+    }
+
+    /// Home → result → sign-out dialog → welcome → auditor, one shot each.
+    private func walk(theme: String, locale: String) {
+        let name = "\(theme)-\(locale)"
+        let app = launch(theme: theme, locale: locale, extra: ["-TranApiBaseUrl", "http://127.0.0.1:1"])
         defer { app.terminate() }
 
         guard wait(for: app.descendants(matching: .any)["offline-notice"], "the offline banner", name) else { return }
         compare("home-\(name)")
 
         app.buttons["check-button"].tap()
-        guard wait(for: app.staticTexts["offline-result"], "the result", name) else { return }
+        guard let fallback = Self.resultCopy("sourceFallback", locale: locale) else {
+            return XCTFail("\(name): no fallback copy for \(locale)")
+        }
+        guard wait(for: app.staticTexts["verdict-source"], label: fallback, "the fallback label", name)
+        else { return }
         compare("result-\(name)")
 
         app.buttons["sign-out-button"].tap()
@@ -85,6 +110,31 @@ final class ScreenshotTests: XCTestCase {
         app.buttons["auditor-branch-button"].tap()
         guard wait(for: app.buttons["sign-out-button"], "the auditor screen", name) else { return }
         compare("auditor-\(name)")
+    }
+
+    /// Home → check against a transport that never answers → the pending caption under the verdict.
+    /// The request stalls until the per-attempt timeout, far longer than the shot takes.
+    private func pendingWalk(theme: String, locale: String) {
+        let name = "\(theme)-\(locale)"
+        let app = launch(theme: theme, locale: locale, extra: ["-TranApiStub", "hang"])
+        defer { app.terminate() }
+
+        guard wait(for: app.buttons["check-button"], "the check button", name) else { return }
+        app.buttons["check-button"].tap()
+        guard let pending = Self.resultCopy("updating", locale: locale) else {
+            return XCTFail("\(name): no pending copy for \(locale)")
+        }
+        guard wait(for: app.staticTexts["verdict-source"], label: pending, "the pending caption", name)
+        else { return }
+        compare("pending-\(name)")
+    }
+
+    private func wait(for element: XCUIElement, label: String, _ what: String, _ name: String) -> Bool {
+        let expectation = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "label == %@", label), object: element)
+        if XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed { return true }
+        XCTFail("\(name): \(what) never read \"\(label)\"")
+        return false
     }
 
     private func wait(for element: XCUIElement, _ what: String, _ name: String) -> Bool {

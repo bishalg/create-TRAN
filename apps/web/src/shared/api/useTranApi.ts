@@ -119,7 +119,10 @@ export function useTranApi({ feedback, client: injected, baseUrl, retry }: UseTr
       } catch (error) {
         outcome = { ok: false, error };
       }
-      return controller.signal.aborted ? null : outcome;
+      if (!controller.signal.aborted) return outcome;
+      // Cancelled: the catalogue's `silent` entry, logged at debug and never shown (REQ-LOAD-004).
+      if (!outcome.ok) logFailure(classifyError(outcome.error));
+      return null;
     },
     []
   );
@@ -188,7 +191,7 @@ export function useTranApi({ feedback, client: injected, baseUrl, retry }: UseTr
           random,
         })
       );
-      // Superseded by a newer check (which owns `isChecking` now) or unmounted.
+      // Superseded by a newer check (which owns `isChecking` now), cancelled, or unmounted.
       if (!outcome) return null;
       if (outcome.ok) {
         setState((prev) => ({
@@ -210,6 +213,15 @@ export function useTranApi({ feedback, client: injected, baseUrl, retry }: UseTr
     [client, fail, feedback, latest, sleep, random]
   );
 
+  /**
+   * Abandons the check in flight, for a screen that goes away while the hook lives on in the
+   * shell: its answer or failure never lands, and nothing on screen changes (REQ-LOAD-004).
+   */
+  const cancelCheck = useCallback(() => {
+    live.current.check?.abort();
+    setState((prev) => ({ ...prev, isChecking: false }));
+  }, []);
+
   useEffect(() => {
     void fetchStatus();
   }, [fetchStatus]);
@@ -221,6 +233,7 @@ export function useTranApi({ feedback, client: injected, baseUrl, retry }: UseTr
     refetch: fetchStatus,
     checkOffline,
     checkViaApi,
+    cancelCheck,
   };
 }
 

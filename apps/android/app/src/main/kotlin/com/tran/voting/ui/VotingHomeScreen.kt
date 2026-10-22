@@ -1,12 +1,14 @@
 package com.tran.voting.ui
 
 import android.content.Context
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import com.tran.voting.api.ServerConfirmation
 import com.tran.voting.api.TranApiClient
 import com.tran.voting.api.TranApiStatus
 import com.tran.voting.api.TranRequestFailure
@@ -40,7 +43,6 @@ import com.tran.voting.ui.atoms.TranTextVariant
 import com.tran.voting.ui.feedback.LocalTranFeedback
 import com.tran.voting.ui.feedback.TranFeedback
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.launch
 import uniffi.tran_uniffi.TranPresentation
 import uniffi.tran_uniffi.TranUserAction
 import uniffi.tran_uniffi.TranValidationException
@@ -65,6 +67,13 @@ fun VotingHomeScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val feedback = LocalTranFeedback.current
+    // One confirmation at a time: a new check cancels the one in flight, and leaving the screen
+    // cancels it too (the scope would, but say so); a cancelled one is silent (REQ-LOAD-004).
+    val confirmation = remember(scope) { ServerConfirmation(scope) }
+    DisposableEffect(confirmation) { onDispose { confirmation.cancel() } }
+    // The source caption belongs to a verdict; an input error has none.
+    var hasVerdict by remember { mutableStateOf(false) }
+    val reduceMotion = rememberReduceMotion()
 
     fun record(failure: TranRequestFailure?) {
         apiStatus = failure?.let(::tranApiStatusFrom) ?: TranApiStatus.ONLINE
@@ -123,13 +132,17 @@ fun VotingHomeScreen(
                 label = stringResource(TranStrings.Eligibility.checkOffline),
                 onClick = {
                     val check = runOfflineCheck(context, ageText, countryCode, invalidAge)
+                    val country = countryCode
                     resultText = check.text
-                    // REQ-NAT-011: the verdict is already on screen; the API call only moves the status pill.
-                    // The server confirms in the background, retrying transient failures; the
-                    // catalogue decides how the outcome is shown.
-                    check.age?.let { age ->
-                        scope.launch {
-                            val failure = attempt { api.confirmEligibility(age, countryCode) }
+                    hasVerdict = check.age != null
+                    // REQ-NAT-011: the verdict is already on screen; the API call only moves the status pill
+                    // and the source caption. The server confirms in the background, retrying transient
+                    // failures; the catalogue decides how the outcome is shown.
+                    val age = check.age
+                    if (age == null) {
+                        confirmation.cancel()
+                    } else {
+                        confirmation.start(run = { api.confirmEligibility(age, country) }) { failure ->
                             record(failure)
                             if (failure == null) {
                                 feedback.acknowledge(TranUserAction.SERVER_CHECK_SUCCEEDED)
@@ -146,6 +159,18 @@ fun VotingHomeScreen(
                 modifier = Modifier.testTag("offline-result"),
                 live = true,
             )
+            // REQ-LOAD-002/003/005: the verdict stays; its live caption says it is being checked
+            // (after the policy delay) or who vouched for it.
+            if (hasVerdict) {
+                TranText(
+                    text = stringResource(TranFeedback.messageRes(confirmation.captionKey)),
+                    variant = TranTextVariant.CAPTION,
+                    live = true,
+                    modifier = Modifier
+                        .animateContentSize(TranMotion.spec(reduceMotion))
+                        .testTag("verdict-source"),
+                )
+            }
             // Theme choices come from the rust-core registry: every palette renders here after
             // `pnpm tokens:sync`, with its label from the shared dictionaries (`shell.theme.*`).
             TranSegmented(

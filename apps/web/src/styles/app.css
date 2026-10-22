@@ -341,8 +341,8 @@ main:focus {
   font-size: var(--tran-font-size-body);
   cursor: pointer;
   transition:
-    filter 0.15s ease,
-    transform 0.15s ease;
+    filter var(--tran-motion-fast) ease,
+    transform var(--tran-motion-fast) ease;
 }
 
 .tran-button[data-variant='secondary'] {
@@ -570,6 +570,15 @@ main:focus {
   --tone: var(--tran-color-ineligible);
 }
 
+/* A newer check is pending (REQ-LOAD-003): the verdict stays, toned down through tokens. */
+.result[data-updating='true'] {
+  --tone: var(--fg-muted);
+}
+
+.result[data-updating='true'] .tran-text {
+  color: var(--fg-muted);
+}
+
 .result-badge {
   display: grid;
   place-items: center;
@@ -612,7 +621,7 @@ main:focus {
 
 @media (prefers-reduced-motion: no-preference) {
   .result {
-    animation: rise 0.25s ease-out;
+    animation: rise var(--tran-motion-base) ease-out;
   }
 }
 
@@ -828,7 +837,7 @@ main:focus {
 
 @media (prefers-reduced-motion: no-preference) {
   .tran-toast {
-    animation: tran-toast-in 0.2s ease-out;
+    animation: tran-toast-in var(--tran-motion-base) ease-out;
   }
 }
 

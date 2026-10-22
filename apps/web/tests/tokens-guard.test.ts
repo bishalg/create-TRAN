@@ -1,4 +1,4 @@
-// Verifies: REQ-WEB-010, REQ-WEB-011, REQ-WEB-014
+// Verifies: REQ-WEB-010, REQ-WEB-011, REQ-WEB-014, REQ-LOAD-006
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -54,6 +54,24 @@ describe('app.css token guard', () => {
     }
 
     expect(offenders).toEqual([]);
+  });
+
+  it('[REQ-LOAD-006] takes every duration from a motion token, never a literal', () => {
+    const rawDuration = /(?<![\w-])\d*\.?\d+m?s\b/g;
+    const offenders = appCss
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith('/*') && !/^--[\w-]+\s*:/.test(line))
+      .filter((line) => line.match(rawDuration));
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('[REQ-LOAD-006] reads the generated motion tokens, which exist', () => {
+    expect(themeCss).toMatch(/--tran-motion-fast:\s*\d+ms;/);
+    expect(themeCss).toMatch(/--tran-motion-base:\s*\d+ms;/);
+    expect(appCss).toContain('var(--tran-motion-fast)');
+    expect(appCss).toContain('var(--tran-motion-base)');
   });
 
   it('generated theme.css terminates every custom property with a semicolon', () => {

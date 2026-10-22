@@ -168,6 +168,10 @@ struct TranApiClient {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = TimeInterval(retryPolicy().requestTimeoutMs) / 1000
         configuration.waitsForConnectivity = false
+        let stubs = TranApiStub.protocolClasses()
+        if !stubs.isEmpty {
+            configuration.protocolClasses = stubs + (configuration.protocolClasses ?? [])
+        }
         return URLSession(configuration: configuration)
     }()
 

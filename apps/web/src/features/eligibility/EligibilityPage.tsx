@@ -1,6 +1,7 @@
-import { type FormEvent, useRef, useState } from 'react';
-import { type SupportedLocale, parseAgeInput, t } from '@tran/core';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
+import { LOADING_POLICY, type SupportedLocale, parseAgeInput, t } from '@tran/core';
 import type { TranApi } from '../../shared/api/useTranApi.js';
+import { useDelayed } from '../../shared/lib/useDelayed.js';
 import { Field } from '../../shared/ui/Field.js';
 import { TranBanner } from '../../shared/ui/TranBanner.js';
 import { TranButton } from '../../shared/ui/TranButton.js';
@@ -12,14 +13,27 @@ import { type CheckMode, toView } from './toView.js';
 export interface EligibilityPageProps {
   api: TranApi;
   locale: SupportedLocale;
+  /** How long a check runs before the screen says so; tests inject `0` or a huge value (REQ-LOAD-002). */
+  indicatorDelayMs?: number;
 }
 
-export function EligibilityPage({ api, locale }: EligibilityPageProps) {
+export function EligibilityPage({
+  api,
+  locale,
+  indicatorDelayMs = LOADING_POLICY.indicatorDelayMs,
+}: EligibilityPageProps) {
   const [mode, setMode] = useState<CheckMode>('device');
   const [age, setAge] = useState('21');
   const [country, setCountry] = useState('US');
   const [ageRejected, setAgeRejected] = useState(false);
   const ageField = useRef<HTMLInputElement>(null);
+  const pending = useDelayed(api.isChecking, indicatorDelayMs);
+  // Only a server-mode result can be superseded by a check; device mode is synchronous.
+  const updating = pending && mode === 'server';
+
+  // The hook lives in the shell and outlives this page: leaving abandons the check (REQ-LOAD-004).
+  const { cancelCheck } = api;
+  useEffect(() => cancelCheck, [cancelCheck]);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -81,7 +95,7 @@ export function EligibilityPage({ api, locale }: EligibilityPageProps) {
         </div>
 
         <TranButton type="submit" disabled={api.isChecking} aria-busy={api.isChecking}>
-          {t(api.isChecking ? 'eligibility.submitting' : 'eligibility.submit', locale)}
+          {t(pending ? 'eligibility.submitting' : 'eligibility.submit', locale)}
         </TranButton>
       </form>
 
@@ -92,8 +106,16 @@ export function EligibilityPage({ api, locale }: EligibilityPageProps) {
       )}
 
       {/* Always mounted: screen readers only announce changes inside a region that already exists. */}
-      <div className="result-slot" role="status" aria-label={t('eligibility.result.label', locale)}>
-        {result && <ResultCard result={result} locale={locale} />}
+      <div
+        className="result-slot"
+        role="status"
+        aria-label={t('eligibility.result.label', locale)}
+        aria-busy={updating}
+      >
+        {result && <ResultCard result={result} locale={locale} updating={updating} />}
+        {updating && !result && (
+          <TranText variant="muted">{t(LOADING_POLICY.pendingMessageKey, locale)}</TranText>
+        )}
       </div>
     </>
   );

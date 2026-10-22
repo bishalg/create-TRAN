@@ -29,7 +29,7 @@ Feature: Errors and feedback
     Then an "error" toast says "Something went wrong on our side"
     And the toast shows "Reference: req-e2e-500"
     And I am told I am "Not eligible to vote"
-    And the result shows "Checked on this device"
+    And the result shows "The server could not answer — checked on this device."
     And the server was asked 3 times
 
   Scenario: Server errors are explained in the user's language
@@ -42,7 +42,7 @@ Feature: Errors and feedback
     When I ask the server with age "20" and country "NP"
     Then I see the offline notice
     And I am told I am "Eligible to vote"
-    And the result shows "Checked on this device"
+    And the result shows "The server could not answer — checked on this device."
 
   Scenario: Signing out asks for confirmation
     When I click the sign out button

@@ -44,8 +44,15 @@ describe('toView', () => {
 
   // Verifies: REQ-ERR-005
   it('shows the device fallback in server mode after the server check failed', () => {
-    expect(toView('server', null, server, device)).toMatchObject({ source: 'device', age: 20 });
+    expect(toView('server', null, server, device)).toMatchObject({ age: 20 });
     expect(toView('device', null, server, device)).toBeNull();
+  });
+
+  // Verifies: REQ-LOAD-005
+  it('[REQ-LOAD-005] a fallback verdict is labelled device_fallback, a server verdict server, a device verdict device', () => {
+    expect(toView('server', null, server, device)?.source).toBe('device_fallback');
+    expect(toView('server', null, server)?.source).toBe('server');
+    expect(toView('device', device, server, device)?.source).toBe('device');
   });
 
   it('returns null until the active mode has a result', () => {

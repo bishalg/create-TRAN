@@ -10,7 +10,12 @@ struct VotingHomeView: View {
     @State private var apiStatus: TranApiStatus = .checking
     /// A connectivity failure shown until a call succeeds (REQ-ERR-006).
     @State private var banner: TranRequestFailure?
+    /// The server's background confirmation of the verdict on screen (REQ-LOAD-002..005).
+    @State private var confirmation = ServerConfirmation()
+    /// Whether `resultText` is a device verdict, so the source caption has something to describe.
+    @State private var hasVerdict = false
     @Environment(TranFeedback.self) private var feedback
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var onSignOut: (() -> Void)? = nil
     var api: TranApiClient = TranApiClient()
 
@@ -55,8 +60,17 @@ struct VotingHomeView: View {
                         }
                         .accessibilityIdentifier("check-button")
 
-                        TranText(resultText, live: true)
-                            .accessibilityIdentifier("offline-result")
+                        TranStack(gap: .xs, alignment: .leading) {
+                            TranText(resultText, live: true)
+                                .accessibilityIdentifier("offline-result")
+                            // The verdict stays as it is while the server checks; only this caption
+                            // says who vouches for it, or that the check is still running (REQ-LOAD-003).
+                            if hasVerdict {
+                                TranText(confirmation.caption, variant: .caption, live: true)
+                                    .accessibilityIdentifier("verdict-source")
+                            }
+                        }
+                        .animation(TranMotion.animation(reduceMotion: reduceMotion), value: confirmation.caption)
 
                         // Theme choices come from the rust-core registry: every case renders here,
                         // with its label from the shared dictionaries (`shell.theme.<mode>`).
@@ -83,6 +97,8 @@ struct VotingHomeView: View {
         .task {
             await refreshApiStatus()
         }
+        // Leaving the screen abandons the confirmation; its late answer is silent (REQ-LOAD-004).
+        .onDisappear { confirmation.cancel() }
     }
 
     private var statusLabel: String {
@@ -106,17 +122,24 @@ struct VotingHomeView: View {
     }
 
     /// The verdict is already on screen (REQ-NAT-002); the server confirms it in the background,
-    /// retrying transient failures, and the catalogue decides how the outcome is shown.
+    /// retrying transient failures, and the catalogue decides how the outcome is shown. A newer
+    /// check replaces this one (REQ-ROB-006).
     private func confirmWithApi(age: UInt16) {
-        Task {
-            do {
-                try await api.confirmEligibility(age: age, countryCode: countryCode)
+        let api = api
+        let countryCode = countryCode
+        confirmation.start {
+            try await api.confirmEligibility(age: age, countryCode: countryCode)
+        } onFinish: { outcome in
+            switch outcome {
+            case .confirmed:
                 succeeded()
                 feedback.acknowledge(.serverCheckSucceeded)
-            } catch {
-                let failure = TranRequestFailure.classify(error)
+            case let .failed(failure):
                 feedback.report(failure)
                 failed(failure)
+            case .cancelled:
+                // Logged at the catalogue's level (debug) and shown nowhere.
+                feedback.log(TranRequestFailure(code: .requestCancelled))
             }
         }
     }
@@ -134,7 +157,7 @@ struct VotingHomeView: View {
     private func checkOffline() {
         // Only parsing happens here; every rule (age range, country shape) is checked once, in Rust.
         guard let age = UInt16(ageText), !countryCode.isEmpty else {
-            resultText = L10n.Errors.ageAndCountry
+            showProblem(L10n.Errors.ageAndCountry)
             return
         }
         do {
@@ -145,12 +168,20 @@ struct VotingHomeView: View {
                 referenceDateIso: TranReferenceDate.string()
             )
             resultText = res.localizedReason
+            hasVerdict = true
             confirmWithApi(age: age)
         } catch let error as TranValidationError {
             // Map the typed Rust variant to shared copy instead of Rust prose.
-            resultText = error.localizedMessage
+            showProblem(error.localizedMessage)
         } catch {
-            resultText = L10n.Errors.ageAndCountry
+            showProblem(L10n.Errors.ageAndCountry)
         }
+    }
+
+    /// No verdict to confirm: an older confirmation must not describe this message.
+    private func showProblem(_ message: String) {
+        confirmation.cancel()
+        hasVerdict = false
+        resultText = message
     }
 }

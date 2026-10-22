@@ -1,4 +1,10 @@
-import { type SupportedLocale, t } from '@tran/core';
+import {
+  LOADING_POLICY,
+  type SupportedLocale,
+  t,
+  type VerdictSource,
+  verdictSourceMessageKey,
+} from '@tran/core';
 import { TranText } from '../../shared/ui/TranText.js';
 import { CheckIcon, CrossIcon } from '../../shared/ui/icons.js';
 
@@ -7,18 +13,28 @@ export interface EligibilityView {
   age: number;
   countryCode: string;
   minimumAge: number;
-  source: 'device' | 'server';
+  source: VerdictSource;
 }
 
+/**
+ * `updating`: a newer check is pending — the verdict stays, the source chip says it is being
+ * re-checked, and the card is toned down through a token (REQ-LOAD-003).
+ */
 export function ResultCard({
   result,
   locale,
+  updating = false,
 }: {
   result: EligibilityView;
   locale: SupportedLocale;
+  updating?: boolean;
 }) {
   return (
-    <article className="result" data-eligible={result.eligible}>
+    <article
+      className="result"
+      data-eligible={result.eligible}
+      data-updating={updating ? 'true' : undefined}
+    >
       <div className="result-badge" aria-hidden="true">
         {result.eligible ? <CheckIcon /> : <CrossIcon />}
       </div>
@@ -50,9 +66,9 @@ export function ResultCard({
           <li className="chip">
             <TranText variant="caption" as="span">
               {t(
-                result.source === 'device'
-                  ? 'eligibility.result.sourceDevice'
-                  : 'eligibility.result.sourceServer',
+                updating
+                  ? LOADING_POLICY.pendingMessageKey
+                  : verdictSourceMessageKey(result.source),
                 locale
               )}
             </TranText>
