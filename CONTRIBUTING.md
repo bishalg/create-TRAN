@@ -61,7 +61,9 @@ We follow **Gitflow branching**:
   git tag vX.Y.Z && git push origin vX.Y.Z   # release.yml tests, builds and publishes the GitHub release
   ```
 - **Pull Request Checklist**:
-  - Keep files focused (strictly ≤ 800 lines per file).
+  - Keep files focused. **Hand-written code and tests: at most 800 lines per file**, enforced by `pnpm tooling:test`;
+    split a bigger file into modules by responsibility. Generated files are exempt (they say so in their header).
+    Documentation has no hard limit, but split it by topic instead of growing one page.
   - Open PR targeting the **`dev`** branch.
   - Ensure all CI checks and local pre-commit/pre-push gates pass.
   - Native changes: verify `pnpm ios:build` and/or `pnpm android:build`.

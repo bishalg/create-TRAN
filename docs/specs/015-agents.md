@@ -10,7 +10,7 @@ Setup guide: [`.agents/README.md`](../../.agents/README.md).
 `signal`, `mode`, `deliverable`, `gates`), uses an unknown value, names a file other than its own, lists a scope path
 that does not exist, names a skill that does not exist, or runs a `pnpm` script that `package.json` does not define.
 An `edit` task MUST declare a `scope`; a `read-only` task MUST NOT.
-**Verified by:** unit tests in `tooling/agents/agents.test.mjs`.
+**Verified by:** unit tests in `tooling/agents/*.test.mjs`.
 
 ### REQ-AGT-002 [verified] Scheduled tasks match the workflow
 

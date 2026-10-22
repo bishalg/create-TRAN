@@ -20,6 +20,8 @@ This is a **template**: keep the sample tiny, exemplary and fully tested.
 - Dependencies: fix an advisory by the smallest bump; if upstream has not bumped, add a ranged override
   (`name@<fixed`) in `pnpm-workspace.yaml`, never a bare name. Every GitHub Action stays pinned to a commit SHA with a
   version comment (`pnpm supply:check`, ADR-0033).
+- Hand-written code and test files stay at or under 800 lines (`pnpm tooling:test`): split by responsibility, not
+  by line count. Generated files are exempt; docs have no hard limit but are split by topic.
 - Commits are Conventional Commits (`feat(scope): …`, `fix!: …`; the `commit-msg` hook checks). One version for every
   package and platform: never hand-edit a version or build number, use `pnpm release` (ADR-0034).
 - Before finishing: `pnpm test:all`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo fmt --all`.

@@ -76,7 +76,7 @@ jobs:
       - name: One version in every package and app (ADR-0034)
         run: pnpm run release:check
 
-      - name: Tooling scripts run through symlinked paths
+      - name: Tooling scripts run through symlinked paths; code files stay at or under 800 lines
         run: pnpm run tooling:test
 
       - name: Build workspace packages

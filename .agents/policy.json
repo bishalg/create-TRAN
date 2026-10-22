@@ -20,6 +20,7 @@
     "CHANGELOG.md",
     "tooling/release/",
     "tooling/entrypoints.test.mjs",
+    "tooling/file-size.test.mjs",
     "tooling/supply-chain/",
     "**/Cargo.toml",
     "Cargo.lock",

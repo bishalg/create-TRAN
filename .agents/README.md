@@ -74,7 +74,7 @@ step 2.
 The runner is generic; the task files, policy and signals are this repo's. In a fork, or when you copy the setup into
 another repo:
 
-1. **Copy** `AGENTS.md`, `.agents/`, `tooling/agents/` (one file plus its tests, plain Node 22, no dependencies),
+1. **Copy** `AGENTS.md`, `.agents/`, `tooling/agents/` (a few files plus their tests, plain Node 22, no dependencies),
    `docs/LEARNINGS.md`, and `.github/workflows/agents.yml` if you schedule on GitHub. Add `.agents/out/` to
    `.gitignore` and the `agents` / `agents:check` scripts to `package.json`.
 2. **Rewrite `AGENTS.md`** for your repo: where the rules live, how to test, what "done" means. It is inlined into
