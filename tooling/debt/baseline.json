@@ -1,0 +1,18 @@
+{
+  "totals": {
+    "asUnknownAs": 2,
+    "eslintDisable": 0,
+    "allowAttr": 6
+  },
+  "files": {
+    "apps/api/src/middleware/request_id.rs": {
+      "allowAttr": 1
+    },
+    "crates/rust-core/src/tokens.rs": {
+      "allowAttr": 5
+    },
+    "e2e/steps/loading-and-offline.steps.ts": {
+      "asUnknownAs": 2
+    }
+  }
+}
