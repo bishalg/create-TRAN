@@ -6,7 +6,7 @@
  * Requirement headings look like:  ### REQ-API-003 [verified] POST eligibility
  * Status is `verified` (default) or `planned` (spec written first, tests not yet).
  */
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -97,4 +97,6 @@ function main(root) {
   console.log('spec-check: ok');
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main(process.cwd());
+// realpath: a symlinked path (macOS /var -> /private/var) must still count as running this file.
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href)
+  main(process.cwd());

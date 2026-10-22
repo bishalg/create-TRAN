@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+// Verifies: REQ-REL-001
+import { describe, it, expect, vi } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
@@ -6,6 +7,7 @@ import * as path from 'node:path';
 import { parseArgs, PINNED_PNPM } from '../src/utils.js';
 import { TRAN_BANNER } from '../src/banner.js';
 import { generateTranProject } from '../src/generator.js';
+import { CLI_VERSION, runCli } from '../src/cli.js';
 
 function createLocalTemplateFixture(): string {
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'tran-template-'));
@@ -151,6 +153,26 @@ describe('CLI argument parsing', () => {
 
   it('should reject invalid prefix', () => {
     expect(() => parseArgs(['--prefix', 'x'])).toThrow(/2–12/);
+  });
+});
+
+describe('version (REQ-REL-001)', () => {
+  it('reports the package version, not a copy of it', async () => {
+    const pkg = JSON.parse(
+      fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf-8')
+    ) as { version: string };
+    expect(CLI_VERSION).toBe(pkg.version);
+    const written: string[] = [];
+    const spy = vi.spyOn(process.stdout, 'write').mockImplementation((chunk) => {
+      written.push(String(chunk));
+      return true;
+    });
+    try {
+      await runCli(['--version']);
+    } finally {
+      spy.mockRestore();
+    }
+    expect(written.join('')).toBe(`create-tran v${pkg.version}\n`);
   });
 });
 

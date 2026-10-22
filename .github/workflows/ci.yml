@@ -73,6 +73,12 @@ jobs:
       - name: Actions pinned, Dependabot complete, overrides ranged, SECURITY.md (ADR-0033)
         run: pnpm run supply:check
 
+      - name: One version in every package and app (ADR-0034)
+        run: pnpm run release:check
+
+      - name: Tooling scripts run through symlinked paths
+        run: pnpm run tooling:test
+
       - name: Build workspace packages
         run: pnpm --filter @tran/api build && pnpm --filter @tran/core build && pnpm --filter create-tran build
 

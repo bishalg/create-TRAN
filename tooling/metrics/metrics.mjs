@@ -24,6 +24,7 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
@@ -375,6 +376,7 @@ function main(root, argv) {
   }
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href)
+// realpath: a symlinked path (macOS /var -> /private/var) must still count as running this file.
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href)
   main(process.cwd(), process.argv.slice(2));
 /* c8 ignore stop */

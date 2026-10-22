@@ -43,8 +43,11 @@
     "agents:check": "node --test tooling/agents/agents.test.mjs && node tooling/agents/agents.mjs check",
     "supply:check": "node --test tooling/supply-chain/supply-chain.test.mjs && node tooling/supply-chain/supply-chain.mjs",
     "deps:audit": "pnpm audit --audit-level high && cargo audit --deny warnings",
+    "release": "node tooling/release/release.mjs bump",
+    "release:check": "node --test tooling/release/release.test.mjs && node tooling/release/release.mjs check",
+    "tooling:test": "node --test tooling/entrypoints.test.mjs",
     "test:all": "pnpm run lint && pnpm run test:coverage && pnpm run test:e2e",
-    "check:quick": "pnpm spec:check && pnpm agents:check && pnpm supply:check && pnpm format:check && pnpm typecheck && pnpm lint",
+    "check:quick": "pnpm spec:check && pnpm agents:check && pnpm supply:check && pnpm release:check && pnpm tooling:test && pnpm format:check && pnpm typecheck && pnpm lint",
     "hooks:install": "git config core.hooksPath .githooks && echo '\u2713 Git hooks installed (.githooks)'",
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true"
   },

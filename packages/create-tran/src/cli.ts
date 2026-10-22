@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import * as path from 'node:path';
 import { AGENT_SECRETS, DEFAULT_AGENT_HARNESS, DEFAULT_AGENT_SETUP } from './agents.js';
 import { printBanner } from './banner.js';
@@ -6,6 +7,11 @@ import { DEFAULT_THEME_MODE } from './palette.js';
 import { collectOnboardingAnswers } from './prompts.js';
 import { DEFAULT_STEM } from './stem.js';
 import { type CliOptions, parseArgs } from './utils.js';
+
+/** From package.json (REQ-REL-001); `../package.json` resolves from both `src/` and `dist/`. */
+export const CLI_VERSION = (
+  createRequire(import.meta.url)('../package.json') as { version: string }
+).version;
 
 export async function runCli(argv: string[] = process.argv.slice(2)): Promise<void> {
   const parsed = parseArgs(argv);
@@ -51,7 +57,7 @@ Examples:
   }
 
   if (parsed.version) {
-    process.stdout.write('create-tran v0.1.0\n');
+    process.stdout.write(`create-tran v${CLI_VERSION}\n`);
     return;
   }
 

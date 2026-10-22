@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Verifies: REQ-REL-002
+# Commit-msg hook: the header must be a Conventional Commit (ADR-0034), so `pnpm release` can write the changelog.
+set -e
+node "$(git rev-parse --show-toplevel)/tooling/release/release.mjs" lint-commit "$1"

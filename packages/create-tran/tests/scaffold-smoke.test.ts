@@ -1,4 +1,4 @@
-// Verifies: REQ-GEN-004, REQ-GEN-005
+// Verifies: REQ-GEN-004, REQ-GEN-005, REQ-REL-005
 /**
  * The generator tests above use a hand-made fixture, which cannot notice the real template moving
  * away from what the customizer expects (a renamed folder, a reformatted colour line). This one
@@ -49,6 +49,12 @@ beforeAll(async () => {
   workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tran-smoke-'));
   template = path.join(workDir, 'template');
   copyWorkingTree(template);
+  // A template that has shipped releases: the new project must not inherit its version or history.
+  execFileSync('node', ['tooling/release/release.mjs', 'set', '2.3.4'], { cwd: template });
+  fs.appendFileSync(
+    path.join(template, 'CHANGELOG.md'),
+    '\n## 2.3.4 - 2026-10-01\n\n- template history\n'
+  );
   project = path.join(workDir, 'acme-vote');
   await generateTranProject({
     projectName: 'acme-vote',
@@ -69,6 +75,17 @@ beforeAll(async () => {
 
 afterAll(() => {
   fs.rmSync(workDir, { recursive: true, force: true });
+});
+
+describe('a new project starts its own release history (REQ-REL-005)', () => {
+  it('sets every version to 0.1.0 and empties the changelog', () => {
+    expect(JSON.parse(read('package.json')).version).toBe('0.1.0');
+    execFileSync('node', ['tooling/release/release.mjs', 'check'], { cwd: project });
+    expect(read('apps/ios/AcmeVotingDemo.xcodeproj/project.pbxproj')).toContain(
+      'CURRENT_PROJECT_VERSION = 1000;'
+    );
+    expect(read('CHANGELOG.md')).not.toMatch(/^## /m);
+  });
 });
 
 describe('scaffolding the real template (REQ-GEN-004)', () => {

@@ -76,6 +76,25 @@ function customizeProject(options: CliOptions): string[] {
   return missed;
 }
 
+const FIRST_VERSION = '0.1.0';
+const EMPTY_CHANGELOG =
+  '# Changelog\n\nAll notable changes, newest first. Written by `pnpm release` from Conventional Commits.\n';
+
+/**
+ * A new project starts at 0.1.0 with an empty changelog, not the template's version and history
+ * (REQ-REL-005). The template's own release tool writes the version, so every platform agrees.
+ */
+function resetReleaseHistory(options: CliOptions): void {
+  const tool = path.join(options.targetDir, 'tooling', 'release', 'release.mjs');
+  if (fs.existsSync(tool)) {
+    execFileSync('node', [tool, 'set', FIRST_VERSION], { cwd: options.targetDir, stdio: 'pipe' });
+  }
+  const changelog = path.join(options.targetDir, 'CHANGELOG.md');
+  if (fs.existsSync(changelog)) {
+    fs.writeFileSync(changelog, EMPTY_CHANGELOG, 'utf-8');
+  }
+}
+
 function resetGitHistory(options: CliOptions): void {
   const gitDir = path.join(options.targetDir, '.git');
   if (fs.existsSync(gitDir)) {
@@ -138,6 +157,7 @@ export async function generateTranProject(options: CliOptions): Promise<void> {
   for (const miss of customizeProject(options)) {
     process.stderr.write(`  ⚠ agent setup: ${miss}; please adjust it by hand\n`);
   }
+  resetReleaseHistory(options);
   resetGitHistory(options);
 }
 

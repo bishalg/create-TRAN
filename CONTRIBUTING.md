@@ -49,8 +49,17 @@ We follow **Gitflow branching**:
 - **Automated Quality Hooks**:
   - `pnpm install` automatically activates our Git native quality hooks (`core.hooksPath .githooks`).
   - **`pre-commit`** executes fast local checks: requirement traceability (`pnpm spec:check`), code formatting (`cargo fmt`, `prettier`), TypeScript typing (`pnpm typecheck`), and Rust linting (`cargo clippy`).
+  - **`commit-msg`** requires a [Conventional Commit](https://www.conventionalcommits.org/) header, `type(scope)!: subject` (`feat(web): show a loading state`), because the changelog is written from it (ADR-0034).
   - **`pre-push`** executes full workspace unit and parity test suites (`pnpm test`) before allowing a push to any remote branch.
   - Run `pnpm check:quick` at any time to verify local quality gates in seconds.
+- **Releasing** (ADR-0034): one version for every package and platform, chosen in the root `package.json`.
+  ```bash
+  git checkout dev && git pull
+  pnpm release auto          # bumps every version, prepends the CHANGELOG.md section; never tags
+  git commit -am "chore(release): vX.Y.Z" && git push
+  # merge dev into main, then on main:
+  git tag vX.Y.Z && git push origin vX.Y.Z   # release.yml tests, builds and publishes the GitHub release
+  ```
 - **Pull Request Checklist**:
   - Keep files focused (strictly ≤ 800 lines per file).
   - Open PR targeting the **`dev`** branch.

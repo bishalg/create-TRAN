@@ -9,7 +9,7 @@
  * - every Rust advisory ignored in `.cargo/audit.toml` says why
  * - `SECURITY.md` says how to report and what CI enforces
  */
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -121,7 +121,8 @@ export function checkAll(root) {
   return errors;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// realpath: a symlinked path (macOS /var -> /private/var) must still count as running this file.
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
   const errors = checkAll(process.cwd());
   for (const error of errors) console.error(`✗ ${error}`);
   if (errors.length) process.exit(1);

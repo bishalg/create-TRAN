@@ -67,6 +67,9 @@ variable `AGENTS_ENABLED` to `false`.
 
 ## After scaffold
 
+The new project starts at version `0.1.0` on every platform with an empty `CHANGELOG.md`; `pnpm release auto` writes
+its first release (see the root `CONTRIBUTING.md`).
+
 ```bash
 cd my-app
 pnpm install

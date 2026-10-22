@@ -42,7 +42,7 @@ targets:
         TRAN_API_BASE_URL: http://127.0.0.1:3001
         SWIFT_VERSION: '5.0'
         MARKETING_VERSION: '0.1.0'
-        CURRENT_PROJECT_VERSION: '1'
+        CURRENT_PROJECT_VERSION: '1000'
         TARGETED_DEVICE_FAMILY: '1,2'
         LIBRARY_SEARCH_PATHS[sdk=iphonesimulator*][arch=arm64]: $(SRCROOT)/RustLib/aarch64-apple-ios-sim
         LIBRARY_SEARCH_PATHS[sdk=iphonesimulator*][arch=x86_64]: $(SRCROOT)/RustLib/x86_64-apple-ios

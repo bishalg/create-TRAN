@@ -1,0 +1,74 @@
+name: Release
+
+# A pushed version tag becomes a GitHub release (ADR-0034, REQ-REL-004). Make the tag with:
+#   pnpm release auto     # bumps every version and writes the CHANGELOG section; never tags
+#   git commit -am "chore(release): vX.Y.Z" && git tag vX.Y.Z && git push origin HEAD vX.Y.Z
+#
+# The job refuses a tag that does not match the version, runs the Rust and TypeScript tests, builds the web app and
+# the Android release APK, and publishes both with that version's CHANGELOG section as the notes. The APK is unsigned:
+# signing keys belong to the project, not the template. iOS is not attached; an unsigned build is not installable.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Test, build and publish ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4.4.4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
+          targets: aarch64-linux-android, x86_64-linux-android
+      - name: Rust cache
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: The tag matches every version in the repo
+        run: node tooling/release/release.mjs check --tag "$GITHUB_REF_NAME"
+
+      - name: Rust tests
+        run: cargo test --workspace
+      - name: TypeScript tests
+        run: pnpm run test:ts
+
+      - name: Build the web app
+        run: |
+          pnpm --filter web build
+          tar -czf "web-$GITHUB_REF_NAME.tar.gz" -C apps/web dist
+      - name: Build the Android release APK (stages the Rust core)
+        run: |
+          (cd apps/android && ./gradlew --no-daemon :app:assembleRelease)
+          cp apps/android/app/build/outputs/apk/release/app-release-unsigned.apk "android-$GITHUB_REF_NAME-unsigned.apk"
+
+      - name: Publish the release with its CHANGELOG section
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node tooling/release/release.mjs notes "$GITHUB_REF_NAME" > notes.md
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md \
+            "web-$GITHUB_REF_NAME.tar.gz" "android-$GITHUB_REF_NAME-unsigned.apk"

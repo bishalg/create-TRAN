@@ -15,7 +15,15 @@
  * AGENT_HARNESS overrides the policy's defaultHarness; AGENT_HARNESS_ARGS adds arguments (a model, a profile).
  */
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseRequirements } from '../spec-check/spec-check.mjs';
@@ -1133,7 +1141,8 @@ function main(root, argv) {
   }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// realpath: a symlinked path (macOS /var -> /private/var) must still count as running this file.
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
   try {
     process.exitCode = main(process.cwd(), process.argv.slice(2));
   } catch (error) {

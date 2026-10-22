@@ -9,6 +9,16 @@ when you learned something that is not obvious from the code, the specs or the A
 - Format, checked by `pnpm agents:check`: a `## YYYY-MM-DD - Title` heading, then a `**Learning:**` and an
   `**Action:**` line. Newest first. Delete an entry when the code makes it obsolete.
 
+## 2026-10-22 - A script's "am I main?" check must resolve symlinks
+
+**Learning:** `import.meta.url === pathToFileURL(process.argv[1]).href` is false when the script is started through a
+symlinked path, because Node resolves the module URL but not `argv[1]`. On macOS every temp folder is one
+(`/var/folders` → `/private/var/folders`), so tooling run inside a scaffolded test project silently skipped `main()`
+and exited 0: two scaffold smoke assertions had passed since they were written without ever running.
+**Action:** Compare against `pathToFileURL(realpathSync(process.argv[1])).href`. `pnpm tooling:test` runs every tool
+through a symlink and rejects the unresolved pattern. When a test only checks an exit code, also check one line of
+output that only the real work prints.
+
 ## 2026-10-22 - pnpm 11 ignores overrides in package.json
 
 **Learning:** pnpm 11 reads `overrides` only from `pnpm-workspace.yaml`. A `pnpm.overrides` block in the root
