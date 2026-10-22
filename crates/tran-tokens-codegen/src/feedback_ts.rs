@@ -3,8 +3,8 @@
 //! locale string is missing fails `tsc`.
 
 use rust_core::feedback::{
-    code_for_http_status, ErrorCode, Presentation, ToastDuration, UserAction, LOG_EVENT,
-    REQUEST_ID_MAX_LEN, RETRY_POLICY,
+    code_for_http_status, ErrorCode, Presentation, ToastDuration, UserAction, VerdictSource,
+    LOADING_POLICY, LOG_EVENT, REQUEST_ID_MAX_LEN, RETRY_POLICY,
 };
 
 fn presentation_ts(presentation: Presentation) -> String {
@@ -46,6 +46,17 @@ pub fn render_feedback_ts() -> String {
     };
     let codes = union(ErrorCode::ALL.iter().map(|c| c.as_str()).collect());
     let actions = union(UserAction::ALL.iter().map(|a| a.as_str()).collect());
+    let sources = union(VerdictSource::ALL.iter().map(|s| s.as_str()).collect());
+    let source_rows: String = VerdictSource::ALL
+        .iter()
+        .map(|source| {
+            format!(
+                "  {{ source: '{}', messageKey: '{}' }},\n",
+                source.as_str(),
+                source.message_key()
+            )
+        })
+        .collect();
 
     let errors: String = ErrorCode::ALL
         .iter()
@@ -111,7 +122,13 @@ export const STATUS_FALLBACK: readonly {{ from: number; to: number; code: ErrorC
 /** Rust's `is_valid_request_id`: 1–{} characters of `[A-Za-z0-9._-]` (REQ-ROB-010). */\n\
 export const REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{{1,{}}}$/;\n\n\
 /** The one log event every platform emits for a failure (REQ-ROB-007). */\n\
-export const LOG_EVENT = {{\n  message: '{}',\n  fields: [{}],\n}} as const;\n",
+export const LOG_EVENT = {{\n  message: '{}',\n  fields: [{}],\n}} as const;\n\n\
+/** Who vouched for the verdict on screen (REQ-LOAD-005). */\n\
+export type VerdictSource ={sources};\n\n\
+export interface VerdictSourceSpec {{\n  readonly source: VerdictSource;\n  /** Locale key of the label that names the source. */\n  readonly messageKey: TranStringKey;\n}}\n\n\
+export const VERDICT_SOURCES: readonly VerdictSourceSpec[] = [\n{source_rows}];\n\n\
+/** How long a check runs before the screen says it is waiting, and what it says (REQ-LOAD-002). */\n\
+export const LOADING_POLICY: {{\n  readonly indicatorDelayMs: number;\n  readonly pendingMessageKey: TranStringKey;\n}} = {{\n  indicatorDelayMs: {},\n  pendingMessageKey: '{}',\n}};\n",
         RETRY_POLICY.max_attempts,
         RETRY_POLICY.base_delay_ms,
         RETRY_POLICY.max_delay_ms,
@@ -125,6 +142,8 @@ export const LOG_EVENT = {{\n  message: '{}',\n  fields: [{}],\n}} as const;\n",
             .map(|f| format!("'{f}'"))
             .collect::<Vec<_>>()
             .join(", "),
+        LOADING_POLICY.indicator_delay_ms,
+        LOADING_POLICY.pending_message_key,
     )
 }
 
@@ -156,5 +175,20 @@ mod tests {
         assert_eq!(ranges.last().map(|r| r.1), Some(599));
         assert!(ranges.windows(2).all(|pair| pair[0].1 + 1 == pair[1].0));
         assert!(ranges.contains(&(502, 504, ErrorCode::ServerUnavailable)));
+    }
+
+    // Verifies: REQ-LOAD-001
+    #[test]
+    fn renders_loading_policy_and_verdict_sources() {
+        let ts = render_feedback_ts();
+        assert!(ts.contains(
+            "export type VerdictSource =\n  | 'device'\n  | 'server'\n  | 'device_fallback';"
+        ));
+        assert!(ts.contains(
+            "{ source: 'device_fallback', messageKey: 'eligibility.result.sourceFallback' },"
+        ));
+        assert!(ts.contains(
+            "export const LOADING_POLICY: {\n  readonly indicatorDelayMs: number;\n  readonly pendingMessageKey: TranStringKey;\n} = {\n  indicatorDelayMs: 300,\n  pendingMessageKey: 'eligibility.result.updating',\n};"
+        ));
     }
 }

@@ -142,6 +142,31 @@ fn render_swift_scale(scale: &Scale) -> String {
             format_points(*points)
         ));
     }
+    out.push_str(
+        "}\n\n/// Animation durations from rust-core, in seconds. Reduced motion turns animation off.\nenum TranMotionDuration {\n",
+    );
+    for (name, millis) in &scale.motion {
+        out.push_str(&format!(
+            "    static let {name}: TimeInterval = {}\n",
+            format_points(millis / 1000.0)
+        ));
+    }
     out.push_str("}\n");
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rust_core::tokens_json_snapshot;
+
+    // Verifies: REQ-LOAD-006
+    #[test]
+    fn renders_motion_scale() {
+        let snapshot = tokens_json_snapshot();
+        let swift = render_swift_tokens(&snapshot, &Scale::from_snapshot(&snapshot).unwrap());
+        assert!(swift.contains(
+            "enum TranMotionDuration {\n    static let fast: TimeInterval = 0.15\n    static let base: TimeInterval = 0.25\n}\n"
+        ));
+    }
 }

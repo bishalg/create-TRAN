@@ -163,3 +163,9 @@ object TranRadius {
     val md: Dp = 14.dp
     val lg: Dp = 20.dp
 }
+
+/** Animation durations from rust-core, in milliseconds. Reduced motion turns animation off. */
+object TranMotionDuration {
+    const val fastMs: Int = 150
+    const val baseMs: Int = 250
+}

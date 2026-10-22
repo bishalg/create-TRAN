@@ -1,8 +1,9 @@
-//! Spacing and radius scales in points (= CSS px at the 16px root, = dp on Android).
+//! Spacing and radius scales in points (= CSS px at the 16px root, = dp on Android), and motion
+//! durations in milliseconds.
 
 use rust_core::tokens::TokensJsonSnapshot;
 
-/// `(member, points)` pairs, in the order the tokens declare them.
+/// `(member, value)` pairs, in the order the tokens declare them.
 pub type Entries = Vec<(&'static str, f64)>;
 
 /// Both scales, converted once so every native target renders the same numbers.
@@ -10,13 +11,17 @@ pub type Entries = Vec<(&'static str, f64)>;
 pub struct Scale {
     pub spacing: Entries,
     pub radii: Entries,
+    /// Milliseconds.
+    pub motion: Entries,
 }
 
 impl Scale {
-    /// Fails on a length the native targets cannot express (anything but `rem` or `px`).
+    /// Fails on a length the native targets cannot express (anything but `rem` or `px`), or a
+    /// duration that is not whole milliseconds.
     pub fn from_snapshot(snapshot: &TokensJsonSnapshot) -> Result<Self, String> {
         let sp = &snapshot.spacing;
         let r = &snapshot.radii;
+        let m = &snapshot.motion;
         Ok(Self {
             spacing: convert(&[
                 ("xxs", &sp.xxs),
@@ -31,6 +36,10 @@ impl Scale {
                 ("nudge", &sp.nudge),
             ])?,
             radii: convert(&[("sm", &r.sm), ("md", &r.md), ("lg", &r.lg)])?,
+            motion: [("fast", &m.fast), ("base", &m.base)]
+                .iter()
+                .map(|(name, value)| css_duration_to_millis(value).map(|ms| (*name, ms)))
+                .collect::<Result<_, _>>()?,
         })
     }
 }
@@ -51,6 +60,17 @@ pub fn css_length_to_points(value: &str) -> Result<f64, String> {
         return Err(format!("unsupported length `{value}` (use rem or px)"));
     };
     parsed.map_err(|e| format!("invalid length `{value}`: {e}"))
+}
+
+/// `150ms` → 150. Seconds are rejected so every platform reads one unit.
+pub fn css_duration_to_millis(value: &str) -> Result<f64, String> {
+    let digits = value
+        .strip_suffix("ms")
+        .ok_or_else(|| format!("unsupported duration `{value}` (use whole ms)"))?;
+    digits
+        .parse::<u32>()
+        .map(f64::from)
+        .map_err(|e| format!("invalid duration `{value}`: {e}"))
 }
 
 /// `2.0` → `2`, `6.5` → `6.5`.
@@ -99,5 +119,25 @@ mod tests {
         assert!(Scale::from_snapshot(&snapshot)
             .unwrap_err()
             .contains("calc(1px)"));
+    }
+
+    // Verifies: REQ-LOAD-006
+    #[test]
+    fn motion_converts_to_milliseconds_and_rejects_other_units() {
+        let scale = Scale::from_snapshot(&tokens_json_snapshot()).unwrap();
+        assert_eq!(scale.motion, [("fast", 150.0), ("base", 250.0)]);
+        assert_eq!(
+            css_duration_to_millis("0.2s").unwrap_err(),
+            "unsupported duration `0.2s` (use whole ms)"
+        );
+        assert!(css_duration_to_millis("fastms")
+            .unwrap_err()
+            .contains("fastms"));
+
+        let mut snapshot = tokens_json_snapshot();
+        snapshot.motion.base = "1s".into();
+        assert!(Scale::from_snapshot(&snapshot)
+            .unwrap_err()
+            .contains("`1s`"));
     }
 }

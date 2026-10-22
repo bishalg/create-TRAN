@@ -310,6 +310,12 @@ RustBuffer uniffi_tran_uniffi_fn_func_error_spec(RustBuffer code, RustCallStatus
 int8_t uniffi_tran_uniffi_fn_func_is_valid_request_id(RustBuffer value, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_LOADING_POLICY
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_LOADING_POLICY
+RustBuffer uniffi_tran_uniffi_fn_func_loading_policy(RustCallStatus *_Nonnull out_status
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_RETRY_AFTER_MS
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_RETRY_AFTER_MS
 RustBuffer uniffi_tran_uniffi_fn_func_retry_after_ms(RustBuffer header, RustCallStatus *_Nonnull out_status
@@ -329,6 +335,11 @@ RustBuffer uniffi_tran_uniffi_fn_func_retry_policy(RustCallStatus *_Nonnull out_
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TOAST_DURATION_MS
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TOAST_DURATION_MS
 uint64_t uniffi_tran_uniffi_fn_func_toast_duration_ms(RustBuffer duration, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_VERDICT_SOURCE_SPEC
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_VERDICT_SOURCE_SPEC
+RustBuffer uniffi_tran_uniffi_fn_func_verdict_source_spec(RustBuffer source, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_FFI_TRAN_UNIFFI_RUSTBUFFER_ALLOC
@@ -669,6 +680,12 @@ uint16_t uniffi_tran_uniffi_checksum_func_is_valid_request_id(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_LOADING_POLICY
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_LOADING_POLICY
+uint16_t uniffi_tran_uniffi_checksum_func_loading_policy(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_RETRY_AFTER_MS
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_RETRY_AFTER_MS
 uint16_t uniffi_tran_uniffi_checksum_func_retry_after_ms(void
@@ -690,6 +707,12 @@ uint16_t uniffi_tran_uniffi_checksum_func_retry_policy(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TOAST_DURATION_MS
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TOAST_DURATION_MS
 uint16_t uniffi_tran_uniffi_checksum_func_toast_duration_ms(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_VERDICT_SOURCE_SPEC
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_VERDICT_SOURCE_SPEC
+uint16_t uniffi_tran_uniffi_checksum_func_verdict_source_spec(void
     
 );
 #endif

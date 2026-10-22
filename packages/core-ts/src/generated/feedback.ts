@@ -239,3 +239,30 @@ export const LOG_EVENT = {
   message: 'request failed',
   fields: ['code', 'status', 'request_id'],
 } as const;
+
+/** Who vouched for the verdict on screen (REQ-LOAD-005). */
+export type VerdictSource =
+  | 'device'
+  | 'server'
+  | 'device_fallback';
+
+export interface VerdictSourceSpec {
+  readonly source: VerdictSource;
+  /** Locale key of the label that names the source. */
+  readonly messageKey: TranStringKey;
+}
+
+export const VERDICT_SOURCES: readonly VerdictSourceSpec[] = [
+  { source: 'device', messageKey: 'eligibility.result.sourceDevice' },
+  { source: 'server', messageKey: 'eligibility.result.sourceServer' },
+  { source: 'device_fallback', messageKey: 'eligibility.result.sourceFallback' },
+];
+
+/** How long a check runs before the screen says it is waiting, and what it says (REQ-LOAD-002). */
+export const LOADING_POLICY: {
+  readonly indicatorDelayMs: number;
+  readonly pendingMessageKey: TranStringKey;
+} = {
+  indicatorDelayMs: 300,
+  pendingMessageKey: 'eligibility.result.updating',
+};

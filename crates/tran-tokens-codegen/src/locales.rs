@@ -3,7 +3,7 @@
 
 use crate::files::{list_dir, read_file};
 use crate::names::{android_resource_name, full_key, member_name};
-use rust_core::feedback::{ErrorCode, UserAction};
+use rust_core::feedback::{ErrorCode, UserAction, VerdictSource, LOADING_POLICY};
 use rust_core::tokens::TokensJsonSnapshot;
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -281,8 +281,9 @@ pub fn verify_theme_labels(base: &Dictionary, snapshot: &TokensJsonSnapshot) -> 
     Ok(())
 }
 
-/// Every `message_key` in the Rust feedback catalogue, checked to exist without placeholders, so
-/// native apps can look copy up by the key the catalogue returns (ADR-0028).
+/// Every `message_key` in the Rust feedback catalogue and the waiting policy (`VerdictSource`,
+/// `LOADING_POLICY`), checked to exist without placeholders, so native apps can look copy up by the
+/// key the table returns (ADR-0028, ADR-0035).
 pub fn feedback_message_keys(base: &Dictionary) -> Result<BTreeSet<String>, String> {
     let keys: BTreeSet<String> = ErrorCode::ALL
         .iter()
@@ -292,6 +293,8 @@ pub fn feedback_message_keys(base: &Dictionary) -> Result<BTreeSet<String>, Stri
                 .iter()
                 .map(|action| action.spec().message_key),
         )
+        .chain(VerdictSource::ALL.iter().map(|source| source.message_key()))
+        .chain([LOADING_POLICY.pending_message_key])
         .map(str::to_string)
         .collect();
     for key in &keys {
@@ -555,6 +558,9 @@ mod tests {
         let keys = feedback_message_keys(&real_base()).unwrap();
         assert!(keys.contains("errors.serverInternal"));
         assert!(keys.contains("auth.signOutConfirm.title"));
+        // Verifies: REQ-LOAD-001 — the waiting policy's keys are checked and exported too.
+        assert!(keys.contains("eligibility.result.updating"));
+        assert!(keys.contains("eligibility.result.sourceFallback"));
 
         let mut base = real_base();
         base.modules

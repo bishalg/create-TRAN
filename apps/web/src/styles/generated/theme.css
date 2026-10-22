@@ -37,6 +37,8 @@
   --tran-radius-pill: 9999px;
   --tran-border-width: 1px;
   --tran-outline-width: 2px;
+  --tran-motion-fast: 150ms;
+  --tran-motion-base: 250ms;
 
   --tran-color-primary: #38bdf8;
   --tran-color-action: #5bc8f9;

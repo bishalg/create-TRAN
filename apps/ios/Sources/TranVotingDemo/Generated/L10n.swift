@@ -68,7 +68,9 @@ enum L10n {
             String(format: String(localized: "eligibility.result.reasonMeets", table: "Eligibility"), age, minimumAge, country)
         }
         static var resultSourceDevice: String { String(localized: "eligibility.result.sourceDevice", table: "Eligibility") }
+        static var resultSourceFallback: String { String(localized: "eligibility.result.sourceFallback", table: "Eligibility") }
         static var resultSourceServer: String { String(localized: "eligibility.result.sourceServer", table: "Eligibility") }
+        static var resultUpdating: String { String(localized: "eligibility.result.updating", table: "Eligibility") }
         static var serverCheckDone: String { String(localized: "eligibility.serverCheckDone", table: "Eligibility") }
         static var submit: String { String(localized: "eligibility.submit", table: "Eligibility") }
         static var submitting: String { String(localized: "eligibility.submitting", table: "Eligibility") }
@@ -135,6 +137,10 @@ extension L10n {
         switch key {
         case "auth.signOutConfirm.title": return L10n.Auth.signOutConfirmTitle
         case "eligibility.offlineNotice": return L10n.Eligibility.offlineNotice
+        case "eligibility.result.sourceDevice": return L10n.Eligibility.resultSourceDevice
+        case "eligibility.result.sourceFallback": return L10n.Eligibility.resultSourceFallback
+        case "eligibility.result.sourceServer": return L10n.Eligibility.resultSourceServer
+        case "eligibility.result.updating": return L10n.Eligibility.resultUpdating
         case "eligibility.serverCheckDone": return L10n.Eligibility.serverCheckDone
         case "errors.ageOutOfRange": return L10n.Errors.ageOutOfRange
         case "errors.birthdateInFuture": return L10n.Errors.birthdateInFuture

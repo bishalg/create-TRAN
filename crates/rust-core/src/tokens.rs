@@ -4,6 +4,9 @@
 
 use serde::{Deserialize, Serialize};
 
+mod motion;
+pub use motion::MotionTokens;
+
 /// Validates `#RGB`, `#RRGGBB`, or `#RRGGBBAA` hex colors.
 pub fn is_valid_hex_color(value: &str) -> bool {
     let hex = value.strip_prefix('#').unwrap_or(value);
@@ -211,6 +214,7 @@ pub struct BrandDesignTokens {
     pub typography: TypographyTokens,
     pub spacing: SpacingTokens,
     pub radii: RadiiTokens,
+    pub motion: MotionTokens,
     pub glass: GlassStructureTokens,
     /// Ordered theme registry. Add one entry here and every platform picks it up
     /// through `pnpm tokens:sync` — consumers look palettes up by key, never branch.
@@ -281,6 +285,7 @@ pub fn default_design_tokens() -> BrandDesignTokens {
             border_width: "1px".into(),
             outline_width: "2px".into(),
         },
+        motion: motion::default_motion_tokens(),
         glass: GlassStructureTokens {
             blur: GlassBlurTokens {
                 sm: "8px".into(),
@@ -481,6 +486,7 @@ pub struct TokensJsonSnapshot {
     pub typography: TypographyTokens,
     pub spacing: SpacingTokens,
     pub radii: RadiiTokens,
+    pub motion: MotionTokens,
     pub default_theme: String,
     /// Themes in registry order (light, dark, black, sepia) — pickers render in this order.
     pub themes: Vec<ThemeJson>,
@@ -555,6 +561,7 @@ pub fn tokens_json_snapshot() -> TokensJsonSnapshot {
         typography: brand.typography,
         spacing: brand.spacing,
         radii: brand.radii,
+        motion: brand.motion,
         default_theme: DEFAULT_THEME.into(),
         themes,
     }

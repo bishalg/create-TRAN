@@ -1,11 +1,12 @@
-// Verifies: REQ-ERR-001 REQ-ERR-004 REQ-ERR-005 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008
+// Verifies: REQ-ERR-001 REQ-ERR-004 REQ-ERR-005 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-LOAD-001
 //! `fixtures/feedback.json` against the catalogue in `rust_core::feedback`. The same file pins the
 //! generated TypeScript, Swift and Kotlin tables.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use rust_core::feedback::{
     code_for_http_status, is_valid_request_id, retry_after_ms, retry_delay_ms, ErrorCode,
-    Presentation, ToastDuration, UserAction, LOG_EVENT, RETRY_POLICY, SERVER_DEADLINE_MS,
+    Presentation, ToastDuration, UserAction, VerdictSource, LOADING_POLICY, LOG_EVENT,
+    RETRY_POLICY, SERVER_DEADLINE_MS,
 };
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -18,6 +19,8 @@ struct Fixtures {
     toast_durations_ms: Value,
     retry_policy: Value,
     server_deadline_ms: u64,
+    loading_policy: Value,
+    verdict_sources: Vec<Value>,
     log_event: Value,
     request_ids: RequestIds,
     retry_delays: Vec<DelayCase>,
@@ -188,4 +191,26 @@ fn status_fallback_matches_the_fixture() {
             case.status
         );
     }
+}
+
+// Verifies: REQ-LOAD-001
+#[test]
+fn loading_policy_matches_fixture() {
+    assert_eq!(
+        json!({
+            "indicatorDelayMs": LOADING_POLICY.indicator_delay_ms,
+            "pendingMessageKey": LOADING_POLICY.pending_message_key,
+        }),
+        fixtures().loading_policy
+    );
+}
+
+// Verifies: REQ-LOAD-001
+#[test]
+fn every_verdict_source_matches_fixture() {
+    let actual: Vec<Value> = VerdictSource::ALL
+        .iter()
+        .map(|source| json!({ "source": source.as_str(), "messageKey": source.message_key() }))
+        .collect();
+    assert_eq!(actual, fixtures().verdict_sources);
 }

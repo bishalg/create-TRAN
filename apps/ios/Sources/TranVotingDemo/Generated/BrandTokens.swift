@@ -152,3 +152,9 @@ enum TranRadius {
     static let md: CGFloat = 14
     static let lg: CGFloat = 20
 }
+
+/// Animation durations from rust-core, in seconds. Reduced motion turns animation off.
+enum TranMotionDuration {
+    static let fast: TimeInterval = 0.15
+    static let base: TimeInterval = 0.25
+}

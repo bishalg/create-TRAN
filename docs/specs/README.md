@@ -33,25 +33,26 @@ ID that no spec defines.
 
 ## Index
 
-| Spec                                                          | Area                                                          | Prefix                |
-| :------------------------------------------------------------ | :------------------------------------------------------------ | :-------------------- |
-| [001 Eligibility rules](./001-eligibility-rules.md)           | Rust core, TypeScript and native mirrors                      | `REQ-RULE`            |
-| [002 HTTP API](./002-http-api.md)                             | Axum service, contract, security defaults                     | `REQ-API`             |
-| [003 Web app](./003-web-app.md)                               | Behaviour, theming, i18n, accessibility                       | `REQ-WEB`, `REQ-A11Y` |
-| [004 SSR and SEO](./004-ssr-seo.md)                           | TanStack Start, metadata, social cards                        | `REQ-SEO`             |
-| [005 Native apps](./005-native-apps.md)                       | SwiftUI and Compose parity and accessibility                  | `REQ-NAT`             |
-| [006 Navigation & Auth Flow](./006-navigation-auth-flow.md)   | Navigation Director, splash boot & branching                  | `REQ-NAV`             |
-| [007 Git Quality Hooks](./007-git-quality-hooks.md)           | Pre-commit lint/typecheck & pre-push testing                  | `REQ-HOOK`            |
-| [008 Localization](./008-localization.md)                     | Dictionaries, modules and fallback                            | `REQ-I18N`            |
-| [009 Native tests in CI](./009-native-tests-in-ci.md)         | Nightly iOS/Android suites, flake policy                      | `REQ-CI`              |
-| [010 Native FFI surface](./010-ffi-surface.md)                | UniFFI docs, typed errors, native extensions                  | `REQ-FFI`             |
-| [011 Error handling and feedback](./011-error-feedback.md)    | Error codes, envelope, retry, toast/banner/dialog             | `REQ-ERR`             |
-| [012 Failure modes](./012-failure-modes.md)                   | Hostile input, panics, cancellation, log contract             | `REQ-ROB`             |
-| [013 Code generation](./013-codegen.md)                       | Token/i18n codegen, drift, pruning; scaffolder                | `REQ-GEN`             |
-| [014 Visual and performance](./014-visual-and-performance.md) | Screenshots, perf and size budgets, reports                   | `REQ-PERF`            |
-| [015 Agents](./015-agents.md)                                 | Scheduled agent tasks, runner, guard, learnings               | `REQ-AGT`             |
-| [016 Supply chain](./016-supply-chain.md)                     | Audits in CI, pinned actions, Dependabot, SECURITY.md         | `REQ-SUP`             |
-| [017 Release](./017-release.md)                               | One version, conventional commits, changelog, tagged releases | `REQ-REL`             |
+| Spec                                                          | Area                                                             | Prefix                |
+| :------------------------------------------------------------ | :--------------------------------------------------------------- | :-------------------- |
+| [001 Eligibility rules](./001-eligibility-rules.md)           | Rust core, TypeScript and native mirrors                         | `REQ-RULE`            |
+| [002 HTTP API](./002-http-api.md)                             | Axum service, contract, security defaults                        | `REQ-API`             |
+| [003 Web app](./003-web-app.md)                               | Behaviour, theming, i18n, accessibility                          | `REQ-WEB`, `REQ-A11Y` |
+| [004 SSR and SEO](./004-ssr-seo.md)                           | TanStack Start, metadata, social cards                           | `REQ-SEO`             |
+| [005 Native apps](./005-native-apps.md)                       | SwiftUI and Compose parity and accessibility                     | `REQ-NAT`             |
+| [006 Navigation & Auth Flow](./006-navigation-auth-flow.md)   | Navigation Director, splash boot & branching                     | `REQ-NAV`             |
+| [007 Git Quality Hooks](./007-git-quality-hooks.md)           | Pre-commit lint/typecheck & pre-push testing                     | `REQ-HOOK`            |
+| [008 Localization](./008-localization.md)                     | Dictionaries, modules and fallback                               | `REQ-I18N`            |
+| [009 Native tests in CI](./009-native-tests-in-ci.md)         | Nightly iOS/Android suites, flake policy                         | `REQ-CI`              |
+| [010 Native FFI surface](./010-ffi-surface.md)                | UniFFI docs, typed errors, native extensions                     | `REQ-FFI`             |
+| [011 Error handling and feedback](./011-error-feedback.md)    | Error codes, envelope, retry, toast/banner/dialog                | `REQ-ERR`             |
+| [012 Failure modes](./012-failure-modes.md)                   | Hostile input, panics, cancellation, log contract                | `REQ-ROB`             |
+| [013 Code generation](./013-codegen.md)                       | Token/i18n codegen, drift, pruning; scaffolder                   | `REQ-GEN`             |
+| [014 Visual and performance](./014-visual-and-performance.md) | Screenshots, perf and size budgets, reports                      | `REQ-PERF`            |
+| [015 Agents](./015-agents.md)                                 | Scheduled agent tasks, runner, guard, learnings                  | `REQ-AGT`             |
+| [016 Supply chain](./016-supply-chain.md)                     | Audits in CI, pinned actions, Dependabot, SECURITY.md            | `REQ-SUP`             |
+| [017 Release](./017-release.md)                               | One version, conventional commits, changelog, tagged releases    | `REQ-REL`             |
+| [018 Loading and offline](./018-loading-and-offline.md)       | Delayed indicators, kept verdicts, cancellation, device fallback | `REQ-LOAD`            |
 
 ## Template
 

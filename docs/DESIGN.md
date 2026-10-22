@@ -12,6 +12,8 @@ All brand and semantic UI tokens live in Rust:
 
 That contract covers typography, spacing, radii, Liquid Glass structure, and a theme registry (`light`, `dark`, `black`, `sepia`) of semantic palettes (primary, success, danger, surface, background, text, voting eligibility green/red), each tagged light or dark.
 
+Motion durations (`fast`, `base`, in `src/tokens/motion.rs`) are tokens too: `--tran-motion-*` in CSS, `designMotion` in TypeScript and `TranMotionDuration` on iOS (seconds) and Android (milliseconds); no platform writes a literal animation duration ([ADR-0035](./adr/0035-loading-and-offline-states.md)).
+
 ## Changing the brand
 
 1. Edit values in `tokens.rs`.

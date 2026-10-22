@@ -5,6 +5,7 @@
 export type { LiquidGlassTokens, ThemeMode, ThemeTokens } from './generated/tokens.js';
 export {
   defaultTheme,
+  designMotion,
   designSpacing,
   designTypography,
   getThemeTokens,

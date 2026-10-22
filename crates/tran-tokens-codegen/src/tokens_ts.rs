@@ -40,7 +40,7 @@ pub fn render_tokens_ts(snapshot: &TokensJsonSnapshot) -> String {
         entries.join("\n")
     ));
     out.push_str(&format!(
-        "export function getThemeTokens(mode: ThemeMode = defaultTheme): ThemeTokens {{\n  return themeTokens[mode];\n}}\n\n/** Default export for backward compatibility — the `{mode}` palette. */\nexport const liquidGlassTokens = themeTokens.{mode};\n\nexport const designTypography = snapshot.typography;\nexport const designSpacing = snapshot.spacing;\n",
+        "export function getThemeTokens(mode: ThemeMode = defaultTheme): ThemeTokens {{\n  return themeTokens[mode];\n}}\n\n/** Default export for backward compatibility — the `{mode}` palette. */\nexport const liquidGlassTokens = themeTokens.{mode};\n\nexport const designTypography = snapshot.typography;\nexport const designSpacing = snapshot.spacing;\n/** Animation durations (`fast`, `base`) as CSS times (REQ-LOAD-006). */\nexport const designMotion = snapshot.motion;\n",
         mode = snapshot.default_theme
     ));
     out

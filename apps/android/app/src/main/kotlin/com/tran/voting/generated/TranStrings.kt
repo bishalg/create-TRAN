@@ -111,7 +111,11 @@ object TranStrings {
         @StringRes
         val resultSourceDevice: Int = R.string.eligibility_result_source_device // eligibility.result.sourceDevice
         @StringRes
+        val resultSourceFallback: Int = R.string.eligibility_result_source_fallback // eligibility.result.sourceFallback
+        @StringRes
         val resultSourceServer: Int = R.string.eligibility_result_source_server // eligibility.result.sourceServer
+        @StringRes
+        val resultUpdating: Int = R.string.eligibility_result_updating // eligibility.result.updating
         @StringRes
         val serverCheckDone: Int = R.string.eligibility_server_check_done // eligibility.serverCheckDone
         @StringRes
@@ -203,6 +207,10 @@ val TranTheme.labelRes: Int
 val feedbackMessageRes: Map<String, Int> = mapOf(
     "auth.signOutConfirm.title" to R.string.auth_sign_out_confirm_title,
     "eligibility.offlineNotice" to R.string.eligibility_offline_notice,
+    "eligibility.result.sourceDevice" to R.string.eligibility_result_source_device,
+    "eligibility.result.sourceFallback" to R.string.eligibility_result_source_fallback,
+    "eligibility.result.sourceServer" to R.string.eligibility_result_source_server,
+    "eligibility.result.updating" to R.string.eligibility_result_updating,
     "eligibility.serverCheckDone" to R.string.eligibility_server_check_done,
     "errors.ageOutOfRange" to R.string.errors_age_out_of_range,
     "errors.birthdateInFuture" to R.string.errors_birthdate_in_future,

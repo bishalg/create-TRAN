@@ -1,4 +1,4 @@
-// Verifies: REQ-NAT-009
+// Verifies: REQ-NAT-009 REQ-LOAD-006
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,12 +18,15 @@ function listFiles(dir: string, extension: string): string[] {
   });
 }
 
-/** Numeric layout/typography literals and raw colours that must come from `TranSpace`/`TranRadius`/palettes. */
+/**
+ * Numeric layout/typography literals, raw colours and literal animation durations that must come from
+ * `TranSpace`/`TranRadius`/palettes/`TranMotionDuration`.
+ */
 const FORBIDDEN: Record<string, RegExp> = {
   swift:
-    /spacing: ?\d|\.padding\(\d|minHeight: ?\d|cornerRadius\(?:? ?\d|\.system\(size|Color\(red|Color\.(red|blue|green|white|black)\b|Color\(tranHex|\.frame\([^)]*\b\d{2,}\b/,
+    /spacing: ?\d|\.padding\(\d|minHeight: ?\d|cornerRadius\(?:? ?\d|\.system\(size|Color\(red|Color\.(red|blue|green|white|black)\b|Color\(tranHex|\.frame\([^)]*\b\d{2,}\b|duration:\s*\d/,
   kotlin:
-    /\b\d+(\.\d+)?\.(dp|sp)\b|Color\(0x|Color\.(Red|Blue|Green|White|Black)\b|RoundedCornerShape\(\d/,
+    /\b\d+(\.\d+)?\.(dp|sp)\b|Color\(0x|Color\.(Red|Blue|Green|White|Black)\b|RoundedCornerShape\(\d|durationMillis\s*=\s*\d|tween\(\d/,
 };
 
 function violations(dir: string, extension: string, pattern: RegExp): string[] {
@@ -45,10 +48,21 @@ describe('native feature code uses generated tokens, not literals', () => {
     expect(violations('apps/android/app/src/main/kotlin', '.kt', FORBIDDEN.kotlin)).toEqual([]);
   });
 
+  it('[REQ-LOAD-006] rejects literal animation durations on both platforms', () => {
+    for (const line of ['.easeOut(duration: 0.25)', '.animation(.default, duration:0.2)']) {
+      expect(FORBIDDEN.swift.test(line), line).toBe(true);
+    }
+    expect(FORBIDDEN.swift.test('.easeOut(duration: TranMotionDuration.base)')).toBe(false);
+    for (const line of ['tween(300)', 'tween(durationMillis = 250)']) {
+      expect(FORBIDDEN.kotlin.test(line), line).toBe(true);
+    }
+    expect(FORBIDDEN.kotlin.test('tween(TranMotionDuration.baseMs)')).toBe(false);
+  });
+
   it('exposes the same scale on both platforms as the Rust tokens', () => {
     const tokens = JSON.parse(
       readFileSync(path.join(root, 'packages/core-ts/src/generated/tokens.json'), 'utf8')
-    ) as { spacing: Record<string, string> };
+    ) as { spacing: Record<string, string>; motion: Record<string, string> };
     const points = (value: string): number => parseFloat(value) * 16;
     const swift = readFileSync(
       path.join(root, 'apps/ios/Sources/TranVotingDemo/Generated/BrandTokens.swift'),
@@ -67,6 +81,13 @@ describe('native feature code uses generated tokens, not literals', () => {
     ]) {
       expect(swift).toContain(`static let ${member}: CGFloat = ${points(tokens.spacing[name]!)}`);
       expect(kotlin).toContain(`val ${member}: Dp = ${points(tokens.spacing[name]!)}.dp`);
+    }
+
+    // REQ-LOAD-006: Swift in seconds, Kotlin in milliseconds.
+    for (const name of ['fast', 'base']) {
+      const millis = parseInt(tokens.motion[name]!, 10);
+      expect(swift).toContain(`static let ${name}: TimeInterval = ${millis / 1000}`);
+      expect(kotlin).toContain(`const val ${name}Ms: Int = ${millis}`);
     }
   });
 });

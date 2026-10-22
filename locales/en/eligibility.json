@@ -36,6 +36,8 @@
     "minimumAge": "Minimum age",
     "sourceDevice": "Checked on this device",
     "sourceServer": "Checked by the server",
+    "sourceFallback": "The server could not answer — checked on this device.",
+    "updating": "Checking with the server…",
     "placeholder": "Tap Check offline",
     "reasonMeets": "Age {age} meets the minimum voting age of {minimumAge} in {country}.",
     "reasonBelow": "Age {age} is below the minimum voting age of {minimumAge} in {country}."

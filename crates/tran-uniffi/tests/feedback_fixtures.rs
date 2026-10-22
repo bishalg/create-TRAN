@@ -1,4 +1,4 @@
-// Verifies: REQ-ERR-001 REQ-ERR-004 REQ-ERR-005 REQ-ROB-010
+// Verifies: REQ-ERR-001 REQ-ERR-004 REQ-ERR-005 REQ-ROB-010 REQ-LOAD-001
 //! The feedback catalogue through the UniFFI export surface (same fixture as rust-core).
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
@@ -7,9 +7,10 @@ use serde_json::Value;
 use std::collections::BTreeMap;
 use tran_uniffi::{
     action_spec, error_catalogue, error_code_for_http_status, error_code_for_validation,
-    error_code_from_wire, error_spec, is_valid_request_id, retry_after_ms, retry_delay_ms,
-    retry_policy, toast_duration_ms, TranErrorCode, TranLogLevel, TranPresentation,
-    TranToastDuration, TranToastTone, TranUserAction, TranValidationError,
+    error_code_from_wire, error_spec, is_valid_request_id, loading_policy, retry_after_ms,
+    retry_delay_ms, retry_policy, toast_duration_ms, verdict_source_spec, TranErrorCode,
+    TranLogLevel, TranPresentation, TranToastDuration, TranToastTone, TranUserAction,
+    TranValidationError, TranVerdictSource,
 };
 
 #[derive(Deserialize)]
@@ -23,6 +24,22 @@ struct Fixtures {
     status_fallback: Vec<StatusCase>,
     actions: Vec<ActionCase>,
     request_ids: RequestIds,
+    loading_policy: LoadingPolicyCase,
+    verdict_sources: Vec<VerdictSourceCase>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct LoadingPolicyCase {
+    indicator_delay_ms: u64,
+    pending_message_key: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct VerdictSourceCase {
+    source: String,
+    message_key: String,
 }
 
 #[derive(Deserialize)]
@@ -240,4 +257,29 @@ fn request_id_shape_matches_the_fixture() {
     let ids = fixtures().request_ids;
     assert!(ids.valid.into_iter().all(is_valid_request_id));
     assert!(!ids.invalid.into_iter().any(is_valid_request_id));
+}
+
+#[test]
+fn loading_policy_matches_fixture() {
+    let expected = fixtures().loading_policy;
+    let policy = loading_policy();
+    assert_eq!(policy.indicator_delay_ms, expected.indicator_delay_ms);
+    assert_eq!(policy.pending_message_key, expected.pending_message_key);
+}
+
+#[test]
+fn every_verdict_source_matches_fixture() {
+    let sources = [
+        TranVerdictSource::Device,
+        TranVerdictSource::Server,
+        TranVerdictSource::DeviceFallback,
+    ];
+    let expected = fixtures().verdict_sources;
+    assert_eq!(expected.len(), sources.len());
+    for (source, case) in sources.into_iter().zip(expected) {
+        let spec = verdict_source_spec(source);
+        assert_eq!(spec.source, source);
+        assert_eq!(spec.wire_name, case.source);
+        assert_eq!(spec.message_key, case.message_key);
+    }
 }

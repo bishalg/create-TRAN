@@ -395,6 +395,66 @@ const _: () = assert!(
     "the server must give up before the client does"
 );
 
+/// How long a check may run before the screen says it is waiting, and what it says (REQ-LOAD-002,
+/// ADR-0035). A delay only — no minimum visible time.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct LoadingPolicy {
+    /// A check that settles sooner shows no progress indicator at all.
+    pub indicator_delay_ms: u64,
+    /// Full locale key (`module.key`) of the pending copy shown in the result's live region.
+    pub pending_message_key: &'static str,
+}
+
+pub const LOADING_POLICY: LoadingPolicy = LoadingPolicy {
+    indicator_delay_ms: 300,
+    pending_message_key: "eligibility.result.updating",
+};
+const _: () = assert!(
+    LOADING_POLICY.indicator_delay_ms < SERVER_DEADLINE_MS,
+    "a stalled check must be acknowledged before the server gives up"
+);
+
+/// Who vouched for the verdict on screen (REQ-LOAD-005).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum VerdictSource {
+    /// The device rules, no server involved.
+    Device,
+    /// The server answered.
+    Server,
+    /// The server was asked and could not answer, so the device rules decided.
+    DeviceFallback,
+}
+
+impl VerdictSource {
+    /// Every source, in table order (codegen and fixtures follow this order).
+    pub const ALL: [Self; 3] = [Self::Device, Self::Server, Self::DeviceFallback];
+
+    /// The wire value (`"device_fallback"`).
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Device => "device",
+            Self::Server => "server",
+            Self::DeviceFallback => "device_fallback",
+        }
+    }
+
+    /// Parses a wire value; unknown values are `None`.
+    pub fn from_wire(source: &str) -> Option<Self> {
+        Self::ALL
+            .into_iter()
+            .find(|candidate| candidate.as_str() == source)
+    }
+
+    /// Full locale key (`module.key`) of the label that names this source.
+    pub fn message_key(self) -> &'static str {
+        match self {
+            Self::Device => "eligibility.result.sourceDevice",
+            Self::Server => "eligibility.result.sourceServer",
+            Self::DeviceFallback => "eligibility.result.sourceFallback",
+        }
+    }
+}
+
 /// The longest request id anyone accepts; see [`is_valid_request_id`].
 pub const REQUEST_ID_MAX_LEN: usize = 64;
 
@@ -512,5 +572,34 @@ mod tests {
     fn huge_retry_numbers_saturate_at_the_cap() {
         assert_eq!(retry_delay_ms(64, 0.0), RETRY_POLICY.max_delay_ms / 2);
         assert_eq!(retry_delay_ms(0, 0.0), RETRY_POLICY.base_delay_ms / 2);
+    }
+
+    // Verifies: REQ-LOAD-001
+    #[test]
+    fn verdict_sources_round_trip_and_unknown_is_none() {
+        for source in VerdictSource::ALL {
+            assert_eq!(VerdictSource::from_wire(source.as_str()), Some(source));
+        }
+        assert_eq!(VerdictSource::from_wire("cache"), None);
+        let keys: std::collections::BTreeSet<&str> =
+            VerdictSource::ALL.iter().map(|s| s.message_key()).collect();
+        assert_eq!(keys.len(), VerdictSource::ALL.len());
+        assert!(keys
+            .iter()
+            .chain([&LOADING_POLICY.pending_message_key])
+            .all(|key| key
+                .split_once('.')
+                .is_some_and(|(module, rest)| !module.is_empty() && !rest.is_empty())));
+    }
+
+    // Verifies: REQ-LOAD-001
+    #[test]
+    fn indicator_delay_is_below_the_server_deadline() {
+        assert_eq!(LOADING_POLICY.indicator_delay_ms, 300);
+        // The `const` assertion stops a build; this names the relation in the test report too.
+        assert_eq!(
+            LOADING_POLICY.indicator_delay_ms.cmp(&SERVER_DEADLINE_MS),
+            std::cmp::Ordering::Less
+        );
     }
 }

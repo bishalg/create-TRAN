@@ -83,3 +83,5 @@ export const liquidGlassTokens = themeTokens.dark;
 
 export const designTypography = snapshot.typography;
 export const designSpacing = snapshot.spacing;
+/** Animation durations (`fast`, `base`) as CSS times (REQ-LOAD-006). */
+export const designMotion = snapshot.motion;

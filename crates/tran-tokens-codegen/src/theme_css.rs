@@ -36,11 +36,14 @@ fn render_shared_token_vars(snapshot: &TokensJsonSnapshot) -> String {
     let ty = &snapshot.typography;
     let sp = &snapshot.spacing;
     let r = &snapshot.radii;
+    let m = &snapshot.motion;
     format!(
-        "  {typography}\n  {spacing}\n  {radii}\n",
+        "  {typography}\n  {spacing}\n  {radii}\n  --tran-motion-fast: {fast};\n  --tran-motion-base: {base};\n",
         typography = render_typography_vars(ty),
         spacing = render_spacing_vars(sp),
         radii = render_radii_vars(r),
+        fast = m.fast,
+        base = m.base,
     )
 }
 
@@ -128,5 +131,20 @@ fn color_scheme_name(theme: &ThemeJson) -> &'static str {
     match theme.color_scheme {
         ColorScheme::Light => "light",
         ColorScheme::Dark => "dark",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rust_core::tokens_json_snapshot;
+
+    // Verifies: REQ-LOAD-006
+    #[test]
+    fn renders_motion_vars() {
+        let css = render_theme_css(&tokens_json_snapshot());
+        let shared = css.split("\n\n").nth(1).unwrap();
+        assert!(shared.starts_with(":root {\n"));
+        assert!(shared.ends_with("\n  --tran-motion-fast: 150ms;\n  --tran-motion-base: 250ms;"));
     }
 }

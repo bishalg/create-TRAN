@@ -8,19 +8,31 @@ import { TranApiError } from '@tran/api';
 import {
   ACTION_CATALOGUE,
   ERROR_CATALOGUE,
+  LOADING_POLICY,
   LOG_EVENT,
   REQUEST_ID_PATTERN,
   RETRY_POLICY,
   STATUS_FALLBACK,
   TOAST_DURATIONS_MS,
+  VERDICT_SOURCES,
   type ActionSpec,
   type ErrorCode,
   type ErrorSpec,
   type UserAction,
+  type VerdictSource,
 } from './generated/feedback.js';
+import type { TranStringKey } from './generated/keys.js';
 import { VoteEligibilityValidationError } from './voting.js';
 
-export { ACTION_CATALOGUE, ERROR_CATALOGUE, LOG_EVENT, RETRY_POLICY, TOAST_DURATIONS_MS };
+export {
+  ACTION_CATALOGUE,
+  ERROR_CATALOGUE,
+  LOADING_POLICY,
+  LOG_EVENT,
+  RETRY_POLICY,
+  TOAST_DURATIONS_MS,
+  VERDICT_SOURCES,
+};
 export type {
   ActionSpec,
   ErrorCode,
@@ -30,10 +42,13 @@ export type {
   ToastDuration,
   ToastTone,
   UserAction,
+  VerdictSource,
+  VerdictSourceSpec,
 } from './generated/feedback.js';
 
 const specsByCode = new Map(ERROR_CATALOGUE.map((spec) => [spec.code, spec]));
 const specsByAction = new Map(ACTION_CATALOGUE.map((spec) => [spec.action, spec]));
+const keysBySource = new Map(VERDICT_SOURCES.map((spec) => [spec.source, spec.messageKey]));
 
 export function errorSpec(code: ErrorCode): ErrorSpec {
   return specsByCode.get(code)!;
@@ -41,6 +56,11 @@ export function errorSpec(code: ErrorCode): ErrorSpec {
 
 export function actionSpec(action: UserAction): ActionSpec {
   return specsByAction.get(action)!;
+}
+
+/** Locale key of the label that says who vouched for a verdict (REQ-LOAD-005). */
+export function verdictSourceMessageKey(source: VerdictSource): TranStringKey {
+  return keysBySource.get(source)!;
 }
 
 /** A wire code this build knows, or `undefined` (a newer server) so callers use the HTTP status. */

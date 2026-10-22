@@ -36,6 +36,8 @@
     "minimumAge": "न्यूनतम उमेर",
     "sourceDevice": "यही उपकरणमा जाँच गरियो",
     "sourceServer": "सर्भरबाट जाँच गरियो",
+    "sourceFallback": "सर्भरले जवाफ दिन सकेन — यही उपकरणमा जाँच गरियो।",
+    "updating": "सर्भरसँग जाँच गर्दै…",
     "placeholder": "अफलाइन जाँच थिच्नुहोस्",
     "reasonMeets": "उमेर {age} ले न्यूनतम मतदान उमेर {minimumAge} पूरा गर्छ ({country})।",
     "reasonBelow": "उमेर {age} न्यूनतम मतदान उमेर {minimumAge} भन्दा कम छ ({country})।"

@@ -36,6 +36,8 @@
     "minimumAge": "न्यूनतम आयु",
     "sourceDevice": "इसी डिवाइस पर जाँच की गई",
     "sourceServer": "सर्वर द्वारा जाँच की गई",
+    "sourceFallback": "सर्वर जवाब नहीं दे सका — इसी डिवाइस पर जाँच की गई।",
+    "updating": "सर्वर से जाँच हो रही है…",
     "placeholder": "ऑफ़लाइन जाँच दबाएँ",
     "reasonMeets": "आयु {age} न्यूनतम मतदान आयु {minimumAge} को पूरा करती है ({country})।",
     "reasonBelow": "आयु {age} न्यूनतम मतदान आयु {minimumAge} से कम है ({country})।"

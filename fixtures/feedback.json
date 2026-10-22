@@ -12,6 +12,24 @@
     "requestTimeoutMs": 5000
   },
   "serverDeadlineMs": 4000,
+  "loadingPolicy": {
+    "indicatorDelayMs": 300,
+    "pendingMessageKey": "eligibility.result.updating"
+  },
+  "verdictSources": [
+    {
+      "source": "device",
+      "messageKey": "eligibility.result.sourceDevice"
+    },
+    {
+      "source": "server",
+      "messageKey": "eligibility.result.sourceServer"
+    },
+    {
+      "source": "device_fallback",
+      "messageKey": "eligibility.result.sourceFallback"
+    }
+  ],
   "logEvent": {
     "message": "request failed",
     "fields": ["code", "status", "request_id"]

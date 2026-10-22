@@ -24,7 +24,9 @@
     <string name="eligibility_result_reason_below">Age %1$s is below the minimum voting age of %2$s in %3$s.</string>
     <string name="eligibility_result_reason_meets">Age %1$s meets the minimum voting age of %2$s in %3$s.</string>
     <string name="eligibility_result_source_device">Checked on this device</string>
+    <string name="eligibility_result_source_fallback">The server could not answer — checked on this device.</string>
     <string name="eligibility_result_source_server">Checked by the server</string>
+    <string name="eligibility_result_updating">Checking with the server…</string>
     <string name="eligibility_server_check_done">Server check complete</string>
     <string name="eligibility_submit">Check eligibility</string>
     <string name="eligibility_submitting">Checking…</string>

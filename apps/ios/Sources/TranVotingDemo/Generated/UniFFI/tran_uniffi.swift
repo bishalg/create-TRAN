@@ -875,6 +875,75 @@ public func FfiConverterTypeTranErrorSpec_lower(_ value: TranErrorSpec) -> RustB
 
 
 /**
+ * How long a check may run before the screen says it is waiting, and what it says (REQ-LOAD-002).
+ */
+public struct TranLoadingPolicy: Equatable, Hashable {
+    /**
+     * A check that settles sooner shows no progress indicator at all.
+     */
+    public var indicatorDelayMs: UInt64
+    /**
+     * Locale key of the pending copy shown as the verdict's live caption.
+     */
+    public var pendingMessageKey: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * A check that settles sooner shows no progress indicator at all.
+         */indicatorDelayMs: UInt64, 
+        /**
+         * Locale key of the pending copy shown as the verdict's live caption.
+         */pendingMessageKey: String) {
+        self.indicatorDelayMs = indicatorDelayMs
+        self.pendingMessageKey = pendingMessageKey
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranLoadingPolicy: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranLoadingPolicy: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranLoadingPolicy {
+        return
+            try TranLoadingPolicy(
+                indicatorDelayMs: FfiConverterUInt64.read(from: &buf), 
+                pendingMessageKey: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranLoadingPolicy, into buf: inout [UInt8]) {
+        FfiConverterUInt64.write(value.indicatorDelayMs, into: &buf)
+        FfiConverterString.write(value.pendingMessageKey, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranLoadingPolicy_lift(_ buf: RustBuffer) throws -> TranLoadingPolicy {
+    return try FfiConverterTypeTranLoadingPolicy.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranLoadingPolicy_lower(_ value: TranLoadingPolicy) -> RustBuffer {
+    return FfiConverterTypeTranLoadingPolicy.lower(value)
+}
+
+
+/**
  * Retry budget for idempotent requests (REQ-ERR-005).
  */
 public struct TranRetryPolicy: Equatable, Hashable {
@@ -960,6 +1029,85 @@ public func FfiConverterTypeTranRetryPolicy_lift(_ buf: RustBuffer) throws -> Tr
 #endif
 public func FfiConverterTypeTranRetryPolicy_lower(_ value: TranRetryPolicy) -> RustBuffer {
     return FfiConverterTypeTranRetryPolicy.lower(value)
+}
+
+
+/**
+ * The label of one [`TranVerdictSource`].
+ */
+public struct TranVerdictSourceSpec: Equatable, Hashable {
+    /**
+     * The source this spec describes.
+     */
+    public var source: TranVerdictSource
+    /**
+     * The source's stable name, as in `fixtures/feedback.json` (`device_fallback`).
+     */
+    public var wireName: String
+    /**
+     * Locale key of the label (`L10n.feedback(_:)` on iOS, `feedbackMessageRes` on Android).
+     */
+    public var messageKey: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * The source this spec describes.
+         */source: TranVerdictSource, 
+        /**
+         * The source's stable name, as in `fixtures/feedback.json` (`device_fallback`).
+         */wireName: String, 
+        /**
+         * Locale key of the label (`L10n.feedback(_:)` on iOS, `feedbackMessageRes` on Android).
+         */messageKey: String) {
+        self.source = source
+        self.wireName = wireName
+        self.messageKey = messageKey
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranVerdictSourceSpec: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranVerdictSourceSpec: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranVerdictSourceSpec {
+        return
+            try TranVerdictSourceSpec(
+                source: FfiConverterTypeTranVerdictSource.read(from: &buf), 
+                wireName: FfiConverterString.read(from: &buf), 
+                messageKey: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranVerdictSourceSpec, into buf: inout [UInt8]) {
+        FfiConverterTypeTranVerdictSource.write(value.source, into: &buf)
+        FfiConverterString.write(value.wireName, into: &buf)
+        FfiConverterString.write(value.messageKey, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranVerdictSourceSpec_lift(_ buf: RustBuffer) throws -> TranVerdictSourceSpec {
+    return try FfiConverterTypeTranVerdictSourceSpec.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranVerdictSourceSpec_lower(_ value: TranVerdictSourceSpec) -> RustBuffer {
+    return FfiConverterTypeTranVerdictSourceSpec.lower(value)
 }
 
 
@@ -2113,6 +2261,91 @@ public func FfiConverterTypeTranValidationError_lower(_ value: TranValidationErr
     return FfiConverterTypeTranValidationError.lower(value)
 }
 
+
+/**
+ * Who vouched for the verdict on screen (REQ-LOAD-005).
+ */
+
+public enum TranVerdictSource: Equatable, Hashable {
+    
+    /**
+     * The device rules, no server involved.
+     */
+    case device
+    /**
+     * The server answered.
+     */
+    case server
+    /**
+     * The server was asked and could not answer, so the device rules decided.
+     */
+    case deviceFallback
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranVerdictSource: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranVerdictSource: FfiConverterRustBuffer {
+    typealias SwiftType = TranVerdictSource
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranVerdictSource {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .device
+        
+        case 2: return .server
+        
+        case 3: return .deviceFallback
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranVerdictSource, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .device:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .server:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .deviceFallback:
+            writeInt(&buf, Int32(3))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranVerdictSource_lift(_ buf: RustBuffer) throws -> TranVerdictSource {
+    return try FfiConverterTypeTranVerdictSource.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranVerdictSource_lower(_ value: TranVerdictSource) -> RustBuffer {
+    return FfiConverterTypeTranVerdictSource.lower(value)
+}
+
+
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
@@ -2508,6 +2741,16 @@ public func isValidRequestId(value: String) -> Bool  {
 })
 }
 /**
+ * The waiting policy every screen uses (ADR-0035).
+ */
+public func loadingPolicy() -> TranLoadingPolicy  {
+    return try!  FfiConverterTypeTranLoadingPolicy_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_loading_policy(uniffiCallStatus
+    )
+})
+}
+/**
  * A `Retry-After` header in whole seconds, capped at [`TranRetryPolicy::max_delay_ms`].
  *
  * # Returns
@@ -2556,6 +2799,17 @@ public func toastDurationMs(duration: TranToastDuration) -> UInt64  {
         uniffiCallStatus in
     uniffi_tran_uniffi_fn_func_toast_duration_ms(
         FfiConverterTypeTranToastDuration_lower(duration),uniffiCallStatus
+    )
+})
+}
+/**
+ * The wire name and label key of `source`.
+ */
+public func verdictSourceSpec(source: TranVerdictSource) -> TranVerdictSourceSpec  {
+    return try!  FfiConverterTypeTranVerdictSourceSpec_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_verdict_source_spec(
+        FfiConverterTypeTranVerdictSource_lower(source),uniffiCallStatus
     )
 })
 }
@@ -2614,6 +2868,9 @@ private let initializationResult: InitializationResult = {
     if (uniffi_tran_uniffi_checksum_func_is_valid_request_id() != 24842) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_tran_uniffi_checksum_func_loading_policy() != 52020) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_tran_uniffi_checksum_func_retry_after_ms() != 54130) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -2624,6 +2881,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_toast_duration_ms() != 56817) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_verdict_source_spec() != 18040) {
         return InitializationResult.apiChecksumMismatch
     }
 

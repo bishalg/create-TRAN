@@ -141,6 +141,35 @@ fn render_kotlin_scale(scale: &Scale) -> String {
             format_points(*points)
         ));
     }
+    out.push_str(
+        "}\n\n/** Animation durations from rust-core, in milliseconds. Reduced motion turns animation off. */\nobject TranMotionDuration {\n",
+    );
+    for (name, millis) in &scale.motion {
+        out.push_str(&format!(
+            "    const val {name}Ms: Int = {}\n",
+            format_points(*millis)
+        ));
+    }
     out.push_str("}\n");
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rust_core::tokens_json_snapshot;
+
+    // Verifies: REQ-LOAD-006
+    #[test]
+    fn renders_motion_scale() {
+        let snapshot = tokens_json_snapshot();
+        let kotlin = render_kotlin_tokens(
+            &snapshot,
+            &Scale::from_snapshot(&snapshot).unwrap(),
+            "com.example",
+        );
+        assert!(kotlin.contains(
+            "object TranMotionDuration {\n    const val fastMs: Int = 150\n    const val baseMs: Int = 250\n}\n"
+        ));
+    }
 }

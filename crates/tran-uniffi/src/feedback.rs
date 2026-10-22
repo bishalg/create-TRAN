@@ -5,7 +5,8 @@
 
 use crate::TranValidationError;
 use rust_core::feedback::{
-    self, ErrorCode, LogLevel, Presentation, ToastDuration, Tone, UserAction, RETRY_POLICY,
+    self, ErrorCode, LogLevel, Presentation, ToastDuration, Tone, UserAction, VerdictSource,
+    LOADING_POLICY, RETRY_POLICY,
 };
 
 /// Declares the native mirror of [`ErrorCode`] and both conversions from one list, so a variant
@@ -336,4 +337,59 @@ pub fn retry_after_ms(header: String) -> Option<u64> {
 #[uniffi::export]
 pub fn is_valid_request_id(value: String) -> bool {
     feedback::is_valid_request_id(&value)
+}
+
+/// How long a check may run before the screen says it is waiting, and what it says (REQ-LOAD-002).
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct TranLoadingPolicy {
+    /// A check that settles sooner shows no progress indicator at all.
+    pub indicator_delay_ms: u64,
+    /// Locale key of the pending copy shown as the verdict's live caption.
+    pub pending_message_key: String,
+}
+
+/// Who vouched for the verdict on screen (REQ-LOAD-005).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, uniffi::Enum)]
+pub enum TranVerdictSource {
+    /// The device rules, no server involved.
+    Device,
+    /// The server answered.
+    Server,
+    /// The server was asked and could not answer, so the device rules decided.
+    DeviceFallback,
+}
+
+/// The label of one [`TranVerdictSource`].
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct TranVerdictSourceSpec {
+    /// The source this spec describes.
+    pub source: TranVerdictSource,
+    /// The source's stable name, as in `fixtures/feedback.json` (`device_fallback`).
+    pub wire_name: String,
+    /// Locale key of the label (`L10n.feedback(_:)` on iOS, `feedbackMessageRes` on Android).
+    pub message_key: String,
+}
+
+/// The waiting policy every screen uses (ADR-0035).
+#[uniffi::export]
+pub fn loading_policy() -> TranLoadingPolicy {
+    TranLoadingPolicy {
+        indicator_delay_ms: LOADING_POLICY.indicator_delay_ms,
+        pending_message_key: LOADING_POLICY.pending_message_key.to_string(),
+    }
+}
+
+/// The wire name and label key of `source`.
+#[uniffi::export]
+pub fn verdict_source_spec(source: TranVerdictSource) -> TranVerdictSourceSpec {
+    let core = match source {
+        TranVerdictSource::Device => VerdictSource::Device,
+        TranVerdictSource::Server => VerdictSource::Server,
+        TranVerdictSource::DeviceFallback => VerdictSource::DeviceFallback,
+    };
+    TranVerdictSourceSpec {
+        source,
+        wire_name: core.as_str().to_string(),
+        message_key: core.message_key().to_string(),
+    }
 }

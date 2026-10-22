@@ -700,6 +700,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_is_valid_request_id(
     ): Int
+    external fun uniffi_tran_uniffi_checksum_func_loading_policy(
+    ): Int
     external fun uniffi_tran_uniffi_checksum_func_retry_after_ms(
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_retry_delay_ms(
@@ -707,6 +709,8 @@ internal object IntegrityCheckingUniffiLib {
     external fun uniffi_tran_uniffi_checksum_func_retry_policy(
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_toast_duration_ms(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_verdict_source_spec(
     ): Int
     external fun ffi_tran_uniffi_uniffi_contract_version(
     ): Int
@@ -749,6 +753,8 @@ internal object UniffiLib {
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_is_valid_request_id(`value`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
+    external fun uniffi_tran_uniffi_fn_func_loading_policy(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_retry_after_ms(`header`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_retry_delay_ms(`retry`: Int,`random`: Double,uniffi_out_err: UniffiRustCallStatus, 
@@ -757,6 +763,8 @@ internal object UniffiLib {
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_toast_duration_ms(`duration`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Long
+    external fun uniffi_tran_uniffi_fn_func_verdict_source_spec(`source`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     external fun ffi_tran_uniffi_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun ffi_tran_uniffi_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -915,6 +923,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_tran_uniffi_checksum_func_is_valid_request_id() and 0xFFFF) != 24842) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_tran_uniffi_checksum_func_loading_policy() and 0xFFFF) != 52020) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if ((lib.uniffi_tran_uniffi_checksum_func_retry_after_ms() and 0xFFFF) != 54130) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -925,6 +936,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_tran_uniffi_checksum_func_toast_duration_ms() and 0xFFFF) != 56817) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_verdict_source_spec() and 0xFFFF) != 18040) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
 }
@@ -1396,6 +1410,53 @@ public object FfiConverterTypeTranErrorSpec: FfiConverterRustBuffer<TranErrorSpe
 
 
 /**
+ * How long a check may run before the screen says it is waiting, and what it says (REQ-LOAD-002).
+ */
+data class TranLoadingPolicy (
+    /**
+     * A check that settles sooner shows no progress indicator at all.
+     */
+    var `indicatorDelayMs`: kotlin.ULong
+    , 
+    /**
+     * Locale key of the pending copy shown as the verdict's live caption.
+     */
+    var `pendingMessageKey`: kotlin.String
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranLoadingPolicy: FfiConverterRustBuffer<TranLoadingPolicy> {
+    override fun read(buf: ByteBuffer): TranLoadingPolicy {
+        return TranLoadingPolicy(
+            FfiConverterULong.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranLoadingPolicy) = (
+            FfiConverterULong.allocationSize(value.`indicatorDelayMs`) +
+            FfiConverterString.allocationSize(value.`pendingMessageKey`)
+    )
+
+    override fun write(value: TranLoadingPolicy, buf: ByteBuffer) {
+            FfiConverterULong.write(value.`indicatorDelayMs`, buf)
+            FfiConverterString.write(value.`pendingMessageKey`, buf)
+    }
+}
+
+
+
+/**
  * Retry budget for idempotent requests (REQ-ERR-005).
  */
 data class TranRetryPolicy (
@@ -1453,6 +1514,61 @@ public object FfiConverterTypeTranRetryPolicy: FfiConverterRustBuffer<TranRetryP
             FfiConverterULong.write(value.`baseDelayMs`, buf)
             FfiConverterULong.write(value.`maxDelayMs`, buf)
             FfiConverterULong.write(value.`requestTimeoutMs`, buf)
+    }
+}
+
+
+
+/**
+ * The label of one [`TranVerdictSource`].
+ */
+data class TranVerdictSourceSpec (
+    /**
+     * The source this spec describes.
+     */
+    var `source`: TranVerdictSource
+    , 
+    /**
+     * The source's stable name, as in `fixtures/feedback.json` (`device_fallback`).
+     */
+    var `wireName`: kotlin.String
+    , 
+    /**
+     * Locale key of the label (`L10n.feedback(_:)` on iOS, `feedbackMessageRes` on Android).
+     */
+    var `messageKey`: kotlin.String
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranVerdictSourceSpec: FfiConverterRustBuffer<TranVerdictSourceSpec> {
+    override fun read(buf: ByteBuffer): TranVerdictSourceSpec {
+        return TranVerdictSourceSpec(
+            FfiConverterTypeTranVerdictSource.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranVerdictSourceSpec) = (
+            FfiConverterTypeTranVerdictSource.allocationSize(value.`source`) +
+            FfiConverterString.allocationSize(value.`wireName`) +
+            FfiConverterString.allocationSize(value.`messageKey`)
+    )
+
+    override fun write(value: TranVerdictSourceSpec, buf: ByteBuffer) {
+            FfiConverterTypeTranVerdictSource.write(value.`source`, buf)
+            FfiConverterString.write(value.`wireName`, buf)
+            FfiConverterString.write(value.`messageKey`, buf)
     }
 }
 
@@ -2255,6 +2371,53 @@ public object FfiConverterTypeTranValidationError : FfiConverterRustBuffer<TranV
 
 
 
+/**
+ * Who vouched for the verdict on screen (REQ-LOAD-005).
+ */
+
+enum class TranVerdictSource {
+    
+    /**
+     * The device rules, no server involved.
+     */
+    DEVICE,
+    /**
+     * The server answered.
+     */
+    SERVER,
+    /**
+     * The server was asked and could not answer, so the device rules decided.
+     */
+    DEVICE_FALLBACK;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranVerdictSource: FfiConverterRustBuffer<TranVerdictSource> {
+    override fun read(buf: ByteBuffer) = try {
+        TranVerdictSource.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TranVerdictSource) = 4UL
+
+    override fun write(value: TranVerdictSource, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
 
 /**
  * @suppress
@@ -2735,6 +2898,19 @@ public object FfiConverterSequenceTypeTranErrorSpec: FfiConverterRustBuffer<List
     
 
         /**
+         * The waiting policy every screen uses (ADR-0035).
+         */ fun `loadingPolicy`(): TranLoadingPolicy {
+            return FfiConverterTypeTranLoadingPolicy.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_loading_policy(
+    
+        _status)
+}
+    )
+    }
+    
+
+        /**
          * A `Retry-After` header in whole seconds, capped at [`TranRetryPolicy::max_delay_ms`].
          *
          * # Returns
@@ -2793,6 +2969,20 @@ public object FfiConverterSequenceTypeTranErrorSpec: FfiConverterRustBuffer<List
     
         
         FfiConverterTypeTranToastDuration.lower(`duration`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * The wire name and label key of `source`.
+         */ fun `verdictSourceSpec`(`source`: TranVerdictSource): TranVerdictSourceSpec {
+            return FfiConverterTypeTranVerdictSourceSpec.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_verdict_source_spec(
+    
+        
+        FfiConverterTypeTranVerdictSource.lower(`source`),_status)
 }
     )
     }

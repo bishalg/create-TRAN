@@ -61,6 +61,9 @@ rounded:
   md: "14px"
   lg: "20px"
   full: "9999px"
+motion:
+  fast: "150ms"
+  base: "250ms"
 components:
   button-primary:
     backgroundColor: "{colors.action}"
@@ -148,6 +151,10 @@ Depth leans on **Liquid Glass** semantics from Rust (blur + ambient/raised shado
 ## Shapes
 
 Corners are soft-product: sm 10px, md 14px, lg 20px, pill/full 9999px. Interactive controls default to **md**; cards and sheets to **lg**.
+
+## Motion
+
+Two durations: **fast** (150ms) for small state changes and **base** (250ms) for a result or panel appearing, one `ease-out`, no easing token. Use `--tran-motion-*` on web and `TranMotionDuration` on iOS / Android — never a literal duration — and drop the animation when the user prefers reduced motion.
 
 ## Components
 

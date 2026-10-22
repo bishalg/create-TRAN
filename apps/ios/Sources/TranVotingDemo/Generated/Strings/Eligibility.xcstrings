@@ -507,6 +507,28 @@
         }
       }
     },
+    "eligibility.result.sourceFallback": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The server could not answer — checked on this device."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सर्वर जवाब नहीं दे सका — इसी डिवाइस पर जाँच की गई।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सर्भरले जवाफ दिन सकेन — यही उपकरणमा जाँच गरियो।"
+          }
+        }
+      }
+    },
     "eligibility.result.sourceServer": {
       "localizations": {
         "en": {
@@ -525,6 +547,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "सर्भरबाट जाँच गरियो"
+          }
+        }
+      }
+    },
+    "eligibility.result.updating": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checking with the server…"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सर्वर से जाँच हो रही है…"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सर्भरसँग जाँच गर्दै…"
           }
         }
       }

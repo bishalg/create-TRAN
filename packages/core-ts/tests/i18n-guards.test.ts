@@ -1,10 +1,15 @@
-// Verifies: REQ-WEB-008 REQ-I18N-004 REQ-I18N-005 REQ-I18N-006 REQ-I18N-007
+// Verifies: REQ-WEB-008 REQ-I18N-004 REQ-I18N-005 REQ-I18N-006 REQ-I18N-007 REQ-LOAD-001
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { ACTION_CATALOGUE, ERROR_CATALOGUE } from '../src/generated/feedback.js';
+import {
+  ACTION_CATALOGUE,
+  ERROR_CATALOGUE,
+  LOADING_POLICY,
+  VERDICT_SOURCES,
+} from '../src/generated/feedback.js';
 
 const root = path.resolve(fileURLToPath(import.meta.url), '../../../../');
 
@@ -206,6 +211,10 @@ function usedKeys(): Set<string> {
 
   // Feedback copy is looked up by code at runtime through the Rust catalogue (ADR-0028).
   for (const spec of [...ERROR_CATALOGUE, ...ACTION_CATALOGUE]) used.add(spec.messageKey);
+
+  // The waiting policy names its copy the same way (ADR-0035, REQ-LOAD-001).
+  used.add(LOADING_POLICY.pendingMessageKey);
+  for (const spec of VERDICT_SOURCES) used.add(spec.messageKey);
 
   return used;
 }
