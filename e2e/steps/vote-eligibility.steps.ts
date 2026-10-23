@@ -162,6 +162,24 @@ Then('the page does not scroll horizontally', async ({ page }) => {
   expect(overflow).toBe(0);
 });
 
+Then('sign out and every theme stay on screen at full size', async ({ page }) => {
+  // A squeezed control does not scroll the page sideways, so check each one (the native REQ-NAT-013 rule).
+  const viewport = page.viewportSize()!.width;
+  const themes = page.getByRole('group', { name: 'Theme' }).getByRole('button');
+  const controls = [page.getByTestId('sign-out-button'), ...(await themes.all())];
+  expect(controls.length).toBeGreaterThan(1);
+  const heights = new Set<number>();
+  for (const control of controls) {
+    const box = (await control.boundingBox())!;
+    const name = await control.textContent();
+    expect(box.width, `${name} width`).toBeGreaterThanOrEqual(24);
+    expect(box.x, `${name} start`).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width, `${name} end`).toBeLessThanOrEqual(viewport);
+    if (control !== controls[0]) heights.add(Math.round(box.height));
+  }
+  expect([...heights], 'a theme label broke inside a word').toHaveLength(1);
+});
+
 Then(
   'every button and field is at least {int} CSS pixels tall and wide',
   async ({ page }, size: number) => {

@@ -2,7 +2,6 @@ package com.tran.voting.ui
 
 import android.content.Context
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -93,7 +92,8 @@ fun VotingHomeScreen(
     ) {
         TranStack(gap = TranGap.MD) {
             TranInline(gap = TranGap.MD, modifier = Modifier.fillMaxWidth()) {
-                TranStack(gap = TranGap.XS) {
+                // The titles take what the button leaves, wrapping on a narrow screen (REQ-NAT-013).
+                TranStack(gap = TranGap.XS, modifier = Modifier.weight(1f)) {
                     TranText(
                         text = stringResource(TranStrings.Shell.header, "Android"),
                         variant = TranTextVariant.TITLE,
@@ -103,7 +103,6 @@ fun VotingHomeScreen(
                         variant = TranTextVariant.MUTED,
                     )
                 }
-                Spacer(Modifier.weight(1f))
                 if (onSignOut != null) {
                     TranButton(
                         label = stringResource(TranStrings.Common.signOut),

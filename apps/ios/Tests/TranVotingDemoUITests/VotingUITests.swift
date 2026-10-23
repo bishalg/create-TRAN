@@ -1,5 +1,5 @@
 // Verifies: REQ-ERR-007 REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006 REQ-NAT-007 REQ-NAT-010 REQ-NAT-011
-// Verifies: REQ-LOAD-002 REQ-LOAD-003 REQ-LOAD-005
+// Verifies: REQ-LOAD-002 REQ-LOAD-003 REQ-LOAD-005 REQ-NAT-013
 import XCTest
 
 /// Native UI + accessibility tests. Journeys mirror e2e/maestro/flows and e2e/features.
@@ -167,6 +167,31 @@ final class VotingUITests: XCTestCase {
         XCTAssertTrue(result.waitForExistence(timeout: 2))
         XCTAssertTrue(result.label.contains("minimum voting age"))
         XCTAssertGreaterThan(result.frame.height, defaultHeight, "the accessibility content size category was not applied")
+    }
+
+    /// The largest text size is the narrowest a screen gets: sign out and every theme keep a full-size target
+    /// inside the window (REQ-NAT-013).
+    func testLargestDynamicTypeKeepsSignOutAndEveryThemeOnScreen() throws {
+        app.terminate()
+        app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+
+        let window = app.windows.element(boundBy: 0).frame
+        let signOut = app.buttons["sign-out-button"]
+        XCTAssertTrue(signOut.waitForExistence(timeout: 2))
+        XCTAssertTrue(signOut.isHittable, "sign out must be tappable")
+        assertWhollyInside(signOut, window, name: "sign out")
+        for name in ["Light", "Dark", "Black", "Sepia"] {
+            assertWhollyInside(app.buttons[name], window, name: "theme \(name)")
+        }
+    }
+
+    private func assertWhollyInside(_ element: XCUIElement, _ window: CGRect, name: String) {
+        XCTAssertTrue(element.exists, "\(name) must exist")
+        let frame = element.frame
+        XCTAssertGreaterThanOrEqual(frame.width, 44, "\(name) is \(frame.width) pt wide")
+        XCTAssertGreaterThanOrEqual(frame.minX, window.minX, "\(name) starts off screen")
+        XCTAssertLessThanOrEqual(frame.maxX, window.maxX, "\(name) ends off screen at \(frame.maxX)")
     }
 }
 

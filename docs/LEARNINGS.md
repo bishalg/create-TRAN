@@ -9,6 +9,17 @@ when you learned something that is not obvious from the code, the specs or the A
 - Format, checked by `pnpm agents:check`: a `## YYYY-MM-DD - Title` heading, then a `**Learning:**` and an
   `**Action:**` line. Newest first. Delete an entry when the code makes it obsolete.
 
+## 2026-10-22 - Layout bugs hide on big phones and in Robolectric's default mode
+
+**Learning:** The default CI emulator (`reactivecircus/android-emulator-runner` with no profile) is 320 × 640 dp,
+narrower than any development phone. There the dashboard's subtitle took the whole header row and squeezed Android's
+sign-out button to 0 dp; the instrumentation test reported it as "The component is not displayed", which looks like a
+timing flake and is not. A Robolectric test of the same screen passed until it used `@GraphicsMode(NATIVE)`: the
+legacy mode measures text too small to overflow.
+**Action:** Reproduce CI emulator failures on the same profile (`avdmanager create avd` with no `--device`). Layout
+assertions in Robolectric use `@GraphicsMode(NATIVE)` and a `qualifiers` screen size (see `NarrowScreenTest`). Prove a
+layout test by breaking the layout and watching it fail.
+
 ## 2026-10-22 - Green locally can mean "built by hand earlier"
 
 **Learning:** The Android JVM parity and screenshot tests load the host build of `tran-uniffi` from `target/release`.

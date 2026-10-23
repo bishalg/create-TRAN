@@ -131,13 +131,12 @@ class VotingHomeAccessibilityTest {
         compose.setContent { NavigationCoordinator() }
 
         compose.onNodeWithTag("sign-out-button").performClick()
-        awaitDisplayed("Sign out?")
+        compose.onNodeWithText("Sign out?").assertIsDisplayed()
         compose.onNodeWithTag("dialog-cancel").performClick()
         assertTrue(compose.onAllNodesWithText("Sign out?").fetchSemanticsNodes().isEmpty())
         compose.onNodeWithTag("check-button").assertIsDisplayed()
 
         compose.onNodeWithTag("sign-out-button").performClick()
-        awaitDisplayed("Sign out?")
         compose.onNodeWithTag("dialog-confirm").performClick()
         compose.onNodeWithText("Continue as Citizen Voter").assertIsDisplayed()
     }
@@ -184,17 +183,6 @@ class VotingHomeAccessibilityTest {
     }
 
     /** Touch bounds, not visual bounds: Material3 enforces the 48dp floor on the touch target. */
-    /**
-     * A dialog draws in its own window. Idle composition does not mean that window has drawn, and on a slow
-     * (software-rendered CI) emulator it may not have yet: wait for it to be displayed, then assert it is.
-     */
-    private fun awaitDisplayed(text: String) {
-        compose.waitUntil(timeoutMillis = 5_000) {
-            runCatching { compose.onNodeWithText(text).assertIsDisplayed() }.isSuccess
-        }
-        compose.onNodeWithText(text).assertIsDisplayed()
-    }
-
     private fun assertTouchTargetAtLeast48(interaction: SemanticsNodeInteraction, label: String) {
         val bounds = interaction.fetchSemanticsNode().touchBoundsInRoot
         val width = bounds.right - bounds.left

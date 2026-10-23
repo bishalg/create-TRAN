@@ -38,7 +38,8 @@ fun AuditorScreen(onSignOut: () -> Unit) {
     TranScreen(modifier = Modifier.padding(TranSpace.lg)) {
         TranStack(gap = TranGap.LG) {
             TranInline(gap = TranGap.MD, modifier = Modifier.fillMaxWidth()) {
-                TranStack(gap = TranGap.XS) {
+                // The titles take what the button leaves, wrapping on a narrow screen (REQ-NAT-013).
+                TranStack(gap = TranGap.XS, modifier = Modifier.weight(1f)) {
                     TranText(
                         text = stringResource(TranStrings.Common.roleElectionAuditor),
                         variant = TranTextVariant.TITLE,
@@ -48,7 +49,6 @@ fun AuditorScreen(onSignOut: () -> Unit) {
                         variant = TranTextVariant.MUTED,
                     )
                 }
-                Spacer(Modifier.weight(1f))
                 TranButton(
                     label = stringResource(TranStrings.Common.signOut),
                     onClick = onSignOut,

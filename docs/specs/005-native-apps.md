@@ -108,3 +108,13 @@ Gradle config and generated Info.plist.
 The reference date a native app hands the Rust core MUST be ISO 8601 (`YYYY-MM-DD`, Gregorian, ASCII digits, UTC)
 whatever the device's language, numbering system or calendar. Found by the iOS screenshots (REQ-PERF-007): in Nepali,
 a locale-following formatter wrote Devanagari digits and every check answered "enter a valid date".
+
+### REQ-NAT-013 [verified] Narrow screens keep every control
+
+On the narrowest supported screen (Android 320 × 640 dp, the default CI emulator) and at the largest text size (iOS
+accessibility XXXL), sign out and every theme choice MUST stay inside the screen at their full touch size, and no label
+may break inside a word: long titles wrap, and choices that do not fit move to the next line. The native counterpart
+of web reflow (REQ-A11Y-007). Found by the nightly instrumentation run: at 320 dp the dashboard's subtitle took the
+whole header row and squeezed the Android sign-out button to zero width.
+**Verified by:** `apps/android/app/src/test/kotlin/com/tran/voting/ui/NarrowScreenTest.kt` (JVM, every push) and
+`VotingUITests.testLargestDynamicTypeKeepsSignOutAndEveryThemeOnScreen` (iOS).

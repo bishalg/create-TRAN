@@ -119,6 +119,7 @@ Feature: Voting eligibility
     # Verifies: REQ-A11Y-007
     Given I use a phone-sized screen
     Then the page does not scroll horizontally
+    And sign out and every theme stay on screen at full size
     When I check on this device with age "17" and country "US"
     Then the page does not scroll horizontally
 
