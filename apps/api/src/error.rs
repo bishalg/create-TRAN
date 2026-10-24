@@ -150,7 +150,7 @@ mod tests {
     use super::*;
     use axum::body::to_bytes;
     use rust_core::VoteValidationError;
-    use std::sync::{Arc, Mutex};
+    use std::sync::{Arc, Mutex, OnceLock};
     use tracing::field::{Field, Visit};
     use tracing_subscriber::layer::{Context, SubscriberExt};
     use tracing_subscriber::Layer;
@@ -237,6 +237,32 @@ mod tests {
     #[derive(Clone, Default)]
     struct Captured(Arc<Mutex<Vec<(tracing::Level, String, String)>>>);
 
+    static GLOBAL_CAPTURE: OnceLock<Captured> = OnceLock::new();
+
+    /// The capture subscriber, installed once as the process-global dispatcher.
+    ///
+    /// Tracing's callsite interest cache is process-global: with per-thread
+    /// subscribers (`with_default`), a cache entry first computed while a
+    /// *foreign* thread's (empty) dispatcher is current is memoized as `never`
+    /// and then silently drops that macro's events on every thread afterwards.
+    /// That is the race this suite used to hit under parallel test threads,
+    /// losing exactly one log level. A global subscriber participates in every
+    /// interest recomputation, so interest settles at `always` and stays there;
+    /// events from other tests (which never install a subscriber) end up here
+    /// too, which the request-id filter below ignores.
+    fn global_capture() -> Captured {
+        GLOBAL_CAPTURE
+            .get_or_init(|| {
+                let captured = Captured::default();
+                tracing::subscriber::set_global_default(
+                    tracing_subscriber::registry().with(captured.clone()),
+                )
+                .expect("no other test may set a global tracing dispatcher");
+                captured
+            })
+            .clone()
+    }
+
     #[derive(Default)]
     struct Fields {
         code: String,
@@ -269,24 +295,32 @@ mod tests {
     // Verifies: REQ-ERR-003
     #[test]
     fn failures_are_logged_at_their_catalogue_level_with_the_request_id() {
-        let captured = Captured::default();
-        let subscriber = tracing_subscriber::registry().with(captured.clone());
-        tracing::subscriber::with_default(subscriber, || {
-            for code in [
-                ErrorCode::ValidationAgeOutOfRange,
-                ErrorCode::NetworkOffline,
-                ErrorCode::RequestMalformed,
-                ErrorCode::ServerInternal,
-            ] {
-                let failure = Failure {
-                    code,
-                    message: "m".into(),
-                    cause: None,
-                };
-                log(&failure, "req-7");
-            }
-        });
-        let events = captured.0.lock().unwrap().clone();
+        let captured = global_capture();
+        // Other tests emit events concurrently (they don't reset the buffer, and
+        // this test's events are the only ones with its request id), so filter by
+        // id instead of claiming the buffer exclusively.
+        const ID: &str = "req-catalogue-level-capture";
+        for code in [
+            ErrorCode::ValidationAgeOutOfRange,
+            ErrorCode::NetworkOffline,
+            ErrorCode::RequestMalformed,
+            ErrorCode::ServerInternal,
+        ] {
+            let failure = Failure {
+                code,
+                message: "m".into(),
+                cause: None,
+            };
+            log(&failure, ID);
+        }
+        let events = captured
+            .0
+            .lock()
+            .unwrap()
+            .iter()
+            .filter(|(_, _, request_id)| request_id == ID)
+            .cloned()
+            .collect::<Vec<_>>();
         let levels: Vec<tracing::Level> = events.iter().map(|e| e.0).collect();
         assert_eq!(
             levels,
@@ -297,7 +331,7 @@ mod tests {
                 tracing::Level::ERROR
             ]
         );
-        assert!(events.iter().all(|e| e.2 == "req-7"));
+        assert!(events.iter().all(|e| e.2 == ID));
         assert_eq!(events[3].1, "server.internal");
     }
 }
