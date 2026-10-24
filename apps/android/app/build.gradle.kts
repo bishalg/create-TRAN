@@ -55,11 +55,15 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
+}
 
-    kotlinOptions {
-        jvmTarget = "17"
-        freeCompilerArgs +=
-            listOf("-opt-in=androidx.compose.ui.ExperimentalComposeUiApi")
+// KGP 2.1+ removed the deprecated android.kotlinOptions{} DSL; compilerOptions replaces it.
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+        freeCompilerArgs.addAll(
+            listOf("-opt-in=androidx.compose.ui.ExperimentalComposeUiApi"),
+        )
     }
 }
 
