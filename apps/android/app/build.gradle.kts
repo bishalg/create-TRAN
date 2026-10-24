@@ -6,7 +6,8 @@ plugins {
 
 android {
     namespace = "com.tran.voting"
-    compileSdk = 35
+    // okhttp-android 5.5's AAR metadata requires compiling against API 37 (AGP 9.4 max).
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.tran.voting"
