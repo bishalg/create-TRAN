@@ -55,11 +55,15 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
+}
 
-    kotlinOptions {
-        jvmTarget = "17"
-        freeCompilerArgs +=
-            listOf("-opt-in=androidx.compose.ui.ExperimentalComposeUiApi")
+// KGP 2.1+ removed the deprecated android.kotlinOptions{} DSL; compilerOptions replaces it.
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+        freeCompilerArgs.addAll(
+            listOf("-opt-in=androidx.compose.ui.ExperimentalComposeUiApi"),
+        )
     }
 }
 
@@ -69,20 +73,20 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
-    implementation("net.java.dev.jna:jna:5.15.0@aar")
+    implementation("net.java.dev.jna:jna:5.19.1@aar")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     testImplementation("junit:junit:4.13.2")
-    testImplementation("net.java.dev.jna:jna:5.15.0")
+    testImplementation("net.java.dev.jna:jna:5.19.1")
     testImplementation("org.json:json:20240303")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     // Virtual time for ServerConfirmation; the version the Compose BOM already resolves.
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
     // Screenshots (ADR-0031): Google's Robolectric renders Compose on the JVM; Roborazzi compares.
     testImplementation(composeBom)
     testImplementation("androidx.compose.ui:ui-test-junit4")
     testImplementation("org.robolectric:robolectric:4.17")
-    testImplementation("io.github.takahirom.roborazzi:roborazzi:1.60.0")
-    testImplementation("io.github.takahirom.roborazzi:roborazzi-compose:1.60.0")
+    testImplementation("io.github.takahirom.roborazzi:roborazzi:1.76.0")
+    testImplementation("io.github.takahirom.roborazzi:roborazzi-compose:1.76.0")
     androidTestImplementation(composeBom)
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     androidTestImplementation("androidx.test:runner:1.6.2")
