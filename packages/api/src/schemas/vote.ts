@@ -9,7 +9,7 @@ export const VoteEligibilityInputSchema = z.object({
 });
 
 export const VoteEligibilityOutputSchema = z.object({
-  eligibility_id: z.string().uuid(),
+  eligibility_id: z.uuid(),
   eligible: z.boolean(),
   age: z.number().int(),
   minimum_age: z.number().int(),
