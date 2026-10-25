@@ -136,6 +136,7 @@ class ScreenshotTest(private val theme: TranTheme, private val locale: String) {
         compose.onRoot().captureRoboImage("offline-$name.png")
     }
 
+    @OptIn(com.github.takahirom.roborazzi.ExperimentalRoborazziApi::class)
     @Test
     fun signOutDialog() {
         launch()

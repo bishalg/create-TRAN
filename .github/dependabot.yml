@@ -29,6 +29,8 @@ updates:
     groups:
       gradle-minor-and-patch:
         update-types: [minor, patch]
+      okhttp:
+        patterns: ["com.squareup.okhttp3:*"]
     open-pull-requests-limit: 5
   - package-ecosystem: github-actions # every `uses:` is pinned by commit SHA; Dependabot bumps the SHA and the version comment
     directory: /

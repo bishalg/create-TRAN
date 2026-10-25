@@ -77,7 +77,7 @@ class TranRequestFailure(
          * request id that is not log-safe is dropped (REQ-ROB-010).
          */
         fun rejected(response: Response): TranRequestFailure {
-            val envelope = envelope(response.body?.string().orEmpty())
+            val envelope = envelope(response.body.string())
             val status = response.code
             val code = envelope?.code?.let { errorCodeFromWire(it) }
                 ?: errorCodeForHttpStatus(status.coerceIn(0, 65535).toUShort())

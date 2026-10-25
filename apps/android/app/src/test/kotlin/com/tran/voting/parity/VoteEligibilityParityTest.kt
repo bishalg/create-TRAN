@@ -35,10 +35,11 @@ class VoteEligibilityParityTest {
                 System.getenv("UNIFFI_LIB_DIR")
                     ?: File(System.getProperty("user.dir"))
                         .parentFile
-                        .parentFile
-                        .parentFile
-                        .resolve("target/release")
-                        .absolutePath
+                        ?.parentFile
+                        ?.parentFile
+                        ?.resolve("target/release")
+                        ?.absolutePath
+                    ?: "target/release"
             System.setProperty("jna.library.path", libDir)
         }
 
