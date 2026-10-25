@@ -26,21 +26,25 @@ export function TranDialog({
   onCancel,
 }: TranDialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
   const bodyId = useId();
 
-  // Read during the first render, before `autoFocus` moves focus into the dialog.
+  // Read during the first render, before focus moves into the dialog.
   const [trigger] = useState(() => document.activeElement as HTMLElement | null);
 
   useEffect(() => {
     const dialog = ref.current!;
     dialog.showModal();
+    const initialFocus = destructive ? cancelRef.current : confirmRef.current;
+    initialFocus?.focus();
     return () => {
       dialog.close();
       // React removes the node before this cleanup runs, so the browser cannot restore focus.
       trigger?.focus();
     };
-  }, [trigger]);
+  }, [destructive, trigger]);
 
   return (
     <dialog
@@ -62,10 +66,17 @@ export function TranDialog({
         </p>
       )}
       <div className="tran-dialog-actions">
-        <TranButton variant="secondary" size="md" autoFocus={destructive} onClick={onCancel}>
+        <TranButton
+          ref={cancelRef}
+          variant="secondary"
+          size="md"
+          autoFocus={destructive}
+          onClick={onCancel}
+        >
           {cancelLabel}
         </TranButton>
         <TranButton
+          ref={confirmRef}
           variant={destructive ? 'danger' : 'primary'}
           size="md"
           autoFocus={!destructive}
