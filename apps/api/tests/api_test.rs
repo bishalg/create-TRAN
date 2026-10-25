@@ -1,4 +1,4 @@
-// Verifies: REQ-API-001 REQ-API-002 REQ-API-003 REQ-API-004 REQ-API-005 REQ-API-006 REQ-API-008 REQ-API-012 REQ-ERR-002
+// Verifies: REQ-API-001 REQ-API-002 REQ-API-003 REQ-API-004 REQ-API-005 REQ-API-006 REQ-API-008 REQ-API-009 REQ-API-010 REQ-API-012 REQ-ERR-002
 //! HTTP-level integration tests. Each test drives the real router in-process (no socket),
 //! so they are fast and deterministic. Naming: `<endpoint>_<condition>_<outcome>`.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
@@ -411,5 +411,64 @@ async fn cors_preflight_allows_the_debug_country_header() {
     assert!(
         allowed.contains("x-debug-country") || allowed == "*",
         "allow-headers was {allowed:?}"
+    );
+}
+
+// ── Countries (REQ-API-009, REQ-API-010) ────────────────────────────────────
+
+#[tokio::test]
+async fn countries_list_returns_sorted_supported_countries() {
+    let reply = send(get("/api/vote/countries")).await;
+
+    assert_eq!(reply.status, StatusCode::OK);
+    let list = reply.json["countries"].as_array().expect("countries array");
+    assert_eq!(list.len(), rust_core::SUPPORTED_COUNTRIES.len());
+
+    for (i, expected) in rust_core::SUPPORTED_COUNTRIES.iter().enumerate() {
+        assert_eq!(list[i]["country_code"], expected.country_code);
+        assert_eq!(list[i]["minimum_age"], expected.minimum_age);
+    }
+}
+
+#[tokio::test]
+async fn countries_single_returns_country_for_supported_code_case_insensitive() {
+    let reply_lower = send(get("/api/vote/countries/br")).await;
+    assert_eq!(reply_lower.status, StatusCode::OK);
+    assert_eq!(reply_lower.json["country_code"], "BR");
+    assert_eq!(reply_lower.json["minimum_age"], 16);
+
+    let reply_upper = send(get("/api/vote/countries/BR")).await;
+    assert_eq!(reply_upper.status, StatusCode::OK);
+    assert_eq!(reply_upper.json["country_code"], "BR");
+    assert_eq!(reply_upper.json["minimum_age"], 16);
+}
+
+#[tokio::test]
+async fn countries_single_returns_400_for_malformed_code() {
+    let reply = send(get("/api/vote/countries/USA")).await;
+    assert_error_envelope(
+        &reply,
+        StatusCode::BAD_REQUEST,
+        "validation.invalid_country_code",
+        "two ASCII letters",
+    );
+
+    let reply_digit = send(get("/api/vote/countries/12")).await;
+    assert_error_envelope(
+        &reply_digit,
+        StatusCode::BAD_REQUEST,
+        "validation.invalid_country_code",
+        "two ASCII letters",
+    );
+}
+
+#[tokio::test]
+async fn countries_single_returns_404_for_unsupported_well_formed_code() {
+    let reply = send(get("/api/vote/countries/XX")).await;
+    assert_error_envelope(
+        &reply,
+        StatusCode::NOT_FOUND,
+        "route.not_found",
+        "Country not supported",
     );
 }

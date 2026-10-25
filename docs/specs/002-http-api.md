@@ -54,13 +54,13 @@ Preflight MUST permit `content-type`, `accept` and `x-debug-country`.
 MUST be read in one place and be injectable for tests.
 **Verified by:** `config.rs` unit tests.
 
-### REQ-API-009 [planned] List supported countries
+### REQ-API-009 [verified] List supported countries
 
 `GET /api/vote/countries` MUST return `200` with `{ "countries": [{ "country_code", "minimum_age" }] }` sorted by code,
 taken from REQ-RULE-009.
 **Verified by:** `api_test.rs`.
 
-### REQ-API-010 [planned] Single country
+### REQ-API-010 [verified] Single country
 
 `GET /api/vote/countries/{code}` MUST return `200` `{ "country_code", "minimum_age" }` for a supported country
 (case-insensitive), `400` for a malformed code, and `404` for a well-formed code that is not supported. (The eligibility

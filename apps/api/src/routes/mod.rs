@@ -16,6 +16,8 @@ pub fn create_router(state: AppState) -> Router {
     Router::new()
         .route("/api/health", get(health::health_check_handler))
         .route("/api/tran/info", get(tran::stack_info_handler))
+        .route("/api/vote/countries", get(vote::list_countries_handler))
+        .route("/api/vote/countries/{code}", get(vote::get_country_handler))
         .route("/api/vote/eligibility", post(vote::eligibility_handler))
         .fallback(not_found)
         .method_not_allowed_fallback(method_not_allowed)
