@@ -28,6 +28,8 @@ signal ──exit 0──► stop. Nothing to do, nothing spent.
 - [Writing a task](#writing-a-task)
 - [Harnesses](#harnesses)
 - [Scheduling](#scheduling)
+- [Credentials for Claude Code on GitHub Actions](#credentials-for-claude-code-on-github-actions)
+- [Issue-driven tasks (planned)](#issue-driven-tasks-planned)
 - [Safety model](#safety-model)
 - [Where knowledge goes](#where-knowledge-goes)
 - [From a persona prompt to a task](#from-a-persona-prompt-to-a-task)
@@ -246,6 +248,44 @@ pull requests opened with the default token do not trigger other workflows.
 
 When you add a scheduled task, add its cron to `agents.yml` too; `pnpm agents:check` fails until both agree. Other
 schedulers are not checked: they live outside the repo.
+
+## Credentials for Claude Code on GitHub Actions
+
+Claude Code cannot log in interactively on a runner, so the workflow needs a secret. Two choices:
+
+| Secret                    | How you get it                                                          | Use it when                                  |
+| :------------------------ | :---------------------------------------------------------------------- | :------------------------------------------- |
+| `ANTHROPIC_API_KEY`       | Console API key with a spend limit                                      | Team or company repos: metered, auditable    |
+| `CLAUDE_CODE_OAUTH_TOKEN` | `claude setup-token` once on your machine; it prints a long-lived token | A personal Pro or Max plan on your own repos |
+
+Add one of them under Settings → Secrets and variables → Actions, plus `AGENT_GITHUB_TOKEN` (fine-grained: contents,
+pull requests and issues write on this repository, or a GitHub App installation token). The runner never sees any
+other secret: deploy keys and database URLs belong to jobs that do not install the harness. Check the vendor's
+commercial terms before using a personal plan token in shared automation.
+
+```yaml
+# .github/workflows/agents.yml (excerpt)
+env:
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+  CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+steps:
+  - run: |
+      if [ -z "$ANTHROPIC_API_KEY$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+        echo "::notice::No Claude credential; skipping."; exit 0
+      fi
+```
+
+Support for `CLAUDE_CODE_OAUTH_TOKEN` in the shipped workflow is REQ-ISS-016 (planned); until then set
+`ANTHROPIC_API_KEY`.
+
+## Issue-driven tasks (planned)
+
+Spec [020](../docs/specs/020-issue-driven-agents.md) and [ADR-0037](../docs/adr/0037-issue-driven-agents.md) add
+`trigger: issue`: an issue-quality gate that rewrites a weak issue instead of working on it, triage labels
+(`needs-detail`, `human-decision-needed`, `review-needed`, `good-to-merge`), a plan plus `/approve` for anything
+non-trivial, one pull request per issue with gates and cost in a comment, screenshots on demand and one fix attempt
+for failed CI. It is the self-hosted replacement for the Jules issue workflow and reuses the runner, guard and gates
+above unchanged.
 
 ## Safety model
 
