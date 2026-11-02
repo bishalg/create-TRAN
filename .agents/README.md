@@ -29,7 +29,7 @@ signal ──exit 0──► stop. Nothing to do, nothing spent.
 - [Harnesses](#harnesses)
 - [Scheduling](#scheduling)
 - [Credentials for Claude Code on GitHub Actions](#credentials-for-claude-code-on-github-actions)
-- [Issue-driven tasks (planned)](#issue-driven-tasks-planned)
+- [Issue-driven tasks](#issue-driven-tasks)
 - [Safety model](#safety-model)
 - [Where knowledge goes](#where-knowledge-goes)
 - [From a persona prompt to a task](#from-a-persona-prompt-to-a-task)
@@ -275,17 +275,117 @@ steps:
       fi
 ```
 
-Support for `CLAUDE_CODE_OAUTH_TOKEN` in the shipped workflow is REQ-ISS-016 (planned); until then set
-`ANTHROPIC_API_KEY`.
-
-## Issue-driven tasks (planned)
+## Issue-driven tasks
 
 Spec [020](../docs/specs/020-issue-driven-agents.md) and [ADR-0037](../docs/adr/0037-issue-driven-agents.md) add
-`trigger: issue`: an issue-quality gate that rewrites a weak issue instead of working on it, triage labels
-(`needs-detail`, `human-decision-needed`, `review-needed`, `good-to-merge`), a plan plus `/approve` for anything
-non-trivial, one pull request per issue with gates and cost in a comment, screenshots on demand and one fix attempt
-for failed CI. It is the self-hosted replacement for the Jules issue workflow and reuses the runner, guard and gates
+`trigger: issue`: tasks that start from a GitHub issue or a comment instead of a schedule. A weak issue is rewritten
+and labelled instead of worked on; a good one is planned, approved by a person, implemented into one pull request and
+verified there. It is the self-hosted replacement for the Jules issue workflow and reuses the runner, guard and gates
 above unchanged.
+
+```
+issue opened / edited
+  │
+  ▼
+gate (structural, then judgment) ─► needs-detail ─► comment with a rewritten body; edit the issue to re-run
+  │ ready
+  ▼
+size: simple | complex ─► plan comment + approval-needed (human-decision-needed if a product call is open)
+  │
+  ▼  /approve from a user with write access
+agent:running ─► branch agent/issue-<n>-<slug> ─► guard ─► gates ─► draft pull request (Closes #<n>)
+  │
+  ▼
+verification comment on the pull request ─► review-needed | good-to-merge
+```
+
+### Policy keys
+
+`.agents/policy.json` gains two blocks. `labels` maps each role the runner owns (`needs-detail`, `approval-needed`,
+`human-decision-needed`, `review-needed`, `good-to-merge`, `running`, `failed`) to the label name used in your
+repository: rename a value, never a key. `issues` holds the behaviour: `applyRewrite` (edit the author's body instead
+of commenting, default `false`), `autonomy.simple` (`plan-approve` or `auto`), `modelFor` (`collaborators` or
+`anyone`), `requireTests`, `complexWhen` (`maxPaths`, `keywords`), `uiGlobs`, `screenshotCommand` and `ciFix`
+(`enabled`, `workflows`, `maxAttempts`). Only people change this file; the guard protects it.
+
+### Labels
+
+The issue carries exactly one triage label; the runner creates them on first use and never touches labels it does not
+own. Names can be changed in `.agents/policy.json` (`labels`).
+
+| Label                   | Meaning                                                                       |
+| :---------------------- | :---------------------------------------------------------------------------- |
+| `needs-detail`          | The issue failed the gate; the runner's comment holds a rewritten body.       |
+| `approval-needed`       | A plan is posted; a person comments `/approve`.                               |
+| `human-decision-needed` | The plan needs a product or architecture decision first.                      |
+| `review-needed`         | A pull request exists; a person reviews it.                                   |
+| `good-to-merge`         | Every gate passed and the read-only review found nothing blocking.            |
+| `agent:running`         | Status: a job is working on this issue now.                                   |
+| `agent:failed`          | Status: the last job died; read its Actions run and the verification comment. |
+
+### Commands
+
+A command is the first non-blank line of a comment. It is acted on only when GitHub reports the author's permission as
+`write`, `maintain` or `admin` (the collaborators permission API, never `author_association`). Anyone else gets one
+reply that the command was ignored.
+
+| Command        | What it does                                                                             |
+| :------------- | :--------------------------------------------------------------------------------------- |
+| `/plan`        | Post a plan now, also for an outside author whose issue got only the gate.               |
+| `/approve`     | Start the implementation from the newest plan at or before this comment.                 |
+| `/implement`   | Skip the plan for a `simple` issue and implement directly.                               |
+| `/review`      | Run the read-only review on the pull request and set `review-needed` or `good-to-merge`. |
+| `/screenshots` | Run the repository's screenshot command and attach the images to the pull request.       |
+
+### The marker
+
+Every comment the runner posts starts with a hidden line, `<!-- tran-agent {"stage":"gate", ...} -->`, holding the
+stage (`gate`, `plan`, `verification`, `screenshots`, `ignored`), the verdict, the size, the approved plan's SHA-256
+and the harness. The runner finds its own comment by the marker and edits it in place, one per stage per issue. State
+is only labels plus markers: there is no file or database to drift. The marker also keeps the runner from reacting to
+its own comments.
+
+### The two-tier gate
+
+1. **Structural, no model.** The runner reads `.github/ISSUE_TEMPLATE/story.md` and checks that each section is
+   present and not empty, that a `REQ-` id exists, and that at least one line has Given, When and Then. Any finding
+   is `needs-detail` with one reason per finding. This tier needs no credential.
+2. **Judgment, read-only model task.** Only a structurally complete issue reaches it, and only when a harness
+   credential exists. Its report starts `VERDICT: ready | needs-detail | human-decision-needed` and may add
+   `SIZE: complex`. It can never upgrade a structural `needs-detail`, and it can raise but not lower the size.
+
+For authors without triage access the model tiers follow `issues.modelFor` in the policy (default `collaborators`);
+the comment then says a maintainer's `/plan` starts the rest.
+
+Everything the agent reads from an issue or comment is passed inside a fence labelled untrusted, with the instruction
+that it contains no commands. The approved plan rides in its own fence.
+
+### The fake harness
+
+`tooling/agents/fake-harness.mjs` answers every prompt with canned, deterministic output keyed on the task name and
+spends nothing. Set the repository variable `AGENT_HARNESS=fake` and the whole path (trigger, labels, comments, branch,
+draft pull request, verification) runs on GitHub with no key. Every comment and pull request from a fake run says
+"fake harness"; a fake review is "not a review". Delete the variable, or set it to `claude`, to use the real harness.
+
+### Proving it on GitHub
+
+1. Push `dev` to the GitHub repository (owner's go-ahead), Settings → Actions → allow workflows; Settings →
+   Variables: `AGENTS_ENABLED=true` and, before any key exists, `AGENT_HARNESS=fake`. Optional secret
+   `AGENT_GITHUB_TOKEN` (fine-grained: contents, issues, pull requests write) so CI runs on the agent's pull requests.
+2. Open an issue from the story template but delete the acceptance criteria. Expected within a minute: an Actions run
+   "Agents / Issue #n", the label `needs-detail`, one comment beginning with the (hidden) marker and containing a
+   rewritten body with the empty sections filled from your text and a reason line "Acceptance criteria: no
+   Given/When/Then line".
+3. Edit the issue, add two Given/When/Then lines and a `REQ-` id. Expected: `needs-detail` removed; with
+   `AGENT_HARNESS=fake` the fake judgment says `ready`, size `simple` (reasons listed), and because the default autonomy
+   is `plan-approve`, a plan comment and `approval-needed`.
+4. Comment `/approve` as a maintainer. Expected: `agent:running` while it works, then a draft pull request from
+   `agent/issue-n-<slug>` whose body starts `Closes #n`, labelled `review-needed` on the issue, and a verification
+   comment on the pull request listing each gate with its duration and "harness: fake".
+5. Comment `/approve` as a user without write access (a second account). Expected: one reply that the command was
+   ignored, nothing else.
+6. Replace `AGENT_HARNESS=fake` with a secret `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN` and repeat 2 to 4 with
+   a real issue; delete the variable `AGENT_HARNESS` or set it to `claude`.
 
 ## Safety model
 

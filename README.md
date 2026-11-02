@@ -187,7 +187,8 @@ Scheduled and micro-task agents are defined once in [`.agents/tasks/`](./.agents
 Claude Code, Codex, Gemini CLI, pi, Jules or your own. Each task starts only when its signal finds evidence: a
 `[planned]` requirement, an audit advisory, a metrics regression, a surviving mutant. The runner, not the agent, runs
 the gates before it opens a draft pull request. It ships as a sample and runs nothing on its own: copy and adapt it
-with [Adopting it in your project](./.agents/README.md#adopting-it-in-your-project).
+with [Adopting it in your project](./.agents/README.md#adopting-it-in-your-project). Agents can also start from a
+GitHub issue: see [Issue-driven tasks](./.agents/README.md#issue-driven-tasks).
 
 ```sh
 pnpm agents list                         # the tasks
