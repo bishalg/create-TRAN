@@ -201,3 +201,38 @@ label unchanged).
 plan run for an issue whose author lacks triage access. For other authors the structural gate and its rewrite still
 run and the comment MUST say that a maintainer's `/plan` starts the rest.
 **Verified by:** unit tests with a fake GitHub client in `tooling/agents/issue.test.mjs`.
+
+## Harness principles made mechanical
+
+Source: the harness-engineering principles recorded in ADR-0037 "Principles". Each one below is a rule that the runner
+enforces, not advice to the model.
+
+### REQ-ISS-023 [planned] A spend ceiling per run
+
+When the harness reports its cost, the runner MUST treat a run whose cost exceeds the task's `max_cost_usd` (default
+`maxCostUsd` in `.agents/policy.json`) like a failed gate: the change MUST NOT be kept, the stage comment MUST say
+the ceiling and the cost, and the issue MUST get `agent:failed`. A harness that reports no cost MUST be noted as
+such in the receipt and MUST NOT be blocked by this rule.
+**Verified by:** unit tests in `tooling/agents/run.test.mjs` with a fake usage report.
+
+### REQ-ISS-024 [planned] Markers are trusted only from the runner
+
+`readState` and the in-place comment update MUST consider only comments whose author is the runner's own identity
+(the authenticated login, or the Actions bot when the job token is used). A marker in a comment by anyone else MUST
+be ignored and MUST NOT be edited.
+**Verified by:** unit tests in `tooling/agents/issue.test.mjs` with forged marker comments from other authors.
+
+### REQ-ISS-025 [planned] A failed run names the harness gap
+
+When a run ends with `agent:failed`, the stage comment MUST name the class of gap the runner suspects, one of
+`missing sensor`, `unclear contract`, `permission gap`, `missing durable state`, `model error`, `budget`, with the
+evidence line that led to it and a link to the run's artifact, so that a person can turn it into a
+`docs/LEARNINGS.md` entry, a new gate or a tighter policy instead of re-prompting.
+**Verified by:** unit tests on the failure comment renderer with one fixture per class.
+
+### REQ-ISS-026 [planned] The change receipt
+
+Every pull request the runner opens or updates MUST carry a receipt: harness and model, turns and cost (or "not
+reported"), the task and signal that started the run with a hash of the evidence, each gate with its status and
+duration, and a link to the run's artifact. The receipt MUST be regenerated on every update, never appended.
+**Verified by:** unit tests on the pull request body renderer in `tooling/agents/verify.test.mjs`.
