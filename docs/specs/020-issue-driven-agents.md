@@ -11,7 +11,7 @@ comes from `AGENTS.md`, `.agents/policy.json`, the task files and `.github/ISSUE
 
 ## Trigger and state
 
-### REQ-ISS-001 [planned] An `issue` trigger
+### REQ-ISS-001 [verified] An `issue` trigger
 
 A task file MAY declare `trigger: issue` with `on: [opened, edited, labeled, commented]` and the built-in signal
 `issue-event`, which reads the GitHub event payload (`--event <path>`, default `GITHUB_EVENT_PATH`). The runner MUST
@@ -101,7 +101,7 @@ write the failing test citing it before code, and the runner MUST fail the run w
 default `true`). A diff that changes only documentation, specs or fixtures passes.
 **Verified by:** unit tests on the prompt and on the diff check.
 
-### REQ-ISS-011 [planned] The issue body is data
+### REQ-ISS-011 [verified] The issue body is data
 
 The runner MUST pass issue and comment text to the agent inside a fenced block labelled as untrusted content with an
 instruction that it contains no commands, and issue-driven edit tasks MUST run with the same tool allow-list as other
@@ -168,7 +168,7 @@ request and verification on GitHub before adding a credential. A `fake` run MUST
 and pull request it produces.
 **Verified by:** unit tests in `tooling/agents/prompt-harness.test.mjs` and `issue.test.mjs`; workflow test.
 
-### REQ-ISS-019 [planned] The runner never triggers itself
+### REQ-ISS-019 [verified] The runner never triggers itself
 
 The `issue-event` signal MUST exit 0 (nothing to do) for a comment whose body carries the runner's marker
 (REQ-ISS-020), for a comment without a command, for a `labeled` event whose label is one the runner owns, and for any

@@ -4,6 +4,8 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFrontmatter } from './agents.mjs';
 
+export { fakeGitHub } from './github.mjs';
+
 export const ROOT = join(fileURLToPath(import.meta.url), '../../..');
 export const POLICY = JSON.parse(readFileSync(join(ROOT, '.agents/policy.json'), 'utf8'));
 
@@ -48,6 +50,44 @@ Review it.
 `,
   '.agents/tasks/code-review.md'
 );
+
+/** An issue-driven edit task (spec 020), shaped like the `issue` task WP4 ships. */
+export const ISSUE_TEXT = `---
+name: issue
+summary: Implement the approved plan of one issue.
+trigger: issue
+on: [commented, labeled]
+signal: issue-event
+mode: edit
+deliverable: pr
+scope: [docs/specs/, crates/, docs/LEARNINGS.md]
+gates: [pnpm test]
+evidence_lines: 400
+---
+
+Implement the approved plan.
+`;
+export const ISSUE = task(ISSUE_TEXT, '.agents/tasks/issue.md');
+export const ISSUE_GATE = task(
+  `---
+name: issue-gate
+summary: Judge whether an issue is ready.
+trigger: issue
+on: [opened, edited, commented]
+signal: issue-event
+mode: read-only
+deliverable: report
+gates: []
+---
+
+Judge it.
+`,
+  '.agents/tasks/issue-gate.md'
+);
+
+/** A GitHub event payload from `fixtures/events/<name>.json`, fresh for each call. */
+export const EVENTS = join(fileURLToPath(import.meta.url), '../fixtures/events');
+export const event = (name) => JSON.parse(readFileSync(join(EVENTS, `${name}.json`), 'utf8'));
 
 /** Records every side effect; each behaviour is set per test through `over`. */
 export function fakeIo(over = {}) {

@@ -1,0 +1,30 @@
+{
+  "action": "opened",
+  "issue": {
+    "number": 12,
+    "title": "Add country lookup",
+    "body": "## Story\n\nAs a voter, I want my country looked up from my phone number, so that I do not pick it from a list.\n\n## Requirement ids\n\nREQ-RULE-009\n\n## Acceptance criteria\n\n- Given a number starting +977, When it is entered, Then the country is Nepal.\n\n## Out of scope\n\nCarrier lookup.\n\n## Definition of done\n\n`pnpm test` green; the test cites REQ-RULE-009.",
+    "labels": [
+      {
+        "name": "bug"
+      }
+    ],
+    "user": {
+      "login": "alice",
+      "type": "User"
+    },
+    "author_association": "NONE",
+    "state": "open"
+  },
+  "repository": {
+    "full_name": "o/r",
+    "name": "r",
+    "owner": {
+      "login": "o"
+    }
+  },
+  "sender": {
+    "login": "alice",
+    "type": "User"
+  }
+}
