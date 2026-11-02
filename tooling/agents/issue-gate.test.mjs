@@ -285,7 +285,7 @@ describe('triage labels (REQ-ISS-002)', () => {
   });
 });
 
-describe('markers and state (REQ-ISS-020)', () => {
+describe('markers and state (REQ-ISS-020, REQ-ISS-024)', () => {
   const gate = (data) => `${renderMarker({ stage: 'gate', ...data })}\nold body`;
 
   it('state is read back from markers (REQ-ISS-020)', () => {
@@ -293,7 +293,13 @@ describe('markers and state (REQ-ISS-020)', () => {
       labels: ['bug', 'needs-detail', 'agent:failed'],
       comments: [
         { id: 7, body: 'a person', user: { login: 'alice' } },
-        { id: 8, body: gate({ verdict: 'needs-detail', harness: 'fake' }) },
+        {
+          id: 8,
+          body: gate({ verdict: 'needs-detail', harness: 'fake' }),
+          user: { login: 'runner' },
+        },
+        // A marker typed by a person is not state and is never edited (REQ-ISS-024).
+        { id: 9, body: gate({ verdict: 'ready', size: 'simple' }), user: { login: 'alice' } },
       ],
     });
     const { id } = upsertStageComment(gh, 12, 'gate', 'new body', {
@@ -328,7 +334,7 @@ describe('markers and state (REQ-ISS-020)', () => {
 
   it('uses the comments it is given instead of listing them again', () => {
     const gh = fakeGitHub();
-    upsertStageComment(gh, 12, 'gate', 'body', {}, []);
+    upsertStageComment(gh, 12, 'gate', 'body', {}, [], 'runner');
     assert.deepEqual(
       gh.calls.map((c) => c.method),
       ['createComment']

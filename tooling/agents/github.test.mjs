@@ -1,4 +1,5 @@
 // The one GitHub client of the issue-driven stages (spec 020, ADR-0037 D4) and its fake.
+// Verifies: REQ-ISS-024
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { createGitHubClient, fakeGitHub, PERMISSIONS } from './agents.mjs';
@@ -242,6 +243,36 @@ describe('the live GitHub client (gh api underneath)', () => {
     assert.equal(s.calls[0].env.GH_TOKEN, TOKEN, 'the token reaches gh only through its env');
   });
 
+  it("whoami is the runner's identity, asked once (REQ-ISS-024)", () => {
+    const { calls, gh } = client([ok({ login: 'tran-bot', type: 'User' })]);
+    assert.equal(gh.whoami(), 'tran-bot');
+    assert.equal(gh.whoami(), 'tran-bot');
+    assert.equal(calls.length, 1);
+    assert.deepEqual(calls[0].args, api('GET', 'user'));
+
+    // The job token cannot read /user (HTTP 403): the comments are the Actions bot's.
+    const job = client([
+      { status: 1, stderr: 'gh: Resource not accessible by integration (HTTP 403)' },
+    ]);
+    assert.equal(job.gh.whoami(), 'github-actions[bot]');
+
+    // A GitHub App token names its bot login in AGENT_GITHUB_LOGIN; no call is needed.
+    const s = stub();
+    const app = createGitHubClient({
+      repo: 'o/r',
+      spawn: s.spawn,
+      env: { AGENT_GITHUB_LOGIN: 'tran-app[bot]' },
+    });
+    assert.equal(app.whoami(), 'tran-app[bot]');
+    assert.equal(s.calls.length, 0);
+    assert.throws(
+      () => createGitHubClient({ repo: 'o/r', spawn: s.spawn, env: { AGENT_GITHUB_LOGIN: 'a b' } }),
+      /AGENT_GITHUB_LOGIN/
+    );
+    const broken = client([{ status: 1, stderr: 'HTTP 500' }]);
+    assert.throws(() => broken.gh.whoami(), /HTTP 500/);
+  });
+
   it('a missing gh is a clear error', () => {
     const gh = createGitHubClient({
       repo: 'o/r',
@@ -260,7 +291,7 @@ describe('the fake GitHub client', () => {
   it('the fake mirrors the live surface', () => {
     const live = createGitHubClient({ repo: 'o/r', spawn: () => ({}) });
     assert.deepEqual(methods(fakeGitHub()), methods(live));
-    assert.equal(methods(live).length, 12);
+    assert.equal(methods(live).length, 13);
   });
 
   it('serves state, applies writes and records every call', () => {
@@ -320,6 +351,14 @@ describe('the fake GitHub client', () => {
       ]
     );
     assert.deepEqual(gh.calls[2].args, [12, 'marker']);
+  });
+
+  it("the fake's own comments are by its login (REQ-ISS-024)", () => {
+    const gh = fakeGitHub({ login: 'tran-bot' });
+    assert.equal(gh.whoami(), 'tran-bot');
+    gh.createComment(1, 'x');
+    assert.equal(gh.listComments(1)[0].author.login, 'tran-bot');
+    assert.equal(fakeGitHub().whoami(), 'runner');
   });
 
   it('starts empty and keeps callers from mutating its state through return values', () => {

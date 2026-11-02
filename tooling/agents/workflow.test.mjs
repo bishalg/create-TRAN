@@ -1,4 +1,4 @@
-// Verifies: REQ-ISS-003, REQ-ISS-016, REQ-ISS-017, REQ-ISS-018, REQ-ISS-019
+// Verifies: REQ-ISS-003, REQ-ISS-009, REQ-ISS-016, REQ-ISS-017, REQ-ISS-018, REQ-ISS-019
 // Reads .github/workflows/agents.yml as text (no YAML dependency): the workflow keeps a plain
 // two-space layout, and these helpers fail loudly when a job or key they look for moves.
 import assert from 'node:assert/strict';
@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
 import { unpinnedActions } from '../supply-chain/supply-chain.mjs';
-import { ROOT } from './test-helpers.mjs';
+import { EVENTS, ROOT } from './test-helpers.mjs';
 
 const YAML = readFileSync(join(ROOT, '.github/workflows/agents.yml'), 'utf8');
 const LINES = YAML.split('\n');
@@ -104,7 +104,9 @@ describe('the issue job: identity and secrets (REQ-ISS-016, REQ-ISS-017)', () =>
       'CLAUDE_CODE_OAUTH_TOKEN',
       'GH_TOKEN',
       'AGENT_HARNESS',
+      'AGENT_GITHUB_LOGIN',
     ]);
+    assert.match(text(env), /AGENT_GITHUB_LOGIN: \$\{\{ vars\.AGENT_GITHUB_LOGIN \}\}/);
     assert.match(text(env), /GH_TOKEN: \$\{\{ secrets\.AGENT_GITHUB_TOKEN \|\| github\.token \}\}/);
     assert.match(text(env), /AGENT_HARNESS: \$\{\{ vars\.AGENT_HARNESS \}\}/);
     const secrets = [...text(ISSUE).matchAll(/secrets\.(\w+)/g)].map((m) => m[1]);
@@ -181,13 +183,63 @@ describe('the issue job: without a credential (REQ-ISS-016, REQ-ISS-018)', () =>
   });
 
   it('installs Claude Code only when a claude model stage will run, then runs the command', () => {
+    // The checkout pushes with the agent token, so CI runs on the pull request (REQ-ISS-009).
+    assert.match(
+      text(step(ISSUE, /actions\/checkout@/)),
+      /token: \$\{\{ secrets\.AGENT_GITHUB_TOKEN \|\| github\.token \}\}/
+    );
     const install = text(step(ISSUE, /claude-code@/));
     assert.match(install, /steps\.key\.outputs\.model == 'yes'/);
     assert.match(install, /steps\.key\.outputs\.harness == 'claude'/);
     const command = text(step(ISSUE, /agents\.mjs issue/));
     assert.match(command, /agents\.mjs issue --event "\$GITHUB_EVENT_PATH" --harness "\$HARNESS"/);
     assert.match(command, /HARNESS: \$\{\{ steps\.key\.outputs\.harness \}\}/);
-    assert.doesNotMatch(text(ISSUE), /rust-toolchain|pnpm install/);
+  });
+});
+
+describe('the issue job: the build toolchain only when the event may build (REQ-ISS-009)', () => {
+  const stage = step(ISSUE, /id: stage/);
+  const decide = (name) => {
+    const dir = mkdtempSync(join(tmpdir(), 'agents-stage-'));
+    const output = join(dir, 'output');
+    writeFileSync(output, '');
+    const result = spawnSync('bash', ['-e', '-c', script(stage)], {
+      cwd: ROOT,
+      encoding: 'utf8',
+      env: {
+        PATH: process.env.PATH,
+        GITHUB_EVENT_PATH: join(EVENTS, `${name}.json`),
+        GITHUB_OUTPUT: output,
+      },
+    });
+    assert.equal(result.status, 0, result.stderr);
+    return readFileSync(output, 'utf8');
+  };
+
+  it('asks only when a model stage can run', () => {
+    assert.match(text(stage), /if: steps\.key\.outputs\.model == 'yes'/);
+  });
+
+  it('/approve and /implement build; a gate, /plan and other comments do not', () => {
+    assert.equal(decide('comment-approve-writer'), 'build=yes\n');
+    assert.equal(decide('comment-implement-writer'), 'build=yes\n');
+    assert.equal(decide('comment-plan-writer'), 'build=no\n');
+    assert.equal(decide('issue-opened-complete'), 'build=no\n');
+    assert.equal(decide('comment-no-command'), 'build=no\n');
+  });
+
+  it('every toolchain step waits for that answer, and the gates find git configured', () => {
+    for (const match of [/rust-toolchain@/, /rust-cache@/, /pnpm\/action-setup@/, /pnpm install/]) {
+      const lines = text(step(ISSUE, match));
+      assert.match(lines, /if: steps\.stage\.outputs\.build == 'yes'/, String(match));
+    }
+    const install = script(step(ISSUE, /pnpm install/));
+    assert.match(install, /pnpm install --frozen-lockfile/);
+    assert.match(install, /git config user\.name/);
+    // The command step runs after the toolchain, whatever the stage.
+    const at = (match) => ISSUE.findIndex((line) => match.test(line));
+    assert.ok(at(/pnpm install --frozen-lockfile/) > at(/id: stage/));
+    assert.ok(at(/agents\.mjs issue/) > at(/pnpm install --frozen-lockfile/));
   });
 });
 

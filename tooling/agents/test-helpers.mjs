@@ -1,8 +1,10 @@
 // Shared fixtures for the tooling/agents tests (not itself a test file).
-import { readFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFrontmatter } from './agents.mjs';
+import { answer } from './fake-harness.mjs';
 
 export { fakeGitHub } from './github.mjs';
 
@@ -101,6 +103,7 @@ export function fakeIo(over = {}) {
     gate: () => ({ status: 0, output: 'ok' }),
     statusBefore: '',
     statusAfter: '',
+    exists: () => true,
     ...over,
   };
   let harnessRan = false;
@@ -116,6 +119,7 @@ export function fakeIo(over = {}) {
       branch: [],
       discarded: null,
       restored: 0,
+      base: [],
     },
     isClean: () => state.clean,
     status: () => (harnessRan ? state.statusAfter : state.statusBefore),
@@ -131,6 +135,9 @@ export function fakeIo(over = {}) {
       return branch;
     },
     restoreBranch: () => io.calls.restored++,
+    useBranch: (branch) => io.calls.base.push(branch),
+    currentBranch: () => 'main',
+    exists: (path) => state.exists(path),
     discardBranch: (branch) => (io.calls.discarded = branch),
     runHarness: (command, prompt) => {
       io.calls.harness++;
@@ -161,3 +168,16 @@ export const OPTS = {
   taskNames: ['spec-gap', 'code-review'],
   harnessOptions: {},
 };
+
+/** The hand-off the fake harness writes for the `issue` task, from a scratch copy of the repo. */
+export function fakeIssueHandoff() {
+  const dir = mkdtempSync(join(tmpdir(), 'fake-issue-'));
+  try {
+    mkdirSync(join(dir, 'docs'));
+    copyFileSync(join(ROOT, 'docs/LEARNINGS.md'), join(dir, 'docs/LEARNINGS.md'));
+    answer('issue', '# Agent task: issue', dir);
+    return readFileSync(join(dir, '.agents/out/issue/result.md'), 'utf8');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}

@@ -39,9 +39,20 @@ REWRITE:
 <only for needs-detail: the complete issue body in the template's sections, keeping the author's words>
 
 PLAN:
-<only for ready: goal, files, requirement ids, tests to write first, risks, estimated lines>
+- Goal: <one sentence: the change and the requirement it serves>
+- Files: <each path you expect to change, tests included>
+- Requirement ids: <the ids to add or update in docs/specs/, as [planned] first>
+- Tests to write first: <each failing test, the file it goes in and the id it cites>
+- Risks: <what could break, and any decision a person must make first>
+- Estimated lines: <one number, within the line budget>
 ```
 
 `SIZE: complex` when the change touches migrations, auth, payments, dependencies, more than five files, or more lines
 than the policy's budget. The runner may raise your size but never lowers it, and never lets your verdict override its
 own structural findings.
+
+Write the plan for `ready`, and whenever the event is a `/plan` comment. The runner posts it as written, a maintainer
+approves it with `/approve` (or edits it first in a `## Plan` comment), and the approved text is the only plan the
+implementation gets: name real paths from this repository, put the spec and the failing test before the code, and
+keep it to one pull request. If the work needs a product or architecture decision, say so under Risks and answer
+`VERDICT: human-decision-needed`.

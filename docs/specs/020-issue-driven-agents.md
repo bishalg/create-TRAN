@@ -18,7 +18,8 @@ A task file MAY declare `trigger: issue` with `on: [opened, edited, labeled, com
 treat the issue (title, body, labels, comments) as the task's evidence and MUST apply the guard, gates and publish
 rules of spec 015 to any change it produces. `pnpm agents:check` MUST reject an `on` value outside that list, an `on`
 field on another trigger, or an `issue` task with another signal.
-**Verified by:** unit tests in `tooling/agents/tasks.test.mjs` and `issue-event.test.mjs`.
+**Verified by:** unit tests in `tooling/agents/tasks.test.mjs` and `issue-event.test.mjs`; the guard, gates and
+publish rules on an issue's change in `issue.test.mjs` and `issue-commands.test.mjs`.
 
 ### REQ-ISS-002 [verified] The issue is the state
 
@@ -35,7 +36,7 @@ Runs for the same issue MUST be serialized (an Actions concurrency group keyed b
 newer queued run MUST cancel an older queued run and MUST NOT cancel an executing one (`cancel-in-progress: false`).
 **Verified by:** workflow test in `tooling/agents/workflow.test.mjs` reading `agents.yml`.
 
-### REQ-ISS-004 [planned] Commands need write access
+### REQ-ISS-004 [verified] Commands need write access
 
 A command is the first non-blank line of a comment when it is one of `/plan`, `/approve`, `/implement`, `/review`,
 `/screenshots`, optionally followed by text. A command MUST be acted on only when the GitHub API reports the author's
@@ -77,30 +78,32 @@ to `complex` (line `SIZE: complex`) and MUST NOT lower it.
 
 ## Plan, approval, implementation
 
-### REQ-ISS-008 [planned] Complex work is planned and approved first
+### REQ-ISS-008 [verified] Complex work is planned and approved first
 
 For `complex`, the runner MUST post a plan (goal, files, requirement ids, tests to write first, risks, estimated
 lines), apply `approval-needed`, and MUST wait for `/approve` from a write-access user before any edit task starts; a
 comment that edits the plan before approval becomes the plan (REQ-ISS-021). For `simple`, the policy's
 `issues.autonomy.simple` (`auto` or `plan-approve`, default `plan-approve`) decides.
-**Verified by:** unit tests with a fake GitHub client.
+**Verified by:** unit tests with a fake GitHub client in `tooling/agents/issue.test.mjs`.
 
-### REQ-ISS-009 [planned] One branch, one pull request, never the base
+### REQ-ISS-009 [verified] One branch, one pull request, never the base
 
 An implementation MUST push to `<branchPrefix>issue-<n>-<slug>` (the task is named `issue`, so spec 015's guard job
 resolves the branch to it), MUST open or update exactly one pull request for the issue whose body starts with
 `Closes #<n>` and follows `.github/pull_request_template.md` when that file exists, and MUST NOT push to the base
 branch or any protected branch. A second run for an issue that already has an open pull request MUST update that pull
 request's branch, never open another.
-**Verified by:** unit tests on branch and body generation.
+**Verified by:** unit tests on branch and body generation in `tooling/agents/issue-commands.test.mjs` and
+`run.test.mjs`; end to end with the fake harness and a fake GitHub client in `issue.test.mjs`.
 
-### REQ-ISS-010 [planned] Spec-first when the repo is spec-first
+### REQ-ISS-010 [verified] Spec-first when the repo is spec-first
 
 When `docs/specs/` exists, the implementation prompt MUST instruct the agent to add or update the requirement and
 write the failing test citing it before code, and the runner MUST fail the run when the diff changes a code file
 (`.ts`, `.tsx`, `.js`, `.mjs`, `.rs`, `.swift`, `.kt`, `.kts`) without changing a test file (`issues.requireTests`,
 default `true`). A diff that changes only documentation, specs or fixtures passes.
-**Verified by:** unit tests on the prompt and on the diff check.
+**Verified by:** unit tests on the prompt and on the diff check in `tooling/agents/issue-commands.test.mjs` and
+`run.test.mjs`.
 
 ### REQ-ISS-011 [verified] The issue body is data
 
@@ -186,14 +189,14 @@ stage per issue, and MUST read the issue's labels and these markers, never a fil
 stage.
 **Verified by:** unit tests with a fake GitHub client in `tooling/agents/issue-gate.test.mjs` and `issue.test.mjs`.
 
-### REQ-ISS-021 [planned] The plan is the latest plan-bearing comment
+### REQ-ISS-021 [verified] The plan is the latest plan-bearing comment
 
 The plan given to the implementation prompt MUST be the body of the newest comment before (or being) the `/approve`
 comment that is either the runner's `plan` comment or a comment by a write-access user containing a `## Plan` heading.
 The runner MUST record that body's SHA-256 in the `plan` marker on approval, carry the plan into the prompt inside its
 own fenced block labelled "approved plan", and refuse to implement when no plan-bearing comment exists (reply once,
 label unchanged).
-**Verified by:** unit tests with a fake GitHub client.
+**Verified by:** unit tests with a fake GitHub client in `tooling/agents/issue-commands.test.mjs`.
 
 ### REQ-ISS-022 [verified] Model stages for outside authors are a policy choice
 
@@ -215,7 +218,7 @@ the ceiling and the cost, and the issue MUST get `agent:failed`. A harness that 
 such in the receipt and MUST NOT be blocked by this rule.
 **Verified by:** unit tests in `tooling/agents/run.test.mjs` with a fake usage report.
 
-### REQ-ISS-024 [planned] Markers are trusted only from the runner
+### REQ-ISS-024 [verified] Markers are trusted only from the runner
 
 `readState` and the in-place comment update MUST consider only comments whose author is the runner's own identity
 (the authenticated login, or the Actions bot when the job token is used). A marker in a comment by anyone else MUST

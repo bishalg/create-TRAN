@@ -327,17 +327,37 @@ own. Names can be changed in `.agents/policy.json` (`labels`).
 
 ### Commands
 
-A command is the first non-blank line of a comment. It is acted on only when GitHub reports the author's permission as
-`write`, `maintain` or `admin` (the collaborators permission API, never `author_association`). Anyone else gets one
-reply that the command was ignored.
+A command is the first non-blank line of a comment, optionally followed by text (`/approve looks right`). It is acted
+on only when GitHub reports the author's permission as `write`, `maintain` or `admin` (the collaborators permission
+API, never `author_association`). Anyone else gets one reply, `ignored: /approve needs write access`, and nothing else
+happens: no label, branch or model run. Replies to commands share one comment per issue, updated in place.
 
-| Command        | What it does                                                                             |
-| :------------- | :--------------------------------------------------------------------------------------- |
-| `/plan`        | Post a plan now, also for an outside author whose issue got only the gate.               |
-| `/approve`     | Start the implementation from the newest plan at or before this comment.                 |
-| `/implement`   | Skip the plan for a `simple` issue and implement directly.                               |
-| `/review`      | Run the read-only review on the pull request and set `review-needed` or `good-to-merge`. |
-| `/screenshots` | Run the repository's screenshot command and attach the images to the pull request.       |
+| Command        | What it does                                                                                                                                             |
+| :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/plan`        | Run the read-only gate task for a plan and post it as the plan comment with `approval-needed`, also for an outside author whose issue got only the gate. |
+| `/approve`     | Implement the newest plan at or before this comment into one draft pull request. With no plan yet, one reply says so.                                    |
+| `/implement`   | `/approve` without a plan, for an issue the check sized `simple`; the check's summary is the plan. Refused for `complex`.                                |
+| `/review`      | Not available yet: the runner replies so. It will run the read-only review on the pull request.                                                          |
+| `/screenshots` | Not available yet: the runner replies so. It will run the repository's screenshot command for the pull request.                                          |
+
+### Plan and approval
+
+A ready issue gets a second comment, the plan, with the sections Goal, Files, Requirement ids, Tests to write first,
+Risks and Estimated lines, and the label `approval-needed`. Under `issues.autonomy.simple: auto` a `simple` issue skips
+the plan and is built at once; a `complex` one is always planned.
+
+To change the plan before approving it, a user with write access comments a `## Plan` section of their own. `/approve`
+takes the newest plan-bearing comment at or before it: the runner's plan comment, a write-access user's `## Plan`
+comment, or the `/approve` comment itself when it holds a `## Plan` section. A `## Plan` from someone without write
+access does not count. The runner records the approved text's SHA-256 and the approver in the plan comment's marker,
+and passes the text to the agent in its own fence labelled as the approved plan.
+
+The implementation runs the `issue` task on `agent/issue-<n>-<slug>` from the default branch: spec and failing test
+first when `docs/specs/` exists, the guard and the task's gates, and a change to a code file without a change to a
+test file is not kept (`issues.requireTests`). The draft pull request's body starts `Closes #<n>` and fits the
+hand-off into `.github/pull_request_template.md`. One pull request per issue: a second `/approve` while one is open
+replies with its link and builds nothing. The plan comment gains a Result line (the pull request, or why it failed),
+and the issue gets `review-needed`, or keeps its label and gets `agent:failed`.
 
 ### The marker
 
@@ -346,6 +366,11 @@ stage (`gate`, `plan`, `verification`, `screenshots`, `ignored`), the verdict, t
 and the harness. The runner finds its own comment by the marker and edits it in place, one per stage per issue. State
 is only labels plus markers: there is no file or database to drift. The marker also keeps the runner from reacting to
 its own comments.
+
+Anyone can type a marker, so a marker counts only in a comment written by the runner's own login: the token's user
+(`GET /user`), or `github-actions[bot]` with the job token. A marker in anyone else's comment is ignored and never
+edited. With a GitHub App token, set the repository variable `AGENT_GITHUB_LOGIN` to the app's bot login
+(`<app-name>[bot]`), because an app token cannot read `GET /user`.
 
 ### The two-tier gate
 
@@ -381,9 +406,10 @@ draft pull request, verification) runs on GitHub with no key. Every comment and 
 3. Edit the issue, add two Given/When/Then lines and a `REQ-` id. Expected: `needs-detail` removed; with
    `AGENT_HARNESS=fake` the fake judgment says `ready`, size `simple` (reasons listed), and because the default autonomy
    is `plan-approve`, a plan comment and `approval-needed`.
-4. Comment `/approve` as a maintainer. Expected: `agent:running` while it works, then a draft pull request from
-   `agent/issue-n-<slug>` whose body starts `Closes #n`, labelled `review-needed` on the issue, and a verification
-   comment on the pull request listing each gate with its duration and "harness: fake".
+4. Comment `/approve` as a maintainer. Expected: `agent:running` while it works (the job installs Rust and the
+   workspace for the gates), then a draft pull request from `agent/issue-n-<slug>` whose body starts `Closes #n` and
+   names "Harness: fake", one `docs/LEARNINGS.md` entry written by the fake, `review-needed` on the issue, and the plan
+   comment's Approval and Result lines. A second `/approve` replies "already open" with the link.
 5. Comment `/approve` as a user without write access (a second account). Expected: one reply that the command was
    ignored, nothing else.
 6. Replace `AGENT_HARNESS=fake` with a secret `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN` and repeat 2 to 4 with
