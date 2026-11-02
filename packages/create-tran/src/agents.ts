@@ -69,7 +69,8 @@ export const AGENT_REFERENCES = [
 ];
 
 type Edit =
-  | { file: string; from: string; to: string }
+  // `all`: every occurrence, for text that repeats (one switch per job that honours it).
+  | { file: string; from: string; to: string; all?: boolean }
   | { file: string; section: string }
   | { file: string; line: string };
 
@@ -126,6 +127,7 @@ const GITHUB_EDITS: Edit[] = [
     file: WORKFLOW,
     from: "vars.AGENTS_ENABLED == 'true'",
     to: "vars.AGENTS_ENABLED != 'false'",
+    all: true,
   },
   {
     file: WORKFLOW,
@@ -186,7 +188,7 @@ function applyEdit(root: string, edit: Edit): string | undefined {
     if (!text.includes(edit.from)) {
       return `${edit.file}: "${edit.from.split('\n')[0]}" not found`;
     }
-    next = text.replace(edit.from, edit.to);
+    next = edit.all ? text.replaceAll(edit.from, edit.to) : text.replace(edit.from, edit.to);
   }
   fs.writeFileSync(file, next, 'utf8');
   return undefined;

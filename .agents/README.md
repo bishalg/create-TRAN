@@ -45,7 +45,7 @@ signal ──exit 0──► stop. Nothing to do, nothing spent.
 | [`.agents/skills/`](skills/)                                      | How-to knowledge in the [Agent Skills](https://agentskills.io) format.     | People, agents via PR |
 | [`docs/LEARNINGS.md`](../docs/LEARNINGS.md)                       | Lessons that change how the next agent works here.                         | People and agents     |
 | [`tooling/agents/agents.mjs`](../tooling/agents/agents.mjs)       | The runner. Plain Node, no dependencies.                                   | People                |
-| [`.github/workflows/agents.yml`](../.github/workflows/agents.yml) | Optional scheduler on GitHub Actions, plus the guard and review jobs.      | People                |
+| [`.github/workflows/agents.yml`](../.github/workflows/agents.yml) | Optional scheduler on GitHub Actions; guard, review and issue jobs.        | People                |
 | `.agents/out/<task>/`                                             | Per run: `prompt.md`, `harness.log`, `result.md`, `report.md`. Gitignored. | The runner            |
 
 `CLAUDE.md` and `.gemini/settings.json` only point Claude Code and Gemini CLI at `AGENTS.md`. Codex, Jules, Cursor,
@@ -264,14 +264,15 @@ other secret: deploy keys and database URLs belong to jobs that do not install t
 commercial terms before using a personal plan token in shared automation.
 
 ```yaml
-# .github/workflows/agents.yml (excerpt)
+# .github/workflows/agents.yml (excerpt, the issue job; the review job skips the whole run instead)
 env:
   ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 steps:
   - run: |
       if [ -z "$ANTHROPIC_API_KEY$CLAUDE_CODE_OAUTH_TOKEN" ]; then
-        echo "::notice::No Claude credential; skipping."; exit 0
+        echo "::notice::No Claude credential: model stages are skipped."
+        echo "AGENT_MODEL_STAGES=skip" >> "$GITHUB_ENV" # the structural gate and its labels still run
       fi
 ```
 
@@ -460,3 +461,10 @@ with `--harness <name>` on demand than on a schedule.
 | `outside the task's scope` / `protected by …` | The agent strayed. Widen `scope` or `allow` only if the change was right.           |
 | `already has an open pull request`            | Review or close the last one; one open pull request per task.                       |
 | `dispatched`                                  | Jules has the task; its pull request appears in your repo.                          |
+| `gate: needs-detail`                          | The issue lacks a template section, a `REQ-` id or a Given/When/Then line; edit it. |
+| `judgment: skipped: no harness credential`    | Only the structural gate ran. Add a Claude secret, or set `AGENT_HARNESS=fake`.     |
+| `judgment: skipped: @… has no triage access`  | `issues.modelFor: collaborators` keeps outside authors to the structural gate.      |
+| `the judgment tier failed`                    | The harness exited or timed out; read `harness.log` in the `agent-issue-<n>` run.   |
+| `` `/approve` is not available yet ``         | This runner version checks issues only; commands arrive with plan and implement.    |
+| No "Issue #n" run after opening an issue      | `AGENTS_ENABLED` is not `true`, the sender is a bot, or Actions are off.            |
+| `agent:failed` on an issue                    | The last issue job died; read its Actions run. The next good run removes the label. |

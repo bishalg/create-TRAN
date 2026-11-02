@@ -20,16 +20,16 @@ rules of spec 015 to any change it produces. `pnpm agents:check` MUST reject an 
 field on another trigger, or an `issue` task with another signal.
 **Verified by:** unit tests in `tooling/agents/tasks.test.mjs` and `issue-event.test.mjs`.
 
-### REQ-ISS-002 [planned] The issue is the state
+### REQ-ISS-002 [verified] The issue is the state
 
 The runner MUST keep task state only on the issue: exactly one of `needs-detail`, `approval-needed`,
 `human-decision-needed`, `review-needed`, `good-to-merge` as a label (removing the others when it applies one, keeping
 every label it does not own), progress as comments it updates in place, and the result as one pull request. It MUST
 create missing labels on first use with the names from `.agents/policy.json` (`labels`), defaulting to the five above
 plus `agent:running` and `agent:failed`.
-**Verified by:** unit tests with a fake GitHub client in `tooling/agents/issue-gate.test.mjs`.
+**Verified by:** unit tests with a fake GitHub client in `tooling/agents/issue-gate.test.mjs` and `issue.test.mjs`.
 
-### REQ-ISS-003 [planned] One run per issue at a time
+### REQ-ISS-003 [verified] One run per issue at a time
 
 Runs for the same issue MUST be serialized (an Actions concurrency group keyed by repository and issue number); a
 newer queued run MUST cancel an older queued run and MUST NOT cancel an executing one (`cancel-in-progress: false`).
@@ -45,7 +45,7 @@ nothing else. The `author_association` field of the payload MUST NOT be used as 
 
 ## Issue quality gate
 
-### REQ-ISS-005 [planned] Every issue is scored against the template
+### REQ-ISS-005 [verified] Every issue is scored against the template
 
 On `opened` and `edited` the runner MUST compare the issue with the repository's story template
 (`.github/ISSUE_TEMPLATE/*.md`, default sections: SMART story, requirement ids, Given/When/Then acceptance criteria,
@@ -55,24 +55,25 @@ The judgment tier is a read-only task that runs only when the structural tier pa
 present; it MUST produce a verdict `ready`, `needs-detail` or `human-decision-needed` with one reason per weak section,
 on a first line `VERDICT: <value>` that the runner parses. The runner MUST never let the judgment tier upgrade a
 structural `needs-detail`.
-**Verified by:** unit tests on the verdict with fixture issues in `tooling/agents/issue-gate.test.mjs`.
+**Verified by:** unit tests on the verdict with fixture issues in `tooling/agents/issue-gate.test.mjs` and
+`issue.test.mjs`.
 
-### REQ-ISS-006 [planned] A weak issue gets a rewrite, not a branch
+### REQ-ISS-006 [verified] A weak issue gets a rewrite, not a branch
 
 For `needs-detail` the runner MUST post one comment containing a complete rewritten issue body in the template's
 format (the model's rewrite when the judgment tier ran, otherwise the template with the author's text placed in the
 sections it matches), MUST apply `needs-detail`, and MUST NOT start any edit task. It MUST NOT edit the author's body
 unless `.agents/policy.json` sets `issues.applyRewrite: true`. An edit to the issue MUST re-run the gate and clear the
 label when the verdict becomes `ready`.
-**Verified by:** unit tests with a fake GitHub client.
+**Verified by:** unit tests with a fake GitHub client in `tooling/agents/issue-gate.test.mjs` and `issue.test.mjs`.
 
-### REQ-ISS-007 [planned] Size class with reasons
+### REQ-ISS-007 [verified] Size class with reasons
 
 For a `ready` issue the runner MUST classify it `simple` or `complex` from heuristics in the policy
 (`issues.complexWhen`: paths named, migrations, auth or payment paths, new dependencies, UI change, estimated lines
 against the line budget) and MUST record the class and reasons in its comment. The judgment tier MAY raise `simple`
 to `complex` (line `SIZE: complex`) and MUST NOT lower it.
-**Verified by:** unit tests on fixture issues.
+**Verified by:** unit tests on fixture issues in `tooling/agents/issue-gate.test.mjs`.
 
 ## Plan, approval, implementation
 
@@ -142,31 +143,32 @@ count survives a new job.
 
 ## Credentials on GitHub Actions
 
-### REQ-ISS-016 [planned] Non-interactive Claude Code credentials
+### REQ-ISS-016 [verified] Non-interactive Claude Code credentials
 
 The workflow MUST accept either `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN` (made once on a developer machine
 with `claude setup-token`) for the `claude` harness, MUST skip every model stage with a notice when neither is set
 (the runner-only stages, the structural gate and its labels, still run), and MUST NOT attempt an interactive login.
 The GitHub identity MUST be `AGENT_GITHUB_TOKEN` (fine-grained or GitHub App) or the job token, with only contents,
 pull-requests and issues write.
-**Verified by:** unit test reading `agents.yml`; documented in `.agents/README.md`.
+**Verified by:** `tooling/agents/workflow.test.mjs` reading `agents.yml` and running its credential step;
+`issue.test.mjs` for the skipped model stages; documented in `.agents/README.md`.
 
-### REQ-ISS-017 [planned] No deploy secrets near the agent
+### REQ-ISS-017 [verified] No deploy secrets near the agent
 
 The job that runs the harness MUST receive only the harness credential and the GitHub token; gates that need other
 secrets MUST run in a separate job that does not install or run the harness.
-**Verified by:** unit test reading `agents.yml`.
+**Verified by:** `tooling/agents/workflow.test.mjs` reading `agents.yml`.
 
 ## Proving the pipeline
 
-### REQ-ISS-018 [planned] A fake harness exercises every stage without a model
+### REQ-ISS-018 [verified] A fake harness exercises every stage without a model
 
 The runner MUST offer a `fake` harness (`tooling/agents/fake-harness.mjs`, prompt on stdin) that returns canned,
 deterministic output for each task named in the prompt and spends nothing. The workflow MUST use it when the
 repository variable `AGENT_HARNESS` is `fake`, so a maintainer can prove the trigger, labels, comments, branch, pull
 request and verification on GitHub before adding a credential. A `fake` run MUST be marked as such in every comment
 and pull request it produces.
-**Verified by:** unit tests in `tooling/agents/prompt-harness.test.mjs` and `issue.test.mjs`; workflow test.
+**Verified by:** unit tests in `tooling/agents/prompt-harness.test.mjs` and `issue.test.mjs`; `workflow.test.mjs`.
 
 ### REQ-ISS-019 [verified] The runner never triggers itself
 
@@ -175,14 +177,14 @@ The `issue-event` signal MUST exit 0 (nothing to do) for a comment whose body ca
 event whose sender is a bot. The workflow MUST additionally skip bot senders in its `if:`.
 **Verified by:** unit tests on fixture payloads; workflow test.
 
-### REQ-ISS-020 [planned] State is readable back from the runner's own comments
+### REQ-ISS-020 [verified] State is readable back from the runner's own comments
 
 Every comment the runner posts MUST start with an HTML comment marker `<!-- tran-agent {"stage":"<stage>", …} -->`
 holding the stage (`gate`, `plan`, `verification`, `screenshots`, `ignored`), the verdict, the size class, the
 approved plan's hash and the harness. The runner MUST find its comment by marker and update it in place, one per
 stage per issue, and MUST read the issue's labels and these markers, never a file or a database, to decide the next
 stage.
-**Verified by:** unit tests with a fake GitHub client.
+**Verified by:** unit tests with a fake GitHub client in `tooling/agents/issue-gate.test.mjs` and `issue.test.mjs`.
 
 ### REQ-ISS-021 [planned] The plan is the latest plan-bearing comment
 
@@ -193,9 +195,9 @@ own fenced block labelled "approved plan", and refuse to implement when no plan-
 label unchanged).
 **Verified by:** unit tests with a fake GitHub client.
 
-### REQ-ISS-022 [planned] Model stages for outside authors are a policy choice
+### REQ-ISS-022 [verified] Model stages for outside authors are a policy choice
 
 `issues.modelFor` (`collaborators` or `anyone`, default `collaborators`) decides whether the judgment tier and the
 plan run for an issue whose author lacks triage access. For other authors the structural gate and its rewrite still
 run and the comment MUST say that a maintainer's `/plan` starts the rest.
-**Verified by:** unit tests with a fake GitHub client.
+**Verified by:** unit tests with a fake GitHub client in `tooling/agents/issue.test.mjs`.

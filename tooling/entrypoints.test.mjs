@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { after, describe, it } from 'node:test';
 
@@ -19,13 +19,18 @@ after(() => rmSync(join(link, '..'), { recursive: true, force: true }));
 const TOOLS = [
   ['spec-check/spec-check.mjs', [], /spec-check: ok/],
   ['agents/agents.mjs', ['check'], /agents: \d+ tasks/],
+  [
+    'agents/agents.mjs',
+    ['issue', '--event', join(link, 'agents/fixtures/events/issue-opened-weak.json'), '--dry-run'],
+    /gate: needs-detail/,
+  ],
   ['supply-chain/supply-chain.mjs', [], /supply-chain: actions pinned/],
   ['release/release.mjs', ['check'], /release: every version agrees/],
 ];
 
 describe('tooling entry points run through a symlinked path', () => {
   for (const [tool, args, printed] of TOOLS) {
-    it(tool, () => {
+    it([tool, ...args.map((arg) => basename(arg))].join(' '), () => {
       const out = execFileSync('node', [join(link, tool), ...args], {
         cwd: ROOT,
         encoding: 'utf8',

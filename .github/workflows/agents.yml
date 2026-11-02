@@ -13,9 +13,14 @@ name: Agents
 # `agent-review` label is explicit intent and needs only the key. The guard job always runs; it costs no model calls.
 #
 # Secrets (a missing key skips the run with a notice, so forks and fresh clones stay green):
-#   ANTHROPIC_API_KEY (claude) · OPENAI_API_KEY (codex) · GEMINI_API_KEY (gemini)
-#   AGENT_GITHUB_TOKEN (optional): a fine-grained token or GitHub App token with contents and pull-requests write.
-#     Pull requests opened with the default GITHUB_TOKEN do not trigger other workflows, so CI would not run on them.
+#   ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN (claude) · OPENAI_API_KEY (codex) · GEMINI_API_KEY (gemini)
+#   AGENT_GITHUB_TOKEN (optional): a fine-grained token or GitHub App token with contents, issues and pull-requests
+#     write. Pull requests opened with the default GITHUB_TOKEN do not trigger other workflows, so CI would not run on
+#     them.
+#
+# Issues (spec 020, ADR-0037): the `issue` job checks every opened or edited issue against the story template, labels
+# it and comments, one run per issue at a time. Without a Claude credential only the runner-only stages run; the
+# repository variable AGENT_HARNESS=fake proves the whole path with canned output and no model.
 #
 # Every action is pinned by commit SHA, and every harness CLI by version; bumps are deliberate commits.
 
@@ -36,6 +41,10 @@ on:
         default: default
   pull_request:
     types: [opened, synchronize, reopened, labeled]
+  issues:
+    types: [opened, edited, labeled]
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: read
@@ -174,11 +183,12 @@ jobs:
       pull-requests: write
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
     steps:
       - name: Check the key
         id: key
         run: |
-          if [ -z "$ANTHROPIC_API_KEY" ]; then echo "::notice::No ANTHROPIC_API_KEY; skipping the review."; echo "skip=true" >> "$GITHUB_OUTPUT"; fi
+          if [ -z "$ANTHROPIC_API_KEY$CLAUDE_CODE_OAUTH_TOKEN" ]; then echo "::notice::No ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN; skipping the review."; echo "skip=true" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: steps.key.outputs.skip != 'true'
         with:
@@ -191,3 +201,68 @@ jobs:
         run: |
           npm install -g @anthropic-ai/claude-code@2.1.305
           node tooling/agents/agents.mjs run code-review --harness claude --publish --pr "${{ github.event.pull_request.number }}"
+
+  issue:
+    name: Issue #${{ github.event.issue.number }}
+    # Never for a bot: the runner's own comments and labels must not start it again (REQ-ISS-019). With a
+    # fine-grained AGENT_GITHUB_TOKEN the sender is a user, so the runner also skips its own marker and labels.
+    if: >-
+      (github.event_name == 'issues' || github.event_name == 'issue_comment') &&
+      github.event.sender.type != 'Bot' && vars.AGENTS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    # One run per issue: a newer queued run replaces an older queued one, never the one running (REQ-ISS-003).
+    concurrency:
+      group: agents-issue-${{ github.repository }}-${{ github.event.issue.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    # Only the harness credential and the GitHub token: no deploy secret ever reaches this job (REQ-ISS-017).
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      GH_TOKEN: ${{ secrets.AGENT_GITHUB_TOKEN || github.token }}
+      AGENT_HARNESS: ${{ vars.AGENT_HARNESS }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      # Without a credential the model stages skip; the structural gate and its labels still run (REQ-ISS-016).
+      - name: Check the harness credential
+        id: key
+        run: |
+          harness="${AGENT_HARNESS:-$(node -p "require('./.agents/policy.json').defaultHarness || 'claude'")}"
+          echo "harness=$harness" >> "$GITHUB_OUTPUT"
+          model=yes
+          case "$harness" in
+            fake) ;;
+            claude)
+              if [ -z "$ANTHROPIC_API_KEY$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+                echo "::notice::No ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN: model stages are skipped; the structural gate and its labels still run. See .agents/README.md."
+                model=no
+              fi ;;
+            *)
+              echo "::notice::The issue job runs the claude or fake harness, not $harness: model stages are skipped. See .agents/README.md."
+              model=no ;;
+          esac
+          echo "model=$model" >> "$GITHUB_OUTPUT"
+          if [ "$model" = no ]; then echo "AGENT_MODEL_STAGES=skip" >> "$GITHUB_ENV"; fi
+      - name: Install Claude Code
+        if: steps.key.outputs.model == 'yes' && steps.key.outputs.harness == 'claude'
+        run: npm install -g @anthropic-ai/claude-code@2.1.305
+      - name: Gate, labels and comments
+        env:
+          HARNESS: ${{ steps.key.outputs.harness }}
+        run: node tooling/agents/agents.mjs issue --event "$GITHUB_EVENT_PATH" --harness "$HARNESS"
+      - name: Upload the prompt, report and decision
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: agent-issue-${{ github.event.issue.number }}
+          path: .agents/out
+          if-no-files-found: ignore
+          retention-days: 14
