@@ -2,15 +2,19 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { readJson } from './shell.mjs';
+import { ISSUE_EVENTS } from './issue-event.mjs';
 import { SIGNALS } from './signals.mjs';
 
-export const TRIGGERS = ['schedule', 'pull_request', 'manual'];
+export { ISSUE_EVENTS };
+export const TRIGGERS = ['schedule', 'pull_request', 'manual', 'issue'];
 export const MODES = ['edit', 'read-only'];
 export const DELIVERABLES = ['pr', 'report'];
-export const HARNESSES = ['claude', 'codex', 'gemini', 'pi', 'jules', 'custom'];
+/** `fake`: canned output for proving the pipeline without a model (REQ-ISS-018). */
+export const HARNESSES = ['claude', 'codex', 'gemini', 'pi', 'jules', 'custom', 'fake'];
 const REQUIRED = ['name', 'summary', 'trigger', 'signal', 'mode', 'deliverable', 'gates'];
 const OPTIONAL = [
   'schedule',
+  'on',
   'scope',
   'allow',
   'skills',
@@ -19,7 +23,7 @@ const OPTIONAL = [
   'timeout_minutes',
 ];
 const KNOWN = new Set([...REQUIRED, ...OPTIONAL]);
-const LISTS = ['gates', 'scope', 'allow', 'skills'];
+const LISTS = ['gates', 'scope', 'allow', 'skills', 'on'];
 const NUMBERS = ['max_changed_lines', 'evidence_lines', 'timeout_minutes'];
 /** pnpm's own commands: `pnpm audit` is not a package.json script. */
 const PNPM_COMMANDS = new Set([
@@ -189,6 +193,15 @@ export function validateTask(task, ctx) {
     at('a schedule task needs a five-field cron in "schedule"');
   if (d.trigger !== 'schedule' && d.schedule !== undefined)
     at('"schedule" only applies to "trigger: schedule"');
+  // REQ-ISS-001: an issue task names the events it handles and reads them through `issue-event`.
+  if (d.trigger !== 'issue' && d.on !== undefined) at('"on" only applies to "trigger: issue"');
+  if (d.trigger === 'issue') {
+    for (const event of Array.isArray(d.on) ? d.on : [])
+      if (!ISSUE_EVENTS.includes(event))
+        at(`"on: ${event}" must be one of ${ISSUE_EVENTS.join(', ')}`);
+    if (d.signal !== undefined && d.signal !== 'issue-event')
+      at(`an issue task reads its event: "signal: issue-event", not "${d.signal}"`);
+  }
 
   const gates = Array.isArray(d.gates) ? d.gates : [];
   if (d.mode === 'edit') {

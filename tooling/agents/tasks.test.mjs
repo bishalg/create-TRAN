@@ -1,4 +1,4 @@
-// Verifies: REQ-AGT-001, REQ-AGT-002, REQ-AGT-009, REQ-AGT-010
+// Verifies: REQ-AGT-001, REQ-AGT-002, REQ-AGT-009, REQ-AGT-010, REQ-ISS-001
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -9,13 +9,15 @@ import {
   checkSchedules,
   chooseHarness,
   HARNESSES,
+  ISSUE_EVENTS,
   parseFrontmatter,
+  TRIGGERS,
   pnpmScript,
   tasksForCron,
   validateTask,
   workflowCrons,
 } from './agents.mjs';
-import { ROOT, task, edited, ctx, REVIEW } from './test-helpers.mjs';
+import { ROOT, task, edited, ctx, REVIEW, ISSUE, ISSUE_GATE, ISSUE_TEXT } from './test-helpers.mjs';
 
 describe('task files (REQ-AGT-001)', () => {
   it('parses the frontmatter subset: quotes, numbers, lists, comments', () => {
@@ -127,6 +129,47 @@ describe('task files (REQ-AGT-001)', () => {
     assert.equal(pnpmScript('pnpm audit --audit-level high'), null);
     assert.equal(pnpmScript('pnpm --filter web lint'), null);
     assert.equal(pnpmScript('cargo test'), null);
+  });
+});
+
+describe('issue tasks (REQ-ISS-001)', () => {
+  const issue = (replace) =>
+    task(
+      Object.entries(replace).reduce((text, [from, to]) => text.replace(from, to), ISSUE_TEXT),
+      '.agents/tasks/issue.md'
+    );
+
+  it('accepts an issue trigger with its events and the issue-event signal', () => {
+    assert.ok(TRIGGERS.includes('issue'));
+    assert.deepEqual(ISSUE_EVENTS, ['opened', 'edited', 'labeled', 'commented']);
+    assert.deepEqual(ISSUE.data.on, ['commented', 'labeled']);
+    assert.deepEqual(validateTask(ISSUE, ctx), []);
+    assert.deepEqual(validateTask(ISSUE_GATE, ctx), []);
+    assert.deepEqual(
+      validateTask(issue({ 'on: [commented, labeled]': 'on: [opened, edited]' }), ctx),
+      []
+    );
+  });
+
+  it('rejects an unknown event, "on" on another trigger, and another signal', () => {
+    assert.deepEqual(validateTask(issue({ 'on: [commented, labeled]': 'on: [closed]' }), ctx), [
+      '.agents/tasks/issue.md: "on: closed" must be one of opened, edited, labeled, commented',
+    ]);
+    assert.deepEqual(
+      validateTask(edited({ 'trigger: schedule': 'trigger: schedule\non: [opened]' }), ctx),
+      ['.agents/tasks/spec-gap.md: "on" only applies to "trigger: issue"']
+    );
+    assert.deepEqual(validateTask(issue({ 'signal: issue-event': 'signal: pr-diff' }), ctx), [
+      '.agents/tasks/issue.md: an issue task reads its event: "signal: issue-event", not "pr-diff"',
+    ]);
+    assert.deepEqual(validateTask(issue({ 'on: [commented, labeled]': 'on: commented' }), ctx), [
+      '.agents/tasks/issue.md: "on" must be a [list]',
+    ]);
+  });
+
+  it('the fake harness is a harness the policy may name', () => {
+    assert.ok(HARNESSES.includes('fake'));
+    assert.deepEqual(checkAll(ROOT, { defaultHarness: 'fake' }).errors, []);
   });
 });
 

@@ -2,6 +2,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseRequirements } from '../spec-check/spec-check.mjs';
+import { readEventSignal } from './issue-event.mjs';
 import { defaultBranch, readJson, sh } from './shell.mjs';
 
 /** Keeps the first `maxLines` lines and says how many were cut. */
@@ -15,12 +16,13 @@ export function truncate(text, maxLines) {
 }
 
 /** Exit 0: nothing to do. 126/127 or killed: the signal itself is broken. Anything else: work. */
-export function evaluateSignal({ status, output }, maxLines) {
+export function evaluateSignal({ status, output, untrusted }, maxLines) {
   const evidence = truncate(output ?? '', maxLines);
   if (status === 0) return { kind: 'none', status, evidence };
   if (status === null || status === 126 || status === 127)
     return { kind: 'broken', status, evidence };
-  return { kind: 'work', status, evidence };
+  // `untrusted`: people wrote the evidence (an issue), so the prompt fences it as data.
+  return { kind: 'work', status, evidence, ...(untrusted ? { untrusted: true } : {}) };
 }
 
 export function plannedRequirements(requirements) {
@@ -124,6 +126,8 @@ export const SIGNALS = {
       ? { status: 1, output: diff.output }
       : { status: 0, output: `no changes against ${base}` };
   },
+  /** The GitHub issue event at AGENT_EVENT (`--event`) or GITHUB_EVENT_PATH (REQ-ISS-001, -019). */
+  'issue-event': (root, policy) => readEventSignal(policy ?? {}),
   /** Every audit tool that is installed; findings from any of them are work. */
   'dependency-audit': (root) => {
     const parts = [sh(root, 'pnpm audit --audit-level high')];

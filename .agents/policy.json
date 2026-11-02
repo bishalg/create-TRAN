@@ -5,6 +5,36 @@
   "maxChangedLines": 300,
   "evidenceMaxLines": 200,
   "timeoutMinutes": 30,
+  "labels": {
+    "$comment": "Label names the issue runner owns (spec 020, REQ-ISS-002), by role. Rename a value to use your own label.",
+    "needs-detail": "needs-detail",
+    "approval-needed": "approval-needed",
+    "human-decision-needed": "human-decision-needed",
+    "review-needed": "review-needed",
+    "good-to-merge": "good-to-merge",
+    "running": "agent:running",
+    "failed": "agent:failed"
+  },
+  "issues": {
+    "$comment": "Issue-driven tasks (spec 020, ADR-0037). modelFor: collaborators | anyone. autonomy.simple: auto | plan-approve.",
+    "applyRewrite": false,
+    "autonomy": {
+      "simple": "plan-approve"
+    },
+    "modelFor": "collaborators",
+    "requireTests": true,
+    "complexWhen": {
+      "maxPaths": 5,
+      "keywords": ["migration", "auth", "payment", "package.json", "Cargo.toml", "dependency"]
+    },
+    "uiGlobs": [],
+    "screenshotCommand": "",
+    "ciFix": {
+      "enabled": false,
+      "workflows": ["CI"],
+      "maxAttempts": 1
+    }
+  },
   "protected": [
     "AGENTS.md",
     "CLAUDE.md",

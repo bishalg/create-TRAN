@@ -1,0 +1,36 @@
+{
+  "action": "labeled",
+  "label": {
+    "name": "needs-detail"
+  },
+  "issue": {
+    "number": 12,
+    "title": "Add country lookup",
+    "body": "We need a lookup.",
+    "labels": [
+      {
+        "name": "bug"
+      },
+      {
+        "name": "needs-detail"
+      }
+    ],
+    "user": {
+      "login": "alice",
+      "type": "User"
+    },
+    "author_association": "NONE",
+    "state": "open"
+  },
+  "repository": {
+    "full_name": "o/r",
+    "name": "r",
+    "owner": {
+      "login": "o"
+    }
+  },
+  "sender": {
+    "login": "maria",
+    "type": "User"
+  }
+}

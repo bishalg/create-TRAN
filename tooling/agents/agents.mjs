@@ -11,12 +11,14 @@
  *   pnpm agents guard [--task <name>] [--base <ref>] [--committed]
  *   pnpm agents due --cron '<expr>'               tasks a workflow cron should run
  *
- * Harnesses: claude, codex, gemini, pi, jules, custom (AGENT_CMD, prompt on stdin).
+ * Harnesses: claude, codex, gemini, pi, jules, custom (AGENT_CMD, prompt on stdin), fake (canned
+ * output, no model: proves the issue pipeline, spec 020).
+ * `--event <path>` (signal, run): the GitHub event payload for `issue-event`; default GITHUB_EVENT_PATH.
  * AGENT_HARNESS overrides the policy's defaultHarness; AGENT_HARNESS_ARGS adds arguments (a model, a profile).
  */
 import { spawnSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
-import { basename, join } from 'node:path';
+import { basename, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { guardChanges, parseNumstat } from './guard.mjs';
 import { chooseHarness, repoSlug } from './harness.mjs';
@@ -32,6 +34,7 @@ export {
   checkSchedules,
   DELIVERABLES,
   HARNESSES,
+  ISSUE_EVENTS,
   LEARNINGS,
   loadTasks,
   MODES,
@@ -54,7 +57,32 @@ export {
   truncate,
   untranslatedStrings,
 } from './signals.mjs';
-export { buildPrompt, chooseHarness, harnessCommand, repoSlug } from './harness.mjs';
+export {
+  buildPrompt,
+  chooseHarness,
+  CLAUDE_EDIT_TOOLS,
+  fenceFor,
+  harnessCommand,
+  repoSlug,
+} from './harness.mjs';
+export {
+  COMMANDS,
+  DEFAULT_LABELS,
+  ISSUE_DEFAULTS,
+  issueEventSignal,
+  issueSettings,
+  labelNames,
+  normalizeComment,
+  ownedLabels,
+  parseCommand,
+  parseIssueEvent,
+  parseMarker,
+  readEventSignal,
+  renderIssueEvidence,
+  renderMarker,
+  skipReason,
+} from './issue-event.mjs';
+export { createGitHubClient, fakeGitHub, PERMISSIONS } from './github.mjs';
 export { globToRegExp, guardChanges, matchesAny, parseNumstat } from './guard.mjs';
 export { branchName, openPrsFor, prBody, readHandoff, runTask, taskFromBranch } from './run.mjs';
 
@@ -67,6 +95,9 @@ function flag(argv, name) {
 
 function main(root, argv) {
   const [command, target] = argv;
+  // The `issue-event` signal reads AGENT_EVENT first (REQ-ISS-001).
+  const event = flag(argv, '--event');
+  if (event) process.env.AGENT_EVENT = resolve(root, event);
   const policy = readJson(join(root, '.agents/policy.json'));
   const tasks = loadTasks(root);
   const byName = (name) => {
@@ -176,7 +207,7 @@ function main(root, argv) {
     }
     default:
       console.error(
-        'usage: agents list | check | signal <task|built-in> | run <task> [--harness h] [--dry-run] [--publish] [--pr n] | guard [--task t] [--base ref] | due --cron <expr>'
+        'usage: agents list | check | signal <task|built-in> [--event path] | run <task> [--harness h] [--dry-run] [--publish] [--pr n] [--event path] | guard [--task t] [--base ref] | due --cron <expr>'
       );
       return 2;
   }
