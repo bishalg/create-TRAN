@@ -10,18 +10,24 @@
  *                          [--dry-run] [--publish] [--pr <number>]
  *   pnpm agents guard [--task <name>] [--base <ref>] [--committed]
  *   pnpm agents due --cron '<expr>'               tasks a workflow cron should run
+ *   pnpm agents issue --event <path> [--harness h] [--dry-run]
+ *                                                 one GitHub issue event: the quality gate (spec 020)
  *
  * Harnesses: claude, codex, gemini, pi, jules, custom (AGENT_CMD, prompt on stdin), fake (canned
  * output, no model: proves the issue pipeline, spec 020).
  * `--event <path>` (signal, run): the GitHub event payload for `issue-event`; default GITHUB_EVENT_PATH.
  * AGENT_HARNESS overrides the policy's defaultHarness; AGENT_HARNESS_ARGS adds arguments (a model, a profile).
+ * AGENT_MODEL_STAGES=skip (issue): no harness credential, so only the runner-only stages run.
  */
 import { spawnSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { createGitHubClient } from './github.mjs';
 import { guardChanges, parseNumstat } from './guard.mjs';
 import { chooseHarness, repoSlug } from './harness.mjs';
+import { readTemplate } from './issue-gate.mjs';
+import { runIssue } from './issue.mjs';
 import { changesSince, liveIo, runTask, taskFromBranch } from './run.mjs';
 import { defaultBranch, git, readJson } from './shell.mjs';
 import { runSignal, SIGNALS } from './signals.mjs';
@@ -82,8 +88,32 @@ export {
   renderMarker,
   skipReason,
 } from './issue-event.mjs';
+export {
+  applyTriageLabel,
+  DEFAULT_SECTIONS,
+  mergeVerdicts,
+  namedPaths,
+  NO_VERDICT,
+  parseJudgment,
+  readState,
+  readTemplate,
+  renderGateComment,
+  rewriteSkeleton,
+  setStatusLabel,
+  sizeClass,
+  splitSections,
+  STATUS,
+  stripHtmlComments,
+  structuralVerdict,
+  templateHints,
+  templateSections,
+  TRIAGE,
+  upsertStageComment,
+  VERDICTS,
+} from './issue-gate.mjs';
 export { createGitHubClient, fakeGitHub, PERMISSIONS } from './github.mjs';
 export { globToRegExp, guardChanges, matchesAny, parseNumstat } from './guard.mjs';
+export { DECISION, GATE_TASK, runIssue, TRIAGE_ACCESS } from './issue.mjs';
 export { branchName, openPrsFor, prBody, readHandoff, runTask, taskFromBranch } from './run.mjs';
 
 // ── CLI ─────────────────────────────────────────────────────────────────────────────────────────
@@ -91,6 +121,48 @@ export { branchName, openPrsFor, prBody, readHandoff, runTask, taskFromBranch } 
 function flag(argv, name) {
   const at = argv.indexOf(name);
   return at === -1 ? undefined : argv[at + 1];
+}
+
+function harnessOptions(root) {
+  const origin =
+    spawnSync('git', ['remote', 'get-url', 'origin'], { cwd: root, encoding: 'utf8' }).stdout ?? '';
+  return {
+    repo: process.env.AGENT_REPO || repoSlug(origin),
+    custom: process.env.AGENT_CMD,
+    extraArgs: (process.env.AGENT_HARNESS_ARGS ?? '').split(' ').filter(Boolean),
+  };
+}
+
+/** `agents issue`: exit 0 for nothing to do or a stage done, 1 for a failure, 127 for no payload. */
+function issueCommand(root, argv, policy, tasks) {
+  const path = flag(argv, '--event') ?? process.env.GITHUB_EVENT_PATH;
+  const payload = path ? readJson(resolve(root, path)) : undefined;
+  if (!payload) {
+    console.error(`agents: no event payload: pass --event <path> or set GITHUB_EVENT_PATH`);
+    return 127;
+  }
+  const dryRun = argv.includes('--dry-run');
+  // An empty AGENT_HARNESS (an unset repository variable in Actions) means "not chosen".
+  const env = { ...process.env, AGENT_HARNESS: process.env.AGENT_HARNESS || undefined };
+  const harness = chooseHarness(flag(argv, '--harness') || undefined, env, policy);
+  const repo = payload.repository?.full_name ?? process.env.GITHUB_REPOSITORY;
+  const result = runIssue(
+    payload,
+    {
+      harness,
+      policy,
+      tasks,
+      taskNames: tasks.map((t) => t.data.name),
+      template: readTemplate(root),
+      dryRun,
+      modelStages: process.env.AGENT_MODEL_STAGES,
+      harnessOptions: harnessOptions(root),
+    },
+    liveIo(root),
+    dryRun ? null : createGitHubClient({ repo, cwd: root })
+  );
+  (result.outcome === 'failed' ? console.error : console.log)(`agents: ${result.message}`);
+  return result.outcome === 'failed' ? 1 : 0;
 }
 
 function main(root, argv) {
@@ -180,9 +252,6 @@ function main(root, argv) {
     case 'run': {
       const task = byName(target);
       const harness = chooseHarness(flag(argv, '--harness'), process.env, policy);
-      const origin =
-        spawnSync('git', ['remote', 'get-url', 'origin'], { cwd: root, encoding: 'utf8' }).stdout ??
-        '';
       const result = runTask(
         task,
         {
@@ -192,11 +261,7 @@ function main(root, argv) {
           dryRun: argv.includes('--dry-run'),
           pr: flag(argv, '--pr'),
           taskNames: tasks.map((t) => t.data.name),
-          harnessOptions: {
-            repo: process.env.AGENT_REPO || repoSlug(origin),
-            custom: process.env.AGENT_CMD,
-            extraArgs: (process.env.AGENT_HARNESS_ARGS ?? '').split(' ').filter(Boolean),
-          },
+          harnessOptions: harnessOptions(root),
         },
         liveIo(root)
       );
@@ -205,9 +270,11 @@ function main(root, argv) {
       );
       return result.outcome === 'failed' ? 1 : 0;
     }
+    case 'issue':
+      return issueCommand(root, argv, policy, tasks);
     default:
       console.error(
-        'usage: agents list | check | signal <task|built-in> [--event path] | run <task> [--harness h] [--dry-run] [--publish] [--pr n] [--event path] | guard [--task t] [--base ref] | due --cron <expr>'
+        'usage: agents list | check | signal <task|built-in> [--event path] | run <task> [--harness h] [--dry-run] [--publish] [--pr n] [--event path] | guard [--task t] [--base ref] | due --cron <expr> | issue --event path [--harness h] [--dry-run]'
       );
       return 2;
   }

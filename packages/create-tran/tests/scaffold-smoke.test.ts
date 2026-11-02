@@ -181,7 +181,10 @@ const hasAgentSetup = fs.existsSync(path.join(repoRoot, '.agents/policy.json'));
 describe.skipIf(!hasAgentSetup)('scaffolding the agent setups (REQ-GEN-005)', () => {
   it('github: the renamed project passes the runner check, schedules on, codex by default', () => {
     run(project, 'node', ['tooling/agents/agents.mjs', 'check']);
-    expect(read('.github/workflows/agents.yml')).toContain("vars.AGENTS_ENABLED != 'false'");
+    const workflow = read('.github/workflows/agents.yml');
+    expect(workflow).toContain("vars.AGENTS_ENABLED != 'false'");
+    // Every job that honours the switch (schedules, issues) is on, not only the first.
+    expect(workflow).not.toContain("== 'true'");
     expect(JSON.parse(read('.agents/policy.json')).defaultHarness).toBe('codex');
   });
 
