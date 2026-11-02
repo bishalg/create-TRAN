@@ -30,6 +30,8 @@ const AGENT_ONLY = [
   WORKFLOW,
   'docs/specs/015-agents.md',
   'docs/adr/0032-evidence-driven-agents.md',
+  'docs/specs/020-issue-driven-agents.md',
+  'docs/adr/0037-issue-driven-agents.md',
 ];
 
 /** Every path the setup reads, edits or removes. */
@@ -59,6 +61,9 @@ export const AGENT_REFERENCES = [
   '0032-evidence',
   '015-agents',
   'REQ-AGT',
+  '020-issue-driven',
+  'ADR-0037',
+  'REQ-ISS',
   '.agents/policy',
   'dependency-audit',
 ];
@@ -83,6 +88,10 @@ const NONE_EDITS: Edit[] = [
   },
   { file: 'README.md', line: '| `pnpm agents` ' },
   { file: 'docs/specs/README.md', line: '| [015 Agents](./015-agents.md)' },
+  {
+    file: 'docs/specs/README.md',
+    line: '| [020 Issue-driven agents](./020-issue-driven-agents.md)',
+  },
   {
     file: '.github/workflows/ci.yml',
     line: '      - name: Agent tasks, workflow crons and learnings',
