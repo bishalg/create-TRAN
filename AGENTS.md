@@ -45,5 +45,6 @@ Scheduled and micro-task agents (Jules, Claude Code, Codex, Gemini CLI, pi or an
 - No signal, no change: work only from the evidence a task's signal produced. Making no change is a correct outcome.
 - Never weaken a test, threshold, budget or gate; never edit `.agents/`, CI or dependency manifests unless the task
   allows it. The runner's guard enforces this.
+- The repo is the system of record: write decisions to files (specs, ADRs, `docs/LEARNINGS.md`), never only in chat.
 - Read [`docs/LEARNINGS.md`](docs/LEARNINGS.md) before starting. Add an entry only for a lesson that changes how the
   next person or agent works here.

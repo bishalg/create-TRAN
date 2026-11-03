@@ -33,6 +33,7 @@ signal ──exit 0──► stop. Nothing to do, nothing spent.
 - [Safety model](#safety-model)
 - [Where knowledge goes](#where-knowledge-goes)
 - [From a persona prompt to a task](#from-a-persona-prompt-to-a-task)
+- [The seven jobs of this harness](#the-seven-jobs-of-this-harness)
 - [Troubleshooting](#troubleshooting)
 
 ## Layout
@@ -449,6 +450,34 @@ optimizations: React.memo, database indexes…") converts like this:
 Bolt itself becomes [`metrics-watch`](tasks/metrics-watch.md): its signal is `pnpm metrics`, which already fails on a
 Lighthouse score or bundle size regression with the numbers. A UX persona without a signal is better run by a person
 with `--harness <name>` on demand than on a schedule.
+
+## The seven jobs of this harness
+
+The model is the reasoning engine. The harness is the environment around it: what it can touch, what survives a new
+session, what counts as evidence, and when it must stop. These seven jobs are already this sample
+([ADR-0032](../docs/adr/0032-evidence-driven-agents.md)). Schedules stay idle until a fork turns them on
+(`create-tran --agents sample|github|none`). The same runner is what a production app keeps.
+
+| Job                                   | Where it lives                                                                                                                                                                                                                                                                       | Who owns it                                             |
+| :------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------ |
+| Turn the request into a contract      | Task frontmatter: `summary`, `signal`, `scope`, `mode`, line budget, `gates`, `deliverable`. Stopping with `NO-CHANGE` is a success. An issue's contract is the story template, the structural gate (Given/When/Then and a `REQ-` id), and `/approve` from a user with write access. | A person, before the run                                |
+| Give the agent a map                  | [`AGENTS.md`](../AGENTS.md) is the short root guide, inlined into every prompt. Skills named on the task are read only for that area. [`docs/LEARNINGS.md`](../docs/LEARNINGS.md) is the one shared lesson file.                                                                     | A person                                                |
+| Expose the right tools                | Claude edit runs use the allowlist in [`tooling/agents/harness.mjs`](../tooling/agents/harness.mjs) (`pnpm`, `cargo`, `node`, `git diff`, `git status`, `git log`). Read-only tasks disallow edits. The runner commits after the guard and gates pass.                               | The runner                                              |
+| Externalize memory                    | Rules in `AGENTS.md`, decisions in `docs/adr/`, requirements in `docs/specs/`, lessons in `docs/LEARNINGS.md`. Issue state is one triage label plus the `<!-- tran-agent … -->` marker on the runner's comment. A new session rebuilds from those artifacts.                         | A person writes the files; the runner keeps issue state |
+| Add sensors before autonomy           | No signal, no model ([REQ-AGT-003](../docs/specs/015-agents.md)). After an edit the runner runs the guard and the gates ([REQ-AGT-006](../docs/specs/015-agents.md)). `prBody` in [`tooling/agents/run.mjs`](../tooling/agents/run.mjs) records that on the pull request.            | The runner runs them; the checks produce the evidence   |
+| Enforce permissions outside the model | [`.agents/policy.json`](policy.json) protects `AGENTS.md`, `.agents/`, CI, manifests, ADRs, and generated files. Task files are protected, so a task cannot widen its own scope. Pull requests stay drafts.                                                                          | A person designs the policy; the runner enforces it     |
+| Record a trace and a receipt          | Each run writes `.agents/out/<task>/` (`prompt.md`, `harness.log`, `result.md`, and on failure `verification.md`). The durable receipt is the draft pull request: **What**, **Why**, **Verification**, **Risk**, plus the signal, the harness, and the gates the runner ran.         | The runner                                              |
+
+A person owns the design: `AGENTS.md`, `.agents/policy.json`, the task files, which signals exist, and when a failure
+becomes a new sensor or a tighter protected path. The runner owns the loop: start or stop, one prompt, scope and
+budget, gates, the commit, and the draft. The model fills one local gap inside the contract (one requirement, one
+advisory, one translation) and writes `NO-CHANGE` when the evidence does not justify a change. Sensors (tests,
+`spec:check`, clippy, coverage, metrics, the guard) produce the evidence; the model's claim that tests passed is not
+that evidence.
+
+When a run drifts, upgrade the harness: a sharper task, a tighter scope, a new protected path, or a
+`docs/LEARNINGS.md` entry. The model still cannot edit `.agents/` unless a task file, which only a person can change,
+allows a path.
 
 ## Troubleshooting
 

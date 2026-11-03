@@ -77,3 +77,22 @@ Numbered so a pull request can cite the one it carries out. Each is also a requi
 Left out on purpose: a dashboard or cross-repository view, mid-run steering, `/review` on pull requests the runner did
 not open, cost budgets per issue (the API key's spend limit is the budget), and any harness other than `claude` and
 `fake` in the issue job (the scheduled job's key mapping for Codex and Gemini still applies to it).
+
+## Principles
+
+Harness engineering, as this repository practices it: the model is the reasoning engine; the environment around it
+decides what it can touch, what survives a session, what counts as evidence and when it must stop. Three rules follow,
+each already enforced somewhere in the runner and named here so future work keeps them:
+
+1. **Every rule is encoded twice.** Once as prose the model reads (`AGENTS.md`, a task body) and once as a check it
+   cannot bypass (the guard, a gate, `spec:check`, a unit test). A rule that exists only as prose is a request.
+2. **The loop belongs to the runner.** Evidence, bounded retries, budgets and escalation are the runner's: signal
+   first, gates after, one fix attempt, a spend ceiling (REQ-ISS-023), a label for a person. The model repairs one
+   local gap; it never decides whether another attempt is allowed.
+3. **Reasoning, hands and history are separate.** The model proposes; the runner holds the tools and permissions
+   (`policy.json`, the GitHub client, the allow-lists); history lives in files and on the issue (labels, markers
+   from the runner's identity only, REQ-ISS-024; `.agents/out/`, the receipt, REQ-ISS-026). A failed run names the
+   harness gap it suspects (REQ-ISS-025), so failure upgrades the system rather than the prompt.
+
+The environment is the system of record (`AGENTS.md`, "Unattended agents"). A new session rebuilds from files and the
+issue, never from a chat transcript.
