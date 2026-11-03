@@ -11,6 +11,8 @@ import { normalizeComment } from './issue-event.mjs';
 
 /** What the collaborator permission API reports, strongest first; `none` for everyone else. */
 export const PERMISSIONS = ['admin', 'maintain', 'write', 'triage', 'read', 'none'];
+/** Who writes the comments when the job token is used: it cannot read `GET /user`. */
+export const ACTIONS_BOT = 'github-actions[bot]';
 
 const REPO = /^[\w.-]+\/[\w.-]+$/;
 const LOGIN = /^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\[bot\])?$/;
@@ -43,10 +45,13 @@ const link = (item) => ({ number: item.number, url: item.html_url });
 
 /**
  * `repo`: `owner/name`. `spawn`, `cwd` and `env` are injectable for tests; `env` defaults to the
- * process environment, which is where `gh` finds its token.
+ * process environment, which is where `gh` finds its token. `env.AGENT_GITHUB_LOGIN` names the
+ * runner's login when `GET /user` cannot (a GitHub App token: `<app>[bot]`).
  */
 export function createGitHubClient({ repo, spawn = spawnSync, cwd, env = process.env }) {
   if (!REPO.test(repo ?? '')) throw new Error(`the repository must be owner/name, got "${repo}"`);
+  let login = env.AGENT_GITHUB_LOGIN || null;
+  if (login && !LOGIN.test(login)) throw new Error(`AGENT_GITHUB_LOGIN is not a login: ${login}`);
   const secrets = [env.GH_TOKEN, env.GITHUB_TOKEN, env.AGENT_GITHUB_TOKEN].filter(
     (value) => value && value.length >= 8
   );
@@ -90,6 +95,15 @@ export function createGitHubClient({ repo, spawn = spawnSync, cwd, env = process
 
   const issues = `repos/${repo}/issues`;
   return {
+    /**
+     * The runner's own login, asked once (REQ-ISS-024): only comments by it are state. The job
+     * token cannot read `GET /user` (HTTP 403), and its comments are by the Actions bot.
+     */
+    whoami: () => {
+      login ??=
+        api('GET', 'user', { tolerate: (r) => /HTTP 403/.test(r.stderr) })?.login ?? ACTIONS_BOT;
+      return login;
+    },
     getIssue: (n) => normalizeIssue(api('GET', `${issues}/${positive(n, 'issue number')}`)),
     listComments: (n) =>
       api('GET', `${issues}/${positive(n, 'issue number')}/comments?per_page=100`, {
@@ -161,6 +175,7 @@ export function createGitHubClient({ repo, spawn = spawnSync, cwd, env = process
  * the live data a test asserts on. Return values are copies, so callers cannot edit the state.
  */
 export function fakeGitHub({
+  login = 'runner',
   issue = {},
   comments = [],
   labels,
@@ -201,6 +216,7 @@ export function fakeGitHub({
   return {
     calls,
     state,
+    whoami: record('whoami', () => login),
     getIssue: record('getIssue', () => ({ ...state.issue, labels: state.labels })),
     listComments: record('listComments', () => state.comments),
     createComment: record('createComment', (n, body) => {
@@ -209,7 +225,7 @@ export function fakeGitHub({
       state.comments.push({
         id,
         body,
-        author: { login: 'runner', type: 'Bot' },
+        author: { login, type: 'Bot' },
         createdAt: null,
         url,
       });

@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import { dirname, join } from 'node:path';
 import { guardChanges, parseNumstat } from './guard.mjs';
 import { buildPrompt, harnessCommand } from './harness.mjs';
+import { fitTemplate, missingTests } from './issue-commands.mjs';
 import { git, readJson, sh } from './shell.mjs';
 import { evaluateSignal, runSignal, truncate } from './signals.mjs';
 import { outDir } from './tasks.mjs';
@@ -68,15 +69,23 @@ export function prBody({ task, harness, signal, gates, lines, handoff }) {
   ].join('\n');
 }
 
+export const PR_TEMPLATE = '.github/pull_request_template.md';
+
 // ── Run (REQ-AGT-003, -005, -006, -008) ─────────────────────────────────────────────────────────
 
 /**
  * One run of one task. Every side effect goes through `io`, so the decision logic is testable:
  * signal → open-PR check → prompt → harness → (edit) hand-off, guard, gates → commit → publish.
+ *
+ * Issue runs (spec 020) add, each off by default: `branch` (the exact branch name), `prMatch` (a
+ * head prefix: only those open pull requests block the run, not every one of the task),
+ * `extraEvidence` (runner-written Markdown after the prompt, such as the approved plan),
+ * `requireTests` (a code change needs a test change, REQ-ISS-010) and `closes` (an issue number:
+ * the body starts `Closes #n` and follows the pull request template, REQ-ISS-009).
  */
 export function runTask(task, opts, io) {
   const d = task.data;
-  const { harness, policy, publish = false, dryRun = false, pr } = opts;
+  const { harness, policy, publish = false, dryRun = false, pr, prMatch, closes } = opts;
   const readOnly = d.mode === 'read-only';
   const out = outDir(d.name);
   const fail = (message, extra = {}) => ({ outcome: 'failed', message, ...extra });
@@ -105,7 +114,9 @@ export function runTask(task, opts, io) {
     if (prs === null)
       io.log('could not list open pull requests (is gh installed and signed in?); continuing');
     else {
-      const mine = openPrsFor(d.name, policy.branchPrefix, prs, opts.taskNames);
+      const mine = prMatch
+        ? prs.filter((p) => p.headRefName?.startsWith(prMatch))
+        : openPrsFor(d.name, policy.branchPrefix, prs, opts.taskNames);
       if (mine.length)
         return {
           outcome: 'skipped',
@@ -114,7 +125,8 @@ export function runTask(task, opts, io) {
     }
   }
 
-  const prompt = buildPrompt({ task, policy, rules: io.readFile('AGENTS.md') ?? '', signal });
+  const base = buildPrompt({ task, policy, rules: io.readFile('AGENTS.md') ?? '', signal });
+  const prompt = opts.extraEvidence ? `${base.trimEnd()}\n\n${opts.extraEvidence.trim()}\n` : base;
   io.writeFile(`${out}/prompt.md`, prompt);
   if (dryRun)
     return {
@@ -132,7 +144,7 @@ export function runTask(task, opts, io) {
   // `startBranch` returns the name it used: it adds a suffix when that branch already exists.
   const branch =
     !readOnly && !command.async
-      ? io.startBranch(branchName(d.name, policy.branchPrefix, opts.now))
+      ? io.startBranch(opts.branch ?? branchName(d.name, policy.branchPrefix, opts.now))
       : null;
   const before = io.status();
   const result = io.runHarness(
@@ -189,6 +201,7 @@ export function runTask(task, opts, io) {
 
   const lines = changes.reduce((sum, change) => sum + change.lines, 0);
   const problems = guardChanges(changes, task, policy);
+  if (opts.requireTests) problems.push(...missingTests(changes));
   const gates = problems.length
     ? []
     : d.gates.map((gate) => ({ command: gate, ...io.runGate(gate) }));
@@ -213,10 +226,14 @@ export function runTask(task, opts, io) {
       branch,
     };
   }
+  const shaped = closes
+    ? { ...handoff, body: fitTemplate(handoff.body, io.readFile(PR_TEMPLATE)) }
+    : handoff;
+  const body = prBody({ task, harness, signal, gates, lines, handoff: shaped });
   const url = io.publish({
     branch,
     title: handoff.title,
-    body: prBody({ task, harness, signal, gates, lines, handoff }),
+    body: closes ? `Closes #${closes}\n\n${body}` : body,
   });
   io.restoreBranch();
   return { outcome: 'published', message: `draft pull request: ${url}`, branch };
@@ -236,10 +253,11 @@ export function changesSince(root, base) {
   return [...tracked, ...untracked];
 }
 
-export function liveIo(root) {
+/** `spawn` runs `gh` (injectable for tests); git runs directly. */
+export function liveIo(root, { spawn = spawnSync } = {}) {
   let original = null;
   let base = null;
-  const gh = (args, input) => spawnSync('gh', args, { cwd: root, encoding: 'utf8', input });
+  const gh = (args, input) => spawn('gh', args, { cwd: root, encoding: 'utf8', input });
   return {
     isClean: () => git(root, ['status', '--porcelain']).trim() === '',
     status: () => git(root, ['status', '--porcelain']),
@@ -276,6 +294,16 @@ export function liveIo(root) {
       return branch;
     },
     restoreBranch: () => original && git(root, ['switch', original]),
+    /**
+     * Puts the checkout on `branch` before a run, so the pull request's base is a branch name: in
+     * Actions an `issue_comment` job may start on a detached commit.
+     */
+    useBranch: (branch) => {
+      if (git(root, ['rev-parse', '--abbrev-ref', 'HEAD']).trim() !== branch)
+        git(root, ['switch', branch]);
+    },
+    currentBranch: () => git(root, ['rev-parse', '--abbrev-ref', 'HEAD']).trim(),
+    exists: (path) => existsSync(join(root, path)),
     discardBranch: (branch) => {
       if (!branch) return;
       git(root, ['switch', original]);
@@ -304,8 +332,33 @@ export function liveIo(root) {
       git(root, ['add', '-A']);
       git(root, ['commit', '-F', '-'], message);
     },
+    /**
+     * Pushes, then updates the branch's open pull request, or opens a draft one. Looking first also
+     * repairs a branch that was pushed before an earlier `gh pr create` failed (REQ-ISS-009).
+     */
     publish: ({ branch, title, body }) => {
       git(root, ['push', '-u', 'origin', branch]);
+      const found = gh([
+        'pr',
+        'list',
+        '--head',
+        branch,
+        '--state',
+        'open',
+        '--json',
+        'number,url',
+        '--limit',
+        '1',
+      ]);
+      const open = found.status === 0 ? JSON.parse(found.stdout || '[]')[0] : null;
+      if (open) {
+        const edit = gh(
+          ['pr', 'edit', String(open.number), '--title', title, '--body-file', '-'],
+          body
+        );
+        if (edit.status !== 0) throw new Error(`gh pr edit failed:\n${edit.stderr}`);
+        return open.url;
+      }
       const result = gh(
         [
           'pr',

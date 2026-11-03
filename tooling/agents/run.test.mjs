@@ -1,8 +1,13 @@
-// Verifies: REQ-AGT-003, REQ-AGT-005, REQ-AGT-006
+// Verifies: REQ-AGT-003, REQ-AGT-005, REQ-AGT-006, REQ-ISS-009, REQ-ISS-010
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, it } from 'node:test';
 import { readHandoff, runTask } from './agents.mjs';
-import { task, REVIEW, fakeIo, OPTS } from './test-helpers.mjs';
+import { liveIo } from './run.mjs';
+import { task, REVIEW, ISSUE, fakeIo, fakeIssueHandoff, OPTS, ROOT } from './test-helpers.mjs';
 
 describe('run: signal first (REQ-AGT-003)', () => {
   it('no signal: the harness never starts and nothing is written', () => {
@@ -197,5 +202,140 @@ describe('hand-off', () => {
     });
     assert.deepEqual(readHandoff('  \n'), { missing: true });
     assert.deepEqual(readHandoff(null), { missing: true });
+  });
+});
+
+describe('run: issue options (REQ-ISS-009, REQ-ISS-010)', () => {
+  const ISSUE_OPTS = { ...OPTS, taskNames: ['issue', 'issue-gate', 'spec-gap'] };
+  const handoff = 'feat(core): look up the country\n\n**What** A lookup.\n\n**Risk** Low.';
+
+  it('a code change without a test is not kept (REQ-ISS-010)', () => {
+    const io = fakeIo({ handoff, changes: [{ path: 'crates/rust-core/src/phone.rs', lines: 9 }] });
+    const result = runTask(ISSUE, { ...ISSUE_OPTS, requireTests: true }, io);
+    assert.equal(result.outcome, 'failed');
+    assert.match(
+      result.message,
+      /code change without a test change: crates\/rust-core\/src\/phone\.rs/
+    );
+    assert.deepEqual(io.calls.gates, []);
+    assert.equal(io.calls.commit, null);
+    assert.match(io.files['.agents/out/issue/verification.md'], /issues\.requireTests/);
+
+    const tested = fakeIo({
+      handoff,
+      changes: [
+        { path: 'crates/rust-core/src/phone.rs', lines: 9 },
+        { path: 'crates/rust-core/tests/phone.rs', lines: 9 },
+      ],
+    });
+    assert.equal(
+      runTask(ISSUE, { ...ISSUE_OPTS, requireTests: true }, tested).outcome,
+      'committed'
+    );
+    // Off by default: scheduled tasks keep today's rules.
+    const io2 = fakeIo({ handoff, changes: [{ path: 'crates/rust-core/src/phone.rs', lines: 9 }] });
+    assert.equal(runTask(ISSUE, ISSUE_OPTS, io2).outcome, 'committed');
+  });
+
+  it('one branch, one pull request per issue (REQ-ISS-009)', () => {
+    const branch = 'agent/issue-12-add-country-lookup';
+    const io = fakeIo({
+      handoff: fakeIssueHandoff(),
+      changes: [{ path: 'docs/LEARNINGS.md', lines: 6 }],
+      openPrs: [{ headRefName: 'agent/issue-13-other', url: 'https://github.com/o/r/pull/7' }],
+    });
+    io.files['.github/pull_request_template.md'] = readFileSync(
+      join(ROOT, '.github/pull_request_template.md'),
+      'utf8'
+    );
+    const opts = {
+      ...ISSUE_OPTS,
+      publish: true,
+      branch,
+      prMatch: 'agent/issue-12-',
+      closes: 12,
+      extraEvidence: '## Approved plan\n\nthe plan',
+    };
+    const result = runTask(ISSUE, opts, io);
+    assert.equal(result.outcome, 'published', result.message);
+    assert.deepEqual(io.calls.branch, [branch]);
+    assert.equal(io.calls.publish.branch, branch);
+    const body = io.calls.publish.body;
+    assert.equal(body.split('\n')[0], 'Closes #12');
+    assert.match(body, /^## What\n\nOne entry in `docs\/LEARNINGS\.md`/m);
+    assert.match(body, /^## Verification\n\nNone by the fake/m);
+    assert.match(body, /\*\*Harness:\*\* claude/);
+    assert.match(body, /Verified by the runner, not the agent/);
+    assert.ok(io.calls.prompt.trimEnd().endsWith('## Approved plan\n\nthe plan'));
+
+    // A pull request for this issue blocks a second run; one for another issue does not.
+    const blocked = fakeIo({
+      openPrs: [{ headRefName: 'agent/issue-12-old', url: 'https://github.com/o/r/pull/8' }],
+    });
+    const skipped = runTask(ISSUE, opts, blocked);
+    assert.equal(skipped.outcome, 'skipped');
+    assert.match(skipped.message, /pull\/8/);
+    assert.equal(blocked.calls.harness, 0);
+    // Without prMatch the dedupe stays per task, as scheduled tasks need (REQ-AGT-008).
+    const perTask = fakeIo({
+      openPrs: [{ headRefName: 'agent/issue-13-other', url: 'https://github.com/o/r/pull/7' }],
+    });
+    assert.equal(runTask(ISSUE, { ...ISSUE_OPTS, publish: true }, perTask).outcome, 'skipped');
+  });
+
+  it('publish updates the open pull request of the branch instead of opening another', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'agents-publish-'));
+    const git = (...args) => {
+      const r = spawnSync('git', args, { cwd: dir, encoding: 'utf8' });
+      assert.equal(r.status, 0, r.stderr);
+      return r.stdout;
+    };
+    git('init', '-q', '--bare', 'remote.git');
+    git('init', '-q', '-b', 'dev', 'work');
+    const work = join(dir, 'work');
+    const inWork = (...args) => {
+      const r = spawnSync('git', args, { cwd: work, encoding: 'utf8' });
+      assert.equal(r.status, 0, r.stderr);
+    };
+    inWork('config', 'user.name', 'Test');
+    inWork('config', 'user.email', 'test@example.com');
+    inWork('remote', 'add', 'origin', join(dir, 'remote.git'));
+    writeFileSync(join(work, 'a.txt'), 'a\n');
+    inWork('add', '-A');
+    inWork('commit', '-q', '-m', 'init');
+    const calls = [];
+    const spawn = (command, args, options) => {
+      calls.push([command, ...args].join(' '));
+      if (args[1] === 'list')
+        return { status: 0, stdout: '[{"number":8,"url":"https://github.com/o/r/pull/8"}]' };
+      return { status: 0, stdout: options.input ? 'ok' : '' };
+    };
+    const io = liveIo(work, { spawn });
+    io.startBranch('agent/issue-12-x');
+    writeFileSync(join(work, 'b.txt'), 'b\n');
+    io.commit('docs: b');
+    const url = io.publish({ branch: 'agent/issue-12-x', title: 'docs: b', body: 'Closes #12' });
+    assert.equal(url, 'https://github.com/o/r/pull/8');
+    assert.deepEqual(calls, [
+      'gh pr list --head agent/issue-12-x --state open --json number,url --limit 1',
+      'gh pr edit 8 --title docs: b --body-file -',
+    ]);
+    assert.match(git('--git-dir', 'remote.git', 'branch'), /agent\/issue-12-x/);
+
+    // No open pull request for the branch: create one, as before.
+    calls.length = 0;
+    const create = (command, args) => {
+      calls.push(args[1]);
+      return { status: 0, stdout: args[1] === 'list' ? '[]' : 'https://github.com/o/r/pull/9\n' };
+    };
+    const fresh = liveIo(work, { spawn: create });
+    fresh.startBranch('agent/issue-12-y');
+    writeFileSync(join(work, 'c.txt'), 'c\n');
+    fresh.commit('docs: c');
+    assert.equal(
+      fresh.publish({ branch: 'agent/issue-12-y', title: 't', body: 'b' }),
+      'https://github.com/o/r/pull/9'
+    );
+    assert.deepEqual(calls, ['list', 'create']);
   });
 });

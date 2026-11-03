@@ -19,8 +19,10 @@ name: Agents
 #     them.
 #
 # Issues (spec 020, ADR-0037): the `issue` job checks every opened or edited issue against the story template, labels
-# it and comments, one run per issue at a time. Without a Claude credential only the runner-only stages run; the
-# repository variable AGENT_HARNESS=fake proves the whole path with canned output and no model.
+# it and comments, posts a plan, and on `/approve` from a user with write access implements it into one draft pull
+# request from agent/issue-<n>-<slug>; one run per issue at a time. Without a Claude credential only the runner-only
+# stages run; the repository variable AGENT_HARNESS=fake proves the whole path with canned output and no model.
+# AGENT_GITHUB_LOGIN (variable, optional): the runner's login when AGENT_GITHUB_TOKEN is a GitHub App token.
 #
 # Every action is pinned by commit SHA, and every harness CLI by version; bumps are deliberate commits.
 
@@ -225,8 +227,12 @@ jobs:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
       GH_TOKEN: ${{ secrets.AGENT_GITHUB_TOKEN || github.token }}
       AGENT_HARNESS: ${{ vars.AGENT_HARNESS }}
+      AGENT_GITHUB_LOGIN: ${{ vars.AGENT_GITHUB_LOGIN }}
     steps:
+      # The agent token pushes the branch, so CI runs on the pull request it opens.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          token: ${{ secrets.AGENT_GITHUB_TOKEN || github.token }}
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -251,10 +257,37 @@ jobs:
           esac
           echo "model=$model" >> "$GITHUB_OUTPUT"
           if [ "$model" = no ]; then echo "AGENT_MODEL_STAGES=skip" >> "$GITHUB_ENV"; fi
+      # Only an event that may build (`/approve`, `/implement`, or a gate under `autonomy.simple: auto`) installs the
+      # toolchain that the `issue` task's gates need; the gate and the plan need Node alone.
+      - name: Does this event build
+        id: stage
+        if: steps.key.outputs.model == 'yes'
+        run: |
+          build="$(node --input-type=module -e "import { readFileSync } from 'node:fs'; import { needsToolchain } from './tooling/agents/issue-commands.mjs'; const read = (path) => JSON.parse(readFileSync(path, 'utf8')); console.log(needsToolchain(read(process.env.GITHUB_EVENT_PATH), read('.agents/policy.json')) ? 'yes' : 'no');")"
+          echo "build=$build" >> "$GITHUB_OUTPUT"
+      - name: Install Rust toolchain
+        if: steps.stage.outputs.build == 'yes'
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+      - name: Rust cache
+        if: steps.stage.outputs.build == 'yes'
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+      - name: Install pnpm
+        if: steps.stage.outputs.build == 'yes'
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - name: Install workspace dependencies
+        if: steps.stage.outputs.build == 'yes'
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build:libs
+          git config user.name "tran-agent"
+          git config user.email "tran-agent@users.noreply.github.com"
       - name: Install Claude Code
         if: steps.key.outputs.model == 'yes' && steps.key.outputs.harness == 'claude'
         run: npm install -g @anthropic-ai/claude-code@2.1.305
-      - name: Gate, labels and comments
+      - name: Gate, plan or implementation
         env:
           HARNESS: ${{ steps.key.outputs.harness }}
         run: node tooling/agents/agents.mjs issue --event "$GITHUB_EVENT_PATH" --harness "$HARNESS"

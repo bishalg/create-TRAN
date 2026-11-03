@@ -343,30 +343,41 @@ export function setStatusLabel(gh, number, status, on, policy) {
   return gh.setLabels(number, on ? [...current, name] : current.filter((l) => l !== name));
 }
 
+/**
+ * The comments the runner wrote itself (REQ-ISS-024): anyone can type a marker, so only comments by
+ * the runner's own login (`gh.whoami()`) are state, and only those are ever edited.
+ */
+export const byRunner = (comments, runner) => comments.filter((c) => c.author?.login === runner);
+
 /** The runner's comment for `stage`, the newest when there are several, or null. */
-const stageComment = (comments, stage) =>
-  comments.filter((c) => parseMarker(c.body)?.stage === stage).at(-1) ?? null;
+const stageComment = (comments, stage, runner) =>
+  byRunner(comments, runner)
+    .filter((c) => parseMarker(c.body)?.stage === stage)
+    .at(-1) ?? null;
 
 /**
  * One comment per stage per issue, updated in place: `<marker>\n<body>` (REQ-ISS-020). `comments`
- * saves a listing when the caller has them. Returns { id, url, created }.
+ * saves a listing when the caller has them; `runner` the identity lookup. Returns
+ * { id, url, created }.
  */
-export function upsertStageComment(gh, number, stage, body, data = {}, comments) {
+export function upsertStageComment(gh, number, stage, body, data = {}, comments, runner) {
   const text = `${renderMarker({ stage, ...data })}\n${body}`;
-  const existing = stageComment(comments ?? gh.listComments(number), stage);
+  const own = runner ?? gh.whoami();
+  const existing = stageComment(comments ?? gh.listComments(number), stage, own);
   if (existing) return { ...gh.updateComment(existing.id, text), created: false };
   return { ...gh.createComment(number, text), created: true };
 }
 
 /**
  * Everything the next stage decides on, from labels and markers only (REQ-ISS-020): the triage
- * label, the status labels by role, and each stage's marker with its comment id.
+ * label, the status labels by role, and each stage's marker with its comment id. Markers count only
+ * in the runner's own comments (REQ-ISS-024).
  */
-export function readState(gh, number, policy, comments) {
+export function readState(gh, number, policy, comments, runner) {
   const labels = gh.getLabels(number);
   const names = labelNames(policy);
   const stages = {};
-  for (const c of comments ?? gh.listComments(number)) {
+  for (const c of byRunner(comments ?? gh.listComments(number), runner ?? gh.whoami())) {
     const marker = parseMarker(c.body);
     if (marker?.stage) stages[marker.stage] = { ...marker, commentId: c.id };
   }
