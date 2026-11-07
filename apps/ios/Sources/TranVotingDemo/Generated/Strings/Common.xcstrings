@@ -89,6 +89,28 @@
         }
       }
     },
+    "common.notNow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not now"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अभी नहीं"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अहिले होइन"
+          }
+        }
+      }
+    },
     "common.notifications": {
       "localizations": {
         "en": {
@@ -107,6 +129,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "सूचनाहरू"
+          }
+        }
+      }
+    },
+    "common.reload": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reload"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "दोबारा लोड करें"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "फेरि लोड गर्नुहोस्"
           }
         }
       }

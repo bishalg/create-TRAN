@@ -54,8 +54,31 @@ Given(
   }
 );
 
+Given(
+  'the server always fails with {int} and code {string}',
+  async ({ page }, status: number, code: string) => {
+    await stage(page, (route) => envelope(route, status, code, 'req-e2e-staged'));
+  }
+);
+
+const goneAway = (route: Route) => route.abort('connectionrefused');
+
 Given('the API goes away', async ({ page }) => {
-  await page.route(`${API}/**`, (route) => route.abort('connectionrefused'));
+  await page.route(`${API}/**`, goneAway);
+});
+
+When('the API comes back and the browser reports it is online', async ({ page }) => {
+  await page.unroute(`${API}/**`, goneAway);
+  // What the browser fires when connectivity returns; the app probes at once (REQ-ERR-013).
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+});
+
+When('I ask the server again', async ({ page }) => {
+  await page.getByRole('button', { name: 'Check eligibility' }).click();
+});
+
+Then('exactly {int} toast(s) is/are shown', async ({ page }, count: number) => {
+  await expect(toastRegion(page).locator('[data-tone]')).toHaveCount(count);
 });
 
 Then('the server was asked {int} times', async ({}, count: number) => {

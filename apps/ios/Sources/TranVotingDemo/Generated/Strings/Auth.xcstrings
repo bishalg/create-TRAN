@@ -45,6 +45,28 @@
         }
       }
     },
+    "auth.signInAgain": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign in again"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "फिर से साइन इन करें"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "फेरि साइन इन गर्नुहोस्"
+          }
+        }
+      }
+    },
     "auth.signOutConfirm.body": {
       "localizations": {
         "en": {

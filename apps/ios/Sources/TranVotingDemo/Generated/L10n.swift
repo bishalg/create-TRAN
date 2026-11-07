@@ -23,6 +23,7 @@ enum L10n {
     enum Auth {
         static var continueAsAuditor: String { String(localized: "auth.continueAsAuditor", table: "Auth") }
         static var continueAsVoter: String { String(localized: "auth.continueAsVoter", table: "Auth") }
+        static var signInAgain: String { String(localized: "auth.signInAgain", table: "Auth") }
         static var signOutConfirmBody: String { String(localized: "auth.signOutConfirm.body", table: "Auth") }
         static var signOutConfirmTitle: String { String(localized: "auth.signOutConfirm.title", table: "Auth") }
         static var welcomeSubtitle: String { String(localized: "auth.welcome.subtitle", table: "Auth") }
@@ -34,7 +35,9 @@ enum L10n {
         static var brand: String { String(localized: "common.brand", table: "Common") }
         static var cancel: String { String(localized: "common.cancel", table: "Common") }
         static var dismiss: String { String(localized: "common.dismiss", table: "Common") }
+        static var notNow: String { String(localized: "common.notNow", table: "Common") }
         static var notifications: String { String(localized: "common.notifications", table: "Common") }
+        static var reload: String { String(localized: "common.reload", table: "Common") }
         static var roleCitizenVoter: String { String(localized: "common.role.citizenVoter", table: "Common") }
         static var roleElectionAuditor: String { String(localized: "common.role.electionAuditor", table: "Common") }
         static var signOut: String { String(localized: "common.signOut", table: "Common") }
@@ -84,17 +87,23 @@ enum L10n {
         static var ageInvalid: String { String(localized: "errors.ageInvalid", table: "Errors") }
         static var ageOutOfRange: String { String(localized: "errors.ageOutOfRange", table: "Errors") }
         static var birthdateInFuture: String { String(localized: "errors.birthdateInFuture", table: "Errors") }
+        static var conflict: String { String(localized: "errors.conflict", table: "Errors") }
         static var countryInvalid: String { String(localized: "errors.countryInvalid", table: "Errors") }
         static var dateInvalid: String { String(localized: "errors.dateInvalid", table: "Errors") }
+        static var forbidden: String { String(localized: "errors.forbidden", table: "Errors") }
         static var notFound: String { String(localized: "errors.notFound", table: "Errors") }
         static var rateLimited: String { String(localized: "errors.rateLimited", table: "Errors") }
         static func reference(_ id: String) -> String {
             String(format: String(localized: "errors.reference", table: "Errors"), id)
         }
+        static var renderFailed: String { String(localized: "errors.renderFailed", table: "Errors") }
+        static var renderFailedBody: String { String(localized: "errors.renderFailedBody", table: "Errors") }
         static var requestCancelled: String { String(localized: "errors.requestCancelled", table: "Errors") }
         static var requestMalformed: String { String(localized: "errors.requestMalformed", table: "Errors") }
         static var serverInternal: String { String(localized: "errors.serverInternal", table: "Errors") }
         static var serverUnavailable: String { String(localized: "errors.serverUnavailable", table: "Errors") }
+        static var sessionExpired: String { String(localized: "errors.sessionExpired", table: "Errors") }
+        static var sessionExpiredBody: String { String(localized: "errors.sessionExpiredBody", table: "Errors") }
         static var timeout: String { String(localized: "errors.timeout", table: "Errors") }
         static var unexpected: String { String(localized: "errors.unexpected", table: "Errors") }
     }
@@ -144,14 +153,18 @@ extension L10n {
         case "eligibility.serverCheckDone": return L10n.Eligibility.serverCheckDone
         case "errors.ageOutOfRange": return L10n.Errors.ageOutOfRange
         case "errors.birthdateInFuture": return L10n.Errors.birthdateInFuture
+        case "errors.conflict": return L10n.Errors.conflict
         case "errors.countryInvalid": return L10n.Errors.countryInvalid
         case "errors.dateInvalid": return L10n.Errors.dateInvalid
+        case "errors.forbidden": return L10n.Errors.forbidden
         case "errors.notFound": return L10n.Errors.notFound
         case "errors.rateLimited": return L10n.Errors.rateLimited
+        case "errors.renderFailed": return L10n.Errors.renderFailed
         case "errors.requestCancelled": return L10n.Errors.requestCancelled
         case "errors.requestMalformed": return L10n.Errors.requestMalformed
         case "errors.serverInternal": return L10n.Errors.serverInternal
         case "errors.serverUnavailable": return L10n.Errors.serverUnavailable
+        case "errors.sessionExpired": return L10n.Errors.sessionExpired
         case "errors.timeout": return L10n.Errors.timeout
         case "errors.unexpected": return L10n.Errors.unexpected
         default: return nil

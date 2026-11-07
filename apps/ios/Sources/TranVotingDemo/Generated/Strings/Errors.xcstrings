@@ -89,6 +89,28 @@
         }
       }
     },
+    "errors.conflict": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This changed while you were working on it. Refresh and try again."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपके काम करते समय यह बदल गया। रीफ़्रेश करके फिर से कोशिश करें।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "तपाईं काम गर्दै गर्दा यो परिवर्तन भयो। रिफ्रेस गरेर फेरि प्रयास गर्नुहोस्।"
+          }
+        }
+      }
+    },
     "errors.countryInvalid": {
       "localizations": {
         "en": {
@@ -129,6 +151,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "YYYY-MM-DD ढाँचामा सही मिति लेख्नुहोस्।"
+          }
+        }
+      }
+    },
+    "errors.forbidden": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You don't have permission to do that."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपको यह करने की अनुमति नहीं है।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "तपाईंलाई यो गर्ने अनुमति छैन।"
           }
         }
       }
@@ -195,6 +239,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "सन्दर्भ: %1$@"
+          }
+        }
+      }
+    },
+    "errors.renderFailed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This screen couldn't be shown"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "यह स्क्रीन नहीं दिखाई जा सकी"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "यो स्क्रिन देखाउन सकिएन"
+          }
+        }
+      }
+    },
+    "errors.renderFailedBody": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something in the app broke. Reloading usually fixes it; your settings are kept."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ऐप में कुछ गड़बड़ हो गई। दोबारा लोड करने से आमतौर पर ठीक हो जाता है; आपकी सेटिंग्स सुरक्षित रहती हैं।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "एपमा केही बिग्रियो। फेरि लोड गर्दा प्रायः ठीक हुन्छ; तपाईंका सेटिङहरू सुरक्षित रहन्छन्।"
           }
         }
       }
@@ -283,6 +371,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "सर्भर अस्थायी रूपमा उपलब्ध छैन — नतिजा यही उपकरणमा जाँचिँदैछ।"
+          }
+        }
+      }
+    },
+    "errors.sessionExpired": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your session has expired"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपका सत्र समाप्त हो गया है"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "तपाईंको सत्र समाप्त भयो"
+          }
+        }
+      }
+    },
+    "errors.sessionExpiredBody": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign in again to continue. Anything you typed stays on this screen until you do."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जारी रखने के लिए फिर से साइन इन करें। तब तक आपने जो लिखा है वह इसी स्क्रीन पर रहेगा।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जारी राख्न फेरि साइन इन गर्नुहोस्। त्यतिन्जेल तपाईंले लेखेको कुरा यही स्क्रिनमा रहन्छ।"
           }
         }
       }

@@ -73,3 +73,50 @@ Users MUST see the locale message for the error's code, never the server's or th
 error toast for a server failure MUST show the request id as a reference.
 **Verified by:** BDD "Server errors are explained in the user's language" and "A broken server is explained and the
 device answers instead", `FeedbackProvider.test.tsx`, `App.test.tsx`, native copy tests.
+
+### REQ-ERR-010 [verified] Authentication, permission and conflict failures have their own codes
+
+`401` MUST classify as `auth.session_expired` (not retryable, `info`, a non-destructive dialog: "Sign in again" ends
+the session and shows the sign-in screen, "Not now" keeps the screen so unsaved input is not lost). `403` MUST be
+`auth.forbidden` (not retryable, `warn`, a medium error toast). `409` MUST be `request.conflict` (not retryable, `info`,
+a medium warning toast). They MUST NOT fall into `request.malformed`. A dialog an error opens has its body and buttons in
+one exhaustive table per platform, like action dialogs (REQ-ERR-007).
+**Verified by:** `fixtures/feedback.json`, `crates/rust-core/tests/feedback_fixtures.rs`, `FeedbackProvider.test.tsx`, `App.errors.test.tsx`, `FeedbackPressureTests.swift`, `FeedbackPressureTest.kt`, BDD "An expired session asks to sign in again".
+
+### REQ-ERR-011 [verified] A crash is caught, reported and recoverable where the platform allows it
+
+A web render failure MUST be caught by one error boundary around the app and classified `client.render_failed`
+(`error`, presentation `screen`: a full-page, focused, localized message with a Reload button — never a blank page).
+Uncaught errors and unhandled promise rejections outside rendering MUST classify as `client.unexpected` and go through
+`report` once. On iOS and Android an uncaught exception MUST be reported (REQ-ERR-014) and then handed to the
+previous handler, which ends the process; SwiftUI and Compose cannot recover a broken view tree.
+**Verified by:** `CrashBoundary.test.tsx`, `useGlobalErrors.test.tsx`, `App.errors.test.tsx`; native reporting in `TranReporting.swift` / `TranReporting.kt` (`FeedbackPressureTests.swift`, `FeedbackPressureTest.kt`).
+
+### REQ-ERR-012 [verified] Toasts never pile up
+
+At most `TOAST_POLICY.maxVisible` (3) toasts are visible; a new one evicts the oldest. A toast with the same message key
+and tone as a visible one MUST restart that toast's timer (and update its reference id) instead of adding a copy.
+The admission rule is one Rust function, pinned by `fixtures/feedback.json` `toastQueue` on every platform.
+**Verified by:** `fixtures/feedback.json` `toastQueue` (`feedback_pressure_fixtures.rs` in rust-core and tran-uniffi, `resilience.test.ts`, native pressure tests), `FeedbackProvider.test.tsx`, BDD "A repeated failure shows one toast, not a pile".
+
+### REQ-ERR-013 [verified] A connectivity banner recovers by itself
+
+While a `banner` failure is shown the app MUST probe the server's health without retries: after
+`RECOVERY_POLICY.firstProbeMs` (5 s), doubling up to `maxProbeMs` (60 s), and immediately when the platform reports
+connectivity again (`online`) or the app returns to the foreground. A successful probe MUST clear the banner; probing
+MUST stop when the banner clears or the screen goes away. The delays are pinned by `fixtures/feedback.json`
+`recoveryProbes`.
+**Verified by:** `fixtures/feedback.json` `recoveryProbes`, `recovery.test.ts`, `useTranApi.test.tsx`, `RecoveryProbeTests.swift`, `RecoveryProbeTest.kt`, BDD "The offline notice clears by itself when the network returns".
+
+### REQ-ERR-014 [verified] Errors that need a human reach one reporter, without the payload
+
+Every failure logged at `error` MUST also go to one pluggable reporter (none by default; Sentry, Crashlytics or an
+HTTP sink in a real app) with exactly the `logEvent` fields. Only client-side codes (`client.*`) MAY attach the
+thrown value for its stack. A reporter that throws MUST NOT break the app; failures below `error` MUST NOT be reported.
+**Verified by:** `fixtures/feedback.json` `reportedLogLevels`, `resilience.test.ts`, `CrashBoundary.test.tsx`, native pressure tests.
+
+### REQ-ERR-015 [verified] Cancelling during a retry wait settles at once
+
+A caller's cancellation during a backoff wait MUST end the call immediately as `request.cancelled`, without waiting
+for the delay or trying again.
+**Verified by:** `resilience.test.ts` ("cancelling during a retry wait"); native waits are `Task.sleep` / `delay`, which cancellation ends at once.

@@ -1,4 +1,4 @@
-// Verifies: REQ-ERR-001 REQ-ERR-004 REQ-ERR-005 REQ-ROB-010 REQ-LOAD-001
+// Verifies: REQ-ERR-001 REQ-ERR-004 REQ-ERR-010 REQ-ERR-011 REQ-ERR-005 REQ-ROB-010 REQ-LOAD-001
 //! The feedback catalogue through the UniFFI export surface (same fixture as rust-core).
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
@@ -116,6 +116,7 @@ fn presentation_json(p: TranPresentation) -> Value {
         TranPresentation::Silent => serde_json::json!({ "kind": "silent" }),
         TranPresentation::Inline => serde_json::json!({ "kind": "inline" }),
         TranPresentation::Banner => serde_json::json!({ "kind": "banner" }),
+        TranPresentation::Screen => serde_json::json!({ "kind": "screen" }),
         TranPresentation::Dialog { destructive } => {
             serde_json::json!({ "kind": "dialog", "destructive": destructive })
         }

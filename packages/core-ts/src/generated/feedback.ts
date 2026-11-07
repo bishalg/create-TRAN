@@ -16,12 +16,16 @@ export type ErrorCode =
   | 'request.cancelled'
   | 'route.not_found'
   | 'route.method_not_allowed'
+  | 'auth.session_expired'
+  | 'auth.forbidden'
+  | 'request.conflict'
   | 'server.rate_limited'
   | 'server.internal'
   | 'server.unavailable'
   | 'network.offline'
   | 'network.timeout'
-  | 'client.unexpected';
+  | 'client.unexpected'
+  | 'client.render_failed';
 
 export type UserAction =
   | 'sign_out'
@@ -39,7 +43,8 @@ export type Presentation =
   | { kind: 'inline' }
   | { kind: 'banner' }
   | { kind: 'toast'; tone: ToastTone; duration: ToastDuration }
-  | { kind: 'dialog'; destructive: boolean };
+  | { kind: 'dialog'; destructive: boolean }
+  | { kind: 'screen' };
 
 export interface ErrorSpec {
   readonly code: ErrorCode;
@@ -139,6 +144,30 @@ export const ERROR_CATALOGUE: readonly ErrorSpec[] = [
     messageKey: 'errors.notFound',
   },
   {
+    code: 'auth.session_expired',
+    httpStatus: 401,
+    retryable: false,
+    logLevel: 'info',
+    presentation: { kind: 'dialog', destructive: false },
+    messageKey: 'errors.sessionExpired',
+  },
+  {
+    code: 'auth.forbidden',
+    httpStatus: 403,
+    retryable: false,
+    logLevel: 'warn',
+    presentation: { kind: 'toast', tone: 'error', duration: 'medium' },
+    messageKey: 'errors.forbidden',
+  },
+  {
+    code: 'request.conflict',
+    httpStatus: 409,
+    retryable: false,
+    logLevel: 'info',
+    presentation: { kind: 'toast', tone: 'warning', duration: 'medium' },
+    messageKey: 'errors.conflict',
+  },
+  {
     code: 'server.rate_limited',
     httpStatus: 429,
     retryable: true,
@@ -186,6 +215,14 @@ export const ERROR_CATALOGUE: readonly ErrorSpec[] = [
     presentation: { kind: 'toast', tone: 'error', duration: 'long' },
     messageKey: 'errors.unexpected',
   },
+  {
+    code: 'client.render_failed',
+    httpStatus: null,
+    retryable: false,
+    logLevel: 'error',
+    presentation: { kind: 'screen' },
+    messageKey: 'errors.renderFailed',
+  },
 ];
 
 export const ACTION_CATALOGUE: readonly ActionSpec[] = [
@@ -214,12 +251,28 @@ export const RETRY_POLICY = {
   requestTimeoutMs: 5000,
 } as const;
 
+/** At most `maxVisible` toasts; a duplicate refreshes the visible one (REQ-ERR-012). */
+export const TOAST_POLICY = {
+  maxVisible: 3,
+} as const;
+
+/** While a banner is up, probe health after `firstProbeMs`, doubling to `maxProbeMs` (REQ-ERR-013). */
+export const RECOVERY_POLICY = {
+  firstProbeMs: 5000,
+  maxProbeMs: 60000,
+} as const;
+
 /** Rust's `code_for_http_status` over 400–599; any other status is `server.internal`. */
 export const STATUS_FALLBACK: readonly { from: number; to: number; code: ErrorCode }[] = [
-  { from: 400, to: 403, code: 'request.malformed' },
+  { from: 400, to: 400, code: 'request.malformed' },
+  { from: 401, to: 401, code: 'auth.session_expired' },
+  { from: 402, to: 402, code: 'request.malformed' },
+  { from: 403, to: 403, code: 'auth.forbidden' },
   { from: 404, to: 404, code: 'route.not_found' },
   { from: 405, to: 405, code: 'route.method_not_allowed' },
-  { from: 406, to: 412, code: 'request.malformed' },
+  { from: 406, to: 408, code: 'request.malformed' },
+  { from: 409, to: 409, code: 'request.conflict' },
+  { from: 410, to: 412, code: 'request.malformed' },
   { from: 413, to: 413, code: 'request.too_large' },
   { from: 414, to: 414, code: 'request.malformed' },
   { from: 415, to: 415, code: 'request.unsupported_media_type' },

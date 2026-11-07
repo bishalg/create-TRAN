@@ -8,5 +8,7 @@
   },
   "cancel": "रद्द करें",
   "dismiss": "बंद करें",
-  "notifications": "सूचनाएँ"
+  "notifications": "सूचनाएँ",
+  "notNow": "अभी नहीं",
+  "reload": "दोबारा लोड करें"
 }

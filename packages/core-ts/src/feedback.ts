@@ -23,6 +23,7 @@ import {
 } from './generated/feedback.js';
 import type { TranStringKey } from './generated/keys.js';
 import { VoteEligibilityValidationError } from './voting.js';
+import { isReportedLogLevel, reportFailure } from './resilience.js';
 
 export {
   ACTION_CATALOGUE,
@@ -108,9 +109,11 @@ export class TranRequestError extends Error {
     message: string,
     public readonly status: number | null = null,
     requestId?: string,
-    public readonly retryAfterMs: number | null = null
+    public readonly retryAfterMs: number | null = null,
+    /** The thrown value behind a client-side failure, for the reporter's stack (REQ-ERR-014). */
+    cause?: unknown
   ) {
-    super(message);
+    super(message, cause === undefined ? undefined : { cause });
     this.name = 'TranRequestError';
     // A code this build does not know must not make the error handler throw (REQ-ROB-005).
     this.code = specsByCode.has(code) ? code : 'client.unexpected';
@@ -142,7 +145,11 @@ function classifyKnown(err: unknown): TranRequestError {
   // Anything else — a TypeError included — is a bug in the client, never "offline".
   return new TranRequestError(
     'client.unexpected',
-    err instanceof Error ? err.message : String(err)
+    err instanceof Error ? err.message : String(err),
+    null,
+    undefined,
+    null,
+    err
   );
 }
 
@@ -162,17 +169,32 @@ export function classifyError(err: unknown): TranRequestError {
 export interface RetryOptions {
   /** Only idempotent requests are retried; the eligibility check is a pure computation. */
   idempotent: boolean;
-  sleep?: (ms: number) => Promise<void>;
+  /** The caller's cancellation; it also ends a backoff wait at once (REQ-ERR-015). */
+  signal?: AbortSignal;
+  sleep?: (ms: number, signal?: AbortSignal) => Promise<void>;
   /** `[0, 1)`; injected so the schedule is deterministic in tests. */
   random?: () => number;
   onRetry?: (error: TranRequestError, retry: number, delayMs: number) => void;
 }
 
-const realSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+const realSleep = (ms: number, signal?: AbortSignal) =>
+  new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer);
+        reject(signal.reason);
+      },
+      { once: true }
+    );
+  });
+
+const cancelled = () => new TranRequestError('request.cancelled', 'cancelled during retry wait');
 
 /** Runs `call` up to `RETRY_POLICY.maxAttempts` times; throws the last failure, classified. */
 export async function withRetry<T>(call: () => Promise<T>, options: RetryOptions): Promise<T> {
-  const { idempotent, sleep = realSleep, random = Math.random, onRetry } = options;
+  const { idempotent, signal, sleep = realSleep, random = Math.random, onRetry } = options;
   const attempt = async (n: number): Promise<T> => {
     try {
       return await call();
@@ -181,8 +203,13 @@ export async function withRetry<T>(call: () => Promise<T>, options: RetryOptions
       const canRetry = idempotent && error.spec.retryable && n < RETRY_POLICY.maxAttempts;
       if (!canRetry) throw error;
       const delay = error.retryAfterMs ?? retryDelayMs(n, random());
+      if (signal?.aborted) throw cancelled();
       onRetry?.(error, n, delay);
-      await sleep(delay);
+      try {
+        await (signal ? sleep(delay, signal) : sleep(delay));
+      } catch {
+        throw cancelled();
+      }
       return attempt(n + 1);
     }
   };
@@ -202,4 +229,10 @@ export function logFailure(error: TranRequestError, logger: FeedbackLogger = con
     request_id: error.requestId,
     detail: error.message,
   });
+  if (isReportedLogLevel(error.spec.logLevel)) {
+    reportFailure(
+      { code: error.code, status: error.status, request_id: error.requestId },
+      error.cause
+    );
+  }
 }

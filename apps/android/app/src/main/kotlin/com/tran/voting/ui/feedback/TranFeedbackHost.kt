@@ -1,11 +1,14 @@
 package com.tran.voting.ui.feedback
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -27,29 +30,37 @@ import kotlinx.coroutines.delay
 fun TranFeedbackHost(feedback: TranFeedback, content: @Composable () -> Unit) {
     Box(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
         content()
-        feedback.toast?.let { toast ->
-            LaunchedEffect(toast.id) {
-                delay(toast.durationMs)
-                if (feedback.toast?.id == toast.id) feedback.dismissToast()
+        // Oldest first, at most `toastPolicy().maxVisible`; a repeat restarts its timer through
+        // `generation` instead of stacking (REQ-ERR-012).
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(TranSpace.md),
+            verticalArrangement = Arrangement.spacedBy(TranSpace.sm),
+        ) {
+            feedback.toasts.forEach { toast ->
+                key(toast.id) {
+                    LaunchedEffect(toast.id, toast.generation) {
+                        delay(toast.durationMs)
+                        feedback.dismissToast(toast.id)
+                    }
+                    TranToast(
+                        tone = toast.tone,
+                        message = stringResource(toast.messageRes),
+                        reference = toast.requestId?.let { stringResource(TranStrings.Errors.reference, it) },
+                        dismissLabel = stringResource(TranStrings.Common.dismiss),
+                        onDismiss = { feedback.dismissToast(toast.id) },
+                    )
+                }
             }
-            TranToast(
-                tone = toast.tone,
-                message = stringResource(toast.messageRes),
-                reference = toast.requestId?.let { stringResource(TranStrings.Errors.reference, it) },
-                dismissLabel = stringResource(TranStrings.Common.dismiss),
-                onDismiss = feedback::dismissToast,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .navigationBarsPadding()
-                    .padding(TranSpace.md),
-            )
         }
         feedback.confirmation?.let { pending ->
             TranDialog(
                 title = stringResource(pending.titleRes),
                 message = stringResource(pending.bodyRes),
                 confirmLabel = stringResource(pending.confirmRes),
-                cancelLabel = stringResource(TranStrings.Common.cancel),
+                cancelLabel = stringResource(pending.cancelRes),
                 destructive = pending.destructive,
                 onConfirm = pending.onConfirm,
                 onCancel = feedback::cancelConfirmation,

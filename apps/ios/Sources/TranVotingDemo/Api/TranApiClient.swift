@@ -181,6 +181,11 @@ struct TranApiClient {
         }
     }
 
+    /// One health request without retries: the recovery probe's question (REQ-ERR-013).
+    func probeHealth() async throws {
+        try await send(path: "/api/health", method: "GET", body: nil, countryCode: nil)
+    }
+
     /// A pure computation on the server, so it is safe to retry.
     func confirmEligibility(age: UInt16, countryCode: String) async throws {
         let body = Data("{\"age\":\(age)}".utf8)

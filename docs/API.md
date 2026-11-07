@@ -178,7 +178,8 @@ Every failure — from any route, an unknown route (`404`) or a wrong method (`4
   correlate logs across services; anything else is replaced. Clients apply the same rule to the id they read back and
   drop one that does not match, because they log it and show it (REQ-ROB-010).
 - **`retryable`** says whether an idempotent request may be retried. A body without `code` (a proxy, an old server)
-  is classified by status: `429` rate limited, `502`–`504` unavailable, other `4xx` malformed, other `5xx` internal.
+  is classified by status: `401` session expired, `403` forbidden, `409` conflict, `429` rate limited, `502`–`504`
+  unavailable, other `4xx` malformed, other `5xx` internal.
 
 The catalogue lives in [`crates/rust-core/src/feedback.rs`](../crates/rust-core/src/feedback.rs) and is pinned by
 [`fixtures/feedback.json`](../fixtures/feedback.json); TypeScript, Swift and Kotlin read generated copies
@@ -196,12 +197,16 @@ The catalogue lives in [`crates/rust-core/src/feedback.rs`](../crates/rust-core/
 | `request.cancelled`               | —    | no    | `debug` | nothing (silent)                  |
 | `route.not_found`                 | 404  | no    | `warn`  | error toast, 5 s                  |
 | `route.method_not_allowed`        | 405  | no    | `warn`  | error toast, 5 s                  |
+| `auth.session_expired`            | 401  | no    | `info`  | dialog: Sign in again / Not now   |
+| `auth.forbidden`                  | 403  | no    | `warn`  | error toast, 5 s                  |
+| `request.conflict`                | 409  | no    | `info`  | warning toast, 5 s                |
 | `server.rate_limited`             | 429  | yes   | `warn`  | warning toast, 5 s                |
 | `server.internal`                 | 500  | yes   | `error` | error toast, 10 s, with reference |
 | `server.unavailable`              | 503  | yes   | `warn`  | banner until a call succeeds      |
 | `network.offline`                 | —    | yes   | `info`  | banner until a call succeeds      |
 | `network.timeout`                 | —    | yes   | `info`  | banner until a call succeeds      |
 | `client.unexpected`               | —    | no    | `error` | error toast, 10 s                 |
+| `client.render_failed`            | —    | no    | `error` | full-page screen + Reload (web)   |
 
 `—` means the client observes it without an HTTP answer.
 
@@ -243,16 +248,38 @@ One failure, one event: `request failed` with `code`, `status`, `request_id` (th
 | A failure someone may need to report | **error toast**, long (10 s) + ref. | `500`, with `request_id`      |
 | A condition that is still true       | **banner** — until it clears        | the API is unreachable        |
 | An action that destroys state        | **dialog** — Cancel is the default  | sign out                      |
+| The user must decide before going on | **dialog** — non-destructive        | session expired (`401`)       |
+| The screen itself is broken          | **screen** — full page + Reload     | a render error (web only)     |
 
-Toasts never take focus, pause while hovered or focused, and can be dismissed. Background calls the user did not
-start (the health check) are logged and may raise a banner, but never toast.
+Choose the lowest presentation that lets the user act: silent < inline < toast < banner < dialog < screen
+([ADR-0036](./adr/0036-crashes-auth-and-recovery-in-the-error-policy.md)).
+
+Toasts never take focus, pause while hovered or focused, and can be dismissed. At most **3** are visible; the same
+message and tone again restarts the visible toast instead of stacking a copy, and a fourth evicts the oldest
+(REQ-ERR-012). Background calls the user did not start (the health check) are logged and may raise a banner, but
+never toast.
+
+### Recovery, crashes and reporting (REQ-ERR-011, REQ-ERR-013, REQ-ERR-014)
+
+- **A banner recovers by itself.** While one is up, the app probes `/api/health` once (no retries) after 5 s, then
+  10 s, 20 s, 40 s, capped at 60 s — and at once when the browser fires `online`, the tab becomes visible, the iOS app
+  returns to the foreground / `NWPathMonitor` sees a network, or Android's default network returns. The first answer
+  clears the banner. Web: `startRecovery` in `@tran/core`.
+- **Crashes.** On the web one `CrashBoundary` turns a render error into `client.render_failed` (the `screen`
+  presentation), and `window` `error` / `unhandledrejection` become `client.unexpected` toasts. iOS and Android report
+  an uncaught exception, then let the previous handler end the process: a broken native view tree is not recoverable.
+- **Reporting.** `error` means "a human must look": those failures, and only those, go to one reporter with exactly the
+  `logEvent` fields (`setErrorReporter` on the web, `TranReporting.sink` on iOS and Android). The template installs
+  none, so nothing leaves the device until you plug in Sentry, Crashlytics or your own endpoint. Only `client.*` codes
+  carry the thrown value, for its stack.
 
 ### Retries (REQ-ERR-005)
 
 Clients retry only **idempotent** requests that fail with a **retryable** code: at most **3 attempts**, waiting
 `half + random × half` ms with `half = min(2000, 200 × 2^(retry−1)) / 2`, or the server's `Retry-After` seconds
 (whole seconds only — `+1` or `1.5` are ignored — capped at 2 s); each attempt times out after 5 s. When the attempts are spent the app falls back — the eligibility
-verdict comes from the device rules — so a flaky server never leaves the user at a dead end.
+verdict comes from the device rules — so a flaky server never leaves the user at a dead end. A caller's cancellation
+during a backoff wait ends the call at once as `request.cancelled` (pass `signal` to `withRetry`, REQ-ERR-015).
 
 ```ts
 import { classifyError, withRetry } from '@tran/core';

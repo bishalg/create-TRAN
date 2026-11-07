@@ -70,6 +70,7 @@ targets:
       - Sources/TranVotingDemo/TranMotion.swift
       - Sources/TranVotingDemo/AuthSession.swift
       - Sources/TranVotingDemo/Feedback/TranFeedback.swift
+      - Sources/TranVotingDemo/Feedback/TranReporting.swift
     dependencies:
       - target: TranVotingDemo
     settings:

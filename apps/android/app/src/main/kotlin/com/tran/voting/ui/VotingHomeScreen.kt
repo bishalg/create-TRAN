@@ -18,10 +18,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.tran.voting.api.RecoveryProbe
 import com.tran.voting.api.ServerConfirmation
 import com.tran.voting.api.TranApiClient
 import com.tran.voting.api.TranApiStatus
 import com.tran.voting.api.TranRequestFailure
+import com.tran.voting.api.listenForConnectivity
 import com.tran.voting.api.tranApiStatusFrom
 import com.tran.voting.generated.TranSpace
 import com.tran.voting.generated.TranStrings
@@ -42,6 +47,7 @@ import com.tran.voting.ui.atoms.TranTextVariant
 import com.tran.voting.ui.feedback.LocalTranFeedback
 import com.tran.voting.ui.feedback.TranFeedback
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 import uniffi.tran_uniffi.TranPresentation
 import uniffi.tran_uniffi.TranUserAction
 import uniffi.tran_uniffi.TranValidationException
@@ -83,6 +89,34 @@ fun VotingHomeScreen(
     // A background call the user did not start: log it, never toast.
     LaunchedEffect(Unit) {
         record(attempt { api.checkHealth() }?.also(feedback::log))
+    }
+
+    // The banner recovers by itself: probe on the Rust schedule, and at once when the network
+    // returns or the app comes back to the foreground (REQ-ERR-013).
+    val recovery = remember(scope) { RecoveryProbe(scope) }
+    val offline = banner != null
+    LaunchedEffect(offline) {
+        if (offline) {
+            recovery.start(probe = { api.probeHealth() }, onRecovered = { record(null) })
+        } else {
+            recovery.stop()
+        }
+    }
+    DisposableEffect(recovery) {
+        // The callback runs on a binder thread; the probe lives on the main thread.
+        val stopListening = listenForConnectivity(context) { scope.launch { recovery.nudge() } }
+        onDispose {
+            stopListening()
+            recovery.stop()
+        }
+    }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle, recovery) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) recovery.nudge()
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
     }
 
     TranScreen(

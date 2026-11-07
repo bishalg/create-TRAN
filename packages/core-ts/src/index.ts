@@ -5,3 +5,5 @@ export * from './i18n.js';
 export * from './voting.js';
 export * from './navigation.js';
 export * from './feedback.js';
+export * from './resilience.js';
+export * from './recovery.js';

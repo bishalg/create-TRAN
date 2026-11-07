@@ -5,7 +5,9 @@
     <string name="common_brand">TRAN</string>
     <string name="common_cancel">रद्द करें</string>
     <string name="common_dismiss">बंद करें</string>
+    <string name="common_not_now">अभी नहीं</string>
     <string name="common_notifications">सूचनाएँ</string>
+    <string name="common_reload">दोबारा लोड करें</string>
     <string name="common_role_citizen_voter">नागरिक मतदाता</string>
     <string name="common_role_election_auditor">चुनाव ऑडिटर</string>
     <string name="common_sign_out">साइन आउट</string>

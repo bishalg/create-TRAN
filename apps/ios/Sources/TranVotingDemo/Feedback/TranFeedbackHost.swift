@@ -10,23 +10,28 @@ struct TranFeedbackHost: ViewModifier {
         let pending = feedback.confirmation
         return content
             .overlay(alignment: .bottom) {
-                if let toast = feedback.toast {
-                    TranToast(
-                        tone: toast.tone,
-                        message: toast.message,
-                        reference: toast.reference,
-                        dismissLabel: L10n.Common.dismiss,
-                        onDismiss: feedback.dismissToast
-                    )
-                    .padding(TranSpace.md)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .task(id: toast.id) {
-                        // Toasts do not take focus, so announce them (REQ-ERR-008).
-                        AccessibilityNotification.Announcement(toast.message).post()
-                        try? await Task.sleep(nanoseconds: toast.durationMs * 1_000_000)
-                        if feedback.toast?.id == toast.id { feedback.dismissToast() }
+                // Oldest first, at most `toastPolicy().maxVisible`; a repeat restarts its timer
+                // through `generation` instead of stacking (REQ-ERR-012).
+                VStack(spacing: TranSpace.sm) {
+                    ForEach(feedback.toasts) { toast in
+                        TranToast(
+                            tone: toast.tone,
+                            message: toast.message,
+                            reference: toast.reference,
+                            dismissLabel: L10n.Common.dismiss,
+                            onDismiss: { feedback.dismissToast(toast.id) }
+                        )
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .task(id: "\(toast.id)-\(toast.generation)") {
+                            // Toasts do not take focus, so announce them (REQ-ERR-008).
+                            AccessibilityNotification.Announcement(toast.message).post()
+                            try? await Task.sleep(nanoseconds: toast.durationMs * 1_000_000)
+                            guard !Task.isCancelled else { return }
+                            feedback.dismissToast(toast.id)
+                        }
                     }
                 }
+                .padding(TranSpace.md)
             }
             .modifier(
                 TranDialog(
@@ -37,7 +42,7 @@ struct TranFeedbackHost: ViewModifier {
                     title: pending?.title ?? "",
                     message: pending?.body ?? "",
                     confirmLabel: pending?.confirmLabel ?? "",
-                    cancelLabel: L10n.Common.cancel,
+                    cancelLabel: pending?.cancelLabel ?? L10n.Common.cancel,
                     destructive: pending?.destructive ?? false,
                     onConfirm: { pending?.onConfirm() }
                 )

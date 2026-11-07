@@ -69,6 +69,14 @@ struct NavigationCoordinatorView: View {
             }
         }
         .modifier(TranFeedbackHost(feedback: feedback))
+        // An expired session asks first; "Sign in again" ends it (REQ-ERR-010).
+        .onAppear {
+            feedback.onErrorConfirmed(.authSessionExpired) {
+                withAnimation(TranMotion.animation(reduceMotion: reduceMotion)) {
+                    session = .unauthenticated
+                }
+            }
+        }
         .environment(feedback)
         // Atoms read the registry palette from the environment; appearance follows the palette's
         // own metadata (token data, not a theme-name check).

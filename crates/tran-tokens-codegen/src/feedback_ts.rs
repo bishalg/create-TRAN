@@ -4,7 +4,7 @@
 
 use rust_core::feedback::{
     code_for_http_status, ErrorCode, Presentation, ToastDuration, UserAction, VerdictSource,
-    LOADING_POLICY, LOG_EVENT, REQUEST_ID_MAX_LEN, RETRY_POLICY,
+    LOADING_POLICY, LOG_EVENT, RECOVERY_POLICY, REQUEST_ID_MAX_LEN, RETRY_POLICY, TOAST_POLICY,
 };
 
 fn presentation_ts(presentation: Presentation) -> String {
@@ -20,6 +20,7 @@ fn presentation_ts(presentation: Presentation) -> String {
         Presentation::Dialog { destructive } => {
             format!("{{ kind: 'dialog', destructive: {destructive} }}")
         }
+        Presentation::Screen => "{ kind: 'screen' }".to_string(),
     }
 }
 
@@ -110,13 +111,17 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error';\n\n\
 export type ToastTone = 'success' | 'info' | 'warning' | 'error';\n\n\
 export type ToastDuration = 'short' | 'medium' | 'long';\n\n\
 /** The one way an outcome reaches the user (REQ-ERR-006). */\n\
-export type Presentation =\n  | {{ kind: 'silent' }}\n  | {{ kind: 'inline' }}\n  | {{ kind: 'banner' }}\n  | {{ kind: 'toast'; tone: ToastTone; duration: ToastDuration }}\n  | {{ kind: 'dialog'; destructive: boolean }};\n\n\
+export type Presentation =\n  | {{ kind: 'silent' }}\n  | {{ kind: 'inline' }}\n  | {{ kind: 'banner' }}\n  | {{ kind: 'toast'; tone: ToastTone; duration: ToastDuration }}\n  | {{ kind: 'dialog'; destructive: boolean }}\n  | {{ kind: 'screen' }};\n\n\
 export interface ErrorSpec {{\n  readonly code: ErrorCode;\n  /** `null` for failures only a client can observe. */\n  readonly httpStatus: number | null;\n  readonly retryable: boolean;\n  readonly logLevel: LogLevel;\n  readonly presentation: Presentation;\n  readonly messageKey: TranStringKey;\n}}\n\n\
 export interface ActionSpec {{\n  readonly action: UserAction;\n  readonly presentation: Presentation;\n  readonly messageKey: TranStringKey;\n}}\n\n\
 export const ERROR_CATALOGUE: readonly ErrorSpec[] = [\n{errors}];\n\n\
 export const ACTION_CATALOGUE: readonly ActionSpec[] = [\n{action_rows}];\n\n\
 export const TOAST_DURATIONS_MS: Readonly<Record<ToastDuration, number>> = {{\n{durations}}};\n\n\
 export const RETRY_POLICY = {{\n  maxAttempts: {},\n  baseDelayMs: {},\n  maxDelayMs: {},\n  requestTimeoutMs: {},\n}} as const;\n\n\
+/** At most `maxVisible` toasts; a duplicate refreshes the visible one (REQ-ERR-012). */\n\
+export const TOAST_POLICY = {{\n  maxVisible: {},\n}} as const;\n\n\
+/** While a banner is up, probe health after `firstProbeMs`, doubling to `maxProbeMs` (REQ-ERR-013). */\n\
+export const RECOVERY_POLICY = {{\n  firstProbeMs: {},\n  maxProbeMs: {},\n}} as const;\n\n\
 /** Rust's `code_for_http_status` over 400–599; any other status is `server.internal`. */\n\
 export const STATUS_FALLBACK: readonly {{ from: number; to: number; code: ErrorCode }}[] = [\n{ranges}];\n\n\
 /** Rust's `is_valid_request_id`: 1–{} characters of `[A-Za-z0-9._-]` (REQ-ROB-010). */\n\
@@ -133,6 +138,9 @@ export const LOADING_POLICY: {{\n  readonly indicatorDelayMs: number;\n  readonl
         RETRY_POLICY.base_delay_ms,
         RETRY_POLICY.max_delay_ms,
         RETRY_POLICY.request_timeout_ms,
+        TOAST_POLICY.max_visible,
+        RECOVERY_POLICY.first_probe_ms,
+        RECOVERY_POLICY.max_probe_ms,
         REQUEST_ID_MAX_LEN,
         REQUEST_ID_MAX_LEN,
         LOG_EVENT.message,
@@ -166,6 +174,11 @@ mod tests {
         ));
         assert!(ts.contains("  short: 3000,"));
         assert!(ts.contains("maxAttempts: 3,"));
+        assert!(ts.contains("  | { kind: 'screen' };"));
+        assert!(ts.contains("export const TOAST_POLICY = {\n  maxVisible: 3,\n} as const;"));
+        assert!(ts.contains(
+            "export const RECOVERY_POLICY = {\n  firstProbeMs: 5000,\n  maxProbeMs: 60000,\n} as const;"
+        ));
     }
 
     #[test]

@@ -35,6 +35,8 @@ object TranStrings {
         @StringRes
         val continueAsVoter: Int = R.string.auth_continue_as_voter // auth.continueAsVoter
         @StringRes
+        val signInAgain: Int = R.string.auth_sign_in_again // auth.signInAgain
+        @StringRes
         val signOutConfirmBody: Int = R.string.auth_sign_out_confirm_body // auth.signOutConfirm.body
         @StringRes
         val signOutConfirmTitle: Int = R.string.auth_sign_out_confirm_title // auth.signOutConfirm.title
@@ -54,7 +56,11 @@ object TranStrings {
         @StringRes
         val dismiss: Int = R.string.common_dismiss // common.dismiss
         @StringRes
+        val notNow: Int = R.string.common_not_now // common.notNow
+        @StringRes
         val notifications: Int = R.string.common_notifications // common.notifications
+        @StringRes
+        val reload: Int = R.string.common_reload // common.reload
         @StringRes
         val roleCitizenVoter: Int = R.string.common_role_citizen_voter // common.role.citizenVoter
         @StringRes
@@ -140,15 +146,23 @@ object TranStrings {
         @StringRes
         val birthdateInFuture: Int = R.string.errors_birthdate_in_future // errors.birthdateInFuture
         @StringRes
+        val conflict: Int = R.string.errors_conflict // errors.conflict
+        @StringRes
         val countryInvalid: Int = R.string.errors_country_invalid // errors.countryInvalid
         @StringRes
         val dateInvalid: Int = R.string.errors_date_invalid // errors.dateInvalid
+        @StringRes
+        val forbidden: Int = R.string.errors_forbidden // errors.forbidden
         @StringRes
         val notFound: Int = R.string.errors_not_found // errors.notFound
         @StringRes
         val rateLimited: Int = R.string.errors_rate_limited // errors.rateLimited
         @StringRes
         val reference: Int = R.string.errors_reference // errors.reference
+        @StringRes
+        val renderFailed: Int = R.string.errors_render_failed // errors.renderFailed
+        @StringRes
+        val renderFailedBody: Int = R.string.errors_render_failed_body // errors.renderFailedBody
         @StringRes
         val requestCancelled: Int = R.string.errors_request_cancelled // errors.requestCancelled
         @StringRes
@@ -157,6 +171,10 @@ object TranStrings {
         val serverInternal: Int = R.string.errors_server_internal // errors.serverInternal
         @StringRes
         val serverUnavailable: Int = R.string.errors_server_unavailable // errors.serverUnavailable
+        @StringRes
+        val sessionExpired: Int = R.string.errors_session_expired // errors.sessionExpired
+        @StringRes
+        val sessionExpiredBody: Int = R.string.errors_session_expired_body // errors.sessionExpiredBody
         @StringRes
         val timeout: Int = R.string.errors_timeout // errors.timeout
         @StringRes
@@ -214,14 +232,18 @@ val feedbackMessageRes: Map<String, Int> = mapOf(
     "eligibility.serverCheckDone" to R.string.eligibility_server_check_done,
     "errors.ageOutOfRange" to R.string.errors_age_out_of_range,
     "errors.birthdateInFuture" to R.string.errors_birthdate_in_future,
+    "errors.conflict" to R.string.errors_conflict,
     "errors.countryInvalid" to R.string.errors_country_invalid,
     "errors.dateInvalid" to R.string.errors_date_invalid,
+    "errors.forbidden" to R.string.errors_forbidden,
     "errors.notFound" to R.string.errors_not_found,
     "errors.rateLimited" to R.string.errors_rate_limited,
+    "errors.renderFailed" to R.string.errors_render_failed,
     "errors.requestCancelled" to R.string.errors_request_cancelled,
     "errors.requestMalformed" to R.string.errors_request_malformed,
     "errors.serverInternal" to R.string.errors_server_internal,
     "errors.serverUnavailable" to R.string.errors_server_unavailable,
+    "errors.sessionExpired" to R.string.errors_session_expired,
     "errors.timeout" to R.string.errors_timeout,
     "errors.unexpected" to R.string.errors_unexpected,
 )

@@ -1,6 +1,6 @@
-// Verifies: REQ-WEB-003 REQ-WEB-006 REQ-ERR-005 REQ-ERR-006 REQ-ERR-008 REQ-ROB-006
+// Verifies: REQ-WEB-003 REQ-WEB-006 REQ-ERR-005 REQ-ERR-006 REQ-ERR-008 REQ-ERR-013 REQ-ROB-006
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { TranApiClient, type TranRequestError } from '@tran/core';
+import { RECOVERY_POLICY, TranApiClient, type TranRequestError } from '@tran/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_API_URL, resolveApiBaseUrl, useTranApi } from './useTranApi.js';
 import type { Feedback } from '../feedback/FeedbackProvider.js';
@@ -14,6 +14,7 @@ function fakeFeedback() {
     acknowledge: vi.fn(),
     confirm: vi.fn(async () => true),
     report: vi.fn((error: TranRequestError) => error.spec.presentation),
+    onErrorConfirmed: vi.fn(() => () => {}),
   } satisfies Feedback;
 }
 
@@ -115,6 +116,83 @@ describe('useTranApi: startup', () => {
     const { result } = renderHook(() => useTranApi({ feedback: fakeFeedback() }));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(String(api.callsTo('/api/health')[0][0])).toBe(`${DEFAULT_API_URL}/api/health`);
+  });
+});
+
+describe('useTranApi: the offline banner recovers by itself (REQ-ERR-013)', () => {
+  /** Offline after startup; then the server comes back. Returns the health call count so far. */
+  async function offlineThenBack() {
+    const ctx = await ready({ down: true });
+    ctx.api.fetchFn.mockImplementation(createFakeApi().fetchFn);
+    return { ...ctx, before: ctx.api.callsTo('/api/health').length };
+  }
+
+  it('probes health on the recovery schedule and clears the banner when it answers', async () => {
+    // Installed first so the probe timer is a fake one; real time still flows for `waitFor`.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const { api, result, before } = await offlineThenBack();
+      await act(async () => {
+        // Half way: real time also moves the fake clock a little, so leave a wide margin.
+        await vi.advanceTimersByTimeAsync(RECOVERY_POLICY.firstProbeMs / 2);
+      });
+      expect(api.callsTo('/api/health')).toHaveLength(before);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(RECOVERY_POLICY.firstProbeMs / 2);
+      });
+      await waitFor(() => expect(result.current.isOffline).toBe(false));
+      expect(result.current.health?.overall_status).toBe('HEALTHY');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('probes at once when the browser reports it is online again', async () => {
+    const { result } = await offlineThenBack();
+    act(() => {
+      window.dispatchEvent(new Event('online'));
+    });
+    await waitFor(() => expect(result.current.isOffline).toBe(false));
+  });
+
+  it('probes at once when the tab becomes visible, not when it is hidden', async () => {
+    const { api, result, before } = await offlineThenBack();
+    const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(api.callsTo('/api/health')).toHaveLength(before);
+    visibility.mockReturnValue('visible');
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await waitFor(() => expect(result.current.isOffline).toBe(false));
+  });
+
+  it('a failed probe keeps the banner and is not retried', async () => {
+    const { api, result } = await ready({ down: true });
+    const before = api.callsTo('/api/health').length;
+    await act(async () => {
+      window.dispatchEvent(new Event('online'));
+      await new Promise((r) => setTimeout(r, 20));
+    });
+    expect(api.callsTo('/api/health')).toHaveLength(before + 1);
+    expect(result.current.isOffline).toBe(true);
+  });
+
+  it('stops probing once the screen goes away', async () => {
+    const { api, unmount, before } = await offlineThenBack();
+    unmount();
+    window.dispatchEvent(new Event('online'));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(api.callsTo('/api/health')).toHaveLength(before);
+  });
+
+  it('does not probe while online', async () => {
+    const { api } = await ready();
+    window.dispatchEvent(new Event('online'));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(api.callsTo('/api/health')).toHaveLength(1);
   });
 });
 

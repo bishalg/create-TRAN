@@ -15,6 +15,7 @@ async function ready() {
     acknowledge: vi.fn(),
     confirm: vi.fn(async () => true),
     report: vi.fn((error: TranRequestError) => error.spec.presentation),
+    onErrorConfirmed: vi.fn(() => () => {}),
   } satisfies Feedback;
   const hook = renderHook(() =>
     useTranApi({ feedback, baseUrl: 'http://api.test', retry: instant })

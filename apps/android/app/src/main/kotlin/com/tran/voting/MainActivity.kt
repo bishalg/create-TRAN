@@ -28,13 +28,17 @@ import com.tran.voting.ui.destination
 import com.tran.voting.ui.feedback.LocalTranFeedback
 import com.tran.voting.ui.feedback.TranFeedback
 import com.tran.voting.ui.feedback.TranFeedbackHost
+import com.tran.voting.ui.feedback.TranReporting
 import uniffi.tran_uniffi.TranAppDestination
+import uniffi.tran_uniffi.TranErrorCode
 import uniffi.tran_uniffi.TranUserAction
 import uniffi.tran_uniffi.TranUserRole
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Uncaught exceptions are reported, then end the app as before (REQ-ERR-011).
+        TranReporting.installUncaughtExceptionHandler()
         enableEdgeToEdge()
         setContent {
             NavigationCoordinator()
@@ -63,6 +67,10 @@ fun NavigationCoordinator(
     val palette = TranBrandTokens.palette(theme)
     // One feedback center for the app: toasts and confirmations render above every screen.
     val feedback = remember { TranFeedback() }
+    // An expired session asks first; "Sign in again" ends it (REQ-ERR-010).
+    LaunchedEffect(feedback) {
+        feedback.onErrorConfirmed(TranErrorCode.AUTH_SESSION_EXPIRED) { session = AuthSession.Unauthenticated }
+    }
     // Destructive, so the catalogue asks first (REQ-ERR-007).
     val signOut = { feedback.confirm(TranUserAction.SIGN_OUT) { session = AuthSession.Unauthenticated } }
 

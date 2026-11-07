@@ -14,7 +14,10 @@ struct VotingHomeView: View {
     @State private var confirmation = ServerConfirmation()
     /// Whether `resultText` is a device verdict, so the source caption has something to describe.
     @State private var hasVerdict = false
+    /// Re-asks the server while the banner is up (REQ-ERR-013).
+    @State private var recovery = RecoveryProbe()
     @Environment(TranFeedback.self) private var feedback
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var onSignOut: (() -> Void)? = nil
     var api: TranApiClient = TranApiClient()
@@ -97,8 +100,28 @@ struct VotingHomeView: View {
         .task {
             await refreshApiStatus()
         }
-        // Leaving the screen abandons the confirmation; its late answer is silent (REQ-LOAD-004).
-        .onDisappear { confirmation.cancel() }
+        // The banner recovers by itself: probe on the Rust schedule, and at once when the network
+        // returns or the app comes back to the foreground (REQ-ERR-013).
+        .onChange(of: banner != nil) { _, offline in
+            if offline {
+                let api = api
+                recovery.start(probe: { try await api.probeHealth() }, onRecovered: { succeeded() })
+            } else {
+                recovery.stop()
+            }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { recovery.nudge() }
+        }
+        .task {
+            for await _ in TranConnectivity.becameReachable() { recovery.nudge() }
+        }
+        // Leaving the screen abandons the confirmation and the recovery; their late answers are
+        // silent (REQ-LOAD-004).
+        .onDisappear {
+            confirmation.cancel()
+            recovery.stop()
+        }
     }
 
     private var statusLabel: String {

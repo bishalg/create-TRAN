@@ -1,4 +1,4 @@
-// Verifies: REQ-ERR-001 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-009 REQ-ROB-007 REQ-LOAD-001
+// Verifies: REQ-ERR-001 REQ-ERR-010 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-009 REQ-ROB-007 REQ-LOAD-001
 import XCTest
 
 /// `fixtures/feedback.json` through the UniFFI surface, plus the iOS feedback center that applies it.
@@ -21,6 +21,7 @@ final class FeedbackParityTests: XCTestCase {
         case .inline: return ["kind": "inline"]
         case .banner: return ["kind": "banner"]
         case let .dialog(destructive): return ["kind": "dialog", "destructive": destructive]
+        case .screen: return ["kind": "screen"]
         case let .toast(tone, duration):
             return ["kind": "toast", "tone": "\(tone)", "duration": "\(duration)"]
         }

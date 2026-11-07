@@ -4,6 +4,7 @@ import {
   evaluateVoteEligibilityOffline,
   logFailure,
   type OfflineEligibilityResult,
+  startRecovery,
   type Presentation,
   type RetryOptions,
   TranApiClient,
@@ -225,6 +226,28 @@ export function useTranApi({ feedback, client: injected, baseUrl, retry }: UseTr
   useEffect(() => {
     void fetchStatus();
   }, [fetchStatus]);
+
+  // While the connectivity banner is up, ask whether the server is back: on the shared schedule,
+  // and at once when the browser is online again or the tab is visible again (REQ-ERR-013).
+  const offline = state.banner !== null;
+  useEffect(() => {
+    if (!offline) return;
+    const loop = startRecovery({
+      probe: (signal) => client.getHealth({ signal }),
+      onRecovered: () => void fetchStatus(),
+    });
+    const nudge = () => loop.nudge();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') loop.nudge();
+    };
+    window.addEventListener('online', nudge);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      loop.stop();
+      window.removeEventListener('online', nudge);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [offline, client, fetchStatus]);
 
   return {
     ...state,

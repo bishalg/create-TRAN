@@ -9,6 +9,8 @@ import {
 } from 'react';
 import {
   actionSpec,
+  admitToast,
+  type ErrorCode,
   logFailure,
   type Presentation,
   type SupportedLocale,
@@ -23,22 +25,27 @@ import { TranDialog } from '../ui/TranDialog.js';
 import { TranToast, TranToastRegion } from '../ui/TranToast.js';
 
 /**
- * The web's one implementation of the Rust feedback policy (ADR-0028). Features say *what*
- * happened; the catalogue decides *how* the user hears about it.
+ * The web's one implementation of the Rust feedback policy (ADR-0028, ADR-0036). Features say
+ * *what* happened; the catalogue decides *how* the user hears about it.
  */
 export interface Feedback {
   /** Shows an action's acknowledgement when the catalogue makes it a toast (REQ-ERR-008). */
   acknowledge(action: UserAction): void;
   /** Resolves `true` once confirmed — immediately when the catalogue asks for no dialog (REQ-ERR-007). */
   confirm(action: UserAction): Promise<boolean>;
-  /** Logs the failure; shows it when it is a toast. Returns the presentation so the caller can
-   * render inline and banner states, which belong to the screen (REQ-ERR-006). */
+  /** Logs the failure; shows it when it is a toast or a dialog. Returns the presentation so the
+   * caller can render inline and banner states, which belong to the screen (REQ-ERR-006). */
   report(error: TranRequestError): Presentation;
+  /** Runs `handler` when the user confirms the dialog a failure with `code` opened (REQ-ERR-010).
+   * Returns the unsubscribe function. */
+  onErrorConfirmed(code: ErrorCode, handler: () => void): () => void;
 }
 
 export interface DialogCopy {
   body: TranStringKey;
   confirm: TranStringKey;
+  /** Defaults to `common.cancel`. */
+  cancel?: TranStringKey;
 }
 
 /**
@@ -50,17 +57,31 @@ export const DIALOG_COPY: Record<UserAction, DialogCopy | null> = {
   server_check_succeeded: null,
 };
 
+/** Dialog copy for failures the catalogue presents as a dialog; a test keeps it complete. */
+export const ERROR_DIALOG_COPY: Partial<Record<ErrorCode, DialogCopy>> = {
+  'auth.session_expired': {
+    body: 'errors.sessionExpiredBody',
+    confirm: 'auth.signInAgain',
+    cancel: 'common.notNow',
+  },
+};
+
 interface ToastItem {
   id: number;
+  /** Bumped when a duplicate arrives, so the toast remounts and its timer restarts (REQ-ERR-012). */
+  generation: number;
   tone: ToastTone;
   messageKey: TranStringKey;
   requestId?: string;
   durationMs: number;
 }
 
-interface PendingConfirm {
-  action: UserAction;
-  resolve: (confirmed: boolean) => void;
+/** The one dialog on screen, whatever opened it: an action to confirm or a failure that asks. */
+interface PendingDialog {
+  titleKey: TranStringKey;
+  copy: DialogCopy;
+  destructive: boolean;
+  settle: (confirmed: boolean) => void;
 }
 
 const FeedbackContext = createContext<Feedback | null>(null);
@@ -78,21 +99,35 @@ export interface FeedbackProviderProps {
 
 export function FeedbackProvider({ locale, children }: FeedbackProviderProps) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
-  const [pending, setPending] = useState<PendingConfirm | null>(null);
+  const [pending, setPending] = useState<PendingDialog | null>(null);
   const nextId = useRef(0);
+  const handlers = useRef(new Map<ErrorCode, Set<() => void>>());
 
   const show = useCallback(
     (presentation: Presentation, messageKey: TranStringKey, requestId?: string) => {
       if (presentation.kind !== 'toast') return;
-      nextId.current += 1;
-      const item: ToastItem = {
-        id: nextId.current,
-        tone: presentation.tone,
-        messageKey,
-        requestId,
-        durationMs: TOAST_DURATIONS_MS[presentation.duration],
-      };
-      setToasts((current) => [...current, item]);
+      const { tone } = presentation;
+      const durationMs = TOAST_DURATIONS_MS[presentation.duration];
+      setToasts((current) => {
+        const admission = admitToast(current, { messageKey, tone });
+        if (admission.kind === 'refresh') {
+          return current.map((toast, index) =>
+            index === admission.index
+              ? { ...toast, generation: toast.generation + 1, requestId, durationMs }
+              : toast
+          );
+        }
+        nextId.current += 1;
+        const item: ToastItem = {
+          id: nextId.current,
+          generation: 0,
+          tone,
+          messageKey,
+          requestId,
+          durationMs,
+        };
+        return [...current.slice(admission.evictOldest), item];
+      });
     },
     []
   );
@@ -108,25 +143,50 @@ export function FeedbackProvider({ locale, children }: FeedbackProviderProps) {
         show(spec.presentation, spec.messageKey);
       },
       confirm(action) {
-        if (actionSpec(action).presentation.kind !== 'dialog') return Promise.resolve(true);
-        return new Promise((resolve) => setPending({ action, resolve }));
+        const { presentation, messageKey } = actionSpec(action);
+        if (presentation.kind !== 'dialog') return Promise.resolve(true);
+        return new Promise((resolve) =>
+          setPending({
+            titleKey: messageKey,
+            // A test keeps DIALOG_COPY complete for every catalogue dialog.
+            copy: DIALOG_COPY[action]!,
+            destructive: presentation.destructive,
+            settle: resolve,
+          })
+        );
       },
       report(error) {
         logFailure(error);
-        show(error.spec.presentation, error.spec.messageKey, error.requestId);
-        return error.spec.presentation;
+        const { presentation, messageKey } = error.spec;
+        show(presentation, messageKey, error.requestId);
+        if (presentation.kind === 'dialog') {
+          const { code } = error;
+          setPending({
+            titleKey: messageKey,
+            // A test keeps ERROR_DIALOG_COPY complete for every catalogue dialog.
+            copy: ERROR_DIALOG_COPY[code]!,
+            destructive: presentation.destructive,
+            settle: (confirmed) => {
+              if (confirmed) handlers.current.get(code)?.forEach((handler) => handler());
+            },
+          });
+        }
+        return presentation;
+      },
+      onErrorConfirmed(code, handler) {
+        const set = handlers.current.get(code) ?? new Set();
+        set.add(handler);
+        handlers.current.set(code, set);
+        return () => set.delete(handler);
       },
     }),
     [show]
   );
 
   const settle = (confirmed: boolean) => {
-    pending?.resolve(confirmed);
+    pending?.settle(confirmed);
     setPending(null);
   };
-
-  const pendingSpec = pending && actionSpec(pending.action);
-  const pendingCopy = pending && DIALOG_COPY[pending.action];
 
   return (
     <FeedbackContext.Provider value={feedback}>
@@ -134,7 +194,7 @@ export function FeedbackProvider({ locale, children }: FeedbackProviderProps) {
       <TranToastRegion label={t('common.notifications', locale)}>
         {toasts.map((toast) => (
           <TranToast
-            key={toast.id}
+            key={`${toast.id}:${toast.generation}`}
             tone={toast.tone}
             message={t(toast.messageKey, locale)}
             detail={toast.requestId && t('errors.reference', locale, { id: toast.requestId })}
@@ -144,13 +204,13 @@ export function FeedbackProvider({ locale, children }: FeedbackProviderProps) {
           />
         ))}
       </TranToastRegion>
-      {pendingSpec && pendingCopy && pendingSpec.presentation.kind === 'dialog' && (
+      {pending && (
         <TranDialog
-          title={t(pendingSpec.messageKey, locale)}
-          body={t(pendingCopy.body, locale)}
-          confirmLabel={t(pendingCopy.confirm, locale)}
-          cancelLabel={t('common.cancel', locale)}
-          destructive={pendingSpec.presentation.destructive}
+          title={t(pending.titleKey, locale)}
+          body={t(pending.copy.body, locale)}
+          confirmLabel={t(pending.copy.confirm, locale)}
+          cancelLabel={t(pending.copy.cancel ?? 'common.cancel', locale)}
+          destructive={pending.destructive}
           onConfirm={() => settle(true)}
           onCancel={() => settle(false)}
         />

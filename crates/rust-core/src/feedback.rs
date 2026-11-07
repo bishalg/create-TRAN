@@ -8,6 +8,12 @@
 
 use crate::validation::VoteValidationError;
 
+mod pressure;
+pub use pressure::{
+    admit_toast, recovery_probe_delay_ms, RecoveryPolicy, ToastAdmission, ToastKey, ToastPolicy,
+    RECOVERY_POLICY, TOAST_POLICY,
+};
+
 /// How loudly a failure is logged where it is handled.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LogLevel {
@@ -25,6 +31,12 @@ impl LogLevel {
             Self::Warn => "warn",
             Self::Error => "error",
         }
+    }
+
+    /// Whether a failure at this level also goes to the app's reporter (REQ-ERR-014): `error`
+    /// means a human must look, so only `error` is reported.
+    pub fn is_reported(self) -> bool {
+        self == Self::Error
     }
 }
 
@@ -94,6 +106,9 @@ pub enum Presentation {
     Banner,
     /// Blocking; the user must choose.
     Dialog { destructive: bool },
+    /// The view tree itself is broken: a full-page message with a reload action (REQ-ERR-011).
+    /// The last resort, and web-only — native view trees cannot be recovered.
+    Screen,
 }
 
 /// Everything the platforms need to know about one error code.
@@ -123,6 +138,12 @@ pub enum ErrorCode {
     RequestCancelled,
     RouteNotFound,
     RouteMethodNotAllowed,
+    /// `401`: the session is missing or expired; the user must sign in again (REQ-ERR-010).
+    AuthSessionExpired,
+    /// `403`: signed in, but not allowed to do this.
+    AuthForbidden,
+    /// `409`: the request clashes with the current state (someone else changed it first).
+    RequestConflict,
     ServerRateLimited,
     ServerInternal,
     ServerUnavailable,
@@ -130,6 +151,8 @@ pub enum ErrorCode {
     NetworkTimeout,
     /// A bug in the client itself; never produced by the server.
     ClientUnexpected,
+    /// Rendering failed and the screen cannot be shown (REQ-ERR-011).
+    ClientRenderFailed,
 }
 
 const fn spec(
@@ -156,7 +179,7 @@ const ERROR_TOAST: Presentation = Presentation::Toast {
 
 impl ErrorCode {
     /// Every code, in catalogue order (codegen and fixtures follow this order).
-    pub const ALL: [Self; 16] = [
+    pub const ALL: [Self; 20] = [
         Self::ValidationAgeOutOfRange,
         Self::ValidationBirthdateInFuture,
         Self::ValidationInvalidCountryCode,
@@ -167,12 +190,16 @@ impl ErrorCode {
         Self::RequestCancelled,
         Self::RouteNotFound,
         Self::RouteMethodNotAllowed,
+        Self::AuthSessionExpired,
+        Self::AuthForbidden,
+        Self::RequestConflict,
         Self::ServerRateLimited,
         Self::ServerInternal,
         Self::ServerUnavailable,
         Self::NetworkOffline,
         Self::NetworkTimeout,
         Self::ClientUnexpected,
+        Self::ClientRenderFailed,
     ];
 
     /// The wire value (`"validation.invalid_country_code"`).
@@ -188,12 +215,16 @@ impl ErrorCode {
             Self::RequestCancelled => "request.cancelled",
             Self::RouteNotFound => "route.not_found",
             Self::RouteMethodNotAllowed => "route.method_not_allowed",
+            Self::AuthSessionExpired => "auth.session_expired",
+            Self::AuthForbidden => "auth.forbidden",
+            Self::RequestConflict => "request.conflict",
             Self::ServerRateLimited => "server.rate_limited",
             Self::ServerInternal => "server.internal",
             Self::ServerUnavailable => "server.unavailable",
             Self::NetworkOffline => "network.offline",
             Self::NetworkTimeout => "network.timeout",
             Self::ClientUnexpected => "client.unexpected",
+            Self::ClientRenderFailed => "client.render_failed",
         }
     }
 
@@ -252,6 +283,24 @@ impl ErrorCode {
             Self::RouteMethodNotAllowed => {
                 spec(Some(405), false, Warn, ERROR_TOAST, "errors.notFound")
             }
+            Self::AuthSessionExpired => spec(
+                Some(401),
+                false,
+                Info,
+                Presentation::Dialog { destructive: false },
+                "errors.sessionExpired",
+            ),
+            Self::AuthForbidden => spec(Some(403), false, Warn, ERROR_TOAST, "errors.forbidden"),
+            Self::RequestConflict => spec(
+                Some(409),
+                false,
+                Info,
+                Presentation::Toast {
+                    tone: Tone::Warning,
+                    duration: ToastDuration::Medium,
+                },
+                "errors.conflict",
+            ),
             Self::ServerRateLimited => spec(
                 Some(429),
                 true,
@@ -297,6 +346,13 @@ impl ErrorCode {
                 },
                 "errors.unexpected",
             ),
+            Self::ClientRenderFailed => spec(
+                None,
+                false,
+                Error,
+                Presentation::Screen,
+                "errors.renderFailed",
+            ),
         }
     }
 }
@@ -314,8 +370,11 @@ impl From<VoteValidationError> for ErrorCode {
 /// Classifies a non-2xx response whose body carries no `code` (a proxy, an old server).
 pub fn code_for_http_status(status: u16) -> ErrorCode {
     match status {
+        401 => ErrorCode::AuthSessionExpired,
+        403 => ErrorCode::AuthForbidden,
         404 => ErrorCode::RouteNotFound,
         405 => ErrorCode::RouteMethodNotAllowed,
+        409 => ErrorCode::RequestConflict,
         413 => ErrorCode::RequestTooLarge,
         415 => ErrorCode::RequestUnsupportedMediaType,
         429 => ErrorCode::ServerRateLimited,
@@ -550,7 +609,9 @@ mod tests {
                 spec.log_level == LogLevel::Error,
                 matches!(
                     code,
-                    ErrorCode::ServerInternal | ErrorCode::ClientUnexpected
+                    ErrorCode::ServerInternal
+                        | ErrorCode::ClientUnexpected
+                        | ErrorCode::ClientRenderFailed
                 ),
                 "{code:?}"
             );

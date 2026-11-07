@@ -5,8 +5,8 @@
 
 use crate::TranValidationError;
 use rust_core::feedback::{
-    self, ErrorCode, LogLevel, Presentation, ToastDuration, Tone, UserAction, VerdictSource,
-    LOADING_POLICY, RETRY_POLICY,
+    self, ErrorCode, LogLevel, Presentation, ToastAdmission, ToastDuration, ToastKey, Tone,
+    UserAction, VerdictSource, LOADING_POLICY, RECOVERY_POLICY, RETRY_POLICY, TOAST_POLICY,
 };
 
 /// Declares the native mirror of [`ErrorCode`] and both conversions from one list, so a variant
@@ -59,6 +59,12 @@ mirror_error_codes! {
     RouteNotFound,
     /// The route exists but not for this method.
     RouteMethodNotAllowed,
+    /// `401`: the session expired; ask the user to sign in again.
+    AuthSessionExpired,
+    /// `403`: signed in, but not allowed to do this.
+    AuthForbidden,
+    /// `409`: the request clashes with the current state.
+    RequestConflict,
     /// Too many requests; retry later.
     ServerRateLimited,
     /// The server failed unexpectedly.
@@ -71,6 +77,8 @@ mirror_error_codes! {
     NetworkTimeout,
     /// A bug in the app itself.
     ClientUnexpected,
+    /// Rendering failed (web only; native apps report and end the process instead).
+    ClientRenderFailed,
 }
 
 /// How loudly to log a failure where it is handled.
@@ -131,6 +139,8 @@ pub enum TranPresentation {
         /// Style the confirm button as destructive and focus Cancel first.
         destructive: bool,
     },
+    /// The view tree is broken; a full-page message with a reload action (web only).
+    Screen,
 }
 
 /// Everything a native app needs to know about one [`TranErrorCode`].
@@ -193,6 +203,7 @@ fn presentation(p: Presentation) -> TranPresentation {
         Presentation::Inline => TranPresentation::Inline,
         Presentation::Banner => TranPresentation::Banner,
         Presentation::Dialog { destructive } => TranPresentation::Dialog { destructive },
+        Presentation::Screen => TranPresentation::Screen,
         Presentation::Toast { tone, duration } => TranPresentation::Toast {
             tone: match tone {
                 Tone::Success => TranToastTone::Success,
@@ -224,12 +235,7 @@ pub fn error_spec(code: TranErrorCode) -> TranErrorSpec {
         wire_code: core.as_str().to_string(),
         http_status: spec.http_status,
         retryable: spec.retryable,
-        log_level: match spec.log_level {
-            LogLevel::Debug => TranLogLevel::Debug,
-            LogLevel::Info => TranLogLevel::Info,
-            LogLevel::Warn => TranLogLevel::Warn,
-            LogLevel::Error => TranLogLevel::Error,
-        },
+        log_level: log_level(spec.log_level),
         presentation: presentation(spec.presentation),
         message_key: spec.message_key.to_string(),
     }
@@ -392,4 +398,127 @@ pub fn verdict_source_spec(source: TranVerdictSource) -> TranVerdictSourceSpec {
         wire_name: core.as_str().to_string(),
         message_key: core.message_key().to_string(),
     }
+}
+
+fn log_level(level: LogLevel) -> TranLogLevel {
+    match level {
+        LogLevel::Debug => TranLogLevel::Debug,
+        LogLevel::Info => TranLogLevel::Info,
+        LogLevel::Warn => TranLogLevel::Warn,
+        LogLevel::Error => TranLogLevel::Error,
+    }
+}
+
+/// Whether a failure at `level` also goes to the app's reporter (REQ-ERR-014): only `Error`.
+#[uniffi::export]
+pub fn is_reported_log_level(level: TranLogLevel) -> bool {
+    [
+        LogLevel::Debug,
+        LogLevel::Info,
+        LogLevel::Warn,
+        LogLevel::Error,
+    ]
+    .into_iter()
+    .find(|core| log_level(*core) == level)
+    .is_some_and(LogLevel::is_reported)
+}
+
+/// Limits on visible toasts (REQ-ERR-012).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, uniffi::Record)]
+pub struct TranToastPolicy {
+    /// A new toast beyond this evicts the oldest.
+    pub max_visible: u32,
+}
+
+/// The toast limits every app uses.
+#[uniffi::export]
+pub fn toast_policy() -> TranToastPolicy {
+    TranToastPolicy {
+        max_visible: u32::try_from(TOAST_POLICY.max_visible).unwrap_or(u32::MAX),
+    }
+}
+
+/// What makes two toasts "the same".
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct TranToastKey {
+    /// Locale key of the toast's message.
+    pub message_key: String,
+    /// Its colour and icon.
+    pub tone: TranToastTone,
+}
+
+/// What to do with an incoming toast.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, uniffi::Enum)]
+pub enum TranToastAdmission {
+    /// The same toast is visible at `index` (oldest first): restart its timer instead.
+    Refresh {
+        /// Position of the visible copy.
+        index: u32,
+    },
+    /// Dismiss this many of the oldest toasts, then show the new one last.
+    Append {
+        /// How many of the oldest toasts to dismiss first.
+        evict_oldest: u32,
+    },
+}
+
+fn core_tone(tone: TranToastTone) -> Tone {
+    match tone {
+        TranToastTone::Success => Tone::Success,
+        TranToastTone::Info => Tone::Info,
+        TranToastTone::Warning => Tone::Warning,
+        TranToastTone::Error => Tone::Error,
+    }
+}
+
+fn to_u32(value: usize) -> u32 {
+    u32::try_from(value).unwrap_or(u32::MAX)
+}
+
+/// Decides how `incoming` joins the `visible` toasts (oldest first) — REQ-ERR-012.
+#[uniffi::export]
+pub fn admit_toast(visible: Vec<TranToastKey>, incoming: TranToastKey) -> TranToastAdmission {
+    let keys: Vec<ToastKey> = visible
+        .iter()
+        .map(|toast| ToastKey {
+            message_key: &toast.message_key,
+            tone: core_tone(toast.tone),
+        })
+        .collect();
+    let incoming = ToastKey {
+        message_key: &incoming.message_key,
+        tone: core_tone(incoming.tone),
+    };
+    match feedback::admit_toast(&keys, incoming) {
+        ToastAdmission::Refresh { index } => TranToastAdmission::Refresh {
+            index: to_u32(index),
+        },
+        ToastAdmission::Append { evict_oldest } => TranToastAdmission::Append {
+            evict_oldest: to_u32(evict_oldest),
+        },
+    }
+}
+
+/// How a connectivity banner recovers by itself (REQ-ERR-013).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, uniffi::Record)]
+pub struct TranRecoveryPolicy {
+    /// Wait before the first health probe.
+    pub first_probe_ms: u64,
+    /// The wait doubles per probe up to this.
+    pub max_probe_ms: u64,
+}
+
+/// The recovery schedule every app uses.
+#[uniffi::export]
+pub fn recovery_policy() -> TranRecoveryPolicy {
+    TranRecoveryPolicy {
+        first_probe_ms: RECOVERY_POLICY.first_probe_ms,
+        max_probe_ms: RECOVERY_POLICY.max_probe_ms,
+    }
+}
+
+/// Wait before health probe number `probe` (1 = the first) while a banner is up.
+#[uniffi::export]
+pub fn recovery_probe_delay_ms(probe: u32) -> u64 {
+    feedback::recovery_probe_delay_ms(probe)
 }

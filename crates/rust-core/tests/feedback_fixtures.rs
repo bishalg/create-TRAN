@@ -1,4 +1,4 @@
-// Verifies: REQ-ERR-001 REQ-ERR-004 REQ-ERR-005 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-LOAD-001
+// Verifies: REQ-ERR-001 REQ-ERR-004 REQ-ERR-010 REQ-ERR-011 REQ-ERR-005 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-LOAD-001
 //! `fixtures/feedback.json` against the catalogue in `rust_core::feedback`. The same file pins the
 //! generated TypeScript, Swift and Kotlin tables.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
@@ -73,6 +73,7 @@ fn presentation_json(presentation: Presentation) -> Value {
         Presentation::Dialog { destructive } => {
             json!({ "kind": "dialog", "destructive": destructive })
         }
+        Presentation::Screen => json!({ "kind": "screen" }),
     }
 }
 

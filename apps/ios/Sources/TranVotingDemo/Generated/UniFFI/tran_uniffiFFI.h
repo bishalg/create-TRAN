@@ -279,6 +279,11 @@ uint16_t uniffi_tran_uniffi_fn_func_voting_age_for_country_offline(RustBuffer co
 RustBuffer uniffi_tran_uniffi_fn_func_action_spec(RustBuffer action, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_ADMIT_TOAST
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_ADMIT_TOAST
+RustBuffer uniffi_tran_uniffi_fn_func_admit_toast(RustBuffer visible, RustBuffer incoming, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_ERROR_CATALOGUE
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_ERROR_CATALOGUE
 RustBuffer uniffi_tran_uniffi_fn_func_error_catalogue(RustCallStatus *_Nonnull out_status
@@ -305,6 +310,11 @@ RustBuffer uniffi_tran_uniffi_fn_func_error_code_from_wire(RustBuffer raw, RustC
 RustBuffer uniffi_tran_uniffi_fn_func_error_spec(RustBuffer code, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_IS_REPORTED_LOG_LEVEL
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_IS_REPORTED_LOG_LEVEL
+int8_t uniffi_tran_uniffi_fn_func_is_reported_log_level(RustBuffer level, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_IS_VALID_REQUEST_ID
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_IS_VALID_REQUEST_ID
 int8_t uniffi_tran_uniffi_fn_func_is_valid_request_id(RustBuffer value, RustCallStatus *_Nonnull out_status
@@ -314,6 +324,17 @@ int8_t uniffi_tran_uniffi_fn_func_is_valid_request_id(RustBuffer value, RustCall
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_LOADING_POLICY
 RustBuffer uniffi_tran_uniffi_fn_func_loading_policy(RustCallStatus *_Nonnull out_status
     
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_RECOVERY_POLICY
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_RECOVERY_POLICY
+RustBuffer uniffi_tran_uniffi_fn_func_recovery_policy(RustCallStatus *_Nonnull out_status
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_RECOVERY_PROBE_DELAY_MS
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_RECOVERY_PROBE_DELAY_MS
+uint64_t uniffi_tran_uniffi_fn_func_recovery_probe_delay_ms(uint32_t probe, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_RETRY_AFTER_MS
@@ -335,6 +356,12 @@ RustBuffer uniffi_tran_uniffi_fn_func_retry_policy(RustCallStatus *_Nonnull out_
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TOAST_DURATION_MS
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TOAST_DURATION_MS
 uint64_t uniffi_tran_uniffi_fn_func_toast_duration_ms(RustBuffer duration, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TOAST_POLICY
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TOAST_POLICY
+RustBuffer uniffi_tran_uniffi_fn_func_toast_policy(RustCallStatus *_Nonnull out_status
+    
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_VERDICT_SOURCE_SPEC
@@ -644,6 +671,12 @@ uint16_t uniffi_tran_uniffi_checksum_func_action_spec(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_ADMIT_TOAST
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_ADMIT_TOAST
+uint16_t uniffi_tran_uniffi_checksum_func_admit_toast(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_ERROR_CATALOGUE
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_ERROR_CATALOGUE
 uint16_t uniffi_tran_uniffi_checksum_func_error_catalogue(void
@@ -674,6 +707,12 @@ uint16_t uniffi_tran_uniffi_checksum_func_error_spec(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_IS_REPORTED_LOG_LEVEL
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_IS_REPORTED_LOG_LEVEL
+uint16_t uniffi_tran_uniffi_checksum_func_is_reported_log_level(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_IS_VALID_REQUEST_ID
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_IS_VALID_REQUEST_ID
 uint16_t uniffi_tran_uniffi_checksum_func_is_valid_request_id(void
@@ -683,6 +722,18 @@ uint16_t uniffi_tran_uniffi_checksum_func_is_valid_request_id(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_LOADING_POLICY
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_LOADING_POLICY
 uint16_t uniffi_tran_uniffi_checksum_func_loading_policy(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_RECOVERY_POLICY
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_RECOVERY_POLICY
+uint16_t uniffi_tran_uniffi_checksum_func_recovery_policy(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_RECOVERY_PROBE_DELAY_MS
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_RECOVERY_PROBE_DELAY_MS
+uint16_t uniffi_tran_uniffi_checksum_func_recovery_probe_delay_ms(void
     
 );
 #endif
@@ -707,6 +758,12 @@ uint16_t uniffi_tran_uniffi_checksum_func_retry_policy(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TOAST_DURATION_MS
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TOAST_DURATION_MS
 uint16_t uniffi_tran_uniffi_checksum_func_toast_duration_ms(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TOAST_POLICY
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TOAST_POLICY
+uint16_t uniffi_tran_uniffi_checksum_func_toast_policy(void
     
 );
 #endif

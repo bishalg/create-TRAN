@@ -688,6 +688,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_action_spec(
     ): Int
+    external fun uniffi_tran_uniffi_checksum_func_admit_toast(
+    ): Int
     external fun uniffi_tran_uniffi_checksum_func_error_catalogue(
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_error_code_for_http_status(
@@ -698,9 +700,15 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_error_spec(
     ): Int
+    external fun uniffi_tran_uniffi_checksum_func_is_reported_log_level(
+    ): Int
     external fun uniffi_tran_uniffi_checksum_func_is_valid_request_id(
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_loading_policy(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_recovery_policy(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_recovery_probe_delay_ms(
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_retry_after_ms(
     ): Int
@@ -709,6 +717,8 @@ internal object IntegrityCheckingUniffiLib {
     external fun uniffi_tran_uniffi_checksum_func_retry_policy(
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_toast_duration_ms(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_toast_policy(
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_verdict_source_spec(
     ): Int
@@ -741,6 +751,8 @@ internal object UniffiLib {
     ): Int
     external fun uniffi_tran_uniffi_fn_func_action_spec(`action`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_admit_toast(`visible`: RustBuffer.ByValue,`incoming`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_error_catalogue(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_error_code_for_http_status(`status`: Short,uniffi_out_err: UniffiRustCallStatus, 
@@ -751,10 +763,16 @@ internal object UniffiLib {
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_error_spec(`code`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_is_reported_log_level(`level`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
     external fun uniffi_tran_uniffi_fn_func_is_valid_request_id(`value`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     external fun uniffi_tran_uniffi_fn_func_loading_policy(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_recovery_policy(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_recovery_probe_delay_ms(`probe`: Int,uniffi_out_err: UniffiRustCallStatus, 
+    ): Long
     external fun uniffi_tran_uniffi_fn_func_retry_after_ms(`header`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_retry_delay_ms(`retry`: Int,`random`: Double,uniffi_out_err: UniffiRustCallStatus, 
@@ -763,6 +781,8 @@ internal object UniffiLib {
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_toast_duration_ms(`duration`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Long
+    external fun uniffi_tran_uniffi_fn_func_toast_policy(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_verdict_source_spec(`source`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun ffi_tran_uniffi_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
@@ -905,6 +925,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_tran_uniffi_checksum_func_action_spec() and 0xFFFF) != 29757) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_tran_uniffi_checksum_func_admit_toast() and 0xFFFF) != 37002) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if ((lib.uniffi_tran_uniffi_checksum_func_error_catalogue() and 0xFFFF) != 60106) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -920,10 +943,19 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_tran_uniffi_checksum_func_error_spec() and 0xFFFF) != 41162) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_tran_uniffi_checksum_func_is_reported_log_level() and 0xFFFF) != 26452) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if ((lib.uniffi_tran_uniffi_checksum_func_is_valid_request_id() and 0xFFFF) != 24842) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_tran_uniffi_checksum_func_loading_policy() and 0xFFFF) != 52020) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_recovery_policy() and 0xFFFF) != 62828) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_recovery_probe_delay_ms() and 0xFFFF) != 64147) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_tran_uniffi_checksum_func_retry_after_ms() and 0xFFFF) != 54130) {
@@ -936,6 +968,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_tran_uniffi_checksum_func_toast_duration_ms() and 0xFFFF) != 56817) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_toast_policy() and 0xFFFF) != 2019) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_tran_uniffi_checksum_func_verdict_source_spec() and 0xFFFF) != 18040) {
@@ -1457,6 +1492,53 @@ public object FfiConverterTypeTranLoadingPolicy: FfiConverterRustBuffer<TranLoad
 
 
 /**
+ * How a connectivity banner recovers by itself (REQ-ERR-013).
+ */
+data class TranRecoveryPolicy (
+    /**
+     * Wait before the first health probe.
+     */
+    var `firstProbeMs`: kotlin.ULong
+    , 
+    /**
+     * The wait doubles per probe up to this.
+     */
+    var `maxProbeMs`: kotlin.ULong
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranRecoveryPolicy: FfiConverterRustBuffer<TranRecoveryPolicy> {
+    override fun read(buf: ByteBuffer): TranRecoveryPolicy {
+        return TranRecoveryPolicy(
+            FfiConverterULong.read(buf),
+            FfiConverterULong.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranRecoveryPolicy) = (
+            FfiConverterULong.allocationSize(value.`firstProbeMs`) +
+            FfiConverterULong.allocationSize(value.`maxProbeMs`)
+    )
+
+    override fun write(value: TranRecoveryPolicy, buf: ByteBuffer) {
+            FfiConverterULong.write(value.`firstProbeMs`, buf)
+            FfiConverterULong.write(value.`maxProbeMs`, buf)
+    }
+}
+
+
+
+/**
  * Retry budget for idempotent requests (REQ-ERR-005).
  */
 data class TranRetryPolicy (
@@ -1514,6 +1596,92 @@ public object FfiConverterTypeTranRetryPolicy: FfiConverterRustBuffer<TranRetryP
             FfiConverterULong.write(value.`baseDelayMs`, buf)
             FfiConverterULong.write(value.`maxDelayMs`, buf)
             FfiConverterULong.write(value.`requestTimeoutMs`, buf)
+    }
+}
+
+
+
+/**
+ * What makes two toasts "the same".
+ */
+data class TranToastKey (
+    /**
+     * Locale key of the toast's message.
+     */
+    var `messageKey`: kotlin.String
+    , 
+    /**
+     * Its colour and icon.
+     */
+    var `tone`: TranToastTone
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranToastKey: FfiConverterRustBuffer<TranToastKey> {
+    override fun read(buf: ByteBuffer): TranToastKey {
+        return TranToastKey(
+            FfiConverterString.read(buf),
+            FfiConverterTypeTranToastTone.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranToastKey) = (
+            FfiConverterString.allocationSize(value.`messageKey`) +
+            FfiConverterTypeTranToastTone.allocationSize(value.`tone`)
+    )
+
+    override fun write(value: TranToastKey, buf: ByteBuffer) {
+            FfiConverterString.write(value.`messageKey`, buf)
+            FfiConverterTypeTranToastTone.write(value.`tone`, buf)
+    }
+}
+
+
+
+/**
+ * Limits on visible toasts (REQ-ERR-012).
+ */
+data class TranToastPolicy (
+    /**
+     * A new toast beyond this evicts the oldest.
+     */
+    var `maxVisible`: kotlin.UInt
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranToastPolicy: FfiConverterRustBuffer<TranToastPolicy> {
+    override fun read(buf: ByteBuffer): TranToastPolicy {
+        return TranToastPolicy(
+            FfiConverterUInt.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranToastPolicy) = (
+            FfiConverterUInt.allocationSize(value.`maxVisible`)
+    )
+
+    override fun write(value: TranToastPolicy, buf: ByteBuffer) {
+            FfiConverterUInt.write(value.`maxVisible`, buf)
     }
 }
 
@@ -1791,6 +1959,18 @@ enum class TranErrorCode {
      */
     ROUTE_METHOD_NOT_ALLOWED,
     /**
+     * `401`: the session expired; ask the user to sign in again.
+     */
+    AUTH_SESSION_EXPIRED,
+    /**
+     * `403`: signed in, but not allowed to do this.
+     */
+    AUTH_FORBIDDEN,
+    /**
+     * `409`: the request clashes with the current state.
+     */
+    REQUEST_CONFLICT,
+    /**
      * Too many requests; retry later.
      */
     SERVER_RATE_LIMITED,
@@ -1813,7 +1993,11 @@ enum class TranErrorCode {
     /**
      * A bug in the app itself.
      */
-    CLIENT_UNEXPECTED;
+    CLIENT_UNEXPECTED,
+    /**
+     * Rendering failed (web only; native apps report and end the process instead).
+     */
+    CLIENT_RENDER_FAILED;
 
     
 
@@ -1951,6 +2135,12 @@ sealed class TranPresentation {
         companion object
     }
     
+    /**
+     * The view tree is broken; a full-page message with a reload action (web only).
+     */
+    object Screen : TranPresentation()
+    
+    
 
     
 
@@ -1977,6 +2167,7 @@ public object FfiConverterTypeTranPresentation : FfiConverterRustBuffer<TranPres
             5 -> TranPresentation.Dialog(
                 FfiConverterBoolean.read(buf),
                 )
+            6 -> TranPresentation.Screen
             else -> throw RuntimeException("invalid enum value, something is very wrong!!")
         }
     }
@@ -2015,6 +2206,12 @@ public object FfiConverterTypeTranPresentation : FfiConverterRustBuffer<TranPres
                 + FfiConverterBoolean.allocationSize(value.`destructive`)
             )
         }
+        is TranPresentation.Screen -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
     }
 
     override fun write(value: TranPresentation, buf: ByteBuffer) {
@@ -2040,6 +2237,108 @@ public object FfiConverterTypeTranPresentation : FfiConverterRustBuffer<TranPres
             is TranPresentation.Dialog -> {
                 buf.putInt(5)
                 FfiConverterBoolean.write(value.`destructive`, buf)
+                Unit
+            }
+            is TranPresentation.Screen -> {
+                buf.putInt(6)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+/**
+ * What to do with an incoming toast.
+ */
+sealed class TranToastAdmission {
+    
+    /**
+     * The same toast is visible at `index` (oldest first): restart its timer instead.
+     */
+    data class Refresh(
+        /**
+         * Position of the visible copy.
+         */
+        val `index`: kotlin.UInt) : TranToastAdmission()
+        
+    {
+        
+
+        companion object
+    }
+    
+    /**
+     * Dismiss this many of the oldest toasts, then show the new one last.
+     */
+    data class Append(
+        /**
+         * How many of the oldest toasts to dismiss first.
+         */
+        val `evictOldest`: kotlin.UInt) : TranToastAdmission()
+        
+    {
+        
+
+        companion object
+    }
+    
+
+    
+
+    
+    
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranToastAdmission : FfiConverterRustBuffer<TranToastAdmission>{
+    override fun read(buf: ByteBuffer): TranToastAdmission {
+        return when(buf.getInt()) {
+            1 -> TranToastAdmission.Refresh(
+                FfiConverterUInt.read(buf),
+                )
+            2 -> TranToastAdmission.Append(
+                FfiConverterUInt.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: TranToastAdmission): ULong = when(value) {
+        is TranToastAdmission.Refresh -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`index`)
+            )
+        }
+        is TranToastAdmission.Append -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`evictOldest`)
+            )
+        }
+    }
+
+    override fun write(value: TranToastAdmission, buf: ByteBuffer) {
+        when(value) {
+            is TranToastAdmission.Refresh -> {
+                buf.putInt(1)
+                FfiConverterUInt.write(value.`index`, buf)
+                Unit
+            }
+            is TranToastAdmission.Append -> {
+                buf.putInt(2)
+                FfiConverterUInt.write(value.`evictOldest`, buf)
                 Unit
             }
         }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
@@ -2631,6 +2930,34 @@ public object FfiConverterSequenceTypeTranErrorSpec: FfiConverterRustBuffer<List
         }
     }
 }
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeTranToastKey: FfiConverterRustBuffer<List<TranToastKey>> {
+    override fun read(buf: ByteBuffer): List<TranToastKey> {
+        val len = buf.getInt()
+        return List<TranToastKey>(len) {
+            FfiConverterTypeTranToastKey.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<TranToastKey>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeTranToastKey.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<TranToastKey>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeTranToastKey.write(it, buf)
+        }
+    }
+}
         /**
          * Whole years between two ISO 8601 dates, using the shared leap-day rules from `rust-core`.
          *
@@ -2804,6 +3131,21 @@ public object FfiConverterSequenceTypeTranErrorSpec: FfiConverterRustBuffer<List
     
 
         /**
+         * Decides how `incoming` joins the `visible` toasts (oldest first) — REQ-ERR-012.
+         */ fun `admitToast`(`visible`: List<TranToastKey>, `incoming`: TranToastKey): TranToastAdmission {
+            return FfiConverterTypeTranToastAdmission.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_admit_toast(
+    
+        
+        FfiConverterSequenceTypeTranToastKey.lower(`visible`),
+        FfiConverterTypeTranToastKey.lower(`incoming`),_status)
+}
+    )
+    }
+    
+
+        /**
          * Every catalogue entry, in catalogue order (parity tests walk it against the fixture).
          */ fun `errorCatalogue`(): List<TranErrorSpec> {
             return FfiConverterSequenceTypeTranErrorSpec.lift(
@@ -2883,6 +3225,20 @@ public object FfiConverterSequenceTypeTranErrorSpec: FfiConverterRustBuffer<List
     
 
         /**
+         * Whether a failure at `level` also goes to the app's reporter (REQ-ERR-014): only `Error`.
+         */ fun `isReportedLogLevel`(`level`: TranLogLevel): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_is_reported_log_level(
+    
+        
+        FfiConverterTypeTranLogLevel.lower(`level`),_status)
+}
+    )
+    }
+    
+
+        /**
          * Whether a request id (from the envelope or the `x-request-id` header) is safe to log and show:
          * 1–64 characters of `[A-Za-z0-9._-]`. Drop any other id (REQ-ROB-010).
          */ fun `isValidRequestId`(`value`: kotlin.String): kotlin.Boolean {
@@ -2905,6 +3261,33 @@ public object FfiConverterSequenceTypeTranErrorSpec: FfiConverterRustBuffer<List
     UniffiLib.uniffi_tran_uniffi_fn_func_loading_policy(
     
         _status)
+}
+    )
+    }
+    
+
+        /**
+         * The recovery schedule every app uses.
+         */ fun `recoveryPolicy`(): TranRecoveryPolicy {
+            return FfiConverterTypeTranRecoveryPolicy.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_recovery_policy(
+    
+        _status)
+}
+    )
+    }
+    
+
+        /**
+         * Wait before health probe number `probe` (1 = the first) while a banner is up.
+         */ fun `recoveryProbeDelayMs`(`probe`: kotlin.UInt): kotlin.ULong {
+            return FfiConverterULong.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_recovery_probe_delay_ms(
+    
+        
+        FfiConverterUInt.lower(`probe`),_status)
 }
     )
     }
@@ -2969,6 +3352,19 @@ public object FfiConverterSequenceTypeTranErrorSpec: FfiConverterRustBuffer<List
     
         
         FfiConverterTypeTranToastDuration.lower(`duration`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * The toast limits every app uses.
+         */ fun `toastPolicy`(): TranToastPolicy {
+            return FfiConverterTypeTranToastPolicy.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_toast_policy(
+    
+        _status)
 }
     )
     }

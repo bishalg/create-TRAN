@@ -944,6 +944,75 @@ public func FfiConverterTypeTranLoadingPolicy_lower(_ value: TranLoadingPolicy) 
 
 
 /**
+ * How a connectivity banner recovers by itself (REQ-ERR-013).
+ */
+public struct TranRecoveryPolicy: Equatable, Hashable {
+    /**
+     * Wait before the first health probe.
+     */
+    public var firstProbeMs: UInt64
+    /**
+     * The wait doubles per probe up to this.
+     */
+    public var maxProbeMs: UInt64
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Wait before the first health probe.
+         */firstProbeMs: UInt64, 
+        /**
+         * The wait doubles per probe up to this.
+         */maxProbeMs: UInt64) {
+        self.firstProbeMs = firstProbeMs
+        self.maxProbeMs = maxProbeMs
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranRecoveryPolicy: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranRecoveryPolicy: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranRecoveryPolicy {
+        return
+            try TranRecoveryPolicy(
+                firstProbeMs: FfiConverterUInt64.read(from: &buf), 
+                maxProbeMs: FfiConverterUInt64.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranRecoveryPolicy, into buf: inout [UInt8]) {
+        FfiConverterUInt64.write(value.firstProbeMs, into: &buf)
+        FfiConverterUInt64.write(value.maxProbeMs, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranRecoveryPolicy_lift(_ buf: RustBuffer) throws -> TranRecoveryPolicy {
+    return try FfiConverterTypeTranRecoveryPolicy.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranRecoveryPolicy_lower(_ value: TranRecoveryPolicy) -> RustBuffer {
+    return FfiConverterTypeTranRecoveryPolicy.lower(value)
+}
+
+
+/**
  * Retry budget for idempotent requests (REQ-ERR-005).
  */
 public struct TranRetryPolicy: Equatable, Hashable {
@@ -1029,6 +1098,134 @@ public func FfiConverterTypeTranRetryPolicy_lift(_ buf: RustBuffer) throws -> Tr
 #endif
 public func FfiConverterTypeTranRetryPolicy_lower(_ value: TranRetryPolicy) -> RustBuffer {
     return FfiConverterTypeTranRetryPolicy.lower(value)
+}
+
+
+/**
+ * What makes two toasts "the same".
+ */
+public struct TranToastKey: Equatable, Hashable {
+    /**
+     * Locale key of the toast's message.
+     */
+    public var messageKey: String
+    /**
+     * Its colour and icon.
+     */
+    public var tone: TranToastTone
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Locale key of the toast's message.
+         */messageKey: String, 
+        /**
+         * Its colour and icon.
+         */tone: TranToastTone) {
+        self.messageKey = messageKey
+        self.tone = tone
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranToastKey: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranToastKey: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranToastKey {
+        return
+            try TranToastKey(
+                messageKey: FfiConverterString.read(from: &buf), 
+                tone: FfiConverterTypeTranToastTone.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranToastKey, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.messageKey, into: &buf)
+        FfiConverterTypeTranToastTone.write(value.tone, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranToastKey_lift(_ buf: RustBuffer) throws -> TranToastKey {
+    return try FfiConverterTypeTranToastKey.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranToastKey_lower(_ value: TranToastKey) -> RustBuffer {
+    return FfiConverterTypeTranToastKey.lower(value)
+}
+
+
+/**
+ * Limits on visible toasts (REQ-ERR-012).
+ */
+public struct TranToastPolicy: Equatable, Hashable {
+    /**
+     * A new toast beyond this evicts the oldest.
+     */
+    public var maxVisible: UInt32
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * A new toast beyond this evicts the oldest.
+         */maxVisible: UInt32) {
+        self.maxVisible = maxVisible
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranToastPolicy: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranToastPolicy: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranToastPolicy {
+        return
+            try TranToastPolicy(
+                maxVisible: FfiConverterUInt32.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranToastPolicy, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.maxVisible, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranToastPolicy_lift(_ buf: RustBuffer) throws -> TranToastPolicy {
+    return try FfiConverterTypeTranToastPolicy.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranToastPolicy_lower(_ value: TranToastPolicy) -> RustBuffer {
+    return FfiConverterTypeTranToastPolicy.lower(value)
 }
 
 
@@ -1432,6 +1629,18 @@ public enum TranErrorCode: Equatable, Hashable {
      */
     case routeMethodNotAllowed
     /**
+     * `401`: the session expired; ask the user to sign in again.
+     */
+    case authSessionExpired
+    /**
+     * `403`: signed in, but not allowed to do this.
+     */
+    case authForbidden
+    /**
+     * `409`: the request clashes with the current state.
+     */
+    case requestConflict
+    /**
      * Too many requests; retry later.
      */
     case serverRateLimited
@@ -1455,6 +1664,10 @@ public enum TranErrorCode: Equatable, Hashable {
      * A bug in the app itself.
      */
     case clientUnexpected
+    /**
+     * Rendering failed (web only; native apps report and end the process instead).
+     */
+    case clientRenderFailed
 
 
 
@@ -1496,17 +1709,25 @@ public struct FfiConverterTypeTranErrorCode: FfiConverterRustBuffer {
         
         case 10: return .routeMethodNotAllowed
         
-        case 11: return .serverRateLimited
+        case 11: return .authSessionExpired
         
-        case 12: return .serverInternal
+        case 12: return .authForbidden
         
-        case 13: return .serverUnavailable
+        case 13: return .requestConflict
         
-        case 14: return .networkOffline
+        case 14: return .serverRateLimited
         
-        case 15: return .networkTimeout
+        case 15: return .serverInternal
         
-        case 16: return .clientUnexpected
+        case 16: return .serverUnavailable
+        
+        case 17: return .networkOffline
+        
+        case 18: return .networkTimeout
+        
+        case 19: return .clientUnexpected
+        
+        case 20: return .clientRenderFailed
         
         default: throw UniffiInternalError.unexpectedEnumCase
         }
@@ -1556,28 +1777,44 @@ public struct FfiConverterTypeTranErrorCode: FfiConverterRustBuffer {
             writeInt(&buf, Int32(10))
         
         
-        case .serverRateLimited:
+        case .authSessionExpired:
             writeInt(&buf, Int32(11))
         
         
-        case .serverInternal:
+        case .authForbidden:
             writeInt(&buf, Int32(12))
         
         
-        case .serverUnavailable:
+        case .requestConflict:
             writeInt(&buf, Int32(13))
         
         
-        case .networkOffline:
+        case .serverRateLimited:
             writeInt(&buf, Int32(14))
         
         
-        case .networkTimeout:
+        case .serverInternal:
             writeInt(&buf, Int32(15))
         
         
-        case .clientUnexpected:
+        case .serverUnavailable:
             writeInt(&buf, Int32(16))
+        
+        
+        case .networkOffline:
+            writeInt(&buf, Int32(17))
+        
+        
+        case .networkTimeout:
+            writeInt(&buf, Int32(18))
+        
+        
+        case .clientUnexpected:
+            writeInt(&buf, Int32(19))
+        
+        
+        case .clientRenderFailed:
+            writeInt(&buf, Int32(20))
         
         }
     }
@@ -1732,6 +1969,10 @@ public enum TranPresentation: Equatable, Hashable {
          * Style the confirm button as destructive and focus Cancel first.
          */destructive: Bool
     )
+    /**
+     * The view tree is broken; a full-page message with a reload action (web only).
+     */
+    case screen
 
 
 
@@ -1765,6 +2006,8 @@ public struct FfiConverterTypeTranPresentation: FfiConverterRustBuffer {
         case 5: return .dialog(destructive: try FfiConverterBool.read(from: &buf)
         )
         
+        case 6: return .screen
+        
         default: throw UniffiInternalError.unexpectedEnumCase
         }
     }
@@ -1795,6 +2038,10 @@ public struct FfiConverterTypeTranPresentation: FfiConverterRustBuffer {
             writeInt(&buf, Int32(5))
             FfiConverterBool.write(destructive, into: &buf)
             
+        
+        case .screen:
+            writeInt(&buf, Int32(6))
+        
         }
     }
 }
@@ -1812,6 +2059,93 @@ public func FfiConverterTypeTranPresentation_lift(_ buf: RustBuffer) throws -> T
 #endif
 public func FfiConverterTypeTranPresentation_lower(_ value: TranPresentation) -> RustBuffer {
     return FfiConverterTypeTranPresentation.lower(value)
+}
+
+
+
+/**
+ * What to do with an incoming toast.
+ */
+
+public enum TranToastAdmission: Equatable, Hashable {
+    
+    /**
+     * The same toast is visible at `index` (oldest first): restart its timer instead.
+     */
+    case refresh(
+        /**
+         * Position of the visible copy.
+         */index: UInt32
+    )
+    /**
+     * Dismiss this many of the oldest toasts, then show the new one last.
+     */
+    case append(
+        /**
+         * How many of the oldest toasts to dismiss first.
+         */evictOldest: UInt32
+    )
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranToastAdmission: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranToastAdmission: FfiConverterRustBuffer {
+    typealias SwiftType = TranToastAdmission
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranToastAdmission {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .refresh(index: try FfiConverterUInt32.read(from: &buf)
+        )
+        
+        case 2: return .append(evictOldest: try FfiConverterUInt32.read(from: &buf)
+        )
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranToastAdmission, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case let .refresh(index):
+            writeInt(&buf, Int32(1))
+            FfiConverterUInt32.write(index, into: &buf)
+            
+        
+        case let .append(evictOldest):
+            writeInt(&buf, Int32(2))
+            FfiConverterUInt32.write(evictOldest, into: &buf)
+            
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranToastAdmission_lift(_ buf: RustBuffer) throws -> TranToastAdmission {
+    return try FfiConverterTypeTranToastAdmission.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranToastAdmission_lower(_ value: TranToastAdmission) -> RustBuffer {
+    return FfiConverterTypeTranToastAdmission.lower(value)
 }
 
 
@@ -2515,6 +2849,31 @@ fileprivate struct FfiConverterSequenceTypeTranErrorSpec: FfiConverterRustBuffer
         return seq
     }
 }
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeTranToastKey: FfiConverterRustBuffer {
+    typealias SwiftType = [TranToastKey]
+
+    public static func write(_ value: [TranToastKey], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeTranToastKey.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [TranToastKey] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [TranToastKey]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeTranToastKey.read(from: &buf))
+        }
+        return seq
+    }
+}
 /**
  * Whole years between two ISO 8601 dates, using the shared leap-day rules from `rust-core`.
  *
@@ -2665,6 +3024,18 @@ public func actionSpec(action: TranUserAction) -> TranActionSpec  {
 })
 }
 /**
+ * Decides how `incoming` joins the `visible` toasts (oldest first) — REQ-ERR-012.
+ */
+public func admitToast(visible: [TranToastKey], incoming: TranToastKey) -> TranToastAdmission  {
+    return try!  FfiConverterTypeTranToastAdmission_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_admit_toast(
+        FfiConverterSequenceTypeTranToastKey.lower(visible),
+        FfiConverterTypeTranToastKey_lower(incoming),uniffiCallStatus
+    )
+})
+}
+/**
  * Every catalogue entry, in catalogue order (parity tests walk it against the fixture).
  */
 public func errorCatalogue() -> [TranErrorSpec]  {
@@ -2729,6 +3100,17 @@ public func errorSpec(code: TranErrorCode) -> TranErrorSpec  {
 })
 }
 /**
+ * Whether a failure at `level` also goes to the app's reporter (REQ-ERR-014): only `Error`.
+ */
+public func isReportedLogLevel(level: TranLogLevel) -> Bool  {
+    return try!  FfiConverterBool.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_is_reported_log_level(
+        FfiConverterTypeTranLogLevel_lower(level),uniffiCallStatus
+    )
+})
+}
+/**
  * Whether a request id (from the envelope or the `x-request-id` header) is safe to log and show:
  * 1–64 characters of `[A-Za-z0-9._-]`. Drop any other id (REQ-ROB-010).
  */
@@ -2747,6 +3129,27 @@ public func loadingPolicy() -> TranLoadingPolicy  {
     return try!  FfiConverterTypeTranLoadingPolicy_lift(try! rustCall() {
         uniffiCallStatus in
     uniffi_tran_uniffi_fn_func_loading_policy(uniffiCallStatus
+    )
+})
+}
+/**
+ * The recovery schedule every app uses.
+ */
+public func recoveryPolicy() -> TranRecoveryPolicy  {
+    return try!  FfiConverterTypeTranRecoveryPolicy_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_recovery_policy(uniffiCallStatus
+    )
+})
+}
+/**
+ * Wait before health probe number `probe` (1 = the first) while a banner is up.
+ */
+public func recoveryProbeDelayMs(probe: UInt32) -> UInt64  {
+    return try!  FfiConverterUInt64.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_recovery_probe_delay_ms(
+        FfiConverterUInt32.lower(probe),uniffiCallStatus
     )
 })
 }
@@ -2803,6 +3206,16 @@ public func toastDurationMs(duration: TranToastDuration) -> UInt64  {
 })
 }
 /**
+ * The toast limits every app uses.
+ */
+public func toastPolicy() -> TranToastPolicy  {
+    return try!  FfiConverterTypeTranToastPolicy_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_toast_policy(uniffiCallStatus
+    )
+})
+}
+/**
  * The wire name and label key of `source`.
  */
 public func verdictSourceSpec(source: TranVerdictSource) -> TranVerdictSourceSpec  {
@@ -2850,6 +3263,9 @@ private let initializationResult: InitializationResult = {
     if (uniffi_tran_uniffi_checksum_func_action_spec() != 29757) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_tran_uniffi_checksum_func_admit_toast() != 37002) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_tran_uniffi_checksum_func_error_catalogue() != 60106) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -2865,10 +3281,19 @@ private let initializationResult: InitializationResult = {
     if (uniffi_tran_uniffi_checksum_func_error_spec() != 41162) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_tran_uniffi_checksum_func_is_reported_log_level() != 26452) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_tran_uniffi_checksum_func_is_valid_request_id() != 24842) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_loading_policy() != 52020) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_recovery_policy() != 62828) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_recovery_probe_delay_ms() != 64147) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_retry_after_ms() != 54130) {
@@ -2881,6 +3306,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_toast_duration_ms() != 56817) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_toast_policy() != 2019) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_verdict_source_spec() != 18040) {

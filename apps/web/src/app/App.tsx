@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   t,
   type AppDestination,
@@ -10,7 +10,9 @@ import { EligibilityPage } from '../features/eligibility/EligibilityPage.js';
 import { AuthWelcomePage } from '../features/auth/AuthWelcomePage.js';
 import { AuditorPage } from '../features/auditor/AuditorPage.js';
 import { type UseTranApiOptions, useTranApi } from '../shared/api/useTranApi.js';
+import { CrashBoundary } from '../shared/feedback/CrashBoundary.js';
 import { FeedbackProvider, useFeedback } from '../shared/feedback/FeedbackProvider.js';
+import { useGlobalErrors } from '../shared/feedback/useGlobalErrors.js';
 import { TranText } from '../shared/ui/TranText.js';
 import { Header } from './Header.js';
 import { type ApiState, StatusFooter } from './StatusFooter.js';
@@ -26,10 +28,14 @@ export interface AppProps {
 
 export function App(props: AppProps = {}) {
   const preferences = usePreferences();
+  // The boundary sits outside every provider so a broken provider still gets the crash screen
+  // (REQ-ERR-011); its children keep one position, so nothing remounts (stable tree).
   return (
-    <FeedbackProvider locale={preferences.locale}>
-      <Shell {...props} preferences={preferences} />
-    </FeedbackProvider>
+    <CrashBoundary locale={preferences.locale}>
+      <FeedbackProvider locale={preferences.locale}>
+        <Shell {...props} preferences={preferences} />
+      </FeedbackProvider>
+    </CrashBoundary>
   );
 }
 
@@ -40,6 +46,7 @@ function Shell({
   preferences: { locale, setLocale, theme, setTheme },
 }: AppProps & { preferences: ReturnType<typeof usePreferences> }) {
   const feedback = useFeedback();
+  useGlobalErrors(feedback);
   const api = useTranApi({ feedback, retry });
   const apiState: ApiState = api.isLoading
     ? 'checking'
@@ -65,6 +72,15 @@ function Shell({
       role,
     });
   };
+
+  // An expired session asks first; "Sign in again" ends it (REQ-ERR-010).
+  useEffect(
+    () =>
+      feedback.onErrorConfirmed('auth.session_expired', () =>
+        setSession({ status: 'unauthenticated' })
+      ),
+    [feedback]
+  );
 
   // Destructive: the catalogue makes this a confirmation dialog (REQ-ERR-007).
   const handleSignOut = async () => {

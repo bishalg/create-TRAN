@@ -5,15 +5,21 @@
     <string name="errors_age_invalid">मान्य उमेर लेख्नुहोस्</string>
     <string name="errors_age_out_of_range">० देखि १५० बीचको पूर्ण संख्या उमेर राख्नुहोस्।</string>
     <string name="errors_birthdate_in_future">जन्ममिति भविष्यको हुन सक्दैन।</string>
+    <string name="errors_conflict">तपाईं काम गर्दै गर्दा यो परिवर्तन भयो। रिफ्रेस गरेर फेरि प्रयास गर्नुहोस्।</string>
     <string name="errors_country_invalid">देश दुई अक्षरको हुनुपर्छ</string>
     <string name="errors_date_invalid">YYYY-MM-DD ढाँचामा सही मिति लेख्नुहोस्।</string>
+    <string name="errors_forbidden">तपाईंलाई यो गर्ने अनुमति छैन।</string>
     <string name="errors_not_found">यो सुविधा अहिले सर्भरमा उपलब्ध छैन।</string>
     <string name="errors_rate_limited">धेरै अनुरोधहरू भए। कृपया केही बेरपछि फेरि प्रयास गर्नुहोस्।</string>
     <string name="errors_reference">सन्दर्भ: %1$s</string>
+    <string name="errors_render_failed">यो स्क्रिन देखाउन सकिएन</string>
+    <string name="errors_render_failed_body">एपमा केही बिग्रियो। फेरि लोड गर्दा प्रायः ठीक हुन्छ; तपाईंका सेटिङहरू सुरक्षित रहन्छन्।</string>
     <string name="errors_request_cancelled">अनुरोध रद्द गरियो।</string>
     <string name="errors_request_malformed">एपले सर्भरले पढ्न नसक्ने अनुरोध पठायो। कृपया रिफ्रेस गरेर फेरि प्रयास गर्नुहोस्।</string>
     <string name="errors_server_internal">हाम्रो तर्फबाट केही गडबड भयो। तपाईंको नतिजा यही उपकरणमा जाँचियो।</string>
     <string name="errors_server_unavailable">सर्भर अस्थायी रूपमा उपलब्ध छैन — नतिजा यही उपकरणमा जाँचिँदैछ।</string>
+    <string name="errors_session_expired">तपाईंको सत्र समाप्त भयो</string>
+    <string name="errors_session_expired_body">जारी राख्न फेरि साइन इन गर्नुहोस्। त्यतिन्जेल तपाईंले लेखेको कुरा यही स्क्रिनमा रहन्छ।</string>
     <string name="errors_timeout">सर्भरले धेरै समय लिइरहेको छ — नतिजा यही उपकरणमा जाँचिँदैछ।</string>
     <string name="errors_unexpected">एपमा केही गडबड भयो। कृपया फेरि प्रयास गर्नुहोस्।</string>
 </resources>

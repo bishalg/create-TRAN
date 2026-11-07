@@ -13,5 +13,11 @@
   "serverUnavailable": "The server is temporarily unavailable — results are checked on this device.",
   "timeout": "The server is taking too long — results are checked on this device.",
   "reference": "Reference: {id}",
-  "unexpected": "Something went wrong in the app. Please try again."
+  "unexpected": "Something went wrong in the app. Please try again.",
+  "sessionExpired": "Your session has expired",
+  "sessionExpiredBody": "Sign in again to continue. Anything you typed stays on this screen until you do.",
+  "forbidden": "You don't have permission to do that.",
+  "conflict": "This changed while you were working on it. Refresh and try again.",
+  "renderFailed": "This screen couldn't be shown",
+  "renderFailedBody": "Something in the app broke. Reloading usually fixes it; your settings are kept."
 }

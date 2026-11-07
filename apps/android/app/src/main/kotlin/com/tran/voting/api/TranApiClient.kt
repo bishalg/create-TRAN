@@ -155,6 +155,11 @@ class TranApiClient(
         }
     }
 
+    /** One health request without retries: the recovery probe's question (REQ-ERR-013). */
+    suspend fun probeHealth() {
+        send(path = "/api/health", method = "GET", body = null, countryCode = null)
+    }
+
     /** A pure computation on the server, so it is safe to retry. */
     suspend fun confirmEligibility(age: Int, countryCode: String) {
         retry.run(idempotent = true) {

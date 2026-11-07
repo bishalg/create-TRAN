@@ -1,4 +1,4 @@
-// Verifies: REQ-ERR-001 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-009
+// Verifies: REQ-ERR-001 REQ-ERR-010 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-009
 package com.tran.voting.parity
 
 import com.tran.voting.api.TranRequestFailure
@@ -43,6 +43,7 @@ class FeedbackParityTest {
         TranPresentation.Silent -> mapOf("kind" to "silent")
         TranPresentation.Inline -> mapOf("kind" to "inline")
         TranPresentation.Banner -> mapOf("kind" to "banner")
+        TranPresentation.Screen -> mapOf("kind" to "screen")
         is TranPresentation.Dialog -> mapOf("kind" to "dialog", "destructive" to destructive)
         is TranPresentation.Toast -> mapOf(
             "kind" to "toast",

@@ -56,3 +56,29 @@ Feature: Errors and feedback
     Then no dialog is open
     And I see the user role badge "Citizen Voter"
     And the sign out button has focus
+
+  # Verifies: REQ-ERR-010
+  Scenario: An expired session asks to sign in again
+    Given the server always fails with 401 and code "auth.session_expired"
+    When I ask the server with age "30" and country "US"
+    Then a dialog asks "Your session has expired"
+    And the server was asked 1 times
+    When I confirm the dialog with "Sign in again"
+    Then I see the role selection options "Continue as Citizen Voter" and "Continue as Election Auditor"
+
+  # Verifies: REQ-ERR-012
+  Scenario: A repeated failure shows one toast, not a pile
+    Given the server always fails with 403 and code "auth.forbidden"
+    When I ask the server with age "30" and country "US"
+    And I ask the server again
+    Then an "error" toast says "You don't have permission to do that."
+    And exactly 1 toast is shown
+
+  # Verifies: REQ-ERR-013
+  Scenario: The offline notice clears by itself when the network returns
+    Given the API goes away
+    When I ask the server with age "20" and country "NP"
+    Then I see the offline notice
+    When the API comes back and the browser reports it is online
+    Then I do not see the offline notice
+    And the API status is "API online"
