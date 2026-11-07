@@ -39,7 +39,7 @@ enum TranReporting {
         NSSetUncaughtExceptionHandler { exception in
             TranReporting.report(
                 TranRequestFailure(code: .clientUnexpected),
-                detail: "\(exception.name.rawValue): \(exception.reason ?? "-")"
+                detail: "\(exception.name.rawValue): \(exception.description)"
             )
             TranReporting.previous?(exception)
         }
