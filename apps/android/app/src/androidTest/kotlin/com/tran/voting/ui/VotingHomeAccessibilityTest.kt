@@ -1,40 +1,29 @@
-// Verifies: REQ-ERR-007 REQ-LOAD-003 REQ-LOAD-005 REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006 REQ-NAT-007 REQ-NAT-010 REQ-NAT-011
-// Verifies: REQ-SCR-002
+// Verifies: REQ-LOAD-005 REQ-NAT-003 REQ-NAT-005 REQ-NAT-006 REQ-NAT-010 REQ-SCR-002
 package com.tran.voting.ui
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.unit.Density
 import androidx.core.graphics.ColorUtils
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.tran.voting.NavigationCoordinator
 import com.tran.voting.api.TranApiClient
 import com.tran.voting.generated.ScreenContract
 import com.tran.voting.generated.TranBrandTokens
+import com.tran.voting.generated.TranStrings
 import com.tran.voting.generated.TranTheme
 import com.tran.voting.generated.labelRes
 import com.tran.voting.generated.tranColorScheme
@@ -45,9 +34,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Instrumented accessibility checks for the voter dashboard: spoken labels, the announced
- * verdict, touch-target sizes, text scaling, and every palette in the theme registry.
- * The device check runs against the real Rust core through UniFFI (no network).
+ * What the screen contract's verbs cannot express (docs/TESTING.md, "Hand-written suites that
+ * remain"): every control's spoken label and role, text contrast in every registry palette, and the
+ * copy of the fallback caption. Every shared journey runs from `screens.json` in
+ * `ScreenContractTest`. The device check runs against the real Rust core through UniFFI.
  */
 @RunWith(AndroidJUnit4::class)
 class VotingHomeAccessibilityTest {
@@ -55,124 +45,55 @@ class VotingHomeAccessibilityTest {
     val compose = createComposeRule()
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val density = context.resources.displayMetrics.density
-
-    private fun label(mode: TranTheme): String = context.getString(mode.labelRes)
 
     /** Mirrors MainActivity: the screen receives a registry palette, never a light/dark flag. */
-    private fun setVotingScreen(fontScale: Float = 1f, api: TranApiClient = TranApiClient()) {
+    private fun setVotingScreen(api: TranApiClient = TranApiClient()) {
         compose.setContent {
-            val current = LocalDensity.current
-            CompositionLocalProvider(LocalDensity provides Density(current.density, fontScale)) {
-                var theme by remember { mutableStateOf(TranTheme.DARK) }
-                val palette = TranBrandTokens.palette(theme)
-                MaterialTheme(colorScheme = tranColorScheme(palette)) {
-                    CompositionLocalProvider(LocalTranPalette provides palette) {
-                        VotingHomeScreen(theme = theme, onThemeChange = { theme = it }, api = api)
-                    }
+            val palette = TranBrandTokens.palette(TranTheme.DARK)
+            MaterialTheme(colorScheme = tranColorScheme(palette)) {
+                CompositionLocalProvider(LocalTranPalette provides palette) {
+                    VotingHomeScreen(theme = TranTheme.DARK, onThemeChange = {}, api = api)
                 }
             }
         }
     }
 
+    /** Labels and roles are not contract verbs: the spoken name of every control (REQ-NAT-003). */
     @Test
     fun everyControlHasASpokenLabelAndRole() {
         setVotingScreen()
-        compose.onNodeWithText("Your age").assertIsDisplayed()
-        compose.onNodeWithText("Country code").assertIsDisplayed()
-        compose.onNodeWithTag(ScreenContract.Eligibility.ageField).assertIsDisplayed()
-        compose.onNodeWithTag(ScreenContract.Eligibility.countryField).assertIsDisplayed()
-        compose.onNodeWithTag(ScreenContract.Eligibility.checkButton).assertTextEquals("Check offline").assertHasClickAction()
+        compose.onNodeWithText(context.getString(TranStrings.Eligibility.ageLabel)).assertIsDisplayed()
+        compose.onNodeWithText(context.getString(TranStrings.Eligibility.countryLabel)).assertIsDisplayed()
+        compose.onNodeWithTag(ScreenContract.Eligibility.checkButton)
+            .assertTextEquals(context.getString(TranStrings.Eligibility.checkOffline))
+            .assertHasClickAction()
         TranTheme.entries.forEach { mode ->
-            compose.onNodeWithText(label(mode)).assertHasClickAction()
+            compose.onNodeWithText(context.getString(mode.labelRes)).assertHasClickAction()
         }
     }
 
+    /**
+     * REQ-LOAD-005: once the retries against an unreachable API are spent, the device decides and
+     * the caption says so. The scenario only requires a caption: the web's device mode never asks
+     * the server, so the fallback copy is native-only and pinned here.
+     */
     @Test
-    fun theVerdictIsAPoliteLiveRegion() {
-        setVotingScreen()
-        compose.onNodeWithTag(ScreenContract.Eligibility.checkButton).performClick()
-        compose.onNodeWithTag(ScreenContract.Eligibility.offlineResult)
-            .assertTextEquals("Age 20 meets the minimum voting age of 18 in NP.")
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
-    }
-
-    @Test
-    fun theDeviceVerdictSurvivesAnUnreachableApi() {
+    fun anUnreachableApiLabelsTheVerdictAsCheckedOnTheDevice() {
         // 127.0.0.1:1 refuses connections on the device; the debug network config still allows
         // loopback, so only the reachability check fails (REQ-NAT-011).
         setVotingScreen(api = TranApiClient(baseUrl = "http://127.0.0.1:1"))
-
-        compose.waitUntil(timeoutMillis = 5_000) {
-            compose.onAllNodesWithTag(ScreenContract.Eligibility.offlineNotice).fetchSemanticsNodes().isNotEmpty()
-        }
-        compose.onNodeWithTag(ScreenContract.Eligibility.apiStatus).assertTextEquals("API offline")
-        // A banner, not an error toast: the catalogue presents `network.offline` persistently.
-        assertTrue(compose.onAllNodesWithTag(ScreenContract.Eligibility.toast).fetchSemanticsNodes().isEmpty())
-
-        // REQ-NAT-002: the verdict does not wait for the API.
         compose.onNodeWithTag(ScreenContract.Eligibility.checkButton).performClick()
-        compose.onNodeWithTag(ScreenContract.Eligibility.offlineResult)
-            .assertTextEquals("Age 20 meets the minimum voting age of 18 in NP.")
 
-        // REQ-LOAD-005: once the retries are spent the device decides, and the caption says so;
-        // REQ-LOAD-003: the verdict itself reads exactly as before.
-        val fallback = "The server could not answer — checked on this device."
+        val fallback = context.getString(TranStrings.Eligibility.resultSourceFallback)
         compose.waitUntil(timeoutMillis = 5_000) {
             compose.onAllNodesWithText(fallback).fetchSemanticsNodes().isNotEmpty()
         }
         compose.onNodeWithTag(ScreenContract.Eligibility.verdictSource)
             .assertTextEquals(fallback)
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
-        compose.onNodeWithTag(ScreenContract.Eligibility.offlineResult)
-            .assertTextEquals("Age 20 meets the minimum voting age of 18 in NP.")
     }
 
-    @Test
-    fun signOutAsksFirstAndCancelKeepsTheSession() {
-        compose.setContent { NavigationCoordinator() }
-
-        compose.onNodeWithTag(ScreenContract.Eligibility.signOutButton).performClick()
-        compose.onNodeWithText("Sign out?").assertIsDisplayed()
-        compose.onNodeWithTag(ScreenContract.Eligibility.dialogCancel).performClick()
-        assertTrue(compose.onAllNodesWithText("Sign out?").fetchSemanticsNodes().isEmpty())
-        compose.onNodeWithTag(ScreenContract.Eligibility.checkButton).assertIsDisplayed()
-
-        compose.onNodeWithTag(ScreenContract.Eligibility.signOutButton).performClick()
-        compose.onNodeWithTag(ScreenContract.Eligibility.dialogConfirm).performClick()
-        compose.onNodeWithText("Continue as Citizen Voter").assertIsDisplayed()
-    }
-
-    @Test
-    fun touchTargetsMeetFortyEightDp() {
-        setVotingScreen()
-        assertTouchTargetAtLeast48(compose.onNodeWithTag(ScreenContract.Eligibility.checkButton), ScreenContract.Eligibility.checkButton)
-        assertTouchTargetAtLeast48(compose.onNodeWithTag(ScreenContract.Eligibility.ageField), ScreenContract.Eligibility.ageField)
-        assertTouchTargetAtLeast48(compose.onNodeWithTag(ScreenContract.Eligibility.countryField), ScreenContract.Eligibility.countryField)
-        TranTheme.entries.forEach { mode ->
-            assertTouchTargetAtLeast48(compose.onNodeWithText(label(mode)), "theme $mode")
-        }
-    }
-
-    @Test
-    fun largestFontScaleKeepsTheVerdictReachable() {
-        setVotingScreen(fontScale = ScreenContract.Minimums.largestFontScale)
-        compose.onNodeWithTag(ScreenContract.Eligibility.checkButton).performScrollTo().performClick()
-        compose.onNodeWithTag(ScreenContract.Eligibility.offlineResult)
-            .performScrollTo()
-            .assertIsDisplayed()
-            .assertTextEquals("Age 20 meets the minimum voting age of 18 in NP.")
-    }
-
-    @Test
-    fun everyRegistryThemeIsSelectable() {
-        setVotingScreen()
-        TranTheme.entries.forEach { mode ->
-            compose.onNodeWithText(label(mode)).performClick()
-            compose.onNodeWithText(label(mode)).assertIsSelected()
-        }
-    }
-
+    /** Contrast is a palette property, not an element's (REQ-NAT-006). */
     @Test
     fun everyRegistryThemeMeetsTextContrast() {
         TranTheme.entries.forEach { mode ->
@@ -182,18 +103,6 @@ class VotingHomeAccessibilityTest {
             val scheme = tranColorScheme(palette)
             assertContrast(mode, "action label on action fill", scheme.onPrimary, scheme.primary)
         }
-    }
-
-    /** Touch bounds, not visual bounds: Material3 enforces the 48dp floor on the touch target. */
-    private fun assertTouchTargetAtLeast48(interaction: SemanticsNodeInteraction, label: String) {
-        val bounds = interaction.fetchSemanticsNode().touchBoundsInRoot
-        val width = bounds.right - bounds.left
-        val height = bounds.bottom - bounds.top
-        val minimum = ScreenContract.Minimums.control * density
-        assertTrue(
-            "$label touch target is ${width / density}×${height / density}dp, needs at least ${ScreenContract.Minimums.control}dp on both axes",
-            width >= minimum && height >= minimum,
-        )
     }
 
     private fun assertContrast(mode: TranTheme, pair: String, foreground: Color, background: Color) {

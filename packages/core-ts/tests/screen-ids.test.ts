@@ -130,16 +130,12 @@ const KNOWN_GAPS: { platform: Platform; id: string; reason: string }[] = [
     id: 'splash-progress',
     reason: 'the Android coordinator resolves the session synchronously, no splash screen',
   },
-  {
-    platform: 'ios',
-    id: 'role-badge',
-    reason: 'the native dashboards name the role in their title; no separate badge yet',
-  },
-  {
-    platform: 'android',
-    id: 'role-badge',
-    reason: 'the native dashboards name the role in their title; no separate badge yet',
-  },
+];
+
+/** The native scenario interpreters (ADR-0038): they run every scenario of `screens.json`. */
+const NATIVE_INTERPRETERS = [
+  'apps/ios/Tests/TranVotingDemoUITests/ScreenContractUITests.swift',
+  'apps/android/app/src/androidTest/kotlin/com/tran/voting/ui/ScreenContractTest.kt',
 ];
 
 /** Feature code only: a platform implements an element when its app sources reference it. */
@@ -182,6 +178,24 @@ describe('screen contract ids', () => {
       expect(missing, `${platform} never exposes these always-present elements`).toEqual([]);
       const closed = KNOWN_GAPS.filter((entry) => entry.platform === platform && ids.has(entry.id));
       expect(closed, `${platform} implements these now: remove them from KNOWN_GAPS`).toEqual([]);
+    }
+  });
+
+  // Verifies: REQ-SCR-006 — the native interpreters read their scenarios at run time, so their
+  // `// Verifies:` header is written once and must name exactly what the scenarios cite.
+  it('cites in each native interpreter every requirement the scenarios tag', () => {
+    const tagged = new Set(
+      SCREENS.flatMap((screen) => screen.scenarios.flatMap((scenario) => scenario.verifies))
+    );
+    for (const file of NATIVE_INTERPRETERS) {
+      const cited = new Set(
+        [...read(file).matchAll(/^\/\/ Verifies:(.*)$/gm)].flatMap((line) =>
+          line[1]!.trim().split(/\s+/)
+        )
+      );
+      const own = new Set(['REQ-SCR-006', 'REQ-SCR-007']);
+      expect([...cited].filter((id) => !own.has(id)).sort(), file).toEqual([...tagged].sort());
+      for (const id of own) expect(cited.has(id), `${file} cites ${id}`).toBe(true);
     }
   });
 

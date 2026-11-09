@@ -7,6 +7,8 @@ struct VotingHomeView: View {
     @State private var ageText = "20"
     @State private var countryCode = "NP"
     @State private var resultText = L10n.Eligibility.resultPlaceholder
+    /// Why the last check was refused; verdicts stay in `resultText` (REQ-NAT-002, ADR-0038).
+    @State private var validationMessage: String?
     @State private var apiStatus: TranApiStatus = .checking
     /// A connectivity failure shown until a call succeeds (REQ-ERR-006).
     @State private var banner: TranRequestFailure?
@@ -31,8 +33,12 @@ struct VotingHomeView: View {
                             TranStack(gap: .xs, alignment: .leading) {
                                 TranText(L10n.Shell.header("iOS"), variant: .title)
                                 TranText(L10n.Eligibility.subtitle, variant: .muted)
+                                TranText(L10n.Common.roleCitizenVoter, variant: .caption)
+                                    .accessibilityIdentifier(ScreenContract.Eligibility.roleBadge)
                             }
-                            Spacer()
+                            // The titles take what the button leaves, wrapping on a narrow screen or at
+                            // the largest text size, as on Android (REQ-NAT-004, REQ-NAT-013).
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             if let onSignOut {
                                 TranButton(label: L10n.Common.signOut, variant: .secondary, size: .md) {
                                     onSignOut()
@@ -63,6 +69,11 @@ struct VotingHomeView: View {
                         }
                         .accessibilityIdentifier(ScreenContract.Eligibility.checkButton)
 
+                        if let validationMessage {
+                            TranText(validationMessage, variant: .danger, live: true)
+                                .accessibilityIdentifier(ScreenContract.Eligibility.validationMessage)
+                        }
+
                         TranStack(gap: .xs, alignment: .leading) {
                             TranText(resultText, live: true)
                                 .accessibilityIdentifier(ScreenContract.Eligibility.offlineResult)
@@ -81,9 +92,10 @@ struct VotingHomeView: View {
                             options: TranTheme.allCases,
                             selection: $theme,
                             label: { $0.label },
-                            accessibilityLabel: L10n.Shell.themeLabel
+                            accessibilityLabel: L10n.Shell.themeLabel,
+                            identifier: ScreenContract.Eligibility.themePicker,
+                            optionName: { $0.rawValue }
                         )
-                        .accessibilityIdentifier(ScreenContract.Eligibility.themePicker)
 
                         // REQ-NAT-011: the status pill mirrors the web footer; it never gates the device check.
                         TranText(statusLabel, variant: .caption, live: true)
@@ -96,6 +108,9 @@ struct VotingHomeView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
+            // The number pad has no return key: a drag puts it away, so at the largest text size
+            // the header the keyboard pushed off screen can be reached again (REQ-NAT-004).
+            .scrollDismissesKeyboard(.interactively)
         }
         .task {
             await refreshApiStatus()
@@ -179,8 +194,9 @@ struct VotingHomeView: View {
 
     private func checkOffline() {
         // Only parsing happens here; every rule (age range, country shape) is checked once, in Rust.
-        guard let age = UInt16(ageText), !countryCode.isEmpty else {
-            showProblem(L10n.Errors.ageAndCountry)
+        // An age that is not a whole number is out of range, in the catalogue's words.
+        guard let age = UInt16(ageText) else {
+            showProblem(TranFeedback.message(errorSpec(code: .validationAgeOutOfRange).messageKey))
             return
         }
         do {
@@ -191,20 +207,23 @@ struct VotingHomeView: View {
                 referenceDateIso: TranReferenceDate.string()
             )
             resultText = res.localizedReason
+            validationMessage = nil
             hasVerdict = true
             confirmWithApi(age: age)
         } catch let error as TranValidationError {
             // Map the typed Rust variant to shared copy instead of Rust prose.
             showProblem(error.localizedMessage)
         } catch {
-            showProblem(L10n.Errors.ageAndCountry)
+            showProblem(L10n.Errors.unexpected)
         }
     }
 
-    /// No verdict to confirm: an older confirmation must not describe this message.
+    /// No verdict to confirm: an older confirmation must not describe this message, and the
+    /// result goes back to its placeholder so a refusal is never read as a verdict.
     private func showProblem(_ message: String) {
         confirmation.cancel()
         hasVerdict = false
-        resultText = message
+        resultText = L10n.Eligibility.resultPlaceholder
+        validationMessage = message
     }
 }

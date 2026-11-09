@@ -25,7 +25,9 @@
 //!
 //! Step fields: `value` (session, locale and theme givens), `id` (every step on an element),
 //! `text` (`type`), `option` (`select`), `key` (`press_key`, and the locale key of `text_is` and
-//! `announced`), `args` (`text_is`, `announced`, possibly empty), `n` (`count`). `presence` is
+//! `announced`), `args` (`text_is`, `announced`, possibly empty, in the order the placeholders first
+//! appear in the English template, so a native interpreter passes them positionally to the
+//! generated `%1$@` / `%1$s` resource; `rust-core` tests that order), `n` (`count`). `presence` is
 //! `always` or `when` with `state`. Touch minimums are not repeated here: the native tests read
 //! them from the generated `ScreenContract.Minimums`.
 

@@ -12,32 +12,40 @@ Offline eligibility on iOS and Android MUST come from the Rust core via UniFFI a
 
 The device check MUST work with no network: the verdict is computed and shown before any API call
 and MUST NOT wait for it or be replaced by it (see REQ-NAT-011).
-**Verified by:** XCUITest journeys and Compose instrumentation through the real Rust core
-([`VotingUITests.swift`](../../apps/ios/Tests/TranVotingDemoUITests/VotingUITests.swift),
-[`VotingHomeAccessibilityTest.kt`](../../apps/android/app/src/androidTest/kotlin/com/tran/voting/ui/VotingHomeAccessibilityTest.kt)),
-including journeys that point the client at an unreachable port and still assert the verdict; the
-client unit tests stub every network call.
+**Verified by:** the screen contract's eligibility scenarios (spec [021](021-screen-contract.md)), run through the real
+Rust core by the XCUITest and Compose interpreters
+([`ScreenContractUITests.swift`](../../apps/ios/Tests/TranVotingDemoUITests/ScreenContractUITests.swift),
+[`ScreenContractTest.kt`](../../apps/android/app/src/androidTest/kotlin/com/tran/voting/ui/ScreenContractTest.kt)),
+including "The device verdict survives an unreachable API", which points the client at a refused port and still
+asserts the verdict; the Maestro [`launch-smoke`](../../e2e/maestro/flows/launch-smoke.yaml) flow on the installed
+app; the client unit tests stub every network call.
 
 ### REQ-NAT-003 [verified] Screen reader labels
 
 Every control MUST have a spoken label and role; the verdict MUST be announced when it changes (VoiceOver: announcement /
 `.updatesFrequently`; TalkBack: `liveRegion = Polite`).
-**Verified by:** XCUITest `performAccessibilityAudit` on every theme; Compose tests for labels, roles and
-`LiveRegionMode.Polite` (`VotingHomeAccessibilityTest.kt`).
+**Verified by:** XCUITest `performAccessibilityAudit` on every theme
+(`VotingUITests.testAccessibilityAuditPassesAcrossThemes`); Compose labels and roles
+(`VotingHomeAccessibilityTest.everyControlHasASpokenLabelAndRole`); both interpreters assert the platform's
+announcement mechanism (`.updatesFrequently`, `LiveRegionMode.Polite`) on every live region a scenario reads, and
+"The verdict is announced by the result's live region" (`ScreenContractUITests.swift`, `ScreenContractTest.kt`).
 
 ### REQ-NAT-004 [verified] Text scaling
 
 At the largest Dynamic Type size (iOS) and 200% font scale (Android) all content MUST remain reachable without truncation of the verdict.
-**Verified by:** XCUITest relaunch at `UICTContentSizeCategoryAccessibilityXXXL` asserting the verdict grows and stays
-reachable; Compose test at `fontScale = 2f` scrolling to the intact verdict.
+**Verified by:** the scenario "The largest text scale keeps every control and the verdict reachable", launched at
+`ScreenContract.Minimums` (`UICTContentSizeCategoryAccessibilityXXXL` on iOS, font scale 2.0 on Android): every
+always-present element of the dashboard is scrolled to, displayed inside the screen's width at its touch size, and the
+verdict reads in full (`ScreenContractUITests.swift`, `ScreenContractTest.kt`).
 
 ### REQ-NAT-005 [verified] Touch targets
 
 The app owns every interactive control it lays out, and all of them MUST be at least 44×44 pt (iOS) / 48×48 dp
 (Android) — including every segment of `TranSegmented`, so the earlier system-picker exception is gone.
-**Verified by:** XCUITest frame assertions for app-owned controls including each theme segment,
-`performAccessibilityAudit` across all four themes, and the Compose test asserting every control's
-`touchBoundsInRoot` is at least 48×48 dp.
+**Verified by:** both interpreters assert `ScreenContract.Minimums` (frame on iOS, `touchBoundsInRoot` on Android)
+for every `control` and `primary` element a scenario taps, types into, selects or expects — the fields, the check and
+sign-out buttons, the dialog buttons and each theme option, one theme scenario per option
+(`ScreenContractUITests.swift`, `ScreenContractTest.kt`) — and `performAccessibilityAudit` across all four themes.
 
 ### REQ-NAT-006 [verified] Reduced motion and contrast
 
@@ -51,8 +59,10 @@ transitions go through `TranMotion.animation(reduceMotion:)` ([`TranMotionTests.
 
 Every palette in the rust-core theme registry MUST be selectable on the voter dashboard and MUST apply its own colour
 tokens; screens MUST receive a palette and MUST NOT branch on a light/dark boolean.
-**Verified by:** XCUITest iterating every picker entry, Compose test iterating `TranTheme.entries`, Maestro
-[`theme` flow](../../e2e/maestro/flows/theme.yaml), generated palette parity with `tokens.json`.
+**Verified by:** one screen scenario per registry theme (`every_registry_theme_is_selected_by_a_scenario` keeps the
+set equal to the registry), run by both interpreters, which select the option by its derived id
+(`theme-picker-<mode>`) and assert it is selected and the dashboard stays usable (`ScreenContractUITests.swift`,
+`ScreenContractTest.kt`); generated palette parity with `tokens.json`.
 
 ### REQ-NAT-008 [verified] Native copy comes from the shared dictionaries
 
@@ -116,5 +126,6 @@ accessibility XXXL), sign out and every theme choice MUST stay inside the screen
 may break inside a word: long titles wrap, and choices that do not fit move to the next line. The native counterpart
 of web reflow (REQ-A11Y-007). Found by the nightly instrumentation run: at 320 dp the dashboard's subtitle took the
 whole header row and squeezed the Android sign-out button to zero width.
-**Verified by:** `apps/android/app/src/test/kotlin/com/tran/voting/ui/NarrowScreenTest.kt` (JVM, every push) and
-`VotingUITests.testLargestDynamicTypeKeepsSignOutAndEveryThemeOnScreen` (iOS).
+**Verified by:** `apps/android/app/src/test/kotlin/com/tran/voting/ui/NarrowScreenTest.kt` (JVM, every push) and the
+largest-text scenario in `ScreenContractUITests.swift` (iOS), which checks every always-present element and every
+option of the theme picker lies inside the window at full touch size.

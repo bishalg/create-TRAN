@@ -1,50 +1,6 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "errors.ageAndCountry": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enter age and country"
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "आयु और देश दर्ज करें"
-          }
-        },
-        "ne": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "उमेर र देश लेख्नुहोस्"
-          }
-        }
-      }
-    },
-    "errors.ageInvalid": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enter a valid age"
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "मान्य आयु दर्ज करें"
-          }
-        },
-        "ne": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "मान्य उमेर लेख्नुहोस्"
-          }
-        }
-      }
-    },
     "errors.ageOutOfRange": {
       "localizations": {
         "en": {

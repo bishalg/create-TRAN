@@ -1,0 +1,17 @@
+# Verifies: REQ-NAT-002
+# Launch smoke: the installed app, started from its real entry point (MainActivity on Android, the
+# app scene on iOS) on a booted simulator, emulator or a real device, gives a device verdict. Every
+# journey lives in the screen contract (crates/rust-core/src/screens/scenarios.rs) and runs in
+# ScreenContractUITests / ScreenContractTest; this flow only proves the shipped build starts and
+# reaches the Rust core, which the Compose rule (a test activity) does not (REQ-SCR-009).
+appId: com.tran.voting
+tags: [smoke]
+---
+- launchApp:
+    clearState: true
+- assertVisible:
+    id: age-field
+- tapOn:
+    id: check-button
+- assertVisible:
+    id: offline-result

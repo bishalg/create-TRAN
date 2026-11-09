@@ -49,9 +49,11 @@ import com.tran.voting.ui.feedback.LocalTranFeedback
 import com.tran.voting.ui.feedback.TranFeedback
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import uniffi.tran_uniffi.TranErrorCode
 import uniffi.tran_uniffi.TranPresentation
 import uniffi.tran_uniffi.TranUserAction
 import uniffi.tran_uniffi.TranValidationException
+import uniffi.tran_uniffi.errorSpec
 import uniffi.tran_uniffi.evaluateVoteEligibilityOffline
 
 /** Voting demo — brand tokens + offline rust-core rules via UniFFI. Copy comes from the shared dictionaries through generated `TranStrings` accessors. */
@@ -69,7 +71,8 @@ fun VotingHomeScreen(
     var apiStatus by remember { mutableStateOf(TranApiStatus.CHECKING) }
     // A connectivity failure shown until a call succeeds (REQ-ERR-006).
     var banner by remember { mutableStateOf<TranRequestFailure?>(null) }
-    val invalidAge = stringResource(TranStrings.Errors.ageInvalid)
+    // Why the last check was refused; verdicts stay in `resultText` (REQ-NAT-002, ADR-0038).
+    var validationMessage by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val feedback = LocalTranFeedback.current
@@ -137,6 +140,11 @@ fun VotingHomeScreen(
                         text = stringResource(TranStrings.Eligibility.subtitle),
                         variant = TranTextVariant.MUTED,
                     )
+                    TranText(
+                        text = stringResource(TranStrings.Common.roleCitizenVoter),
+                        variant = TranTextVariant.CAPTION,
+                        modifier = Modifier.testTag(ScreenContract.Eligibility.roleBadge),
+                    )
                 }
                 if (onSignOut != null) {
                     TranButton(
@@ -165,9 +173,11 @@ fun VotingHomeScreen(
             TranButton(
                 label = stringResource(TranStrings.Eligibility.checkOffline),
                 onClick = {
-                    val check = runOfflineCheck(context, ageText, countryCode, invalidAge)
+                    val check = runOfflineCheck(context, ageText, countryCode)
                     val country = countryCode
-                    resultText = check.text
+                    // A refusal is never read as a verdict: the result goes back to its placeholder.
+                    resultText = check.verdict ?: resultPlaceholder
+                    validationMessage = check.problem
                     hasVerdict = check.age != null
                     // REQ-NAT-011: the verdict is already on screen; the API call only moves the status pill
                     // and the source caption. The server confirms in the background, retrying transient
@@ -188,6 +198,14 @@ fun VotingHomeScreen(
                 },
                 modifier = Modifier.testTag(ScreenContract.Eligibility.checkButton),
             )
+            validationMessage?.let {
+                TranText(
+                    text = it,
+                    variant = TranTextVariant.DANGER,
+                    live = true,
+                    modifier = Modifier.testTag(ScreenContract.Eligibility.validationMessage),
+                )
+            }
             TranText(
                 text = resultText,
                 modifier = Modifier.testTag(ScreenContract.Eligibility.offlineResult),
@@ -211,7 +229,9 @@ fun VotingHomeScreen(
                 options = TranTheme.entries,
                 selected = theme,
                 onSelect = onThemeChange,
-                modifier = Modifier.fillMaxWidth().testTag(ScreenContract.Eligibility.themePicker),
+                modifier = Modifier.fillMaxWidth(),
+                testTag = ScreenContract.Eligibility.themePicker,
+                optionName = { it.id },
             ) { mode ->
                 stringResource(mode.labelRes)
             }
@@ -237,8 +257,11 @@ fun VotingHomeScreen(
     }
 }
 
-/** The verdict text plus the validated age, when the input was good enough for the API call. */
-private data class OfflineCheck(val text: String, val age: Int?)
+/**
+ * The verdict sentence or the reason it was refused, plus the validated age when the input was
+ * good enough for the API call.
+ */
+private data class OfflineCheck(val verdict: String?, val problem: String?, val age: Int?)
 
 /** Runs a call; returns its classified failure, or `null` on success. Cancellation still propagates. */
 private suspend fun attempt(block: suspend () -> Unit): TranRequestFailure? = try {
@@ -255,15 +278,19 @@ private fun runOfflineCheck(
     context: Context,
     ageText: String,
     countryCode: String,
-    invalidAge: String,
 ): OfflineCheck {
     // Only parsing happens here; every rule (age range, country shape) is checked once, in Rust.
-    val age = ageText.toUShortOrNull() ?: return OfflineCheck(invalidAge, null)
+    // An age that is not a whole number is out of range, in the catalogue's words.
+    val age = ageText.toUShortOrNull() ?: return OfflineCheck(
+        verdict = null,
+        problem = context.getString(TranFeedback.messageRes(errorSpec(TranErrorCode.VALIDATION_AGE_OUT_OF_RANGE).messageKey)),
+        age = null,
+    )
     val reference = tranReferenceDate()
     return try {
         val result = evaluateVoteEligibilityOffline(age, null, countryCode, reference)
-        OfflineCheck(result.localizedReason(context), age.toInt())
+        OfflineCheck(verdict = result.localizedReason(context), problem = null, age = age.toInt())
     } catch (e: TranValidationException) {
-        OfflineCheck(context.getString(e.localizedMessageRes()), null)
+        OfflineCheck(verdict = null, problem = context.getString(e.localizedMessageRes()), age = null)
     }
 }

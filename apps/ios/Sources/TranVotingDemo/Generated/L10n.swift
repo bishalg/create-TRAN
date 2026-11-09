@@ -87,8 +87,6 @@ enum L10n {
     }
 
     enum Errors {
-        static var ageAndCountry: String { String(localized: "errors.ageAndCountry", table: "Errors") }
-        static var ageInvalid: String { String(localized: "errors.ageInvalid", table: "Errors") }
         static var ageOutOfRange: String { String(localized: "errors.ageOutOfRange", table: "Errors") }
         static var birthdateInFuture: String { String(localized: "errors.birthdateInFuture", table: "Errors") }
         static var conflict: String { String(localized: "errors.conflict", table: "Errors") }

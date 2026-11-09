@@ -71,8 +71,6 @@ export type TranStringKey =
   | 'eligibility.validation.label'
   | 'eligibility.verdict.eligible'
   | 'eligibility.verdict.ineligible'
-  | 'errors.ageAndCountry'
-  | 'errors.ageInvalid'
   | 'errors.ageOutOfRange'
   | 'errors.birthdateInFuture'
   | 'errors.conflict'

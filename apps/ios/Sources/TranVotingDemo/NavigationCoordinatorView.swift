@@ -20,9 +20,10 @@ struct NavigationCoordinatorView: View {
         if let initialSession {
             _session = State(initialValue: initialSession)
             _isBootstrapping = State(initialValue: false)
-        } else if CommandLine.arguments.contains("-unauthenticated") {
-            _session = State(initialValue: .unauthenticated)
-            _isBootstrapping = State(initialValue: true)
+        } else if let preset = AuthSession.launchPreset() {
+            // No stored session boots through the splash; a stored one opens its screen at once.
+            _session = State(initialValue: preset ?? .unauthenticated)
+            _isBootstrapping = State(initialValue: preset == nil)
         } else {
             // Default directly to voter dashboard so existing UI tests pass instantly
             _session = State(initialValue: .authenticated(role: .citizenVoter))

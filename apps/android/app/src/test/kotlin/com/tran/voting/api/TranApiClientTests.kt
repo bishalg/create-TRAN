@@ -142,7 +142,7 @@ class TranApiClientTests {
         runBlocking {
             server.enqueue(MockResponse().setResponseCode(403).setHeader("x-request-id", "edge-7").setBody("<html>"))
             val failure = failureOf { client().checkHealth() }!!
-            assertEquals(TranErrorCode.REQUEST_MALFORMED, failure.code)
+            assertEquals(TranErrorCode.AUTH_FORBIDDEN, failure.code)
             assertEquals(403, failure.status)
             assertEquals("edge-7", failure.requestId)
             assertEquals("the server answered", TranApiStatus.ONLINE, tranApiStatusFrom(failure))

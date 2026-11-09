@@ -15,10 +15,14 @@ struct AuditorHomeView: View {
                     TranStack(gap: .lg, alignment: .leading) {
                         TranInline(gap: .md) {
                             TranStack(gap: .xs, alignment: .leading) {
+                                // The title names the role, so it is the role badge here.
                                 TranText(L10n.Common.roleElectionAuditor, variant: .title)
+                                    .accessibilityIdentifier(ScreenContract.Auditor.roleBadge)
                                 TranText(L10n.Auditor.subtitle, variant: .muted)
                             }
-                            Spacer()
+                            // The titles take what the button leaves, wrapping on a narrow screen or at
+                            // the largest text size, as on Android (REQ-NAT-004, REQ-NAT-013).
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             TranButton(label: L10n.Common.signOut, variant: .secondary, size: .md) {
                                 onSignOut()
                             }

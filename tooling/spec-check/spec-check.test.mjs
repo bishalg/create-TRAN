@@ -83,7 +83,7 @@ describe('isCitingSource', () => {
       'e2e/features/vote-eligibility.feature',
       // Rendered from the screen contract by `pnpm tokens:sync`: its `@REQ-…` tags cite (REQ-SCR-005).
       'e2e/features/screens/eligibility.feature',
-      'e2e/maestro/flows/offline-eligibility.yaml',
+      'e2e/maestro/flows/launch-smoke.yaml',
       'crates/rust-core/tests/parity_fixtures.rs',
       'crates/rust-core/src/voting.rs',
       'apps/ios/Tests/TranVotingDemoTests/NavigationParityTests.swift',

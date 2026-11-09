@@ -56,12 +56,10 @@ fun NavigationCoordinator(
     // Screenshot tests start in each registry theme and talk to a canned API (ADR-0031).
     initialTheme: TranTheme = TranTheme.DARK,
     api: TranApiClient = TranApiClient(),
+    // The stored session to open with; the screen contract's UI tests start each scenario from one.
+    initialSession: AuthSession = AuthSession.Authenticated(userId = "voter-001", role = TranUserRole.CITIZEN_VOTER),
 ) {
-    var session by remember {
-        mutableStateOf<AuthSession>(
-            AuthSession.Authenticated(userId = "voter-001", role = TranUserRole.CITIZEN_VOTER)
-        )
-    }
+    var session by remember { mutableStateOf(initialSession) }
     // Any theme in the rust-core registry can be selected — no light/dark boolean.
     var theme by remember { mutableStateOf(initialTheme) }
     val palette = TranBrandTokens.palette(theme)

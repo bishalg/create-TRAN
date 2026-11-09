@@ -82,18 +82,30 @@ The phrasing is one fixed sentence per verb, with every id, key and value quoted
 (`scenario_names_are_unique_and_quotable`), `crates/tran-tokens-codegen/tests/generated_files.rs`,
 `tooling/spec-check/spec-check.test.mjs` (`isCitingSource` counts `e2e/features/screens/*.feature`).
 
-### REQ-SCR-006 [planned] One scenario interpreter per platform runs every scenario
+### REQ-SCR-006 [verified] One scenario interpreter per platform runs every scenario
 
 Playwright step definitions bound to the generated Gherkin, an XCUITest case and a Compose instrumentation case MUST
 each execute every scenario by interpreting its verbs over element ids, with no per-scenario code. A failing step MUST
 report the scenario name, the step and the element. Each interpreter MUST resolve `text_is` through the shared
 dictionaries for the scenario's locale ([008](008-localization.md)), never through hard-coded copy.
 **Verified by:** `e2e/steps/screens.steps.ts`, `ScreenContractUITests.swift`, `ScreenContractTest.kt`, each citing
-the scenario tags it runs. Web part done: `e2e/steps/screens.steps.ts` runs every scenario of
-`e2e/features/screens/*.feature` under `pnpm test:e2e`, finds each scenario's data in the generated `SCREENS` by its
-title, resolves keys with `t()` and fails with "scenario › step › element". iOS and Android follow (package 3).
+the scenario tags it runs. Web: `e2e/steps/screens.steps.ts` runs every scenario of `e2e/features/screens/*.feature`
+under `pnpm test:e2e`, finds each scenario's data in the generated `SCREENS` by its title, resolves keys with `t()` and
+fails with "scenario › step › element". iOS: `apps/ios/Tests/TranVotingDemoUITests/ScreenContractUITests.swift` adds
+one XCUITest method per scenario of the bundled `screens.json` at run time (`test_<scenario name>`), launches the app
+with debug-only presets for the givens (`-TranSession`, `-TranApiBaseUrl`, `-AppleLanguages`, `-TranTheme`,
+`-UIPreferredContentSizeCategoryName`) and resolves keys through the String Catalogs compiled into the test bundle
+(`ScreenCatalogue.swift`, `ContractScreenDriver.swift`). Android:
+`apps/android/app/src/androidTest/kotlin/com/tran/voting/ui/ScreenContractTest.kt` is parameterized by scenario name
+over the assets' `screens.json`, composes the app's `NavigationCoordinator` in the given state and resolves keys
+through the generated string resources (`ScreenCatalogue.kt`, `ContractScreenDriver.kt`). Arguments are passed
+positionally, so `every_expected_message_resolves_with_its_arguments` (`crates/rust-core/src/screens/tests.rs`) pins
+them to the template's placeholder order; `packages/core-ts/tests/screen-ids.test.ts` keeps each native interpreter's
+`// Verifies:` header equal to the requirements the scenarios cite. A verb a platform cannot stage (`reduced_motion`,
+`go_offline`, `go_online`, `api_reachable` with no API running) skips the scenario with the reason; no scenario uses
+one today.
 
-### REQ-SCR-007 [planned] Non-functional rules come from the element's declaration
+### REQ-SCR-007 [verified] Non-functional rules come from the element's declaration
 
 The platform minimums MUST be one Rust table (`PLATFORM_MINIMUMS`) emitted with the contract. For every element of
 touch class `control` each interpreter MUST assert the platform minimum; for every `live_region` it MUST assert the
@@ -105,6 +117,13 @@ NOT appear in platform test code.
 and `primary` element a scenario taps, types into, selects in or expects to exist meets `PLATFORM_MINIMUMS.web` on
 both axes; every `live_region` it reads has `role="status"`, `alert`, `log` or `aria-live`; the largest text scale
 halves the CSS viewport (200% zoom) and every always-present element must then be visible and within the width.
+iOS (`ContractScreenDriver.swift`): the same elements meet `ScreenContract.Minimums` by frame, rounded to device
+pixels; every live region it reads carries `.updatesFrequently` (read from the element snapshot); at
+`UICTContentSizeCategoryAccessibilityXXXL` every always-present element is scrolled to, hittable and inside the
+window, and so is every option of a segmented control. Android (`ContractScreenDriver.kt`): the same by
+`touchBoundsInRoot`, `LiveRegionMode.Polite`, and at font scale 2.0 every always-present element is scrolled to,
+displayed and inside the root's width. A select step also sizes the option it taps. Breaking the verdict's live
+region fails every scenario that reads it, naming the scenario, step and element.
 
 ### REQ-SCR-008 [planned] A conformance manifest is checked against the contract
 
@@ -116,12 +135,15 @@ declare. The checker MUST report every difference in one run.
 **Verified by:** `tooling/screens-check/screens-check.test.mjs` with staged manifests (a passing one, each failure
 class), and the nightly native workflow running the real suites ([009](009-native-tests-in-ci.md)).
 
-### REQ-SCR-009 [planned] A journey is written once
+### REQ-SCR-009 [verified] A journey is written once
 
 A hand-written UI journey (XCUITest, Compose test, Maestro flow or Playwright step) that a scenario covers MUST be
 removed in the change that adds the scenario; what remains MUST be behaviour the verb set cannot express, named as
 such in `docs/TESTING.md`. New user-visible behaviour MUST start as a scenario in `screens.rs`.
-**Verified by:** review, and `docs/TESTING.md` listing the remaining hand-written suites with their reason. Web part
-done: the Playwright journeys the scenarios cover are gone from `e2e/features/` (device verdicts, the non-numeric
-age, an unreachable API, the announced verdict, launch and role branching, sign-out confirm and cancel), and
-`docs/TESTING.md` "Hand-written suites that remain" names what stays. XCUITest, Compose and Maestro follow.
+**Verified by:** review, and `docs/TESTING.md` "Hand-written suites that remain" listing every remaining
+hand-written suite with its reason. The Playwright journeys the scenarios cover are gone from `e2e/features/` (device
+verdicts, the non-numeric age, an unreachable API, the announced verdict, launch and role branching, sign-out confirm
+and cancel). `VotingUITests.swift` keeps only the accessibility audit, the held server check and the fallback caption;
+`VotingHomeAccessibilityTest.kt` only labels and roles, contrast and the fallback caption; the Maestro journeys
+(navigation, offline eligibility, theme) are replaced by one launch smoke of the installed app,
+`e2e/maestro/flows/launch-smoke.yaml`.

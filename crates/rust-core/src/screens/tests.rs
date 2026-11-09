@@ -80,13 +80,20 @@ fn locales() -> BTreeMap<String, BTreeMap<String, String>> {
     out
 }
 
-/// `{name}` placeholders of a locale string.
-fn placeholders(value: &str) -> BTreeSet<String> {
-    value
+/// `{name}` placeholders of a locale string, in order of first appearance: the order of the
+/// positional `%1$@` / `%1$s` arguments the native string resources are generated with.
+fn placeholders(value: &str) -> Vec<String> {
+    let mut names: Vec<String> = Vec::new();
+    for name in value
         .split('{')
         .skip(1)
         .filter_map(|rest| rest.split_once('}').map(|(name, _)| name.to_string()))
-        .collect()
+    {
+        if !names.contains(&name) {
+            names.push(name);
+        }
+    }
+    names
 }
 
 // Verifies: REQ-SCR-001
@@ -178,7 +185,9 @@ fn every_label_and_intent_key_exists_in_every_locale() {
     }
 }
 
-// Verifies: REQ-SCR-004 — a `text_is` or `announced` key resolves, with exactly its placeholders.
+// Verifies: REQ-SCR-004 REQ-SCR-006 — a `text_is` or `announced` key resolves, with exactly its
+// placeholders, listed in the template's order: the native interpreters pass `args` positionally
+// to the generated `%n$@` / `%n$s` resources.
 #[test]
 fn every_expected_message_resolves_with_its_arguments() {
     let locales = locales();
@@ -189,8 +198,12 @@ fn every_expected_message_resolves_with_its_arguments() {
             continue;
         };
         let value = &base[key];
-        let names: BTreeSet<String> = args.iter().map(|a| a.name.to_string()).collect();
-        assert_eq!(names, placeholders(value), "`{key}` arguments");
+        let names: Vec<String> = args.iter().map(|a| a.name.to_string()).collect();
+        assert_eq!(
+            names,
+            placeholders(value),
+            "`{key}` arguments, in the template's order"
+        );
         for dictionary in locales.values() {
             assert!(dictionary.contains_key(key), "`{key}`");
         }

@@ -41,9 +41,11 @@ fun AuditorScreen(onSignOut: () -> Unit) {
             TranInline(gap = TranGap.MD, modifier = Modifier.fillMaxWidth()) {
                 // The titles take what the button leaves, wrapping on a narrow screen (REQ-NAT-013).
                 TranStack(gap = TranGap.XS, modifier = Modifier.weight(1f)) {
+                    // The title names the role, so it is the role badge here.
                     TranText(
                         text = stringResource(TranStrings.Common.roleElectionAuditor),
                         variant = TranTextVariant.TITLE,
+                        modifier = Modifier.testTag(ScreenContract.Auditor.roleBadge),
                     )
                     TranText(
                         text = stringResource(TranStrings.Auditor.subtitle),

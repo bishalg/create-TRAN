@@ -50,7 +50,9 @@ pending copy in place of the source label; native the pending copy as the live c
 read exactly as before otherwise. When the check settles the new verdict and source replace the old ones in one
 update.
 **Verified by:** `ResultCard.test.tsx`, `App.test.tsx`, BDD "The last result stays visible while a new check runs",
-`VotingUITests.swift`, `VotingHomeAccessibilityTest.kt`.
+`VotingUITests.testPendingCheckKeepsTheDeviceVerdictAndSaysItIsChecking` (iOS), `VotingHomeScreenTest.kt` (Android),
+and the screen scenario "The device verdict survives an unreachable API" on both (`ScreenContractUITests.swift`,
+`ScreenContractTest.kt`).
 
 ### REQ-LOAD-004 [verified] Submitting again or leaving cancels the check, and a cancelled check is silent
 
@@ -72,8 +74,9 @@ on iOS and Android — and the result MUST carry the `device_fallback` label, di
 the user knows which path answered; the banner or toast of REQ-ERR-006 still applies. A later successful check MUST
 return the source to `server`. Device-mode checks and the startup health check are unchanged.
 **Verified by:** `toView.test.ts`, `useTranApi.test.tsx`, BDD "The server cannot be reached: the device decides and
-says so" (and the two existing fallback scenarios in `error-feedback.feature`, updated), `VotingUITests.swift`,
-`VotingHomeAccessibilityTest.kt`.
+says so" (and the two existing fallback scenarios in `error-feedback.feature`, updated),
+`VotingUITests.testUnreachableApiLabelsTheVerdictAsCheckedOnTheDevice`,
+`VotingHomeAccessibilityTest.anUnreachableApiLabelsTheVerdictAsCheckedOnTheDevice`.
 
 ### REQ-LOAD-006 [verified] Motion comes from tokens and bows to reduced motion
 

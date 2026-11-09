@@ -135,7 +135,7 @@ final class TranApiClientTests: XCTestCase {
     func testStatusWithoutACodeUsesTheFallbackTableAndTheHeaderId() async throws {
         respond(status: 403, body: "<html>", headers: ["x-request-id": "edge-7"])
         let failure = await failure { try await makeClient().checkHealth() }
-        XCTAssertEqual(failure?.code, .requestMalformed)
+        XCTAssertEqual(failure?.code, .authForbidden)
         XCTAssertEqual(failure?.status, 403)
         XCTAssertEqual(failure?.requestId, "edge-7")
         XCTAssertEqual(failure.map(TranApiStatus.from), .online, "the server answered")

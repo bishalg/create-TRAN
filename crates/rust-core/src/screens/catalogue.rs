@@ -116,6 +116,9 @@ pub const VERDICT_SOURCE: Element = element(
     Touch::None,
     Presence::When(state::VERDICT_SHOWN),
 );
+/// One option per registry theme. Each option is addressed as `<this id>-<theme mode>` (the dark
+/// option is `theme-picker-dark`), derived at run time by the platform and by every interpreter's
+/// `select` step from this id and the option name, never spelled out in code (ADR-0038).
 pub const THEME_PICKER: Element = element(
     "theme-picker",
     Kind::Segmented,

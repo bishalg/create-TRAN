@@ -146,10 +146,6 @@ object TranStrings {
 
     object Errors {
         @StringRes
-        val ageAndCountry: Int = R.string.errors_age_and_country // errors.ageAndCountry
-        @StringRes
-        val ageInvalid: Int = R.string.errors_age_invalid // errors.ageInvalid
-        @StringRes
         val ageOutOfRange: Int = R.string.errors_age_out_of_range // errors.ageOutOfRange
         @StringRes
         val birthdateInFuture: Int = R.string.errors_birthdate_in_future // errors.birthdateInFuture

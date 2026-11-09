@@ -131,7 +131,9 @@ class VotingHomeScreenTest {
         compose.onNodeWithTag(ScreenContract.Eligibility.ageField).performTextReplacement("abc")
         compose.onNodeWithTag(ScreenContract.Eligibility.checkButton).performClick()
         compose.waitForIdle()
-        compose.onNodeWithTag(ScreenContract.Eligibility.offlineResult).assertTextEquals(text(TranStrings.Errors.ageInvalid))
+        // The refusal has its own element; the result goes back to its placeholder (ADR-0038).
+        compose.onNodeWithTag(ScreenContract.Eligibility.validationMessage).assertTextEquals(text(TranStrings.Errors.ageOutOfRange))
+        compose.onNodeWithTag(ScreenContract.Eligibility.offlineResult).assertTextEquals(text(TranStrings.Eligibility.resultPlaceholder))
         assertTrue(noNodes(ScreenContract.Eligibility.verdictSource))
     }
 

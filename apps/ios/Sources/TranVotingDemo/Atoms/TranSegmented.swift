@@ -11,6 +11,10 @@ struct TranSegmented<Value: Hashable>: View {
     @Binding var selection: Value
     let label: (Value) -> String
     var accessibilityLabel: String = ""
+    /// Names each option for UI tests: the control's own id plus the option, so a contract
+    /// `select` step finds it (ADR-0038). `nil` leaves the segments unnamed.
+    var identifier: String? = nil
+    var optionName: (Value) -> String = { "\($0)" }
 
     var body: some View {
         TranInline(gap: .xxs) {
@@ -20,6 +24,7 @@ struct TranSegmented<Value: Hashable>: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(accessibilityLabel)
+        .accessibilityIdentifier(identifier ?? "")
     }
 
     private func segment(_ option: Value) -> some View {
@@ -37,5 +42,12 @@ struct TranSegmented<Value: Hashable>: View {
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(selected ? [.isSelected] : [])
+        .accessibilityIdentifier(identifier.map { optionIdentifier($0, optionName(option)) } ?? "")
     }
+}
+
+/// `<control id>-<option>`: how a segmented control's option is addressed (the screen contract's
+/// theme picker comment in `crates/rust-core/src/screens/catalogue.rs`).
+func optionIdentifier(_ control: String, _ option: String) -> String {
+    "\(control)-\(option)"
 }
