@@ -46,7 +46,7 @@ fn run() -> Result<(), String> {
         );
     }
     println!(
-        "tran-tokens-codegen: wrote {} files (tokens, rules, feedback, strings, DESIGN.md)",
+        "tran-tokens-codegen: wrote {} files (tokens, rules, feedback, screens, strings, DESIGN.md)",
         written.len()
     );
     Ok(())

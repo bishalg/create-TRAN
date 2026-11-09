@@ -4,11 +4,13 @@
   "signOut": "Sign out",
   "role": {
     "citizenVoter": "Citizen Voter",
-    "electionAuditor": "Election Auditor"
+    "electionAuditor": "Election Auditor",
+    "label": "Role"
   },
   "cancel": "Cancel",
   "dismiss": "Dismiss",
   "notifications": "Notifications",
   "notNow": "Not now",
-  "reload": "Reload"
+  "reload": "Reload",
+  "loading": "Loading"
 }

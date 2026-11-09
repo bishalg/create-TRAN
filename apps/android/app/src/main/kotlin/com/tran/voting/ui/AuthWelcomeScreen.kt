@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import com.tran.voting.generated.ScreenContract
 import com.tran.voting.generated.TranSpace
 import com.tran.voting.generated.TranStrings
 import com.tran.voting.ui.atoms.TranButton
@@ -41,13 +42,13 @@ fun AuthWelcomeScreen(onSelectRole: (TranUserRole) -> Unit) {
                 TranButton(
                     label = stringResource(TranStrings.Auth.continueAsVoter),
                     onClick = { onSelectRole(TranUserRole.CITIZEN_VOTER) },
-                    modifier = Modifier.fillMaxWidth().testTag("voter-branch-button"),
+                    modifier = Modifier.fillMaxWidth().testTag(ScreenContract.AuthWelcome.voterBranchButton),
                 )
                 TranButton(
                     label = stringResource(TranStrings.Auth.continueAsAuditor),
                     onClick = { onSelectRole(TranUserRole.ELECTION_AUDITOR) },
                     variant = TranButtonVariant.SECONDARY,
-                    modifier = Modifier.fillMaxWidth().testTag("auditor-branch-button"),
+                    modifier = Modifier.fillMaxWidth().testTag(ScreenContract.AuthWelcome.auditorBranchButton),
                 )
             }
         }

@@ -16,6 +16,7 @@
   "status": {
     "online": "API online",
     "offline": "API offline",
-    "checking": "Checking API…"
+    "checking": "Checking API…",
+    "label": "API status"
   }
 }

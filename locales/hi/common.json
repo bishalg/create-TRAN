@@ -4,11 +4,13 @@
   "signOut": "साइन आउट",
   "role": {
     "citizenVoter": "नागरिक मतदाता",
-    "electionAuditor": "चुनाव ऑडिटर"
+    "electionAuditor": "चुनाव ऑडिटर",
+    "label": "भूमिका"
   },
   "cancel": "रद्द करें",
   "dismiss": "बंद करें",
   "notifications": "सूचनाएँ",
   "notNow": "अभी नहीं",
-  "reload": "दोबारा लोड करें"
+  "reload": "दोबारा लोड करें",
+  "loading": "लोड हो रहा है"
 }

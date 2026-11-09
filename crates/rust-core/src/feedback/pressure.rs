@@ -68,7 +68,8 @@ mod tests {
 
     #[test]
     fn the_cap_is_never_exceeded_after_admission() {
-        let keys = ["a.one", "a.two", "a.three", "a.four", "a.five"];
+        // `a.three` twice: a duplicate refreshes instead of appending (REQ-ERR-012).
+        let keys = ["a.one", "a.two", "a.three", "a.three", "a.four", "a.five"];
         let mut visible: Vec<ToastKey> = Vec::new();
         for key in keys {
             let incoming = ToastKey {

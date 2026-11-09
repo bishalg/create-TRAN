@@ -22,7 +22,7 @@ struct AuditorHomeView: View {
                             TranButton(label: L10n.Common.signOut, variant: .secondary, size: .md) {
                                 onSignOut()
                             }
-                            .accessibilityIdentifier("sign-out-button")
+                            .accessibilityIdentifier(ScreenContract.Auditor.signOutButton)
                         }
 
                         TranSurface {

@@ -485,6 +485,28 @@
         }
       }
     },
+    "eligibility.result.source": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Who checked the result"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "परिणाम किसने जाँचा"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नतिजा कसले जाँच्यो"
+          }
+        }
+      }
+    },
     "eligibility.result.sourceDevice": {
       "localizations": {
         "en": {

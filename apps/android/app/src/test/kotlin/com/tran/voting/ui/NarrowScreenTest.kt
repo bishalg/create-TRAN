@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import com.tran.voting.NavigationCoordinator
+import com.tran.voting.generated.ScreenContract
 import com.tran.voting.generated.TranTheme
 import com.tran.voting.generated.labelRes
 import com.tran.voting.parity.VoteEligibilityParityTest
@@ -51,9 +52,9 @@ class NarrowScreenTest {
     @Test
     fun `REQ-NAT-013 the voter can reach sign out and every theme on a 320 dp screen`() {
         compose.setContent { NavigationCoordinator(api = FakeApis.healthy()) }
-        compose.waitUntil(5_000) { compose.onAllNodes(hasTestTag("sign-out-button")).fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(5_000) { compose.onAllNodes(hasTestTag(ScreenContract.Eligibility.signOutButton)).fetchSemanticsNodes().isNotEmpty() }
 
-        assertWhollyOnScreen(compose.onNodeWithTag("sign-out-button"), "sign out")
+        assertWhollyOnScreen(compose.onNodeWithTag(ScreenContract.Eligibility.signOutButton), "sign out")
         val chips = TranTheme.entries.map { mode -> mode to compose.onNodeWithText(text(mode.labelRes)) }
         chips.forEach { (mode, chip) -> assertWhollyOnScreen(chip, "theme $mode") }
         // A label broken inside a word ("Se/pi/a") makes its chip taller than the others.
@@ -64,7 +65,7 @@ class NarrowScreenTest {
     @Test
     fun `REQ-NAT-013 the auditor can reach sign out on a 320 dp screen`() {
         compose.setContent { AuditorScreen(onSignOut = {}) }
-        assertWhollyOnScreen(compose.onNodeWithTag("sign-out-button"), "sign out")
+        assertWhollyOnScreen(compose.onNodeWithTag(ScreenContract.Eligibility.signOutButton), "sign out")
     }
 
     companion object {

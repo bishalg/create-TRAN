@@ -1,6 +1,7 @@
 // Verifies: REQ-LOAD-002 REQ-LOAD-003 REQ-LOAD-004 REQ-LOAD-005 REQ-ERR-005 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-WEB-001 REQ-WEB-002 REQ-WEB-003 REQ-WEB-006 REQ-A11Y-002 REQ-A11Y-003 REQ-A11Y-004 REQ-A11Y-006 REQ-NAV-001 REQ-NAV-002 REQ-NAV-003 REQ-NAV-004 REQ-NAV-005
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ScreenIds } from '@tran/core';
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeApi, envelope, REQUEST_ID } from '../../tests/helpers/fakeApi.js';
 import { App, type AppProps } from './App.js';
@@ -426,7 +427,7 @@ describe('App: navigation and role branching', () => {
 
     await user.click(screen.getByRole('button', { name: 'Continue as Citizen Voter' }));
     expect(screen.getByLabelText('Your age')).toBeVisible();
-    expect(screen.getByTestId('role-badge')).toHaveTextContent('Citizen Voter');
+    expect(screen.getByTestId(ScreenIds.eligibility.roleBadge)).toHaveTextContent('Citizen Voter');
   });
 
   it('[REQ-NAV-004] branches into Election Auditor dashboard upon selection', async () => {
@@ -440,7 +441,9 @@ describe('App: navigation and role branching', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: 'Election Auditor Dashboard' })
     ).toBeVisible();
-    expect(screen.getByTestId('role-badge')).toHaveTextContent('Election Auditor');
+    expect(screen.getByTestId(ScreenIds.eligibility.roleBadge)).toHaveTextContent(
+      'Election Auditor'
+    );
     expect(screen.getByText('NP')).toBeVisible();
 
     // Can switch back to Citizen Voter from Auditor dashboard
@@ -455,7 +458,7 @@ describe('App: navigation and role branching', () => {
     const dialog = screen.getByRole('dialog', { name: 'Sign out?' });
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(screen.getByTestId('role-badge')).toHaveTextContent('Citizen Voter');
+    expect(screen.getByTestId(ScreenIds.eligibility.roleBadge)).toHaveTextContent('Citizen Voter');
   });
 
   it('[REQ-LOAD-004] signing out during a server check shows no late toast', async () => {
@@ -480,12 +483,12 @@ describe('App: navigation and role branching', () => {
 
   it('[REQ-NAV-005] confirming sign-out returns to the auth welcome screen', async () => {
     const { user } = await renderApp();
-    expect(screen.getByTestId('role-badge')).toHaveTextContent('Citizen Voter');
+    expect(screen.getByTestId(ScreenIds.eligibility.roleBadge)).toHaveTextContent('Citizen Voter');
 
     await user.click(screen.getByRole('button', { name: 'Sign out' }));
     const dialog = screen.getByRole('dialog', { name: 'Sign out?' });
     await user.click(within(dialog).getByRole('button', { name: 'Sign out' }));
     expect(screen.getByRole('heading', { level: 2, name: 'Welcome to TRAN Voting' })).toBeVisible();
-    expect(screen.queryByTestId('role-badge')).toBeNull();
+    expect(screen.queryByTestId(ScreenIds.eligibility.roleBadge)).toBeNull();
   });
 });

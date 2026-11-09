@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import com.tran.voting.generated.ScreenContract
 import com.tran.voting.generated.TranSpace
 import com.tran.voting.generated.TranStrings
 import com.tran.voting.ui.atoms.TranButton
@@ -54,7 +55,7 @@ fun AuditorScreen(onSignOut: () -> Unit) {
                     onClick = onSignOut,
                     variant = TranButtonVariant.SECONDARY,
                     size = TranButtonSize.MD,
-                    modifier = Modifier.testTag("sign-out-button"),
+                    modifier = Modifier.testTag(ScreenContract.Auditor.signOutButton),
                 )
             }
 

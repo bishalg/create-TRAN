@@ -42,7 +42,7 @@ struct NavigationCoordinatorView: View {
                         TranText(L10n.Common.brand, variant: .display)
                         ProgressView()
                             .tint(palette.primary)
-                            .accessibilityIdentifier("splash-progress")
+                            .accessibilityIdentifier(ScreenContract.Splash.splashProgress)
                     }
                 }
                 .onAppear {

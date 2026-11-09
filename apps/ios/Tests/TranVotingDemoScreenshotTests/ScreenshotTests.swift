@@ -84,18 +84,18 @@ final class ScreenshotTests: XCTestCase {
         let app = launch(theme: theme, locale: locale, extra: ["-TranApiBaseUrl", "http://127.0.0.1:1"])
         defer { app.terminate() }
 
-        guard wait(for: app.descendants(matching: .any)["offline-notice"], "the offline banner", name) else { return }
+        guard wait(for: app.descendants(matching: .any)[ScreenContract.Eligibility.offlineNotice], "the offline banner", name) else { return }
         compare("home-\(name)")
 
-        app.buttons["check-button"].tap()
+        app.buttons[ScreenContract.Eligibility.checkButton].tap()
         guard let fallback = Self.resultCopy("sourceFallback", locale: locale) else {
             return XCTFail("\(name): no fallback copy for \(locale)")
         }
-        guard wait(for: app.staticTexts["verdict-source"], label: fallback, "the fallback label", name)
+        guard wait(for: app.staticTexts[ScreenContract.Eligibility.verdictSource], label: fallback, "the fallback label", name)
         else { return }
         compare("result-\(name)")
 
-        app.buttons["sign-out-button"].tap()
+        app.buttons[ScreenContract.Eligibility.signOutButton].tap()
         guard wait(for: app.alerts.firstMatch, "the sign-out dialog", name) else { return }
         compare("sign-out-dialog-\(name)")
 
@@ -104,11 +104,11 @@ final class ScreenshotTests: XCTestCase {
         let buttons = app.alerts.firstMatch.buttons
         XCTAssertEqual(buttons.count, 2, "\(name): the sign-out dialog should offer Cancel and Sign out")
         buttons.element(boundBy: 1).tap()
-        guard wait(for: app.buttons["auditor-branch-button"], "the welcome screen", name) else { return }
+        guard wait(for: app.buttons[ScreenContract.AuthWelcome.auditorBranchButton], "the welcome screen", name) else { return }
         compare("welcome-\(name)")
 
-        app.buttons["auditor-branch-button"].tap()
-        guard wait(for: app.buttons["sign-out-button"], "the auditor screen", name) else { return }
+        app.buttons[ScreenContract.AuthWelcome.auditorBranchButton].tap()
+        guard wait(for: app.buttons[ScreenContract.Eligibility.signOutButton], "the auditor screen", name) else { return }
         compare("auditor-\(name)")
     }
 
@@ -119,12 +119,12 @@ final class ScreenshotTests: XCTestCase {
         let app = launch(theme: theme, locale: locale, extra: ["-TranApiStub", "hang"])
         defer { app.terminate() }
 
-        guard wait(for: app.buttons["check-button"], "the check button", name) else { return }
-        app.buttons["check-button"].tap()
+        guard wait(for: app.buttons[ScreenContract.Eligibility.checkButton], "the check button", name) else { return }
+        app.buttons[ScreenContract.Eligibility.checkButton].tap()
         guard let pending = Self.resultCopy("updating", locale: locale) else {
             return XCTFail("\(name): no pending copy for \(locale)")
         }
-        guard wait(for: app.staticTexts["verdict-source"], label: pending, "the pending caption", name)
+        guard wait(for: app.staticTexts[ScreenContract.Eligibility.verdictSource], label: pending, "the pending caption", name)
         else { return }
         compare("pending-\(name)")
     }

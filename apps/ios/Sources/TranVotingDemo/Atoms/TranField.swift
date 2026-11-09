@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Labelled text input (web `Field`). `hint` is the field placeholder; the label styles and the
 /// input box come from tokens. `identifier` lands on the control itself so UI tests keep querying
-/// `textFields["age-field"]`.
+/// `textFields[ScreenContract.Eligibility.ageField]`.
 struct TranField: View {
     @Environment(\.tranPalette) private var palette
 

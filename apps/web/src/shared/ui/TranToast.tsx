@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useRef } from 'react';
+import { ScreenIds } from '@tran/core';
 import { CheckIcon, CrossIcon, InfoIcon, WarningIcon } from './icons.js';
 
 export type TranToastTone = 'success' | 'info' | 'warning' | 'error';
@@ -58,6 +59,7 @@ export function TranToast({
     <div
       className="tran-toast"
       data-tone={tone}
+      data-testid={ScreenIds.eligibility.toast}
       role={tone === 'error' ? 'alert' : 'status'}
       onMouseEnter={pause}
       onMouseLeave={resume}
@@ -74,6 +76,7 @@ export function TranToast({
       <button
         type="button"
         className="tran-toast-dismiss"
+        data-testid={ScreenIds.eligibility.toastDismiss}
         aria-label={dismissLabel}
         onClick={onDismiss}
       >

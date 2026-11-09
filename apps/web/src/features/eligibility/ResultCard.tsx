@@ -1,5 +1,6 @@
 import {
   LOADING_POLICY,
+  ScreenIds,
   type SupportedLocale,
   t,
   type VerdictSource,
@@ -64,7 +65,7 @@ export function ResultCard({
             </TranText>
           </li>
           <li className="chip">
-            <TranText variant="caption" as="span">
+            <TranText variant="caption" as="span" data-testid={ScreenIds.eligibility.verdictSource}>
               {t(
                 updating
                   ? LOADING_POLICY.pendingMessageKey

@@ -1,0 +1,94 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "screen.auditor.intent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Let an election auditor review every country’s minimum voting age exactly as the shared Rust rules apply it."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "चुनाव लेखा परीक्षक को हर देश की न्यूनतम मतदान आयु ठीक वैसे ही देखने दें जैसे साझा Rust नियम उसे लागू करते हैं।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "निर्वाचन अडिटरलाई हरेक देशको न्यूनतम मतदान उमेर साझा Rust नियमले लागू गरेजस्तै हेर्न दिनुहोस्।"
+          }
+        }
+      }
+    },
+    "screen.authWelcome.intent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Let a signed-out person pick Citizen Voter or Election Auditor in one tap and open that role’s dashboard."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "साइन आउट व्यक्ति को एक टैप में नागरिक मतदाता या चुनाव लेखा परीक्षक चुनने दें और उस भूमिका का डैशबोर्ड खोलें।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "साइन आउट भएको व्यक्तिलाई एकै ट्यापमा नागरिक मतदाता वा निर्वाचन अडिटर छान्न दिनुहोस् र त्यो भूमिकाको ड्यासबोर्ड खोल्नुहोस्।"
+          }
+        }
+      }
+    },
+    "screen.eligibility.intent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tell a citizen within seconds, even offline, whether their age meets a country’s minimum voting age, and who vouched for the answer."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नागरिक को कुछ ही सेकंड में, ऑफ़लाइन भी, बताएँ कि उनकी आयु किसी देश की न्यूनतम मतदान आयु पूरी करती है या नहीं, और उत्तर की पुष्टि किसने की।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नागरिकलाई केही सेकेन्डमै, अफलाइनमा पनि, उनको उमेरले कुनै देशको न्यूनतम मतदान उमेर पुर्‍याउँछ कि पुर्‍याउँदैन र उत्तर कसले प्रमाणित गर्‍यो भनी बताउनुहोस्।"
+          }
+        }
+      }
+    },
+    "screen.splash.intent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show that the app is starting until the stored session picks the first screen."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सहेजा गया सत्र पहली स्क्रीन चुनने तक दिखाएँ कि ऐप शुरू हो रहा है।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सुरक्षित सत्रले पहिलो स्क्रिन नछानेसम्म एप सुरु हुँदैछ भनी देखाउनुहोस्।"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

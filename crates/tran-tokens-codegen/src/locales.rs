@@ -4,6 +4,7 @@
 use crate::files::{list_dir, read_file};
 use crate::names::{android_resource_name, full_key, member_name};
 use rust_core::feedback::{ErrorCode, UserAction, VerdictSource, LOADING_POLICY};
+use rust_core::screens::SCREENS;
 use rust_core::tokens::TokensJsonSnapshot;
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -318,6 +319,36 @@ pub fn feedback_message_keys(base: &Dictionary) -> Result<BTreeSet<String>, Stri
     Ok(keys)
 }
 
+/// Every locale key the screen contract names: intents, element labels and the messages its
+/// scenarios expect (ADR-0038, REQ-SCR-001). A missing key fails the run, so no platform is handed
+/// a contract it cannot localize.
+pub fn screen_message_keys(base: &Dictionary) -> Result<BTreeSet<String>, String> {
+    let keys: BTreeSet<String> = SCREENS
+        .iter()
+        .flat_map(|screen| {
+            let labels = screen.elements.iter().map(|element| element.label);
+            let messages = screen
+                .scenarios
+                .iter()
+                .flat_map(|scenario| scenario.then)
+                .filter_map(|then| then.message().map(|(key, _)| key));
+            std::iter::once(screen.intent).chain(labels).chain(messages)
+        })
+        .map(str::to_string)
+        .collect();
+    let missing = keys.iter().find(|key| {
+        key.split_once('.')
+            .and_then(|(module, relative)| base.modules.get(module)?.get(relative))
+            .is_none()
+    });
+    match missing {
+        Some(key) => Err(format!(
+            "screen contract names `{key}`, missing from locales/"
+        )),
+        None => Ok(keys),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -572,5 +603,20 @@ mod tests {
             err.contains("`errors.serverInternal` must not take placeholders"),
             "{err}"
         );
+    }
+
+    // Verifies: REQ-SCR-001 — the contract's keys are checked before anything is rendered.
+    #[test]
+    fn screen_keys_must_exist() {
+        let keys = screen_message_keys(&real_base()).unwrap();
+        assert!(keys.contains("screen.eligibility.intent"));
+        assert!(keys.contains("eligibility.age.label"));
+        assert!(keys.contains("eligibility.result.reasonMeets"));
+
+        let mut base = real_base();
+        base.modules.remove("screen");
+        let err = screen_message_keys(&base).unwrap_err();
+        assert!(err.contains("`screen."), "{err}");
+        assert!(err.contains("missing from locales/"), "{err}");
     }
 }

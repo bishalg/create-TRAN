@@ -9,6 +9,16 @@ when you learned something that is not obvious from the code, the specs or the A
 - Format, checked by `pnpm agents:check`: a `## YYYY-MM-DD - Title` heading, then a `**Learning:**` and an
   `**Action:**` line. Newest first. Delete an entry when the code makes it obsolete.
 
+## 2026-11-09 - A `const fn` that only builds `const` tables counts as uncovered
+
+**Learning:** `cargo llvm-cov` measures run time only. A `const fn` helper used solely inside `const` items (the
+screen catalogue's `element`, `Scenario::new`) is evaluated by the compiler, so its regions report 0% and
+`pnpm test:rust:coverage` fails at 100% although every table is tested. Inside those tables, `&helper(..)` as an
+argument is also not promoted to `'static` (only literals and paths are), so nested slices built by a `const fn` do not
+compile at all.
+**Action:** Call each table-building `const fn` once from a test at run time; build nested slices from literals or
+`macro_rules!`, not from `const fn` calls (see `crates/rust-core/src/screens/scenarios.rs`).
+
 ## 2026-10-22 - Layout bugs hide on big phones and in Robolectric's default mode
 
 **Learning:** The default CI emulator (`reactivecircus/android-emulator-runner` with no profile) is 320 × 640 dp,

@@ -89,6 +89,28 @@
         }
       }
     },
+    "shell.status.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API status"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API स्थिति"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API स्थिति"
+          }
+        }
+      }
+    },
     "shell.status.offline": {
       "localizations": {
         "en": {

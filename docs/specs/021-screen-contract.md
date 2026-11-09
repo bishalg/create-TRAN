@@ -20,19 +20,22 @@ Vocabulary used below:
 - The **platform minimums** are the per-platform numbers an element's touch class resolves to (44 pt on iOS, 48 dp on
   Android, 24 CSS px on the web with 44 px for the primary action).
 
-### REQ-SCR-001 [planned] The screen contract is one Rust module
+### REQ-SCR-001 [verified] The screen contract is one Rust module
 
-`crates/rust-core/src/screens.rs` MUST define every screen (`id`, its `AppDestination`, an `intent` locale key) and its
-elements (`id`, semantic `kind`, `label` locale key, `touch` class, `presence`: always or only in a named state).
+`crates/rust-core/src/screens.rs` (with `screens/`) MUST define every screen (`id`, its `AppDestination`, an `intent` locale key) and its
+elements (`id`, semantic `kind`, `label` locale key, `touch` class: `control`, `primary` or `none`, `presence`: always
+or only in a named state). An id names one element: a shared element (sign out) is declared once and listed on each
+screen. Intent keys are `screen.<camelCaseScreenId>.intent` (camelCase, per [008](008-localization.md)).
 Unit tests MUST reject duplicate or non-kebab-case ids, an element whose label key is missing from any locale, and a
 screen whose destination no `AppDestination` variant names. The dead-key guard MUST count intent and label keys as
 used. `pnpm tokens:sync` MUST emit the contract to `packages/core-ts/src/generated/screens.ts`, iOS
 `Generated/ScreenContract.swift` and Android `generated/ScreenContract.kt`; `cargo test` MUST fail while any copy is
 stale (ADR-0030).
-**Verified by:** `crates/rust-core/src/screens.rs` tests, `crates/tran-tokens-codegen/tests/generated_files.rs`,
-`packages/core-ts/tests/i18n-guards.test.ts`.
+**Verified by:** `crates/rust-core/src/screens/tests.rs`, `crates/tran-tokens-codegen/src/locales.rs` and
+`generate.rs` (a missing contract key fails the run), `crates/tran-tokens-codegen/src/screens_ts.rs` and
+`screens_native.rs`, `crates/tran-tokens-codegen/tests/generated_files.rs`, `packages/core-ts/tests/i18n-guards.test.ts`.
 
-### REQ-SCR-002 [planned] Every platform addresses elements by the generated id
+### REQ-SCR-002 [verified] Every platform addresses elements by the generated id
 
 Each platform MUST expose every element whose presence is `always` under its contract id, and every element with a
 conditional presence whenever its state holds, through `data-testid` (web), `accessibilityIdentifier` (iOS) and
@@ -40,25 +43,27 @@ conditional presence whenever its state holds, through `data-testid` (web), `acc
 literal element id in feature code or tests, on an id a platform uses that the contract does not declare, and on an
 always-present element a platform never references.
 **Verified by:** `packages/core-ts/tests/screen-ids.test.ts` (scans `apps/web/src`, `apps/ios`, `apps/android` and
-`e2e/`).
+`e2e/`; Maestro YAML stays literal and is checked against the contract). Always-present elements a platform does not
+implement yet are listed there with a reason (`KNOWN_GAPS`), and the guard fails once a gap is closed.
 
-### REQ-SCR-003 [planned] The contract never describes presentation
+### REQ-SCR-003 [verified] The contract never describes presentation
 
 An element kind MUST be semantic (`field`, `button`, `text`, `live_region`, `banner`, `toast`, `dialog`,
 `segmented`, `progress`). The contract MUST NOT carry colour, size, spacing, typography, order or layout; a test over
 the generated JSON MUST fail if any key named like one appears. Presentation stays with design tokens
 ([ADR-0005](../adr/0005-generated-design-tokens.md)) and each platform's atoms ([ADR-0022](../adr/0022-native-atoms.md)).
-**Verified by:** `crates/rust-core/src/screens.rs` schema test.
+**Verified by:** `crates/rust-core/src/screens/tests.rs` (`the_contract_never_describes_presentation`).
 
-### REQ-SCR-004 [planned] Acceptance criteria are scenario data with a closed verb set
+### REQ-SCR-004 [verified] Acceptance criteria are scenario data with a closed verb set
 
-Scenarios MUST live beside their screen in `screens.rs`. _Given_ MUST be drawn from: stored session, API reachable or
+Scenarios MUST live beside their screen in `screens.rs` (`screens/scenarios.rs`). _Given_ MUST be drawn from: stored session, API reachable or
 unreachable, locale, theme, largest text scale, reduced motion. _When_ MUST be drawn from: `tap`, `type`, `select`,
 `press_key`, `go_offline`, `go_online`. _Then_ MUST be drawn from: `exists`, `missing`, `text_is` (a locale key with
 arguments, resolved per locale), `has_focus`, `announced` (the live region's text), `count`. Every scenario MUST cite
 at least one requirement id and MUST carry `within_ms`, defaulting to the indicator delay plus `SERVER_DEADLINE_MS`
 and never exceeding it. A test MUST pin the verb list so that adding a verb changes a named snapshot and the ADR.
-**Verified by:** `crates/rust-core/src/screens.rs` tests (citations resolve, bounds hold, verb snapshot).
+**Verified by:** `crates/rust-core/src/screens/tests.rs` (citations resolve, bounds hold, verb snapshot
+`the_verb_set_is_closed`, expected messages resolve with their arguments, eligibility verdicts agree with the rules).
 
 ### REQ-SCR-005 [planned] Scenarios render to Gherkin and to machine-readable JSON
 
@@ -85,7 +90,8 @@ touch class `control` each interpreter MUST assert the platform minimum; for eve
 platform's announcement mechanism (`role="status"`, `.updatesFrequently` or announcement, `LiveRegionMode.Polite`);
 for a scenario given the largest text scale it MUST assert every always-present element stays reachable. Numbers MUST
 NOT appear in platform test code.
-**Verified by:** the three interpreters (REQ-SCR-006) and `crates/rust-core/src/screens.rs` minimums test.
+**Verified by:** the three interpreters (REQ-SCR-006) and `crates/rust-core/src/screens/tests.rs`
+(`platform_minimums_are_one_table`, the Rust half).
 
 ### REQ-SCR-008 [planned] A conformance manifest is checked against the contract
 

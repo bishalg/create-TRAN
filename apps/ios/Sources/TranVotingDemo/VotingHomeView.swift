@@ -37,7 +37,7 @@ struct VotingHomeView: View {
                                 TranButton(label: L10n.Common.signOut, variant: .secondary, size: .md) {
                                     onSignOut()
                                 }
-                                .accessibilityIdentifier("sign-out-button")
+                                .accessibilityIdentifier(ScreenContract.Eligibility.signOutButton)
                             }
                         }
 
@@ -46,14 +46,14 @@ struct VotingHomeView: View {
                                 label: L10n.Eligibility.ageLabel,
                                 hint: L10n.Eligibility.agePlaceholder,
                                 text: $ageText,
-                                identifier: "age-field",
+                                identifier: ScreenContract.Eligibility.ageField,
                                 keyboard: .numberPad
                             )
                             TranField(
                                 label: L10n.Eligibility.countryLabel,
                                 hint: L10n.Eligibility.countryPlaceholder,
                                 text: $countryCode,
-                                identifier: "country-field",
+                                identifier: ScreenContract.Eligibility.countryField,
                                 autocapitalization: .characters
                             )
                         }
@@ -61,16 +61,16 @@ struct VotingHomeView: View {
                         TranButton(label: L10n.Eligibility.checkOffline, fullWidth: true) {
                             checkOffline()
                         }
-                        .accessibilityIdentifier("check-button")
+                        .accessibilityIdentifier(ScreenContract.Eligibility.checkButton)
 
                         TranStack(gap: .xs, alignment: .leading) {
                             TranText(resultText, live: true)
-                                .accessibilityIdentifier("offline-result")
+                                .accessibilityIdentifier(ScreenContract.Eligibility.offlineResult)
                             // The verdict stays as it is while the server checks; only this caption
                             // says who vouches for it, or that the check is still running (REQ-LOAD-003).
                             if hasVerdict {
                                 TranText(confirmation.caption, variant: .caption, live: true)
-                                    .accessibilityIdentifier("verdict-source")
+                                    .accessibilityIdentifier(ScreenContract.Eligibility.verdictSource)
                             }
                         }
                         .animation(TranMotion.animation(reduceMotion: reduceMotion), value: confirmation.caption)
@@ -83,14 +83,14 @@ struct VotingHomeView: View {
                             label: { $0.label },
                             accessibilityLabel: L10n.Shell.themeLabel
                         )
-                        .accessibilityIdentifier("theme-picker")
+                        .accessibilityIdentifier(ScreenContract.Eligibility.themePicker)
 
                         // REQ-NAT-011: the status pill mirrors the web footer; it never gates the device check.
                         TranText(statusLabel, variant: .caption, live: true)
-                            .accessibilityIdentifier("api-status")
+                            .accessibilityIdentifier(ScreenContract.Eligibility.apiStatus)
                         if let banner {
                             TranBanner(message: TranFeedback.message(banner.spec.messageKey))
-                                .accessibilityIdentifier("offline-notice")
+                                .accessibilityIdentifier(ScreenContract.Eligibility.offlineNotice)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)

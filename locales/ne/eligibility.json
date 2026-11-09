@@ -40,7 +40,8 @@
     "updating": "सर्भरसँग जाँच गर्दै…",
     "placeholder": "अफलाइन जाँच थिच्नुहोस्",
     "reasonMeets": "उमेर {age} ले न्यूनतम मतदान उमेर {minimumAge} पूरा गर्छ ({country})।",
-    "reasonBelow": "उमेर {age} न्यूनतम मतदान उमेर {minimumAge} भन्दा कम छ ({country})।"
+    "reasonBelow": "उमेर {age} न्यूनतम मतदान उमेर {minimumAge} भन्दा कम छ ({country})।",
+    "source": "नतिजा कसले जाँच्यो"
   },
   "serverCheckDone": "सर्भर जाँच पूरा भयो"
 }

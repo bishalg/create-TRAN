@@ -31,7 +31,7 @@ struct TranToast: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(dismissLabel)
-            .accessibilityIdentifier("toast-dismiss")
+            .accessibilityIdentifier(ScreenContract.Eligibility.toastDismiss)
         }
         .padding(.leading, TranSpace.md)
         .background(palette.surface, in: RoundedRectangle(cornerRadius: TranRadius.md))
@@ -39,7 +39,7 @@ struct TranToast: View {
             RoundedRectangle(cornerRadius: TranRadius.md).stroke(toneColor, lineWidth: TranSpace.xxs)
         )
         .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("toast")
+        .accessibilityIdentifier(ScreenContract.Eligibility.toast)
     }
 
     private var icon: String {

@@ -28,6 +28,7 @@ import com.tran.voting.api.TranApiStatus
 import com.tran.voting.api.TranRequestFailure
 import com.tran.voting.api.listenForConnectivity
 import com.tran.voting.api.tranApiStatusFrom
+import com.tran.voting.generated.ScreenContract
 import com.tran.voting.generated.TranSpace
 import com.tran.voting.generated.TranStrings
 import com.tran.voting.generated.TranTheme
@@ -143,7 +144,7 @@ fun VotingHomeScreen(
                         onClick = onSignOut,
                         variant = TranButtonVariant.SECONDARY,
                         size = TranButtonSize.MD,
-                        modifier = Modifier.testTag("sign-out-button"),
+                        modifier = Modifier.testTag(ScreenContract.Eligibility.signOutButton),
                     )
                 }
             }
@@ -152,13 +153,13 @@ fun VotingHomeScreen(
                     label = stringResource(TranStrings.Eligibility.ageLabel),
                     value = ageText,
                     onValueChange = { ageText = it },
-                    modifier = Modifier.weight(1f).testTag("age-field"),
+                    modifier = Modifier.weight(1f).testTag(ScreenContract.Eligibility.ageField),
                 )
                 TranField(
                     label = stringResource(TranStrings.Eligibility.countryLabel),
                     value = countryCode,
                     onValueChange = { countryCode = it.uppercase() },
-                    modifier = Modifier.weight(1f).testTag("country-field"),
+                    modifier = Modifier.weight(1f).testTag(ScreenContract.Eligibility.countryField),
                 )
             }
             TranButton(
@@ -185,11 +186,11 @@ fun VotingHomeScreen(
                         }
                     }
                 },
-                modifier = Modifier.testTag("check-button"),
+                modifier = Modifier.testTag(ScreenContract.Eligibility.checkButton),
             )
             TranText(
                 text = resultText,
-                modifier = Modifier.testTag("offline-result"),
+                modifier = Modifier.testTag(ScreenContract.Eligibility.offlineResult),
                 live = true,
             )
             // REQ-LOAD-002/003/005: the verdict stays; its live caption says it is being checked
@@ -201,7 +202,7 @@ fun VotingHomeScreen(
                     live = true,
                     modifier = Modifier
                         .animateContentSize(TranMotion.spec(reduceMotion))
-                        .testTag("verdict-source"),
+                        .testTag(ScreenContract.Eligibility.verdictSource),
                 )
             }
             // Theme choices come from the rust-core registry: every palette renders here after
@@ -210,7 +211,7 @@ fun VotingHomeScreen(
                 options = TranTheme.entries,
                 selected = theme,
                 onSelect = onThemeChange,
-                modifier = Modifier.fillMaxWidth().testTag("theme-picker"),
+                modifier = Modifier.fillMaxWidth().testTag(ScreenContract.Eligibility.themePicker),
             ) { mode ->
                 stringResource(mode.labelRes)
             }
@@ -224,12 +225,12 @@ fun VotingHomeScreen(
                 ),
                 variant = TranTextVariant.CAPTION,
                 live = true,
-                modifier = Modifier.testTag("api-status"),
+                modifier = Modifier.testTag(ScreenContract.Eligibility.apiStatus),
             )
             banner?.let {
                 TranBanner(
                     message = stringResource(TranFeedback.messageRes(it.spec.messageKey)),
-                    modifier = Modifier.testTag("offline-notice"),
+                    modifier = Modifier.testTag(ScreenContract.Eligibility.offlineNotice),
                 )
             }
         }

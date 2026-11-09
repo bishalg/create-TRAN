@@ -56,6 +56,8 @@ object TranStrings {
         @StringRes
         val dismiss: Int = R.string.common_dismiss // common.dismiss
         @StringRes
+        val loading: Int = R.string.common_loading // common.loading
+        @StringRes
         val notNow: Int = R.string.common_not_now // common.notNow
         @StringRes
         val notifications: Int = R.string.common_notifications // common.notifications
@@ -65,6 +67,8 @@ object TranStrings {
         val roleCitizenVoter: Int = R.string.common_role_citizen_voter // common.role.citizenVoter
         @StringRes
         val roleElectionAuditor: Int = R.string.common_role_election_auditor // common.role.electionAuditor
+        @StringRes
+        val roleLabel: Int = R.string.common_role_label // common.role.label
         @StringRes
         val signOut: Int = R.string.common_sign_out // common.signOut
     }
@@ -114,6 +118,8 @@ object TranStrings {
         val resultReasonBelow: Int = R.string.eligibility_result_reason_below // eligibility.result.reasonBelow
         @StringRes
         val resultReasonMeets: Int = R.string.eligibility_result_reason_meets // eligibility.result.reasonMeets
+        @StringRes
+        val resultSource: Int = R.string.eligibility_result_source // eligibility.result.source
         @StringRes
         val resultSourceDevice: Int = R.string.eligibility_result_source_device // eligibility.result.sourceDevice
         @StringRes
@@ -181,6 +187,17 @@ object TranStrings {
         val unexpected: Int = R.string.errors_unexpected // errors.unexpected
     }
 
+    object Screen {
+        @StringRes
+        val auditorIntent: Int = R.string.screen_auditor_intent // screen.auditor.intent
+        @StringRes
+        val authWelcomeIntent: Int = R.string.screen_auth_welcome_intent // screen.authWelcome.intent
+        @StringRes
+        val eligibilityIntent: Int = R.string.screen_eligibility_intent // screen.eligibility.intent
+        @StringRes
+        val splashIntent: Int = R.string.screen_splash_intent // screen.splash.intent
+    }
+
     object Shell {
         @StringRes
         val header: Int = R.string.shell_header // shell.header
@@ -190,6 +207,8 @@ object TranStrings {
         val skipToContent: Int = R.string.shell_skip_to_content // shell.skipToContent
         @StringRes
         val statusChecking: Int = R.string.shell_status_checking // shell.status.checking
+        @StringRes
+        val statusLabel: Int = R.string.shell_status_label // shell.status.label
         @StringRes
         val statusOffline: Int = R.string.shell_status_offline // shell.status.offline
         @StringRes

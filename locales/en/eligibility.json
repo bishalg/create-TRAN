@@ -40,7 +40,8 @@
     "updating": "Checking with the server…",
     "placeholder": "Tap Check offline",
     "reasonMeets": "Age {age} meets the minimum voting age of {minimumAge} in {country}.",
-    "reasonBelow": "Age {age} is below the minimum voting age of {minimumAge} in {country}."
+    "reasonBelow": "Age {age} is below the minimum voting age of {minimumAge} in {country}.",
+    "source": "Who checked the result"
   },
   "serverCheckDone": "Server check complete"
 }

@@ -1,4 +1,4 @@
-import { type SupportedLocale, type TranStringKey, t } from '@tran/core';
+import { ScreenIds, type SupportedLocale, type TranStringKey, t } from '@tran/core';
 import { TranText } from '../shared/ui/TranText.js';
 
 export type ApiState = 'checking' | 'online' | 'offline';
@@ -18,7 +18,13 @@ export interface StatusFooterProps {
 export function StatusFooter({ state, version, locale }: StatusFooterProps) {
   return (
     <footer className="status" data-state={state}>
-      <TranText variant="caption" as="span" role="status" className="status-pill">
+      <TranText
+        variant="caption"
+        as="span"
+        role="status"
+        className="status-pill"
+        data-testid={ScreenIds.eligibility.apiStatus}
+      >
         <div className="dot" aria-hidden="true" /> {t(LABEL[state], locale)}
         {state === 'online' && version ? ` · v${version}` : ''}
       </TranText>

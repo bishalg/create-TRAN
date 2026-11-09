@@ -40,7 +40,8 @@
     "updating": "सर्वर से जाँच हो रही है…",
     "placeholder": "ऑफ़लाइन जाँच दबाएँ",
     "reasonMeets": "आयु {age} न्यूनतम मतदान आयु {minimumAge} को पूरा करती है ({country})।",
-    "reasonBelow": "आयु {age} न्यूनतम मतदान आयु {minimumAge} से कम है ({country})।"
+    "reasonBelow": "आयु {age} न्यूनतम मतदान आयु {minimumAge} से कम है ({country})।",
+    "source": "परिणाम किसने जाँचा"
   },
   "serverCheckDone": "सर्वर जाँच पूरी हुई"
 }

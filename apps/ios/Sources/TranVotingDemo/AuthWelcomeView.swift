@@ -22,7 +22,7 @@ struct AuthWelcomeView: View {
                         ) {
                             onSelectRole(.citizenVoter)
                         }
-                        .accessibilityIdentifier("voter-branch-button")
+                        .accessibilityIdentifier(ScreenContract.AuthWelcome.voterBranchButton)
 
                         TranButton(
                             label: L10n.Auth.continueAsAuditor,
@@ -32,7 +32,7 @@ struct AuthWelcomeView: View {
                         ) {
                             onSelectRole(.electionAuditor)
                         }
-                        .accessibilityIdentifier("auditor-branch-button")
+                        .accessibilityIdentifier(ScreenContract.AuthWelcome.auditorBranchButton)
                     }
                 }
                 .frame(maxWidth: .infinity)

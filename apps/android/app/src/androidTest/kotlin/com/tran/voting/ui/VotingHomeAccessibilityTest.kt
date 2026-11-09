@@ -1,4 +1,5 @@
 // Verifies: REQ-ERR-007 REQ-LOAD-003 REQ-LOAD-005 REQ-NAT-002 REQ-NAT-003 REQ-NAT-004 REQ-NAT-005 REQ-NAT-006 REQ-NAT-007 REQ-NAT-010 REQ-NAT-011
+// Verifies: REQ-SCR-002
 package com.tran.voting.ui
 
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +33,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.tran.voting.NavigationCoordinator
 import com.tran.voting.api.TranApiClient
+import com.tran.voting.generated.ScreenContract
 import com.tran.voting.generated.TranBrandTokens
 import com.tran.voting.generated.TranTheme
 import com.tran.voting.generated.labelRes
@@ -78,9 +80,9 @@ class VotingHomeAccessibilityTest {
         setVotingScreen()
         compose.onNodeWithText("Your age").assertIsDisplayed()
         compose.onNodeWithText("Country code").assertIsDisplayed()
-        compose.onNodeWithTag("age-field").assertIsDisplayed()
-        compose.onNodeWithTag("country-field").assertIsDisplayed()
-        compose.onNodeWithTag("check-button").assertTextEquals("Check offline").assertHasClickAction()
+        compose.onNodeWithTag(ScreenContract.Eligibility.ageField).assertIsDisplayed()
+        compose.onNodeWithTag(ScreenContract.Eligibility.countryField).assertIsDisplayed()
+        compose.onNodeWithTag(ScreenContract.Eligibility.checkButton).assertTextEquals("Check offline").assertHasClickAction()
         TranTheme.entries.forEach { mode ->
             compose.onNodeWithText(label(mode)).assertHasClickAction()
         }
@@ -89,8 +91,8 @@ class VotingHomeAccessibilityTest {
     @Test
     fun theVerdictIsAPoliteLiveRegion() {
         setVotingScreen()
-        compose.onNodeWithTag("check-button").performClick()
-        compose.onNodeWithTag("offline-result")
+        compose.onNodeWithTag(ScreenContract.Eligibility.checkButton).performClick()
+        compose.onNodeWithTag(ScreenContract.Eligibility.offlineResult)
             .assertTextEquals("Age 20 meets the minimum voting age of 18 in NP.")
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
     }
@@ -102,15 +104,15 @@ class VotingHomeAccessibilityTest {
         setVotingScreen(api = TranApiClient(baseUrl = "http://127.0.0.1:1"))
 
         compose.waitUntil(timeoutMillis = 5_000) {
-            compose.onAllNodesWithTag("offline-notice").fetchSemanticsNodes().isNotEmpty()
+            compose.onAllNodesWithTag(ScreenContract.Eligibility.offlineNotice).fetchSemanticsNodes().isNotEmpty()
         }
-        compose.onNodeWithTag("api-status").assertTextEquals("API offline")
+        compose.onNodeWithTag(ScreenContract.Eligibility.apiStatus).assertTextEquals("API offline")
         // A banner, not an error toast: the catalogue presents `network.offline` persistently.
-        assertTrue(compose.onAllNodesWithTag("toast").fetchSemanticsNodes().isEmpty())
+        assertTrue(compose.onAllNodesWithTag(ScreenContract.Eligibility.toast).fetchSemanticsNodes().isEmpty())
 
         // REQ-NAT-002: the verdict does not wait for the API.
-        compose.onNodeWithTag("check-button").performClick()
-        compose.onNodeWithTag("offline-result")
+        compose.onNodeWithTag(ScreenContract.Eligibility.checkButton).performClick()
+        compose.onNodeWithTag(ScreenContract.Eligibility.offlineResult)
             .assertTextEquals("Age 20 meets the minimum voting age of 18 in NP.")
 
         // REQ-LOAD-005: once the retries are spent the device decides, and the caption says so;
@@ -119,10 +121,10 @@ class VotingHomeAccessibilityTest {
         compose.waitUntil(timeoutMillis = 5_000) {
             compose.onAllNodesWithText(fallback).fetchSemanticsNodes().isNotEmpty()
         }
-        compose.onNodeWithTag("verdict-source")
+        compose.onNodeWithTag(ScreenContract.Eligibility.verdictSource)
             .assertTextEquals(fallback)
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
-        compose.onNodeWithTag("offline-result")
+        compose.onNodeWithTag(ScreenContract.Eligibility.offlineResult)
             .assertTextEquals("Age 20 meets the minimum voting age of 18 in NP.")
     }
 
@@ -130,23 +132,23 @@ class VotingHomeAccessibilityTest {
     fun signOutAsksFirstAndCancelKeepsTheSession() {
         compose.setContent { NavigationCoordinator() }
 
-        compose.onNodeWithTag("sign-out-button").performClick()
+        compose.onNodeWithTag(ScreenContract.Eligibility.signOutButton).performClick()
         compose.onNodeWithText("Sign out?").assertIsDisplayed()
-        compose.onNodeWithTag("dialog-cancel").performClick()
+        compose.onNodeWithTag(ScreenContract.Eligibility.dialogCancel).performClick()
         assertTrue(compose.onAllNodesWithText("Sign out?").fetchSemanticsNodes().isEmpty())
-        compose.onNodeWithTag("check-button").assertIsDisplayed()
+        compose.onNodeWithTag(ScreenContract.Eligibility.checkButton).assertIsDisplayed()
 
-        compose.onNodeWithTag("sign-out-button").performClick()
-        compose.onNodeWithTag("dialog-confirm").performClick()
+        compose.onNodeWithTag(ScreenContract.Eligibility.signOutButton).performClick()
+        compose.onNodeWithTag(ScreenContract.Eligibility.dialogConfirm).performClick()
         compose.onNodeWithText("Continue as Citizen Voter").assertIsDisplayed()
     }
 
     @Test
     fun touchTargetsMeetFortyEightDp() {
         setVotingScreen()
-        assertTouchTargetAtLeast48(compose.onNodeWithTag("check-button"), "check-button")
-        assertTouchTargetAtLeast48(compose.onNodeWithTag("age-field"), "age-field")
-        assertTouchTargetAtLeast48(compose.onNodeWithTag("country-field"), "country-field")
+        assertTouchTargetAtLeast48(compose.onNodeWithTag(ScreenContract.Eligibility.checkButton), ScreenContract.Eligibility.checkButton)
+        assertTouchTargetAtLeast48(compose.onNodeWithTag(ScreenContract.Eligibility.ageField), ScreenContract.Eligibility.ageField)
+        assertTouchTargetAtLeast48(compose.onNodeWithTag(ScreenContract.Eligibility.countryField), ScreenContract.Eligibility.countryField)
         TranTheme.entries.forEach { mode ->
             assertTouchTargetAtLeast48(compose.onNodeWithText(label(mode)), "theme $mode")
         }
@@ -154,9 +156,9 @@ class VotingHomeAccessibilityTest {
 
     @Test
     fun largestFontScaleKeepsTheVerdictReachable() {
-        setVotingScreen(fontScale = 2f)
-        compose.onNodeWithTag("check-button").performScrollTo().performClick()
-        compose.onNodeWithTag("offline-result")
+        setVotingScreen(fontScale = ScreenContract.Minimums.largestFontScale)
+        compose.onNodeWithTag(ScreenContract.Eligibility.checkButton).performScrollTo().performClick()
+        compose.onNodeWithTag(ScreenContract.Eligibility.offlineResult)
             .performScrollTo()
             .assertIsDisplayed()
             .assertTextEquals("Age 20 meets the minimum voting age of 18 in NP.")
@@ -187,9 +189,9 @@ class VotingHomeAccessibilityTest {
         val bounds = interaction.fetchSemanticsNode().touchBoundsInRoot
         val width = bounds.right - bounds.left
         val height = bounds.bottom - bounds.top
-        val minimum = 48f * density
+        val minimum = ScreenContract.Minimums.control * density
         assertTrue(
-            "$label touch target is ${width / density}×${height / density}dp, needs at least 48×48dp",
+            "$label touch target is ${width / density}×${height / density}dp, needs at least ${ScreenContract.Minimums.control}dp on both axes",
             width >= minimum && height >= minimum,
         )
     }

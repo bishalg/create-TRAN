@@ -1,4 +1,5 @@
 import {
+  ScreenIds,
   type SupportedLocale,
   type ThemeMode,
   type TranStringKey,
@@ -61,7 +62,12 @@ export function Header({
             </TranButton>
           ))}
         </div>
-        <div className="segmented" role="group" aria-label={t('shell.theme.label', locale)}>
+        <div
+          className="segmented"
+          role="group"
+          aria-label={t('shell.theme.label', locale)}
+          data-testid={ScreenIds.eligibility.themePicker}
+        >
           {themeNames.map((mode) => (
             <TranButton
               key={mode}
@@ -78,7 +84,12 @@ export function Header({
         </div>
 
         {currentRole && (
-          <TranText variant="caption" as="span" className="role-badge" data-testid="role-badge">
+          <TranText
+            variant="caption"
+            as="span"
+            className="role-badge"
+            data-testid={ScreenIds.eligibility.roleBadge}
+          >
             {t(
               currentRole === 'citizen_voter'
                 ? 'common.role.citizenVoter'
@@ -94,7 +105,7 @@ export function Header({
             variant="secondary"
             size="md"
             className="sign-out-button"
-            data-testid="sign-out-button"
+            data-testid={ScreenIds.eligibility.signOutButton}
             onClick={() => void onSignOut()}
             aria-label={t('common.signOut', locale)}
           >

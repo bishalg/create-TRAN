@@ -5,11 +5,12 @@ use crate::config::CodegenPaths;
 use crate::files::GeneratedFile;
 use crate::kotlin::{render_kotlin_strings, render_kotlin_tokens};
 use crate::locales::{
-    feedback_message_keys, load_locales, verify_generated_names, verify_no_duplicate_values,
-    verify_theme_labels,
+    feedback_message_keys, load_locales, screen_message_keys, verify_generated_names,
+    verify_no_duplicate_values, verify_theme_labels,
 };
 use crate::names::pascal_case;
 use crate::scale::Scale;
+use crate::screens_native::{render_screen_contract_kotlin, render_screen_contract_swift};
 use crate::strings::{
     android_resource_dir, render_android_module_strings, render_translations_json, render_ts_keys,
     render_xcstrings,
@@ -17,9 +18,10 @@ use crate::strings::{
 use crate::swift::{render_l10n_swift, render_swift_tokens};
 use crate::theme_css::render_theme_css;
 use crate::tokens_ts::{render_tokens_json, render_tokens_ts};
-use crate::{render_design_md, render_feedback_ts, render_rules_ts};
+use crate::{render_design_md, render_feedback_ts, render_rules_ts, render_screens_ts};
+use rust_core::screens::{platform_minimum, Platform, SCREENS};
 use rust_core::tokens::TokensJsonSnapshot;
-use rust_core::tokens_json_snapshot;
+use rust_core::{screens_json_snapshot, tokens_json_snapshot};
 use std::path::PathBuf;
 
 /// Renders everything from the `rust-core` tokens and `paths.locales_dir`.
@@ -40,6 +42,7 @@ pub fn generate_from(
     verify_generated_names(base)?;
     verify_theme_labels(base, snapshot)?;
     let feedback_keys = feedback_message_keys(base)?;
+    screen_message_keys(base)?;
 
     let core = &paths.core_generated_dir;
     let ios = &paths.ios_generated_dir;
@@ -50,6 +53,10 @@ pub fn generate_from(
         file(core.join("tokens.ts"), render_tokens_ts(snapshot)),
         file(core.join("rules.ts"), render_rules_ts()),
         file(core.join("feedback.ts"), render_feedback_ts()),
+        file(
+            core.join("screens.ts"),
+            render_screens_ts(&screens_json_snapshot()),
+        ),
         file(
             core.join("strings.json"),
             render_translations_json(&locales),
@@ -66,6 +73,18 @@ pub fn generate_from(
         file(
             ios.join("L10n.swift"),
             render_l10n_swift(base, snapshot, &feedback_keys),
+        ),
+        file(
+            ios.join("ScreenContract.swift"),
+            render_screen_contract_swift(&SCREENS, &platform_minimum(Platform::Ios)),
+        ),
+        file(
+            kotlin.join("ScreenContract.kt"),
+            render_screen_contract_kotlin(
+                &SCREENS,
+                &platform_minimum(Platform::Android),
+                kotlin_package,
+            ),
         ),
         file(
             kotlin.join("BrandTokens.kt"),
@@ -213,6 +232,20 @@ mod tests {
             err.contains("`locales/english` is not a valid locale folder name"),
             "{err}"
         );
+    }
+
+    // Verifies: REQ-SCR-001 — a contract key missing from locales/ stops the run.
+    #[test]
+    fn a_screen_key_missing_from_locales_fails_the_run() {
+        let dir = tempfile::tempdir().unwrap();
+        let locales = dir.path().join("locales");
+        copy_tree(&workspace_root().join("locales"), &locales);
+        for locale in fs::read_dir(&locales).unwrap() {
+            let module = locale.unwrap().path().join("screen.json");
+            fs::remove_file(module).unwrap_or_default();
+        }
+        let err = generate(&CodegenConfig::sample_defaults().resolve(dir.path())).unwrap_err();
+        assert!(err.contains("screen contract names `screen."), "{err}");
     }
 
     #[test]

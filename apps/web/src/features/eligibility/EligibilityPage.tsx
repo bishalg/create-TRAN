@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react';
-import { LOADING_POLICY, type SupportedLocale, parseAgeInput, t } from '@tran/core';
+import { LOADING_POLICY, ScreenIds, type SupportedLocale, parseAgeInput, t } from '@tran/core';
 import type { TranApi } from '../../shared/api/useTranApi.js';
 import { useDelayed } from '../../shared/lib/useDelayed.js';
 import { Field } from '../../shared/ui/Field.js';
@@ -56,7 +56,11 @@ export function EligibilityPage({
 
   return (
     <>
-      {api.banner && <TranBanner>{t(api.banner.spec.messageKey, locale)}</TranBanner>}
+      {api.banner && (
+        <TranBanner data-testid={ScreenIds.eligibility.offlineNotice}>
+          {t(api.banner.spec.messageKey, locale)}
+        </TranBanner>
+      )}
 
       <form
         className="card"
@@ -69,6 +73,7 @@ export function EligibilityPage({
         <div className="fields">
           <Field
             ref={ageField}
+            data-testid={ScreenIds.eligibility.ageField}
             label={t('eligibility.age.label', locale)}
             value={age}
             onChange={(e) => setAge(e.target.value)}
@@ -79,6 +84,7 @@ export function EligibilityPage({
           />
           <Field
             label={t('eligibility.country.label', locale)}
+            data-testid={ScreenIds.eligibility.countryField}
             value={country}
             onChange={(e) => setCountry(e.target.value.toUpperCase())}
             maxLength={2}
@@ -94,7 +100,12 @@ export function EligibilityPage({
           />
         </div>
 
-        <TranButton type="submit" disabled={api.isChecking} aria-busy={api.isChecking}>
+        <TranButton
+          type="submit"
+          disabled={api.isChecking}
+          aria-busy={api.isChecking}
+          data-testid={ScreenIds.eligibility.checkButton}
+        >
           {t(pending ? 'eligibility.submitting' : 'eligibility.submit', locale)}
         </TranButton>
       </form>
@@ -108,6 +119,7 @@ export function EligibilityPage({
       {/* Always mounted: screen readers only announce changes inside a region that already exists. */}
       <div
         className="result-slot"
+        data-testid={ScreenIds.eligibility.offlineResult}
         role="status"
         aria-label={t('eligibility.result.label', locale)}
         aria-busy={updating}

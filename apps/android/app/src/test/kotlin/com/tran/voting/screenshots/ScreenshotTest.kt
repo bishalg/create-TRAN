@@ -13,6 +13,7 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import com.github.takahirom.roborazzi.captureScreenRoboImage
 import com.tran.voting.NavigationCoordinator
 import com.tran.voting.api.TranApiClient
+import com.tran.voting.generated.ScreenContract
 import com.tran.voting.generated.TranStrings
 import com.tran.voting.generated.TranTheme
 import com.tran.voting.testing.FakeApis
@@ -88,9 +89,9 @@ class ScreenshotTest(private val theme: TranTheme, private val locale: String) {
 
     /** Sign out through the confirmation dialog, landing on the welcome screen. */
     private fun signOut() {
-        compose.onNodeWithTag("sign-out-button").performClick()
-        compose.onNodeWithTag("dialog-confirm").performClick()
-        awaitNode(hasTestTag("voter-branch-button"))
+        compose.onNodeWithTag(ScreenContract.Eligibility.signOutButton).performClick()
+        compose.onNodeWithTag(ScreenContract.Eligibility.dialogConfirm).performClick()
+        awaitNode(hasTestTag(ScreenContract.AuthWelcome.voterBranchButton))
     }
 
     @Test
@@ -106,8 +107,8 @@ class ScreenshotTest(private val theme: TranTheme, private val locale: String) {
         // skip straight past that timeout, so freeze it: step to the toast, then a fixed settle
         // well inside its shortest duration.
         compose.mainClock.autoAdvance = false
-        compose.onNodeWithTag("check-button").performClick()
-        awaitNode(hasTestTag("toast"))
+        compose.onNodeWithTag(ScreenContract.Eligibility.checkButton).performClick()
+        awaitNode(hasTestTag(ScreenContract.Eligibility.toast))
         compose.mainClock.advanceTimeBy(SETTLE_MS)
         compose.onRoot().captureRoboImage("result-$name.png")
     }
@@ -119,9 +120,9 @@ class ScreenshotTest(private val theme: TranTheme, private val locale: String) {
         // Only the held call leaves the main thread; blocking it would freeze the screen.
         hang.offMainThread = true
         compose.mainClock.autoAdvance = false
-        compose.onNodeWithTag("check-button").performClick()
+        compose.onNodeWithTag(ScreenContract.Eligibility.checkButton).performClick()
         compose.mainClock.advanceTimeBy(loadingPolicy().indicatorDelayMs.toLong() + SETTLE_MS)
-        awaitNode(hasTestTag("verdict-source") and hasText(text(TranStrings.Eligibility.resultUpdating)))
+        awaitNode(hasTestTag(ScreenContract.Eligibility.verdictSource) and hasText(text(TranStrings.Eligibility.resultUpdating)))
         compose.onRoot().captureRoboImage("pending-$name.png")
     }
 
@@ -129,9 +130,9 @@ class ScreenshotTest(private val theme: TranTheme, private val locale: String) {
     @Test
     fun offline() {
         launch(FakeApis.refusing(), status = TranStrings.Shell.statusOffline)
-        awaitNode(hasTestTag("offline-notice"))
-        compose.onNodeWithTag("check-button").performClick()
-        awaitNode(hasTestTag("verdict-source") and hasText(text(TranStrings.Eligibility.resultSourceFallback)))
+        awaitNode(hasTestTag(ScreenContract.Eligibility.offlineNotice))
+        compose.onNodeWithTag(ScreenContract.Eligibility.checkButton).performClick()
+        awaitNode(hasTestTag(ScreenContract.Eligibility.verdictSource) and hasText(text(TranStrings.Eligibility.resultSourceFallback)))
         compose.waitForIdle()
         compose.onRoot().captureRoboImage("offline-$name.png")
     }
@@ -140,7 +141,7 @@ class ScreenshotTest(private val theme: TranTheme, private val locale: String) {
     @Test
     fun signOutDialog() {
         launch()
-        compose.onNodeWithTag("sign-out-button").performClick()
+        compose.onNodeWithTag(ScreenContract.Eligibility.signOutButton).performClick()
         compose.waitForIdle()
         // The dialog is its own window, so capture the whole screen.
         captureScreenRoboImage("sign-out-dialog-$name.png")
@@ -157,7 +158,7 @@ class ScreenshotTest(private val theme: TranTheme, private val locale: String) {
     fun auditor() {
         launch()
         signOut()
-        compose.onNodeWithTag("auditor-branch-button").performClick()
+        compose.onNodeWithTag(ScreenContract.AuthWelcome.auditorBranchButton).performClick()
         compose.waitForIdle()
         compose.onRoot().captureRoboImage("auditor-$name.png")
     }

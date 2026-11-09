@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
+import { ScreenIds } from '@tran/core';
 import { TranButton } from './TranButton.js';
 
 export interface TranDialogProps {
@@ -71,6 +72,7 @@ export function TranDialog({
           variant="secondary"
           size="md"
           autoFocus={destructive}
+          data-testid={ScreenIds.eligibility.dialogCancel}
           onClick={onCancel}
         >
           {cancelLabel}
@@ -80,6 +82,7 @@ export function TranDialog({
           variant={destructive ? 'danger' : 'primary'}
           size="md"
           autoFocus={!destructive}
+          data-testid={ScreenIds.eligibility.dialogConfirm}
           onClick={onConfirm}
         >
           {confirmLabel}

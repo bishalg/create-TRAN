@@ -1,5 +1,6 @@
 import { expect, type Page, type Route } from '@playwright/test';
 import { createBdd } from 'playwright-bdd';
+import { ScreenIds } from '@tran/core';
 
 const { Given, When, Then } = createBdd();
 
@@ -131,5 +132,5 @@ Then('no dialog is open', async ({ page }) => {
 });
 
 Then('the sign out button has focus', async ({ page }) => {
-  await expect(page.getByTestId('sign-out-button')).toBeFocused();
+  await expect(page.getByTestId(ScreenIds.eligibility.signOutButton)).toBeFocused();
 });

@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect } from '@playwright/test';
 import { createBdd } from 'playwright-bdd';
+import { ScreenIds } from '@tran/core';
 
 const { Given, When, Then } = createBdd();
 
@@ -166,7 +167,7 @@ Then('sign out and every theme stay on screen at full size', async ({ page }) =>
   // A squeezed control does not scroll the page sideways, so check each one (the native REQ-NAT-013 rule).
   const viewport = page.viewportSize()!.width;
   const themes = page.getByRole('group', { name: 'Theme' }).getByRole('button');
-  const controls = [page.getByTestId('sign-out-button'), ...(await themes.all())];
+  const controls = [page.getByTestId(ScreenIds.eligibility.signOutButton), ...(await themes.all())];
   expect(controls.length).toBeGreaterThan(1);
   const heights = new Set<number>();
   for (const control of controls) {

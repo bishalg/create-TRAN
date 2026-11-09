@@ -25,6 +25,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import com.tran.voting.generated.ScreenContract
 import com.tran.voting.generated.TranRadius
 import com.tran.voting.generated.TranSpace
 import uniffi.tran_uniffi.TranToastTone
@@ -56,7 +57,7 @@ fun TranToast(
         TranToastTone.WARNING, TranToastTone.ERROR -> Icons.Filled.Warning
     }
     Surface(
-        modifier = modifier.fillMaxWidth().testTag("toast").semantics { liveRegion = LiveRegionMode.Polite },
+        modifier = modifier.fillMaxWidth().testTag(ScreenContract.Eligibility.toast).semantics { liveRegion = LiveRegionMode.Polite },
         shape = RoundedCornerShape(TranRadius.md),
         color = palette.surface,
         border = BorderStroke(TranSpace.xxs, toneColor),
@@ -72,7 +73,7 @@ fun TranToast(
                     Text(reference, color = palette.textPrimary, style = MaterialTheme.typography.bodySmall)
                 }
             }
-            IconButton(onClick = onDismiss, modifier = Modifier.testTag("toast-dismiss")) {
+            IconButton(onClick = onDismiss, modifier = Modifier.testTag(ScreenContract.Eligibility.toastDismiss)) {
                 Icon(Icons.Filled.Close, contentDescription = dismissLabel, tint = palette.textPrimary)
             }
         }

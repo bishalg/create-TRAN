@@ -1,11 +1,12 @@
 import { expect } from '@playwright/test';
 import { createBdd } from 'playwright-bdd';
+import { ScreenIds } from '@tran/core';
 
 const { Given, When, Then } = createBdd();
 
 /** Sign-out is destructive, so it always goes through the confirmation dialog (REQ-ERR-007). */
 async function signOut(page: import('@playwright/test').Page) {
-  await page.getByTestId('sign-out-button').click();
+  await page.getByTestId(ScreenIds.eligibility.signOutButton).click();
   await page
     .getByRole('dialog', { name: 'Sign out?' })
     .getByRole('button', { name: 'Sign out' })
@@ -38,7 +39,7 @@ Then('I am routed to the {string} dashboard', async ({ page }, dashboardTitle: s
 });
 
 Then('I see the user role badge {string}', async ({ page }, badgeText: string) => {
-  await expect(page.getByTestId('role-badge')).toHaveText(badgeText);
+  await expect(page.getByTestId(ScreenIds.eligibility.roleBadge)).toHaveText(badgeText);
 });
 
 Then('I see the global voting age rules for countries', async ({ page }) => {
@@ -52,12 +53,12 @@ Given(
     await page.goto('/');
     await signOut(page);
     await page.getByRole('button', { name: new RegExp(`Continue as ${role}`) }).click();
-    await expect(page.getByTestId('role-badge')).toHaveText(role);
+    await expect(page.getByTestId(ScreenIds.eligibility.roleBadge)).toHaveText(role);
   }
 );
 
 When('I click the sign out button', async ({ page }) => {
-  await page.getByTestId('sign-out-button').click();
+  await page.getByTestId(ScreenIds.eligibility.signOutButton).click();
 });
 
 When('I confirm signing out', async ({ page }) => {

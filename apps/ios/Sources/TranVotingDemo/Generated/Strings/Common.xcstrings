@@ -89,6 +89,28 @@
         }
       }
     },
+    "common.loading": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "लोड हो रहा है"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "लोड हुँदैछ"
+          }
+        }
+      }
+    },
     "common.notNow": {
       "localizations": {
         "en": {
@@ -195,6 +217,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "निर्वाचन अडिटर"
+          }
+        }
+      }
+    },
+    "common.role.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Role"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "भूमिका"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "भूमिका"
           }
         }
       }

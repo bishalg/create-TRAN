@@ -16,6 +16,7 @@
   "status": {
     "online": "API सञ्चालनमा",
     "offline": "API अफलाइन",
-    "checking": "API जाँच हुँदैछ…"
+    "checking": "API जाँच हुँदैछ…",
+    "label": "API स्थिति"
   }
 }

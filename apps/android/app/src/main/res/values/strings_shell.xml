@@ -5,6 +5,7 @@
     <string name="shell_language_label">Language</string>
     <string name="shell_skip_to_content">Skip to content</string>
     <string name="shell_status_checking">Checking API…</string>
+    <string name="shell_status_label">API status</string>
     <string name="shell_status_offline">API offline</string>
     <string name="shell_status_online">API online</string>
     <string name="shell_subtitle">Check the minimum voting age for a country.</string>

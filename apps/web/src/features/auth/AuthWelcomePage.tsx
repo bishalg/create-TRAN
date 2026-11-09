@@ -1,4 +1,4 @@
-import { type SupportedLocale, type UserRole, t } from '@tran/core';
+import { ScreenIds, type SupportedLocale, type UserRole, t } from '@tran/core';
 import { TranButton } from '../../shared/ui/TranButton.js';
 import { TranStack } from '../../shared/ui/TranStack.js';
 import { TranText } from '../../shared/ui/TranText.js';
@@ -16,10 +16,18 @@ export function AuthWelcomePage({ locale, onSelectRole }: AuthWelcomePageProps) 
       </TranText>
       <TranText variant="body">{t('auth.welcome.subtitle', locale)}</TranText>
       <TranStack className="auth-branches" gap="md">
-        <TranButton type="button" onClick={() => onSelectRole('citizen_voter')}>
+        <TranButton
+          type="button"
+          data-testid={ScreenIds.authWelcome.voterBranchButton}
+          onClick={() => onSelectRole('citizen_voter')}
+        >
           {t('auth.continueAsVoter', locale)}
         </TranButton>
-        <TranButton type="button" onClick={() => onSelectRole('election_auditor')}>
+        <TranButton
+          type="button"
+          data-testid={ScreenIds.authWelcome.auditorBranchButton}
+          onClick={() => onSelectRole('election_auditor')}
+        >
           {t('auth.continueAsAuditor', locale)}
         </TranButton>
       </TranStack>

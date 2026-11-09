@@ -35,11 +35,13 @@ enum L10n {
         static var brand: String { String(localized: "common.brand", table: "Common") }
         static var cancel: String { String(localized: "common.cancel", table: "Common") }
         static var dismiss: String { String(localized: "common.dismiss", table: "Common") }
+        static var loading: String { String(localized: "common.loading", table: "Common") }
         static var notNow: String { String(localized: "common.notNow", table: "Common") }
         static var notifications: String { String(localized: "common.notifications", table: "Common") }
         static var reload: String { String(localized: "common.reload", table: "Common") }
         static var roleCitizenVoter: String { String(localized: "common.role.citizenVoter", table: "Common") }
         static var roleElectionAuditor: String { String(localized: "common.role.electionAuditor", table: "Common") }
+        static var roleLabel: String { String(localized: "common.role.label", table: "Common") }
         static var signOut: String { String(localized: "common.signOut", table: "Common") }
     }
 
@@ -70,6 +72,7 @@ enum L10n {
         static func resultReasonMeets(_ age: String, _ minimumAge: String, _ country: String) -> String {
             String(format: String(localized: "eligibility.result.reasonMeets", table: "Eligibility"), age, minimumAge, country)
         }
+        static var resultSource: String { String(localized: "eligibility.result.source", table: "Eligibility") }
         static var resultSourceDevice: String { String(localized: "eligibility.result.sourceDevice", table: "Eligibility") }
         static var resultSourceFallback: String { String(localized: "eligibility.result.sourceFallback", table: "Eligibility") }
         static var resultSourceServer: String { String(localized: "eligibility.result.sourceServer", table: "Eligibility") }
@@ -108,6 +111,13 @@ enum L10n {
         static var unexpected: String { String(localized: "errors.unexpected", table: "Errors") }
     }
 
+    enum Screen {
+        static var auditorIntent: String { String(localized: "screen.auditor.intent", table: "Screen") }
+        static var authWelcomeIntent: String { String(localized: "screen.authWelcome.intent", table: "Screen") }
+        static var eligibilityIntent: String { String(localized: "screen.eligibility.intent", table: "Screen") }
+        static var splashIntent: String { String(localized: "screen.splash.intent", table: "Screen") }
+    }
+
     enum Shell {
         static func header(_ platform: String) -> String {
             String(format: String(localized: "shell.header", table: "Shell"), platform)
@@ -115,6 +125,7 @@ enum L10n {
         static var languageLabel: String { String(localized: "shell.language.label", table: "Shell") }
         static var skipToContent: String { String(localized: "shell.skipToContent", table: "Shell") }
         static var statusChecking: String { String(localized: "shell.status.checking", table: "Shell") }
+        static var statusLabel: String { String(localized: "shell.status.label", table: "Shell") }
         static var statusOffline: String { String(localized: "shell.status.offline", table: "Shell") }
         static var statusOnline: String { String(localized: "shell.status.online", table: "Shell") }
         static var subtitle: String { String(localized: "shell.subtitle", table: "Shell") }

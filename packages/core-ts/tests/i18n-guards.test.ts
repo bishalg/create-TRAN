@@ -1,4 +1,4 @@
-// Verifies: REQ-WEB-008 REQ-I18N-004 REQ-I18N-005 REQ-I18N-006 REQ-I18N-007 REQ-LOAD-001
+// Verifies: REQ-WEB-008 REQ-I18N-004 REQ-I18N-005 REQ-I18N-006 REQ-I18N-007 REQ-LOAD-001 REQ-SCR-001
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,6 +10,7 @@ import {
   LOADING_POLICY,
   VERDICT_SOURCES,
 } from '../src/generated/feedback.js';
+import { SCREENS } from '../src/generated/screens.js';
 
 const root = path.resolve(fileURLToPath(import.meta.url), '../../../../');
 
@@ -215,6 +216,12 @@ function usedKeys(): Set<string> {
   // The waiting policy names its copy the same way (ADR-0035, REQ-LOAD-001).
   used.add(LOADING_POLICY.pendingMessageKey);
   for (const spec of VERDICT_SOURCES) used.add(spec.messageKey);
+
+  // The screen contract names its intents and element labels (ADR-0038, REQ-SCR-001).
+  for (const screen of SCREENS) {
+    used.add(screen.intent);
+    for (const element of screen.elements) used.add(element.label);
+  }
 
   return used;
 }

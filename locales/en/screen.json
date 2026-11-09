@@ -1,0 +1,14 @@
+{
+  "splash": {
+    "intent": "Show that the app is starting until the stored session picks the first screen."
+  },
+  "authWelcome": {
+    "intent": "Let a signed-out person pick Citizen Voter or Election Auditor in one tap and open that role’s dashboard."
+  },
+  "eligibility": {
+    "intent": "Tell a citizen within seconds, even offline, whether their age meets a country’s minimum voting age, and who vouched for the answer."
+  },
+  "auditor": {
+    "intent": "Let an election auditor review every country’s minimum voting age exactly as the shared Rust rules apply it."
+  }
+}

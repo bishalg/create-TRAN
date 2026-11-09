@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
+import com.tran.voting.generated.ScreenContract
 
 /**
  * Blocking choice (REQ-ERR-007) — the web `TranDialog` atom. A destructive confirm is coloured as
@@ -36,7 +37,7 @@ fun TranDialog(
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
-                modifier = Modifier.testTag("dialog-confirm"),
+                modifier = Modifier.testTag(ScreenContract.Eligibility.dialogConfirm),
                 colors = if (destructive) {
                     ButtonDefaults.textButtonColors(contentColor = palette.danger)
                 } else {
@@ -45,7 +46,7 @@ fun TranDialog(
             ) { Text(confirmLabel) }
         },
         dismissButton = {
-            TextButton(onClick = onCancel, modifier = Modifier.testTag("dialog-cancel")) { Text(cancelLabel) }
+            TextButton(onClick = onCancel, modifier = Modifier.testTag(ScreenContract.Eligibility.dialogCancel)) { Text(cancelLabel) }
         },
     )
 }
