@@ -10,19 +10,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import com.tran.voting.generated.TranRadius
 import com.tran.voting.generated.TranSpace
 
 /**
  * Persistent, non-blocking notice for a condition that is still true — the API is unreachable —
- * removed by its owner when the condition clears (REQ-ERR-006). Never auto-dismisses.
+ * removed by its owner when the condition clears (REQ-ERR-006). Never auto-dismisses. One node for
+ * TalkBack, named by its message (REQ-SCR-008).
  */
 @Composable
 fun TranBanner(message: String, modifier: Modifier = Modifier) {
     val palette = LocalTranPalette.current
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
         shape = RoundedCornerShape(TranRadius.sm),
         color = palette.surface,
         border = BorderStroke(TranSpace.xxs, palette.accent),

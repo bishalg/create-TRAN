@@ -1,6 +1,5 @@
 {
   "en": {
-    "auditor.backToVoter": "Switch to Citizen Voter",
     "auditor.rules.title": "Verified Country Minimum Ages",
     "auditor.subtitle": "Global voting age rules verified against rust-core parity fixtures.",
     "auditor.table.countryCode": "Country Code",
@@ -101,7 +100,6 @@
     "shell.title": "Voting Eligibility"
   },
   "hi": {
-    "auditor.backToVoter": "नागरिक मतदाता पर स्विच करें",
     "auditor.rules.title": "सत्यापित देश न्यूनतम आयु",
     "auditor.subtitle": "वैश्विक मतदान आयु नियम rust-core समानता फ़िक्स्चर द्वारा सत्यापित।",
     "auditor.table.countryCode": "देश कोड",
@@ -202,7 +200,6 @@
     "shell.title": "मतदान पात्रता"
   },
   "ne": {
-    "auditor.backToVoter": "नागरिक मतदातामा स्विच गर्नुहोस्",
     "auditor.rules.title": "प्रमाणित देश न्यूनतम उमेर",
     "auditor.subtitle": "विश्वव्यापी मतदान उमेर नियमहरू rust-core समानता फिक्स्चरद्वारा प्रमाणित।",
     "auditor.table.countryCode": "देश कोड",

@@ -1,5 +1,34 @@
 {
   "scenario_bound_ms": 4300,
+  "platform_minimums": [
+    {
+      "platform": "web",
+      "unit": "css_px",
+      "control": 24,
+      "primary_action": 44,
+      "largest_text_scale": {
+        "percent": 200
+      }
+    },
+    {
+      "platform": "ios",
+      "unit": "pt",
+      "control": 44,
+      "primary_action": 44,
+      "largest_text_scale": {
+        "category": "UICTContentSizeCategoryAccessibilityXXXL"
+      }
+    },
+    {
+      "platform": "android",
+      "unit": "dp",
+      "control": 48,
+      "primary_action": 48,
+      "largest_text_scale": {
+        "percent": 200
+      }
+    }
+  ],
   "screens": [
     {
       "id": "splash",
@@ -11,7 +40,12 @@
           "kind": "progress",
           "label": "common.loading",
           "touch": "none",
-          "presence": "always"
+          "presence": "always",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
         }
       ],
       "scenarios": [
@@ -52,14 +86,44 @@
           "kind": "button",
           "label": "auth.continueAsVoter",
           "touch": "primary",
-          "presence": "always"
+          "presence": "always",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
         },
         {
           "id": "auditor-branch-button",
           "kind": "button",
           "label": "auth.continueAsAuditor",
           "touch": "control",
-          "presence": "always"
+          "presence": "always",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
+        },
+        {
+          "id": "skip-link",
+          "kind": "button",
+          "label": "shell.skipToContent",
+          "touch": "control",
+          "presence": "always",
+          "platforms": [
+            "web"
+          ]
+        },
+        {
+          "id": "language-picker",
+          "kind": "segmented",
+          "label": "shell.language.label",
+          "touch": "control",
+          "presence": "always",
+          "platforms": [
+            "web"
+          ]
         }
       ],
       "scenarios": [
@@ -157,50 +221,85 @@
           "kind": "button",
           "label": "common.signOut",
           "touch": "control",
-          "presence": "always"
+          "presence": "always",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
         },
         {
           "id": "role-badge",
           "kind": "text",
           "label": "common.role.label",
           "touch": "none",
-          "presence": "always"
+          "presence": "always",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
         },
         {
           "id": "age-field",
           "kind": "field",
           "label": "eligibility.age.label",
           "touch": "control",
-          "presence": "always"
+          "presence": "always",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
         },
         {
           "id": "country-field",
           "kind": "field",
           "label": "eligibility.country.label",
           "touch": "control",
-          "presence": "always"
+          "presence": "always",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
         },
         {
           "id": "check-button",
           "kind": "button",
           "label": "eligibility.checkOffline",
           "touch": "primary",
-          "presence": "always"
+          "presence": "always",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
         },
         {
           "id": "offline-result",
           "kind": "live_region",
           "label": "eligibility.result.label",
           "touch": "none",
-          "presence": "always"
+          "presence": "always",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
         },
         {
           "id": "validation-message",
-          "kind": "text",
+          "kind": "live_region",
           "label": "eligibility.validation.label",
           "touch": "none",
           "presence": "when",
-          "state": "validation_failed"
+          "state": "validation_failed",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
         },
         {
           "id": "verdict-source",
@@ -208,21 +307,36 @@
           "label": "eligibility.result.source",
           "touch": "none",
           "presence": "when",
-          "state": "verdict_shown"
+          "state": "verdict_shown",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
         },
         {
           "id": "theme-picker",
           "kind": "segmented",
           "label": "shell.theme.label",
           "touch": "control",
-          "presence": "always"
+          "presence": "always",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
         },
         {
           "id": "api-status",
           "kind": "live_region",
           "label": "shell.status.label",
           "touch": "none",
-          "presence": "always"
+          "presence": "always",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
         },
         {
           "id": "offline-notice",
@@ -230,7 +344,12 @@
           "label": "eligibility.offlineNotice",
           "touch": "none",
           "presence": "when",
-          "state": "api_unreachable"
+          "state": "api_unreachable",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
         },
         {
           "id": "toast",
@@ -238,7 +357,12 @@
           "label": "common.notifications",
           "touch": "none",
           "presence": "when",
-          "state": "toast_shown"
+          "state": "toast_shown",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
         },
         {
           "id": "toast-dismiss",
@@ -246,7 +370,12 @@
           "label": "common.dismiss",
           "touch": "control",
           "presence": "when",
-          "state": "toast_shown"
+          "state": "toast_shown",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
         },
         {
           "id": "dialog-confirm",
@@ -254,7 +383,12 @@
           "label": "common.signOut",
           "touch": "control",
           "presence": "when",
-          "state": "sign_out_confirm"
+          "state": "sign_out_confirm",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
         },
         {
           "id": "dialog-cancel",
@@ -262,7 +396,42 @@
           "label": "common.cancel",
           "touch": "control",
           "presence": "when",
-          "state": "sign_out_confirm"
+          "state": "sign_out_confirm",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
+        },
+        {
+          "id": "skip-link",
+          "kind": "button",
+          "label": "shell.skipToContent",
+          "touch": "control",
+          "presence": "always",
+          "platforms": [
+            "web"
+          ]
+        },
+        {
+          "id": "language-picker",
+          "kind": "segmented",
+          "label": "shell.language.label",
+          "touch": "control",
+          "presence": "always",
+          "platforms": [
+            "web"
+          ]
+        },
+        {
+          "id": "mode-switch",
+          "kind": "segmented",
+          "label": "eligibility.mode.legend",
+          "touch": "control",
+          "presence": "always",
+          "platforms": [
+            "web"
+          ]
         }
       ],
       "scenarios": [
@@ -965,14 +1134,24 @@
           "kind": "button",
           "label": "common.signOut",
           "touch": "control",
-          "presence": "always"
+          "presence": "always",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
         },
         {
           "id": "role-badge",
           "kind": "text",
           "label": "common.role.label",
           "touch": "none",
-          "presence": "always"
+          "presence": "always",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
         },
         {
           "id": "dialog-confirm",
@@ -980,7 +1159,12 @@
           "label": "common.signOut",
           "touch": "control",
           "presence": "when",
-          "state": "sign_out_confirm"
+          "state": "sign_out_confirm",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
         },
         {
           "id": "dialog-cancel",
@@ -988,7 +1172,32 @@
           "label": "common.cancel",
           "touch": "control",
           "presence": "when",
-          "state": "sign_out_confirm"
+          "state": "sign_out_confirm",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
+        },
+        {
+          "id": "skip-link",
+          "kind": "button",
+          "label": "shell.skipToContent",
+          "touch": "control",
+          "presence": "always",
+          "platforms": [
+            "web"
+          ]
+        },
+        {
+          "id": "language-picker",
+          "kind": "segmented",
+          "label": "shell.language.label",
+          "touch": "control",
+          "presence": "always",
+          "platforms": [
+            "web"
+          ]
         }
       ],
       "scenarios": [
@@ -1027,6 +1236,12 @@
           ]
         }
       ]
+    }
+  ],
+  "unreached_states": [
+    {
+      "state": "toast_shown",
+      "reason": "a toast acknowledges a server answer: the web's device check never calls the server (REQ-WEB-001) and the verb set has no given for its server mode, and the native suites run without an API"
     }
   ]
 }

@@ -8,6 +8,7 @@
   },
   "include": [
     "steps",
+    "support",
     "visual",
     "perf",
     "smoke",

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  ScreenIds,
   t,
   type AppDestination,
   type AuthSession,
@@ -89,14 +90,14 @@ function Shell({
 
   return (
     <div className="app">
-      <a className="skip-link" href="#main">
+      <a className="skip-link" href="#main" data-testid={ScreenIds.eligibility.skipLink}>
         {t('shell.skipToContent', locale)}
       </a>
       <Header
         locale={locale}
         onLocaleChange={setLocale}
         theme={theme}
-        onThemeChange={setTheme}
+        onThemeChange={destination === 'voter_dashboard' ? setTheme : undefined}
         currentRole={currentRole}
         onSignOut={currentRole ? handleSignOut : undefined}
       />
@@ -117,12 +118,15 @@ function Shell({
           <EligibilityPage api={api} locale={locale} indicatorDelayMs={loading?.indicatorDelayMs} />
         )}
 
-        {destination === 'auditor_dashboard' && (
-          <AuditorPage locale={locale} onBackToVoter={() => handleSelectRole('citizen_voter')} />
-        )}
+        {destination === 'auditor_dashboard' && <AuditorPage locale={locale} />}
       </main>
 
-      <StatusFooter state={apiState} version={api.info?.version} locale={locale} />
+      <StatusFooter
+        state={apiState}
+        version={api.info?.version}
+        locale={locale}
+        showStatus={destination === 'voter_dashboard'}
+      />
     </div>
   );
 }

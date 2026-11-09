@@ -68,7 +68,10 @@ One small domain you can extend:
 - `X-Debug-Country` (e.g. `US`, `IN`, `NP`, `BR`) — documented as dev-only; **not gated by env in code yet**
 - Loopback defaults to `US`; private ranges stub to `IN` for variety
 
-Golden cases live in `fixtures/vote-eligibility.json` (Rust, TypeScript, and UniFFI parity tests).
+Golden cases live in `fixtures/vote-eligibility.json` (Rust, TypeScript, and UniFFI parity tests). Screens are a
+contract too: `crates/rust-core/src/screens` declares each screen's elements and scenarios, generated to Gherkin and
+to every platform's UI tests, and `pnpm screens:check` compares the accessibility tree each suite saw with it
+([spec 021](./docs/specs/021-screen-contract.md)).
 
 The web UI uses **design tokens only** (generated CSS), **Tran\* atoms** instead of raw markup ([docs/ATOMIC.md](./docs/ATOMIC.md)), a four-theme registry from Rust (light, dark, black, sepia; remembered and applied before first paint), three languages (en, ne, hi) from one module-based dictionary in [`locales/`](./locales) shared by web, iOS and Android ([spec 008](./docs/specs/008-localization.md)), and accessibility checks in CI (axe on every theme + BDD).
 
@@ -283,7 +286,8 @@ This gives tRPC-like ergonomics on the TypeScript side without a Rust oRPC runti
 | `pnpm test`                | `cargo test` + Vitest (fast)                                                                                  |
 | `pnpm test:coverage`       | Rust + TS with **100% coverage gates**                                                                        |
 | `pnpm test:e2e`            | Playwright Gherkin (starts API + web)                                                                         |
-| `pnpm test:all`            | Coverage + E2E (what CI runs for tests)                                                                       |
+| `pnpm test:all`            | Coverage + E2E + screen conformance (what CI runs for tests)                                                  |
+| `pnpm screens:check`       | UI suites' accessibility manifests (`e2e/conformance/`) against the screen contract                           |
 | `pnpm typecheck`           | TypeScript                                                                                                    |
 | `pnpm lint`                | Clippy                                                                                                        |
 | `pnpm tokens:sync`         | Regenerate tokens + strings → TS/CSS, Swift, Kotlin, DESIGN.md                                                |

@@ -39,7 +39,8 @@ Then('I am routed to the {string} dashboard', async ({ page }, dashboardTitle: s
 });
 
 Then('I see the user role badge {string}', async ({ page }, badgeText: string) => {
-  await expect(page.getByTestId(ScreenIds.eligibility.roleBadge)).toHaveText(badgeText);
+  // The badge reads its label first, for screen readers only: "Role: Citizen Voter".
+  await expect(page.getByTestId(ScreenIds.eligibility.roleBadge)).toHaveText(`Role: ${badgeText}`);
 });
 
 Then('I see the global voting age rules for countries', async ({ page }) => {

@@ -24,6 +24,7 @@ easy to copy. Every layer below has one reference file. Copy its shape, not its 
 | **BDD + E2E**           | Playwright + Gherkin                                | `e2e/features/vote-eligibility.feature`                                                                                                | Real browser → real Vite → real Axum (incl. CORS)                                                                          |
 | **iOS UI + a11y**       | XCTest / XCUITest                                   | `apps/ios/Tests/TranVotingDemoUITests/ScreenContractUITests.swift` (+ `VotingUITests.swift`)                                           | Every screen scenario on a simulator, 44 pt targets, live regions, Dynamic Type; `performAccessibilityAudit` per theme     |
 | **Android + a11y**      | Compose instrumentation                             | `apps/android/app/src/androidTest/…/ScreenContractTest.kt` (+ `VotingHomeAccessibilityTest.kt`)                                        | Every screen scenario on an emulator, 48 dp touch bounds, `liveRegion`, 200% font scale; labels, contrast                  |
+| **Screen conformance**  | `pnpm screens:check`                                | `tooling/screens-check/screens-check.mjs`, manifests in `e2e/conformance/` (README there)                                              | What each platform's accessibility tree shows (role, name, size, no stray control) is what the screen contract declares    |
 | **Native smoke**        | Maestro                                             | `e2e/maestro/flows/launch-smoke.yaml`                                                                                                  | The installed app starts from its real entry point and gives a verdict                                                     |
 | **Screenshots** (local) | Playwright + Roborazzi on Robolectric + XCUITest    | `e2e/visual/web.spec.ts`, `apps/android/app/src/test/…/screenshots/ScreenshotTest.kt`, `apps/ios/Tests/TranVotingDemoScreenshotTests/` | Every theme × locale, plus the pending and offline states, look as they did; references per machine, gitignored (ADR-0031) |
 | **Metrics** (on demand) | Lighthouse + Navigation Timing + size collector     | `e2e/perf/web.spec.ts`, `tooling/metrics/metrics.mjs`, `tooling/metrics/budgets.json`                                                  | Scores, paint times and bundle sizes within budget and not drifting; history in `docs/reports/`                            |
@@ -45,6 +46,7 @@ pnpm test:coverage        # Rust + TS, FAILS below 100%
 pnpm test:e2e             # Gherkin scenarios in Chromium (starts API + web itself)
 pnpm ios:test             # XCTest + XCUITest (client stubs, accessibility audits) on the first available iPhone simulator
 pnpm android:test         # JVM unit tests + Compose instrumentation on a booted emulator (builds the Rust .so first)
+pnpm screens:check        # each UI suite's accessibility manifest (e2e/conformance/*.json) against the screen contract
 pnpm e2e:maestro          # Maestro smoke flows on the booted simulator/emulator (--device to choose)
 pnpm test:all             # everything CI runs
 pnpm visual               # web screenshots, every theme × locale (first run on a machine records the references)
@@ -66,6 +68,11 @@ the app when it finishes — reinstall the built APK before Maestro:
 `adb install -r apps/android/app/build/outputs/apk/debug/app-debug.apk`.
 
 First E2E run needs `pnpm --filter e2e exec playwright install chromium`.
+
+`pnpm test:e2e`, `pnpm ios:test` and `pnpm android:test` each leave the accessibility tree their screen scenarios saw
+in `e2e/conformance/<platform>.json` (local, gitignored); `pnpm screens:check` compares every manifest it finds with the
+screen contract and reports a missing platform without failing, so `pnpm test:all` checks the web alone
+([spec 021](./specs/021-screen-contract.md) REQ-SCR-008, [e2e/conformance/README.md](../e2e/conformance/README.md)).
 
 ### Native suites in CI
 

@@ -1,7 +1,6 @@
 {
   "title": "Election Auditor Dashboard",
   "subtitle": "Global voting age rules verified against rust-core parity fixtures.",
-  "backToVoter": "Switch to Citizen Voter",
   "years": "{years} years",
   "rules": {
     "title": "Verified Country Minimum Ages"

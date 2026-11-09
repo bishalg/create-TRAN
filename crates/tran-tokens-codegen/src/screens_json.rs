@@ -1,5 +1,7 @@
 //! `screens.json` for the native UI-test bundles (ADR-0038, REQ-SCR-005): the same bytes in
 //! `apps/ios/Tests/TranVotingDemoUITests/Resources/` and `apps/android/app/src/androidTest/assets/`.
+//! `pnpm screens:check` (`tooling/screens-check`) reads the iOS copy as the conformance oracle
+//! (REQ-SCR-008).
 //!
 //! The shape is flat so Swift `Codable` and Kotlin `org.json` decode it without enums with
 //! payloads: every step is one object with a `verb` and only the fields that verb uses.
@@ -7,10 +9,13 @@
 //! ```json
 //! {
 //!   "scenario_bound_ms": 4300,
+//!   "platform_minimums": [{ "platform": "ios", "unit": "pt", "control": 44, "primary_action": 44,
+//!                           "largest_text_scale": { "category": "…" } }],
 //!   "screens": [{
 //!     "id": "eligibility", "destination": "voter_dashboard", "intent": "screen.eligibility.intent",
 //!     "elements": [{ "id": "offline-notice", "kind": "banner", "label": "…", "touch": "none",
-//!                    "presence": "when", "state": "api_unreachable" }],
+//!                    "presence": "when", "state": "api_unreachable",
+//!                    "platforms": ["web", "ios", "android"] }],
 //!     "scenarios": [{
 //!       "name": "…", "verifies": ["REQ-NAT-011"], "within_ms": 4300,
 //!       "given": [{ "verb": "session", "value": "citizen_voter" }, { "verb": "api_unreachable" }],
@@ -19,7 +24,8 @@
 //!                   "args": [{ "name": "age", "value": "20" }] },
 //!                 { "verb": "count", "id": "sign-out-button", "n": 1 }]
 //!     }]
-//!   }]
+//!   }],
+//!   "unreached_states": [{ "state": "toast_shown", "reason": "…" }]
 //! }
 //! ```
 //!
@@ -28,19 +34,24 @@
 //! `announced`), `args` (`text_is`, `announced`, possibly empty, in the order the placeholders first
 //! appear in the English template, so a native interpreter passes them positionally to the
 //! generated `%1$@` / `%1$s` resource; `rust-core` tests that order), `n` (`count`). `presence` is
-//! `always` or `when` with `state`. Touch minimums are not repeated here: the native tests read
-//! them from the generated `ScreenContract.Minimums`.
+//! `always` or `when` with `state`; `platforms` lists where the element is offered, and a native
+//! interpreter skips the others. `unreached_states` are the states no scenario reaches yet. `platform_minimums` is `PLATFORM_MINIMUMS` for the
+//! conformance checker, which has no other generated source it can read without a compiler; the
+//! native tests keep reading theirs from the generated `ScreenContract.Minimums`.
 
 use crate::screens_gherkin::session_name;
 use rust_core::screens::{
-    Arg, Element, Given, Presence, Scenario, Screen, ScreensJsonSnapshot, Then, When,
+    Arg, Element, Given, Platform, PlatformMinimum, Presence, Scenario, Screen,
+    ScreensJsonSnapshot, Then, UnreachedState, When,
 };
 use serde::Serialize;
 
 #[derive(Serialize)]
 struct Catalogue {
     scenario_bound_ms: u64,
+    platform_minimums: &'static [PlatformMinimum],
     screens: Vec<ScreenJson>,
+    unreached_states: &'static [UnreachedState],
 }
 
 #[derive(Serialize)]
@@ -61,6 +72,7 @@ struct ElementJson {
     presence: &'static str,
     #[serde(skip_serializing_if = "Option::is_none")]
     state: Option<&'static str>,
+    platforms: &'static [Platform],
 }
 
 #[derive(Serialize)]
@@ -161,6 +173,7 @@ fn element_json(element: &Element) -> ElementJson {
         touch: element.touch.as_str(),
         presence,
         state,
+        platforms: element.platforms,
     }
 }
 
@@ -188,7 +201,9 @@ fn screen_json(screen: &Screen) -> ScreenJson {
 pub fn render_screens_json(snapshot: &ScreensJsonSnapshot) -> String {
     let catalogue = Catalogue {
         scenario_bound_ms: snapshot.scenario_bound_ms,
+        platform_minimums: snapshot.platform_minimums,
         screens: snapshot.screens.iter().map(screen_json).collect(),
+        unreached_states: snapshot.unreached_states,
     };
     serde_json::to_string_pretty(&catalogue).expect("the contract is plain data") + "\n"
 }
@@ -302,6 +317,14 @@ mod tests {
         assert!(rendered.ends_with("}\n"));
         let parsed: Value = serde_json::from_str(&rendered).unwrap();
         assert_eq!(parsed["scenario_bound_ms"], snapshot.scenario_bound_ms);
+        assert_eq!(
+            parsed["unreached_states"],
+            serde_json::to_value(snapshot.unreached_states).unwrap()
+        );
+        assert_eq!(
+            parsed["platform_minimums"],
+            serde_json::to_value(snapshot.platform_minimums).unwrap()
+        );
         let screens = parsed["screens"].as_array().unwrap();
         assert_eq!(screens.len(), snapshot.screens.len());
         for (json, screen) in screens.iter().zip(snapshot.screens) {
@@ -326,6 +349,17 @@ mod tests {
             (&json!("when"), &json!("api_unreachable"))
         );
         assert_eq!(screens[2]["elements"][0]["presence"], "always");
+        assert_eq!(
+            screens[2]["elements"][0]["platforms"],
+            json!(["web", "ios", "android"])
+        );
+        let skip = screens[2]["elements"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|e| e["id"] == "skip-link")
+            .unwrap();
+        assert_eq!(skip["platforms"], json!(["web"]));
         assert!(screens[2]["elements"][0].get("state").is_none());
     }
 }

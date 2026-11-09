@@ -1,4 +1,4 @@
-// Verifies: REQ-SCR-006 REQ-SCR-007 (web part)
+// Verifies: REQ-SCR-006 REQ-SCR-007 REQ-SCR-008 (web part)
 /**
  * The web interpreter of the screen contract (ADR-0038): one definition per verb of the Gherkin
  * that `pnpm tokens:sync` renders to `e2e/features/screens/`, and nothing per scenario. Each step
@@ -8,6 +8,9 @@
  * Elements are found by `data-testid` (the contract id). `text_is` and `announced` resolve their
  * key through the shared dictionaries with `t()`, as `apps/web` does. Touch minimums and the
  * largest text scale come from `PLATFORM_MINIMUMS.web`; no number lives here.
+ *
+ * After the given state, every `When` and the last `Then`, the page's accessibility tree is
+ * recorded for `pnpm screens:check` (`e2e/support/conformance.ts`, REQ-SCR-008).
  */
 import { expect, type Locator, type Page, type TestInfo } from '@playwright/test';
 import { createBdd } from 'playwright-bdd';
@@ -24,8 +27,9 @@ import {
   type SupportedLocale,
   type TranStringKey,
 } from '@tran/core';
+import { ScenarioManifest } from '../support/conformance.js';
 
-const { Given, When, Then } = createBdd();
+const { Given, When, Then, After } = createBdd();
 
 const API = 'http://127.0.0.1:3001';
 const WEB = PLATFORM_MINIMUMS.find((minimum) => minimum.platform === 'web')!;
@@ -46,6 +50,7 @@ interface Run {
   largestText: boolean;
   launched: boolean;
   checkedReach: boolean;
+  manifest: ScenarioManifest;
 }
 
 let run: Run | undefined;
@@ -60,15 +65,18 @@ function find(title: string): { scenario: Scenario; screen: Screen } {
 
 function current(testInfo: TestInfo): Run {
   if (run?.testId !== testInfo.testId) {
-    run = {
+    const found = find(testInfo.title);
+    const next: Run = {
       testId: testInfo.testId,
-      ...find(testInfo.title),
+      ...found,
       session: 'citizen_voter',
       locale: 'en',
       largestText: false,
       launched: false,
       checkedReach: false,
+      manifest: new ScenarioManifest(testInfo.testId, found.scenario.name, () => next.locale),
     };
+    run = next;
   }
   return run;
 }
@@ -113,7 +121,10 @@ async function applyLargestText(page: Page) {
 /** Every always-present element of the screen is on screen and within the viewport's width. */
 async function assertReachable(page: Page, r: Run, stepTitle: string) {
   const width = page.viewportSize()!.width;
-  for (const element of r.screen.elements.filter((e) => e.presence === 'always')) {
+  const always = r.screen.elements.filter(
+    (e) => e.presence === 'always' && e.platforms.includes('web')
+  );
+  for (const element of always) {
     const locator = byId(page, element.id);
     const label = where(r, stepTitle, element.id);
     await locator.scrollIntoViewIfNeeded({ timeout: r.scenario.within_ms });
@@ -152,6 +163,7 @@ async function launch(page: Page, r: Run) {
   }
   if (r.theme)
     await byId(page, ScreenIds.eligibility.themePicker).locator(`[value="${r.theme}"]`).click();
+  await r.manifest.record(page, 'given');
 }
 
 /** Before the first `Then`: at the largest text scale, everything must still be reachable. */
@@ -224,6 +236,7 @@ async function target(page: Page, r: Run, stepTitle: string, id: string): Promis
 
 When(step(`I tap ${Q}`), async ({ page, $testInfo, $step }, id: string) => {
   await (await target(page, current($testInfo), $step.title, unquote(id))).click();
+  await current($testInfo).manifest.record(page, $step.title);
 });
 
 When(
@@ -231,6 +244,7 @@ When(
   async ({ page, $testInfo, $step }, text: string, id: string) => {
     // `type` replaces the field's content.
     await (await target(page, current($testInfo), $step.title, unquote(id))).fill(unquote(text));
+    await current($testInfo).manifest.record(page, $step.title);
   }
 );
 
@@ -242,21 +256,25 @@ When(
     const choice = element.locator(`[value="${unquote(option)}"]`);
     await expect(choice, `${where(r, $step.title, unquote(id))}: no option`).toHaveCount(1);
     await choice.click();
+    await r.manifest.record(page, $step.title);
   }
 );
 
 When(step(`I press ${Q} in ${Q}`), async ({ page, $testInfo, $step }, key: string, id: string) => {
   await (await target(page, current($testInfo), $step.title, unquote(id))).press(unquote(key));
+  await current($testInfo).manifest.record(page, $step.title);
 });
 
-When('I go offline', async ({ page, context, $testInfo }) => {
+When('I go offline', async ({ page, context, $testInfo, $step }) => {
   await launch(page, current($testInfo));
   await context.setOffline(true);
+  await current($testInfo).manifest.record(page, $step.title);
 });
 
-When('I go online', async ({ page, context, $testInfo }) => {
+When('I go online', async ({ page, context, $testInfo, $step }) => {
   await launch(page, current($testInfo));
   await context.setOffline(false);
+  await current($testInfo).manifest.record(page, $step.title);
 });
 
 // ── Then ───────────────────────────────────────────────────────────────────────────────────────
@@ -349,3 +367,12 @@ Then(
     });
   }
 );
+
+// ── Conformance (REQ-SCR-008) ──────────────────────────────────────────────────────────────────
+
+/** The settled state every `Then` waited for: the scenario's last snapshot. */
+After(async ({ page, $testInfo }) => {
+  if (run?.testId !== $testInfo.testId || !run.launched) return;
+  if ($testInfo.status !== $testInfo.expectedStatus) return; // a failed scenario reports itself
+  await run.manifest.record(page, 'then');
+});

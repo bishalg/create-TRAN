@@ -143,6 +143,7 @@ fun VotingHomeScreen(
                     TranText(
                         text = stringResource(TranStrings.Common.roleCitizenVoter),
                         variant = TranTextVariant.CAPTION,
+                        label = stringResource(TranStrings.Common.roleLabel),
                         modifier = Modifier.testTag(ScreenContract.Eligibility.roleBadge),
                     )
                 }
@@ -203,6 +204,7 @@ fun VotingHomeScreen(
                     text = it,
                     variant = TranTextVariant.DANGER,
                     live = true,
+                    label = stringResource(TranStrings.Eligibility.validationLabel),
                     modifier = Modifier.testTag(ScreenContract.Eligibility.validationMessage),
                 )
             }
@@ -210,6 +212,7 @@ fun VotingHomeScreen(
                 text = resultText,
                 modifier = Modifier.testTag(ScreenContract.Eligibility.offlineResult),
                 live = true,
+                label = stringResource(TranStrings.Eligibility.resultLabel),
             )
             // REQ-LOAD-002/003/005: the verdict stays; its live caption says it is being checked
             // (after the policy delay) or who vouched for it.
@@ -218,6 +221,7 @@ fun VotingHomeScreen(
                     text = stringResource(TranFeedback.messageRes(confirmation.captionKey)),
                     variant = TranTextVariant.CAPTION,
                     live = true,
+                    label = stringResource(TranStrings.Eligibility.resultSource),
                     modifier = Modifier
                         .animateContentSize(TranMotion.spec(reduceMotion))
                         .testTag(ScreenContract.Eligibility.verdictSource),
@@ -232,6 +236,7 @@ fun VotingHomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 testTag = ScreenContract.Eligibility.themePicker,
                 optionName = { it.id },
+                accessibilityLabel = stringResource(TranStrings.Shell.themeLabel),
             ) { mode ->
                 stringResource(mode.labelRes)
             }
@@ -245,6 +250,7 @@ fun VotingHomeScreen(
                 ),
                 variant = TranTextVariant.CAPTION,
                 live = true,
+                label = stringResource(TranStrings.Shell.statusLabel),
                 modifier = Modifier.testTag(ScreenContract.Eligibility.apiStatus),
             )
             banner?.let {

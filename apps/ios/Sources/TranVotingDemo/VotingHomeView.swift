@@ -33,7 +33,7 @@ struct VotingHomeView: View {
                             TranStack(gap: .xs, alignment: .leading) {
                                 TranText(L10n.Shell.header("iOS"), variant: .title)
                                 TranText(L10n.Eligibility.subtitle, variant: .muted)
-                                TranText(L10n.Common.roleCitizenVoter, variant: .caption)
+                                TranText(L10n.Common.roleCitizenVoter, variant: .caption, label: L10n.Common.roleLabel)
                                     .accessibilityIdentifier(ScreenContract.Eligibility.roleBadge)
                             }
                             // The titles take what the button leaves, wrapping on a narrow screen or at
@@ -70,17 +70,17 @@ struct VotingHomeView: View {
                         .accessibilityIdentifier(ScreenContract.Eligibility.checkButton)
 
                         if let validationMessage {
-                            TranText(validationMessage, variant: .danger, live: true)
+                            TranText(validationMessage, variant: .danger, live: true, label: L10n.Eligibility.validationLabel)
                                 .accessibilityIdentifier(ScreenContract.Eligibility.validationMessage)
                         }
 
                         TranStack(gap: .xs, alignment: .leading) {
-                            TranText(resultText, live: true)
+                            TranText(resultText, live: true, label: L10n.Eligibility.resultLabel)
                                 .accessibilityIdentifier(ScreenContract.Eligibility.offlineResult)
                             // The verdict stays as it is while the server checks; only this caption
                             // says who vouches for it, or that the check is still running (REQ-LOAD-003).
                             if hasVerdict {
-                                TranText(confirmation.caption, variant: .caption, live: true)
+                                TranText(confirmation.caption, variant: .caption, live: true, label: L10n.Eligibility.resultSource)
                                     .accessibilityIdentifier(ScreenContract.Eligibility.verdictSource)
                             }
                         }
@@ -98,7 +98,7 @@ struct VotingHomeView: View {
                         )
 
                         // REQ-NAT-011: the status pill mirrors the web footer; it never gates the device check.
-                        TranText(statusLabel, variant: .caption, live: true)
+                        TranText(statusLabel, variant: .caption, live: true, label: L10n.Shell.statusLabel)
                             .accessibilityIdentifier(ScreenContract.Eligibility.apiStatus)
                         if let banner {
                             TranBanner(message: TranFeedback.message(banner.spec.messageKey))

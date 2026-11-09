@@ -1,28 +1,6 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "auditor.backToVoter": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Switch to Citizen Voter"
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "नागरिक मतदाता पर स्विच करें"
-          }
-        },
-        "ne": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "नागरिक मतदातामा स्विच गर्नुहोस्"
-          }
-        }
-      }
-    },
     "auditor.rules.title": {
       "localizations": {
         "en": {

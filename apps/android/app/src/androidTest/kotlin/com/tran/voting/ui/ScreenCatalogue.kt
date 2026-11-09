@@ -39,7 +39,9 @@ data class ScreenCatalogue(val screens: List<ContractScreen>) {
                     kind = it.getString("kind"),
                     label = it.getString("label"),
                     touch = it.getString("touch"),
-                    always = it.getString("presence") == "always",
+                    // Always on screen on Android: another platform's own element (the web's skip link) is not.
+                    always = it.getString("presence") == "always" &&
+                        it.getJSONArray("platforms").let { platforms -> (0 until platforms.length()).any { i -> platforms.getString(i) == "android" } },
                 )
             },
             scenarios = json.getJSONArray("scenarios").objects().map { scenario ->

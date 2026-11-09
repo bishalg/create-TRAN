@@ -10,6 +10,16 @@ const instant: AppProps['retry'] = { sleep: async () => {}, random: () => 0 };
 
 type User = ReturnType<typeof userEvent.setup>;
 
+/**
+ * Startup settles as "API online" or "API offline". Off the voter dashboard the screen contract
+ * shows no status pill, so the footer's state says it (REQ-SCR-008).
+ */
+async function apiSettled() {
+  await waitFor(() =>
+    expect(document.querySelector('footer')?.getAttribute('data-state')).toMatch(/online|offline/)
+  );
+}
+
 async function renderApp(opts: Parameters<typeof createFakeApi>[0] = {}, props: AppProps = {}) {
   const api = createFakeApi(opts);
   vi.stubGlobal('fetch', api.fetchFn);
@@ -426,7 +436,7 @@ describe('App: navigation and role branching', () => {
     const api = createFakeApi();
     vi.stubGlobal('fetch', api.fetchFn);
     render(<App retry={instant} initialSession={{ status: 'unauthenticated' }} />);
-    await screen.findByText(/API (online|offline)/);
+    await apiSettled();
 
     expect(screen.getByRole('heading', { level: 2, name: 'Welcome to TRAN Voting' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Continue as Citizen Voter' })).toBeVisible();
@@ -438,7 +448,7 @@ describe('App: navigation and role branching', () => {
     vi.stubGlobal('fetch', api.fetchFn);
     const user = userEvent.setup();
     render(<App retry={instant} initialSession={{ status: 'unauthenticated' }} />);
-    await screen.findByText(/API (online|offline)/);
+    await apiSettled();
 
     await user.click(screen.getByRole('button', { name: 'Continue as Citizen Voter' }));
     expect(screen.getByLabelText('Your age')).toBeVisible();
@@ -450,7 +460,7 @@ describe('App: navigation and role branching', () => {
     vi.stubGlobal('fetch', api.fetchFn);
     const user = userEvent.setup();
     render(<App retry={instant} initialSession={{ status: 'unauthenticated' }} />);
-    await screen.findByText(/API (online|offline)/);
+    await apiSettled();
 
     await user.click(screen.getByRole('button', { name: 'Continue as Election Auditor' }));
     expect(
@@ -460,10 +470,8 @@ describe('App: navigation and role branching', () => {
       'Election Auditor'
     );
     expect(screen.getByText('NP')).toBeVisible();
-
-    // Can switch back to Citizen Voter from Auditor dashboard
-    await user.click(screen.getByRole('button', { name: 'Switch to Citizen Voter' }));
-    expect(screen.getByLabelText('Your age')).toBeVisible();
+    // Changing role goes through sign-out: the auditor screen offers only what the contract declares.
+    expect(screen.queryByRole('button', { name: /Citizen Voter/ })).toBeNull();
   });
 
   it('[REQ-NAV-005] signing out asks first, and cancelling keeps the session', async () => {
@@ -493,7 +501,7 @@ describe('App: navigation and role branching', () => {
     expect(init?.signal?.aborted).toBe(true);
     const notifications = screen.getByRole('region', { name: 'Notifications' });
     expect(within(notifications).queryByText('Server check complete')).toBeNull();
-    expect(screen.getByText(/API online/)).toBeVisible();
+    expect(document.querySelector('footer')).toHaveAttribute('data-state', 'online');
   });
 
   it('[REQ-NAV-005] confirming sign-out returns to the auth welcome screen', async () => {

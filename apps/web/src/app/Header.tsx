@@ -21,7 +21,8 @@ export interface HeaderProps {
   locale: SupportedLocale;
   onLocaleChange: (locale: SupportedLocale) => void;
   theme: ThemeMode;
-  onThemeChange: (theme: ThemeMode) => void;
+  /** Shows the theme picker; the screen contract offers it on the voter dashboard only. */
+  onThemeChange?: (theme: ThemeMode) => void;
   currentRole?: import('@tran/core').UserRole | null;
   /** May open a confirmation first, so it can be async. */
   onSignOut?: () => void | Promise<void>;
@@ -47,7 +48,12 @@ export function Header({
       </TranText>
 
       <div className="header-actions">
-        <div className="segmented" role="group" aria-label={t('shell.language.label', locale)}>
+        <div
+          className="segmented"
+          role="group"
+          aria-label={t('shell.language.label', locale)}
+          data-testid={ScreenIds.eligibility.languagePicker}
+        >
           {TRAN_LOCALES.map((code) => (
             <TranButton
               key={code}
@@ -62,28 +68,30 @@ export function Header({
             </TranButton>
           ))}
         </div>
-        <div
-          className="segmented"
-          role="group"
-          aria-label={t('shell.theme.label', locale)}
-          data-testid={ScreenIds.eligibility.themePicker}
-        >
-          {/* `value` names the option, so a scenario's `select` finds it in any language. */}
-          {themeNames.map((mode) => (
-            <TranButton
-              key={mode}
-              type="button"
-              value={mode}
-              variant="secondary"
-              size="md"
-              className="segmented-item"
-              aria-pressed={mode === theme}
-              onClick={() => onThemeChange(mode)}
-            >
-              {t(THEME_KEYS[mode], locale)}
-            </TranButton>
-          ))}
-        </div>
+        {onThemeChange && (
+          <div
+            className="segmented"
+            role="group"
+            aria-label={t('shell.theme.label', locale)}
+            data-testid={ScreenIds.eligibility.themePicker}
+          >
+            {/* `value` names the option, so a scenario's `select` finds it in any language. */}
+            {themeNames.map((mode) => (
+              <TranButton
+                key={mode}
+                type="button"
+                value={mode}
+                variant="secondary"
+                size="md"
+                className="segmented-item"
+                aria-pressed={mode === theme}
+                onClick={() => onThemeChange(mode)}
+              >
+                {t(THEME_KEYS[mode], locale)}
+              </TranButton>
+            ))}
+          </div>
+        )}
 
         {currentRole && (
           <TranText
@@ -92,12 +100,18 @@ export function Header({
             className="role-badge"
             data-testid={ScreenIds.eligibility.roleBadge}
           >
-            {t(
-              currentRole === 'citizen_voter'
-                ? 'common.role.citizenVoter'
-                : 'common.role.electionAuditor',
-              locale
-            )}
+            {/* A badge is named by what it shows: "Role: Citizen Voter" (screen contract label). */}
+            <TranText variant="caption" as="span" className="sr-only">
+              {`${t('common.role.label', locale)}: `}
+            </TranText>
+            <TranText variant="caption" as="span">
+              {t(
+                currentRole === 'citizen_voter'
+                  ? 'common.role.citizenVoter'
+                  : 'common.role.electionAuditor',
+                locale
+              )}
+            </TranText>
           </TranText>
         )}
 

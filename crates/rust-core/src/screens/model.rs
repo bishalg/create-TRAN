@@ -32,10 +32,25 @@ pub struct Element {
     /// Kebab-case; the one name behind `data-testid`, `accessibilityIdentifier` and `testTag`.
     pub id: &'static str,
     pub kind: ElementKind,
-    /// Locale key of the element's accessible name.
+    /// Locale key of the element's accessible name. For an element that carries changing content
+    /// (a text, a live region, a banner, a toast) it names that content: "Role", then the role.
     pub label: &'static str,
     pub touch: TouchClass,
     pub presence: Presence,
+    /// The platforms that offer the element: every platform unless the catalogue says why one
+    /// does not (REQ-SCR-008), so the conformance check knows a deliberate difference from a gap.
+    pub platforms: &'static [Platform],
+}
+
+impl Element {
+    /// The same element, offered only on `platforms`. The catalogue says why beside each use.
+    pub const fn only(self, platforms: &'static [Platform]) -> Self {
+        Self { platforms, ..self }
+    }
+
+    pub fn is_on(&self, platform: Platform) -> bool {
+        self.platforms.contains(&platform)
+    }
 }
 
 /// What an element is, never how it looks (REQ-SCR-003).
@@ -333,6 +348,8 @@ pub enum Platform {
 }
 
 impl Platform {
+    pub const ALL: [Self; 3] = [Self::Web, Self::Ios, Self::Android];
+
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Web => "web",
@@ -404,10 +421,19 @@ pub const PLATFORM_MINIMUMS: [PlatformMinimum; 3] = [
     },
 ];
 
+/// A state an element depends on that no scenario reaches yet, and why (REQ-SCR-008). The
+/// conformance check reports it instead of failing "never observed".
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+pub struct UnreachedState {
+    pub state: &'static str,
+    pub reason: &'static str,
+}
+
 /// Everything the codegen emits, in one serializable value (`pnpm tokens:sync`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub struct ScreensJsonSnapshot {
     pub screens: &'static [Screen],
     pub platform_minimums: &'static [PlatformMinimum],
     pub scenario_bound_ms: u64,
+    pub unreached_states: &'static [UnreachedState],
 }

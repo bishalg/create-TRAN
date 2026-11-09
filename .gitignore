@@ -98,3 +98,7 @@ mutants.out*/
 
 # Agent runs (ADR-0032): prompts, harness logs, hand-offs and reports, per run, never committed.
 .agents/out/
+
+# Conformance manifests: local, like screenshot references (REQ-SCR-008, ADR-0031)
+e2e/conformance/*.json
+e2e/conformance/.web-parts/

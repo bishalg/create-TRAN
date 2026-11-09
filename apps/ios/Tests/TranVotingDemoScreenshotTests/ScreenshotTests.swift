@@ -129,9 +129,10 @@ final class ScreenshotTests: XCTestCase {
         compare("pending-\(name)")
     }
 
+    /// The caption is a labelled text (`TranText(label:)`): it reads its copy as its value.
     private func wait(for element: XCUIElement, label: String, _ what: String, _ name: String) -> Bool {
         let expectation = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "label == %@", label), object: element)
+            predicate: NSPredicate(format: "value == %@", label), object: element)
         if XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed { return true }
         XCTFail("\(name): \(what) never read \"\(label)\"")
         return false

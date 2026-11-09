@@ -1,6 +1,7 @@
 //! iOS `Generated/ScreenContract.swift` and Android `generated/ScreenContract.kt`: the screen
 //! contract's element ids, one constant per element and screen, plus the platform's minimums
 //! (ADR-0038, REQ-SCR-002, REQ-SCR-007). Feature code and UI tests use these, never a literal.
+//! An element another platform offers alone (the web's skip link) gets no constant here.
 
 use crate::names::pascal_case;
 use crate::screens_ts::member_from_id;
@@ -17,7 +18,7 @@ pub fn render_screen_contract_swift(screens: &[Screen], minimum: &PlatformMinimu
     );
     for screen in screens {
         out.push_str(&format!("    enum {} {{\n", pascal_case(screen.id)));
-        for element in screen.elements {
+        for element in screen.elements.iter().filter(|e| e.is_on(minimum.platform)) {
             out.push_str(&format!(
                 "        static let {} = \"{}\"\n",
                 member_from_id(element.id),
@@ -53,7 +54,7 @@ pub fn render_screen_contract_kotlin(
     );
     for screen in screens {
         out.push_str(&format!("    object {} {{\n", pascal_case(screen.id)));
-        for element in screen.elements {
+        for element in screen.elements.iter().filter(|e| e.is_on(minimum.platform)) {
             out.push_str(&format!(
                 "        const val {} = \"{}\"\n",
                 member_from_id(element.id),

@@ -1,4 +1,4 @@
-// Verifies: REQ-SCR-006 REQ-SCR-007
+// Verifies: REQ-SCR-006 REQ-SCR-007 REQ-SCR-008
 // Verifies: REQ-A11Y-003 REQ-A11Y-007 REQ-ERR-006 REQ-ERR-007 REQ-LOAD-003 REQ-LOAD-005 REQ-NAT-001 REQ-NAT-002
 // Verifies: REQ-NAT-003 REQ-NAT-004 REQ-NAT-007 REQ-NAT-011 REQ-NAT-013 REQ-NAV-001 REQ-NAV-002 REQ-NAV-003
 // Verifies: REQ-NAV-004 REQ-NAV-005 REQ-WEB-001 REQ-WEB-002 REQ-WEB-004 REQ-WEB-014
@@ -39,7 +39,9 @@ import java.util.Locale
  * maps to one Compose test action or assertion over contract ids, on the app's own
  * `NavigationCoordinator`; copy is resolved through the generated string resources and sizes come
  * from `ScreenContract.Minimums`. The `Verifies` header lists what the scenarios cite;
- * `packages/core-ts/tests/screen-ids.test.ts` keeps it equal to the catalogue.
+ * `packages/core-ts/tests/screen-ids.test.ts` keeps it equal to the catalogue. After the given
+ * state, every `When` and the last `Then`, the semantics tree is recorded for `pnpm screens:check`
+ * (`ConformanceManifest`, REQ-SCR-008).
  */
 @RunWith(Parameterized::class)
 class ScreenContractTest(private val name: String) {
@@ -78,7 +80,10 @@ class ScreenContractTest(private val name: String) {
         scenario.given.forEach(::given)
         scenario.whens.forEach(::whenStep)
         scenario.thens.forEach(::thenStep)
+        record("then")
     }
+
+    private fun record(phase: String) = ConformanceManifest.record(compose, scenario.name, phase, localeTag)
 
     /** What this platform cannot stage, said once per verb. */
     private fun unsupported(): String? {
@@ -140,6 +145,7 @@ class ScreenContractTest(private val name: String) {
                 NavigationCoordinator(initialTheme = theme, api = api, initialSession = session)
             }
         }
+        record("given")
     }
 
     // When
@@ -167,6 +173,7 @@ class ScreenContractTest(private val name: String) {
             "press_key" -> if (step.key == "Enter") node.performImeAction() else fail("${driver.place(step, id)}: only Enter has an IME action")
             else -> fail("${driver.place(step, id)}: unknown when")
         }
+        record(step.title)
     }
 
     // Then

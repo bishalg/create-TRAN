@@ -13,7 +13,8 @@ enum TranTextVariant: CaseIterable {
 
 /// Token-bound typography atom. Sizes are semantic system styles so Dynamic Type keeps working
 /// (REQ-NAT-004); colours come from the palette in the environment. `live` marks a region whose
-/// changes are announced (REQ-NAT-003).
+/// changes are announced (REQ-NAT-003). `label` names changing content for VoiceOver ("Result",
+/// then the verdict as its value), as the screen contract declares it (REQ-SCR-008).
 struct TranText: View {
     @Environment(\.tranPalette) private var palette
 
@@ -21,15 +22,27 @@ struct TranText: View {
     private let variant: TranTextVariant
     private let live: Bool
     private let bold: Bool
+    private let label: String?
 
-    init(_ text: String, variant: TranTextVariant = .body, live: Bool = false, bold: Bool = false) {
+    init(_ text: String, variant: TranTextVariant = .body, live: Bool = false, bold: Bool = false, label: String? = nil) {
         self.text = text
         self.variant = variant
         self.live = live
         self.bold = bold
+        self.label = label
     }
 
     var body: some View {
+        if let label {
+            content
+                .accessibilityLabel(label)
+                .accessibilityValue(text)
+        } else {
+            content
+        }
+    }
+
+    private var content: some View {
         Text(text)
             .font(font)
             .foregroundStyle(color)

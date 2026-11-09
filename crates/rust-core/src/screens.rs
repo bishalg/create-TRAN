@@ -8,11 +8,11 @@ mod catalogue;
 mod model;
 mod scenarios;
 
-pub use catalogue::{state, SCREENS};
+pub use catalogue::{state, SCREENS, UNREACHED_STATES};
 pub use model::{
     Arg, Element, ElementKind, Given, Platform, PlatformMinimum, Presence, Scenario, Screen,
-    ScreensJsonSnapshot, SessionKind, TextScale, Then, TouchClass, When, PLATFORM_MINIMUMS,
-    SCENARIO_BOUND_MS,
+    ScreensJsonSnapshot, SessionKind, TextScale, Then, TouchClass, UnreachedState, When,
+    PLATFORM_MINIMUMS, SCENARIO_BOUND_MS,
 };
 
 /// The whole contract as one serializable value; the codegen renders it for every platform.
@@ -21,6 +21,7 @@ pub fn screens_json_snapshot() -> ScreensJsonSnapshot {
         screens: &SCREENS,
         platform_minimums: &PLATFORM_MINIMUMS,
         scenario_bound_ms: SCENARIO_BOUND_MS,
+        unreached_states: &UNREACHED_STATES,
     }
 }
 

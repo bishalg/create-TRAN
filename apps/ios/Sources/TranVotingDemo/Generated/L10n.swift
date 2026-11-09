@@ -7,7 +7,6 @@ import Foundation
 /// missing translations fall back to it through the String Catalogs.
 enum L10n {
     enum Auditor {
-        static var backToVoter: String { String(localized: "auditor.backToVoter", table: "Auditor") }
         static var rulesTitle: String { String(localized: "auditor.rules.title", table: "Auditor") }
         static var subtitle: String { String(localized: "auditor.subtitle", table: "Auditor") }
         static var tableCountryCode: String { String(localized: "auditor.table.countryCode", table: "Auditor") }

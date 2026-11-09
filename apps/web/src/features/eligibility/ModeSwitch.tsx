@@ -1,4 +1,4 @@
-import { type SupportedLocale, type TranStringKey, t } from '@tran/core';
+import { ScreenIds, type SupportedLocale, type TranStringKey, t } from '@tran/core';
 import { TranLabel } from '../../shared/ui/TranLabel.js';
 import { TranText } from '../../shared/ui/TranText.js';
 import type { CheckMode } from './toView.js';
@@ -17,7 +17,7 @@ export interface ModeSwitchProps {
 /** Native radios: arrow-key navigation, focus and screen-reader semantics come for free. */
 export function ModeSwitch({ mode, onChange, locale }: ModeSwitchProps) {
   return (
-    <fieldset className="choice-group">
+    <fieldset className="choice-group" data-testid={ScreenIds.eligibility.modeSwitch}>
       <legend>{t('eligibility.mode.legend', locale)}</legend>
       {OPTIONS.map(({ value, title, hint }) => (
         <TranLabel key={value} className="choice">

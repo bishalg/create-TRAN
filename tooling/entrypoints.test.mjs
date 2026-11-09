@@ -18,6 +18,12 @@ after(() => rmSync(join(link, '..'), { recursive: true, force: true }));
 /** Each tool with arguments that only read the repo, and a line it prints only from main(). */
 const TOOLS = [
   ['spec-check/spec-check.mjs', [], /spec-check: ok/],
+  // A folder with no manifests: every platform is "no manifest", which passes.
+  [
+    'screens-check/screens-check.mjs',
+    ['--dir', join(link, 'screens-check/none')],
+    /screens-check: ok/,
+  ],
   ['agents/agents.mjs', ['check'], /agents: \d+ tasks/],
   [
     'agents/agents.mjs',

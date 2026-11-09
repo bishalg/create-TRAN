@@ -10,8 +10,6 @@ import com.tran.voting.R
 object TranStrings {
     object Auditor {
         @StringRes
-        val backToVoter: Int = R.string.auditor_back_to_voter // auditor.backToVoter
-        @StringRes
         val rulesTitle: Int = R.string.auditor_rules_title // auditor.rules.title
         @StringRes
         val subtitle: Int = R.string.auditor_subtitle // auditor.subtitle

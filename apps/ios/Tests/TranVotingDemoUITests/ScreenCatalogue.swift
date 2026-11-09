@@ -46,8 +46,11 @@ struct ContractElement: Decodable {
     let touch: String
     let presence: String
     let state: String?
+    /// Where the element is offered; another platform's own (the web's skip link) is not iOS's.
+    let platforms: [String]
 
-    var isAlways: Bool { presence == "always" }
+    /// Always on screen on iOS.
+    var isAlways: Bool { presence == "always" && platforms.contains("ios") }
 }
 
 struct ContractScenario: Decodable {

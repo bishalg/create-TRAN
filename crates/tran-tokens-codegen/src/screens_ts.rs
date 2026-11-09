@@ -76,7 +76,7 @@ export type When =\n  | {{ readonly tap: ElementId }}\n  | {{ readonly type: {{ 
 /** {then}. */\n\
 export type Then =\n  | {{ readonly exists: ElementId }}\n  | {{ readonly missing: ElementId }}\n  | {{ readonly text_is: ExpectedMessage }}\n  | {{ readonly has_focus: ElementId }}\n  | {{ readonly announced: ExpectedMessage }}\n  | {{ readonly count: {{ readonly id: ElementId; readonly n: number }} }};\n\n\
 export interface Scenario {{\n  readonly name: string;\n  readonly verifies: readonly string[];\n  readonly given: readonly Given[];\n  readonly when: readonly When[];\n  readonly then: readonly Then[];\n  readonly within_ms: number;\n}}\n\n\
-export interface ScreenElement {{\n  readonly id: ElementId;\n  readonly kind: ElementKind;\n  readonly label: TranStringKey;\n  readonly touch: TouchClass;\n  readonly presence: Presence;\n}}\n\n\
+export interface ScreenElement {{\n  readonly id: ElementId;\n  readonly kind: ElementKind;\n  readonly label: TranStringKey;\n  readonly touch: TouchClass;\n  readonly presence: Presence;\n  /** Where the element is offered (REQ-SCR-008). */\n  readonly platforms: readonly ('web' | 'ios' | 'android')[];\n}}\n\n\
 export interface Screen {{\n  readonly id: ScreenId;\n  readonly destination: ScreenDestination;\n  readonly intent: TranStringKey;\n  readonly elements: readonly ScreenElement[];\n  readonly scenarios: readonly Scenario[];\n}}\n\n\
 export type TextScale = {{ readonly percent: number }} | {{ readonly category: string }};\n\n\
 /** Touch minimums and the largest text scale per platform (REQ-SCR-007). */\n\

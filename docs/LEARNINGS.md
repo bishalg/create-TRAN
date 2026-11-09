@@ -9,6 +9,16 @@ when you learned something that is not obvious from the code, the specs or the A
 - Format, checked by `pnpm agents:check`: a `## YYYY-MM-DD - Title` heading, then a `**Learning:**` and an
   `**Action:**` line. Newest first. Delete an entry when the code makes it obsolete.
 
+## 2026-11-10 - A labelled text reads its content as its value, not its label
+
+**Learning:** `pnpm screens:check` requires content that changes (the verdict, the API status, the role badge) to be
+named by its contract label, so `TranText(label:)` now gives VoiceOver "Result" as `label` and the verdict as `value`,
+and Android's content description becomes "Result, <verdict>". An XCUITest that reads `element.label` of such a text
+gets "Result"; on the web, the role badge and the verdict source start with a screen-reader-only label, so an exact
+`toHaveText` includes it.
+**Action:** Read a labelled text's content from `value` on iOS (`ContractScreenDriver.text(of:)`), from `Text` (not
+the content description) on Android, and by an inner element or a substring on the web.
+
 ## 2026-11-09 - A `const fn` that only builds `const` tables counts as uncovered
 
 **Learning:** `cargo llvm-cov` measures run time only. A `const fn` helper used solely inside `const` items (the

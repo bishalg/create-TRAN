@@ -123,6 +123,7 @@ export function EligibilityPage({
           variant="danger"
           className="error"
           role="alert"
+          aria-label={t('eligibility.validation.label', locale)}
           data-testid={ScreenIds.eligibility.validationMessage}
         >
           {t(alertKey, locale)}

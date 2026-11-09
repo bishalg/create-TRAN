@@ -45,6 +45,7 @@ fun AuditorScreen(onSignOut: () -> Unit) {
                     TranText(
                         text = stringResource(TranStrings.Common.roleElectionAuditor),
                         variant = TranTextVariant.TITLE,
+                        label = stringResource(TranStrings.Common.roleLabel),
                         modifier = Modifier.testTag(ScreenContract.Auditor.roleBadge),
                     )
                     TranText(

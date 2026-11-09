@@ -125,15 +125,27 @@ window, and so is every option of a segmented control. Android (`ContractScreenD
 displayed and inside the root's width. A select step also sizes the option it taps. Breaking the verdict's live
 region fails every scenario that reads it, naming the scenario, step and element.
 
-### REQ-SCR-008 [planned] A conformance manifest is checked against the contract
+### REQ-SCR-008 [verified] A conformance manifest is checked against the contract
 
 Each platform's UI suite MUST write, per screen and reachable state, the accessibility tree it presents (id, role,
 accessible name, frame) to a local, gitignored manifest. `pnpm screens:check` MUST compare every manifest found with
 the contract and fail when a required element is absent, carries another role or name than the contract's kind and
 label resolve to, is below its touch minimum, or when an interactive element is present that the contract does not
 declare. The checker MUST report every difference in one run.
-**Verified by:** `tooling/screens-check/screens-check.test.mjs` with staged manifests (a passing one, each failure
-class), and the nightly native workflow running the real suites ([009](009-native-tests-in-ci.md)).
+An element one platform offers alone MUST say so in the catalogue (`Element::only`, with the reason beside it: the
+web's skip link, language picker and check-mode switch), and a state no scenario reaches yet MUST be listed in
+`UNREACHED_STATES` with the reason (the toast); the checker reports such a state instead of failing "never observed",
+and a Rust test fails once a scenario reaches it. An element that carries changing content (a text, a live region)
+is named by its label and reads its content after it ("Result", then the verdict).
+**Verified by:** `tooling/screens-check/screens-check.test.mjs` with staged manifests (a passing one per platform, each
+failure class, the screen-detection rule, "no manifest"), `crates/rust-core/src/screens/tests.rs`
+(`platform_scoped_elements_name_their_platforms`, `unreached_states_are_real_and_still_unreached`),
+`crates/tran-tokens-codegen/src/screens_json.rs`, and the real suites writing `e2e/conformance/<platform>.json`:
+`e2e/support/conformance.ts` (from `e2e/steps/screens.steps.ts`, `pnpm test:e2e`, checked in `pnpm test:all` and
+the CI `e2e` job), `apps/ios/Tests/TranVotingDemoUITests/ConformanceManifest.swift` and
+`apps/android/app/src/androidTest/kotlin/com/tran/voting/ui/ConformanceManifest.kt` (from the interpreters, checked
+after each nightly native job, [009](009-native-tests-in-ci.md)). How each manifest is written:
+`e2e/conformance/README.md`.
 
 ### REQ-SCR-009 [verified] A journey is written once
 

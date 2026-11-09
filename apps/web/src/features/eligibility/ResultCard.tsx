@@ -95,12 +95,17 @@ export function ResultCard({
                 as="span"
                 data-testid={ScreenIds.eligibility.verdictSource}
               >
-                {t(
-                  updating
-                    ? LOADING_POLICY.pendingMessageKey
-                    : verdictSourceMessageKey(result.source),
-                  locale
-                )}
+                <TranText variant="caption" as="span" className="sr-only">
+                  {`${t('eligibility.result.source', locale)}: `}
+                </TranText>
+                <TranText variant="caption" as="span">
+                  {t(
+                    updating
+                      ? LOADING_POLICY.pendingMessageKey
+                      : verdictSourceMessageKey(result.source),
+                    locale
+                  )}
+                </TranText>
               </TranText>
             </li>
           </ul>

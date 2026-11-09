@@ -8,6 +8,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 
 /**
  * Single-choice segmented control. Android keeps Material3's chips — they already carry the
@@ -26,10 +28,13 @@ fun <T> TranSegmented(
     // screen contract `select` step finds it (ADR-0038). `null` leaves them unnamed.
     testTag: String? = null,
     optionName: (T) -> String = { it.toString() },
+    // Names the group for TalkBack ("Theme"), as the screen contract labels it (REQ-SCR-008).
+    accessibilityLabel: String? = null,
     label: @Composable (T) -> String,
 ) {
+    val named = if (accessibilityLabel == null) modifier else modifier.semantics { contentDescription = accessibilityLabel }
     FlowRow(
-        modifier = if (testTag == null) modifier else modifier.testTag(testTag),
+        modifier = if (testTag == null) named else named.testTag(testTag),
         horizontalArrangement = Arrangement.spacedBy(TranGap.SM.value),
     ) {
         options.forEach { option ->

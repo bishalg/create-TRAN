@@ -9,7 +9,6 @@ export type SupportedLocale = (typeof TRAN_LOCALES)[number];
 
 /** Every key in `locales/<locale>/*.json`: `<module>.<group>.<name>`. */
 export type TranStringKey =
-  | 'auditor.backToVoter'
   | 'auditor.rules.title'
   | 'auditor.subtitle'
   | 'auditor.table.countryCode'

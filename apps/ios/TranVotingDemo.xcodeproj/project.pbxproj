@@ -31,6 +31,7 @@
 		3D743A56CCDB211CAD3C1BB0 /* screens.json in Resources */ = {isa = PBXBuildFile; fileRef = A11501118A23965A69E81723 /* screens.json */; };
 		3F5C9C2AC33FF4D365E265DE /* TranApiStubTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECA1515D07C3D2B19C4269EC /* TranApiStubTests.swift */; };
 		4064B4A0E18C8AA31EE28915 /* tran_uniffi.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2AF051840CF2BCD45F86C7 /* tran_uniffi.swift */; };
+		410258624B8447C3BE0752FD /* ConformanceManifest.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA06632C9F25E413CBC9A505 /* ConformanceManifest.swift */; };
 		4427B80D0AC89715A731587D /* ContractScreenDriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E7F38C960C8BE5BD7556E5 /* ContractScreenDriver.swift */; };
 		4BB5334E4B2D08172421A102 /* TranReferenceDate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B83934E01F2D9C881B1710ED /* TranReferenceDate.swift */; };
 		4CB4C37D325D68249243B486 /* TranDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2004B2EEC44B7971ED61E9C /* TranDialog.swift */; };
@@ -151,6 +152,7 @@
 		B5575124847CD87F66535AE5 /* Eligibility.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Eligibility.xcstrings; sourceTree = "<group>"; };
 		B83934E01F2D9C881B1710ED /* TranReferenceDate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranReferenceDate.swift; sourceTree = "<group>"; };
 		B85C1ED9728B5EF5BE132CA8 /* VotingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VotingUITests.swift; sourceTree = "<group>"; };
+		BA06632C9F25E413CBC9A505 /* ConformanceManifest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConformanceManifest.swift; sourceTree = "<group>"; };
 		BBBC0CB4657353B14FD31B78 /* RecoveryProbeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecoveryProbeTests.swift; sourceTree = "<group>"; };
 		BCCE0CE297BF291A83E2AF8B /* ServerConfirmation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerConfirmation.swift; sourceTree = "<group>"; };
 		C034730D3B05B84233E15C80 /* TranReporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranReporting.swift; sourceTree = "<group>"; };
@@ -311,6 +313,7 @@
 		D697C794E5EB7B1EE8F31FAF /* TranVotingDemoUITests */ = {
 			isa = PBXGroup;
 			children = (
+				BA06632C9F25E413CBC9A505 /* ConformanceManifest.swift */,
 				D0E7F38C960C8BE5BD7556E5 /* ContractScreenDriver.swift */,
 				79E54F32F5773040253B0D8B /* ScreenCatalogue.swift */,
 				5E4659EA6E104B7DE5BD1147 /* ScreenContractUITests.swift */,
@@ -563,6 +566,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B1D21E554DD10C015C1A16F5 /* BrandTokens.swift in Sources */,
+				410258624B8447C3BE0752FD /* ConformanceManifest.swift in Sources */,
 				4427B80D0AC89715A731587D /* ContractScreenDriver.swift in Sources */,
 				36B4AC9E900464C2B59DA82B /* ScreenCatalogue.swift in Sources */,
 				83A2DDE9C3EB6D13494714AB /* ScreenContract.swift in Sources */,

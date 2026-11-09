@@ -579,3 +579,80 @@ fn constructors_default_the_bound_and_keep_their_fields() {
     );
     assert_eq!((element.id, element.label), ("a", "common.brand"));
 }
+
+// Verifies: REQ-SCR-008 — an element offered on fewer platforms names at least one, once each,
+// and every platform still offers every screen something.
+#[test]
+fn platform_scoped_elements_name_their_platforms() {
+    for element in unique_elements() {
+        let mut seen = Vec::new();
+        for platform in element.platforms {
+            assert!(
+                !seen.contains(platform),
+                "`{}` lists {platform:?} twice",
+                element.id
+            );
+            seen.push(*platform);
+        }
+        assert!(!seen.is_empty(), "`{}` is offered nowhere", element.id);
+    }
+    for screen in &SCREENS {
+        for platform in Platform::ALL {
+            assert!(
+                screen.elements.iter().any(|e| e.is_on(platform)),
+                "`{}` offers {platform:?} nothing",
+                screen.id
+            );
+        }
+    }
+    let scoped = super::catalogue::element(
+        "a",
+        ElementKind::Button,
+        "common.brand",
+        TouchClass::Control,
+        Presence::Always,
+    )
+    .only(&[Platform::Web]);
+    assert!(scoped.is_on(Platform::Web) && !scoped.is_on(Platform::Ios));
+}
+
+// Verifies: REQ-SCR-008 — an unreached state is one some element depends on, and no scenario
+// expects an element of it: once one does, the entry must go.
+#[test]
+fn unreached_states_are_real_and_still_unreached() {
+    let states: BTreeSet<&str> = unique_elements()
+        .iter()
+        .filter_map(|element| match element.presence {
+            Presence::When(state) => Some(state),
+            Presence::Always => None,
+        })
+        .collect();
+    for unreached in &UNREACHED_STATES {
+        assert!(
+            states.contains(unreached.state),
+            "`{}` is no element's state",
+            unreached.state
+        );
+        assert!(!unreached.reason.is_empty());
+        let in_state: Vec<&str> = unique_elements()
+            .iter()
+            .filter(|element| element.presence == Presence::When(unreached.state))
+            .map(|element| element.id)
+            .collect();
+        for scenario in all_scenarios() {
+            for then in scenario.then {
+                let expects = match then {
+                    Then::Missing(_) => false,
+                    Then::Count { n, .. } => *n > 0,
+                    _ => true,
+                };
+                assert!(
+                    !(expects && in_state.contains(&then.element())),
+                    "\"{}\" reaches `{}`: remove it from UNREACHED_STATES",
+                    scenario.name,
+                    unreached.state
+                );
+            }
+        }
+    }
+}

@@ -1,4 +1,4 @@
-// Verifies: REQ-SCR-006 REQ-SCR-007
+// Verifies: REQ-SCR-006 REQ-SCR-007 REQ-SCR-008
 // Verifies: REQ-A11Y-003 REQ-A11Y-007 REQ-ERR-006 REQ-ERR-007 REQ-LOAD-003 REQ-LOAD-005 REQ-NAT-001 REQ-NAT-002
 // Verifies: REQ-NAT-003 REQ-NAT-004 REQ-NAT-007 REQ-NAT-011 REQ-NAT-013 REQ-NAV-001 REQ-NAV-002 REQ-NAV-003
 // Verifies: REQ-NAV-004 REQ-NAV-005 REQ-WEB-001 REQ-WEB-002 REQ-WEB-004 REQ-WEB-014
@@ -9,6 +9,8 @@ import XCTest
 /// XCUITest action or assertion over contract ids; copy is resolved through the app's String
 /// Catalogs and sizes come from `ScreenContract.Minimums`. The `Verifies` header above lists what
 /// the scenarios cite; `packages/core-ts/tests/screen-ids.test.ts` keeps it equal to the catalogue.
+/// After the given state, every `When` and the last `Then`, the app's accessibility tree is
+/// recorded for `pnpm screens:check` (`ConformanceManifest`, REQ-SCR-008).
 final class ScreenContractUITests: XCTestCase {
     /// Test method name → its screen and scenario.
     private static var registry: [String: (screen: ContractScreen, scenario: ContractScenario)] = [:]
@@ -90,6 +92,11 @@ final class ScreenContractUITests: XCTestCase {
         for step in scenario.given { given(step) }
         for step in scenario.when { when(step) }
         for step in scenario.then { then(step) }
+        record("then")
+    }
+
+    private func record(_ phase: String) {
+        ConformanceManifest.record(app, scenario: scenario.name, phase: phase, locale: locale)
     }
 
     private var driver: ContractScreenDriver {
@@ -125,6 +132,7 @@ final class ScreenContractUITests: XCTestCase {
             app.launchArguments += ["-UIPreferredContentSizeCategoryName", ScreenContract.Minimums.largestContentSizeCategory]
         }
         app.launch()
+        record("given")
     }
 
     // MARK: - When
@@ -166,6 +174,7 @@ final class ScreenContractUITests: XCTestCase {
         default:
             XCTFail("\(driver.place(step, id)): unknown when")
         }
+        record(step.title)
     }
 
     // MARK: - Then

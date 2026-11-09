@@ -21,6 +21,8 @@ export type ElementId =
   | 'splash-progress'
   | 'voter-branch-button'
   | 'auditor-branch-button'
+  | 'skip-link'
+  | 'language-picker'
   | 'sign-out-button'
   | 'role-badge'
   | 'age-field'
@@ -35,7 +37,8 @@ export type ElementId =
   | 'toast'
   | 'toast-dismiss'
   | 'dialog-confirm'
-  | 'dialog-cancel';
+  | 'dialog-cancel'
+  | 'mode-switch';
 
 /** What an element is, never how it looks (REQ-SCR-003). */
 export type ElementKind =
@@ -109,6 +112,8 @@ export interface ScreenElement {
   readonly label: TranStringKey;
   readonly touch: TouchClass;
   readonly presence: Presence;
+  /** Where the element is offered (REQ-SCR-008). */
+  readonly platforms: readonly ('web' | 'ios' | 'android')[];
 }
 
 export interface Screen {
@@ -141,7 +146,12 @@ export const SCREENS: readonly Screen[] = [
         "kind": "progress",
         "label": "common.loading",
         "touch": "none",
-        "presence": "always"
+        "presence": "always",
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
       }
     ],
     "scenarios": [
@@ -179,14 +189,44 @@ export const SCREENS: readonly Screen[] = [
         "kind": "button",
         "label": "auth.continueAsVoter",
         "touch": "primary",
-        "presence": "always"
+        "presence": "always",
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
       },
       {
         "id": "auditor-branch-button",
         "kind": "button",
         "label": "auth.continueAsAuditor",
         "touch": "control",
-        "presence": "always"
+        "presence": "always",
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "id": "skip-link",
+        "kind": "button",
+        "label": "shell.skipToContent",
+        "touch": "control",
+        "presence": "always",
+        "platforms": [
+          "web"
+        ]
+      },
+      {
+        "id": "language-picker",
+        "kind": "segmented",
+        "label": "shell.language.label",
+        "touch": "control",
+        "presence": "always",
+        "platforms": [
+          "web"
+        ]
       }
     ],
     "scenarios": [
@@ -273,51 +313,86 @@ export const SCREENS: readonly Screen[] = [
         "kind": "button",
         "label": "common.signOut",
         "touch": "control",
-        "presence": "always"
+        "presence": "always",
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
       },
       {
         "id": "role-badge",
         "kind": "text",
         "label": "common.role.label",
         "touch": "none",
-        "presence": "always"
+        "presence": "always",
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
       },
       {
         "id": "age-field",
         "kind": "field",
         "label": "eligibility.age.label",
         "touch": "control",
-        "presence": "always"
+        "presence": "always",
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
       },
       {
         "id": "country-field",
         "kind": "field",
         "label": "eligibility.country.label",
         "touch": "control",
-        "presence": "always"
+        "presence": "always",
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
       },
       {
         "id": "check-button",
         "kind": "button",
         "label": "eligibility.checkOffline",
         "touch": "primary",
-        "presence": "always"
+        "presence": "always",
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
       },
       {
         "id": "offline-result",
         "kind": "live_region",
         "label": "eligibility.result.label",
         "touch": "none",
-        "presence": "always"
+        "presence": "always",
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
       },
       {
         "id": "validation-message",
-        "kind": "text",
+        "kind": "live_region",
         "label": "eligibility.validation.label",
         "touch": "none",
         "presence": {
           "when": "validation_failed"
-        }
+        },
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
       },
       {
         "id": "verdict-source",
@@ -326,21 +401,36 @@ export const SCREENS: readonly Screen[] = [
         "touch": "none",
         "presence": {
           "when": "verdict_shown"
-        }
+        },
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
       },
       {
         "id": "theme-picker",
         "kind": "segmented",
         "label": "shell.theme.label",
         "touch": "control",
-        "presence": "always"
+        "presence": "always",
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
       },
       {
         "id": "api-status",
         "kind": "live_region",
         "label": "shell.status.label",
         "touch": "none",
-        "presence": "always"
+        "presence": "always",
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
       },
       {
         "id": "offline-notice",
@@ -349,7 +439,12 @@ export const SCREENS: readonly Screen[] = [
         "touch": "none",
         "presence": {
           "when": "api_unreachable"
-        }
+        },
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
       },
       {
         "id": "toast",
@@ -358,7 +453,12 @@ export const SCREENS: readonly Screen[] = [
         "touch": "none",
         "presence": {
           "when": "toast_shown"
-        }
+        },
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
       },
       {
         "id": "toast-dismiss",
@@ -367,7 +467,12 @@ export const SCREENS: readonly Screen[] = [
         "touch": "control",
         "presence": {
           "when": "toast_shown"
-        }
+        },
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
       },
       {
         "id": "dialog-confirm",
@@ -376,7 +481,12 @@ export const SCREENS: readonly Screen[] = [
         "touch": "control",
         "presence": {
           "when": "sign_out_confirm"
-        }
+        },
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
       },
       {
         "id": "dialog-cancel",
@@ -385,7 +495,42 @@ export const SCREENS: readonly Screen[] = [
         "touch": "control",
         "presence": {
           "when": "sign_out_confirm"
-        }
+        },
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "id": "skip-link",
+        "kind": "button",
+        "label": "shell.skipToContent",
+        "touch": "control",
+        "presence": "always",
+        "platforms": [
+          "web"
+        ]
+      },
+      {
+        "id": "language-picker",
+        "kind": "segmented",
+        "label": "shell.language.label",
+        "touch": "control",
+        "presence": "always",
+        "platforms": [
+          "web"
+        ]
+      },
+      {
+        "id": "mode-switch",
+        "kind": "segmented",
+        "label": "eligibility.mode.legend",
+        "touch": "control",
+        "presence": "always",
+        "platforms": [
+          "web"
+        ]
       }
     ],
     "scenarios": [
@@ -1071,14 +1216,24 @@ export const SCREENS: readonly Screen[] = [
         "kind": "button",
         "label": "common.signOut",
         "touch": "control",
-        "presence": "always"
+        "presence": "always",
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
       },
       {
         "id": "role-badge",
         "kind": "text",
         "label": "common.role.label",
         "touch": "none",
-        "presence": "always"
+        "presence": "always",
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
       },
       {
         "id": "dialog-confirm",
@@ -1087,7 +1242,12 @@ export const SCREENS: readonly Screen[] = [
         "touch": "control",
         "presence": {
           "when": "sign_out_confirm"
-        }
+        },
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
       },
       {
         "id": "dialog-cancel",
@@ -1096,7 +1256,32 @@ export const SCREENS: readonly Screen[] = [
         "touch": "control",
         "presence": {
           "when": "sign_out_confirm"
-        }
+        },
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "id": "skip-link",
+        "kind": "button",
+        "label": "shell.skipToContent",
+        "touch": "control",
+        "presence": "always",
+        "platforms": [
+          "web"
+        ]
+      },
+      {
+        "id": "language-picker",
+        "kind": "segmented",
+        "label": "shell.language.label",
+        "touch": "control",
+        "presence": "always",
+        "platforms": [
+          "web"
+        ]
       }
     ],
     "scenarios": [
@@ -1174,6 +1359,8 @@ export const ScreenIds = {
   authWelcome: {
     voterBranchButton: 'voter-branch-button',
     auditorBranchButton: 'auditor-branch-button',
+    skipLink: 'skip-link',
+    languagePicker: 'language-picker',
   },
   eligibility: {
     signOutButton: 'sign-out-button',
@@ -1191,11 +1378,16 @@ export const ScreenIds = {
     toastDismiss: 'toast-dismiss',
     dialogConfirm: 'dialog-confirm',
     dialogCancel: 'dialog-cancel',
+    skipLink: 'skip-link',
+    languagePicker: 'language-picker',
+    modeSwitch: 'mode-switch',
   },
   auditor: {
     signOutButton: 'sign-out-button',
     roleBadge: 'role-badge',
     dialogConfirm: 'dialog-confirm',
     dialogCancel: 'dialog-cancel',
+    skipLink: 'skip-link',
+    languagePicker: 'language-picker',
   },
 } as const;

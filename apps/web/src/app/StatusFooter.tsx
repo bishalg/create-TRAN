@@ -13,21 +13,29 @@ export interface StatusFooterProps {
   state: ApiState;
   version?: string;
   locale: SupportedLocale;
+  /**
+   * Shows the status pill. The footer landmark is on every page (REQ-A11Y-010); the screen
+   * contract offers the API status on the voter dashboard only.
+   */
+  showStatus?: boolean;
 }
 
-export function StatusFooter({ state, version, locale }: StatusFooterProps) {
+export function StatusFooter({ state, version, locale, showStatus = true }: StatusFooterProps) {
   return (
     <footer className="status" data-state={state}>
-      <TranText
-        variant="caption"
-        as="span"
-        role="status"
-        className="status-pill"
-        data-testid={ScreenIds.eligibility.apiStatus}
-      >
-        <div className="dot" aria-hidden="true" /> {t(LABEL[state], locale)}
-        {state === 'online' && version ? ` · v${version}` : ''}
-      </TranText>
+      {showStatus && (
+        <TranText
+          variant="caption"
+          as="span"
+          role="status"
+          className="status-pill"
+          aria-label={t('shell.status.label', locale)}
+          data-testid={ScreenIds.eligibility.apiStatus}
+        >
+          <div className="dot" aria-hidden="true" /> {t(LABEL[state], locale)}
+          {state === 'online' && version ? ` · v${version}` : ''}
+        </TranText>
+      )}
     </footer>
   );
 }

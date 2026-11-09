@@ -162,17 +162,20 @@ describe('screen contract ids', () => {
     ).toEqual(SCREENS.flatMap((screen) => screen.elements.map((element) => element.id)).sort());
   });
 
-  it('references every always-present element on every platform', () => {
-    const always = [
-      ...new Set(
-        SCREENS.flatMap((screen) =>
-          screen.elements.filter((element) => element.presence === 'always').map((e) => e.id)
-        )
-      ),
-    ];
+  it('references every always-present element on every platform that offers it', () => {
     const gap = (platform: Platform, id: string): boolean =>
       KNOWN_GAPS.some((entry) => entry.platform === platform && entry.id === id);
     for (const platform of ['web', 'ios', 'android'] as const) {
+      // An element another platform offers alone (the web's skip link) is not this one's to expose.
+      const always = [
+        ...new Set(
+          SCREENS.flatMap((screen) =>
+            screen.elements
+              .filter((e) => e.presence === 'always' && e.platforms.includes(platform))
+              .map((e) => e.id)
+          )
+        ),
+      ];
       const { ids } = referencedIds(APP_SOURCES[platform]);
       const missing = always.filter((id) => !ids.has(id) && !gap(platform, id));
       expect(missing, `${platform} never exposes these always-present elements`).toEqual([]);
@@ -193,7 +196,7 @@ describe('screen contract ids', () => {
           line[1]!.trim().split(/\s+/)
         )
       );
-      const own = new Set(['REQ-SCR-006', 'REQ-SCR-007']);
+      const own = new Set(['REQ-SCR-006', 'REQ-SCR-007', 'REQ-SCR-008']);
       expect([...cited].filter((id) => !own.has(id)).sort(), file).toEqual([...tagged].sort());
       for (const id of own) expect(cited.has(id), `${file} cites ${id}`).toBe(true);
     }

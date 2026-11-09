@@ -62,9 +62,11 @@ struct ContractScreenDriver {
         app.buttons["\(id)-\(option)"]
     }
 
-    /// What the element reads: a text's label, a field's value.
+    /// What the element reads: a field's value, a labelled text's value (`TranText(label:)` names
+    /// it "Result" and reads the verdict as its value), else a text's label.
     static func text(of element: XCUIElement) -> String {
         if element.elementType == .textField, let value = element.value as? String { return value }
+        if let value = element.value as? String, !value.isEmpty { return value }
         return element.label
     }
 

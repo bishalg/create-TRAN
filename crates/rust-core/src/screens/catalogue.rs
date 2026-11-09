@@ -3,7 +3,9 @@
 //! An element shared by two screens (sign out, the confirmation dialog's buttons, the role badge) is
 //! declared once below and listed on each screen, so one id always means one element.
 
-use super::model::{Element, ElementKind as Kind, Presence, Screen, TouchClass as Touch};
+use super::model::{
+    Element, ElementKind as Kind, Platform, Presence, Screen, TouchClass as Touch, UnreachedState,
+};
 use super::scenarios;
 use crate::navigation::AppDestination;
 
@@ -20,6 +22,7 @@ pub(super) const fn element(
         label,
         touch,
         presence,
+        platforms: &Platform::ALL,
     }
 }
 
@@ -36,6 +39,48 @@ pub mod state {
     /// The last check was refused because an input did not parse (REQ-WEB-002, REQ-NAT-002).
     pub const VALIDATION_FAILED: &str = "validation_failed";
 }
+
+/// States no scenario reaches yet. `pnpm screens:check` lists them instead of failing "never
+/// observed"; `crates/rust-core/src/screens/tests.rs` fails once a scenario expects one, so the
+/// entry goes when the gap closes (REQ-SCR-008).
+pub const UNREACHED_STATES: [UnreachedState; 1] = [UnreachedState {
+    state: state::TOAST_SHOWN,
+    reason: "a toast acknowledges a server answer: the web's device check never calls the server \
+             (REQ-WEB-001) and the verb set has no given for its server mode, and the native \
+             suites run without an API",
+}];
+
+/// The web's own: WCAG 2.4.1 asks a web page for a way past repeated blocks (REQ-A11Y-010); an
+/// app screen has none to skip, so iOS and Android do not offer it.
+pub const SKIP_LINK: Element = element(
+    "skip-link",
+    Kind::Button,
+    "shell.skipToContent",
+    Touch::Control,
+    Presence::Always,
+)
+.only(&[Platform::Web]);
+/// The web's own: a browser tab chooses its language in the page (REQ-I18N-006, REQ-A11Y-006);
+/// iOS and Android follow the system's per-app language setting instead.
+pub const LANGUAGE_PICKER: Element = element(
+    "language-picker",
+    Kind::Segmented,
+    "shell.language.label",
+    Touch::Control,
+    Presence::Always,
+)
+.only(&[Platform::Web]);
+/// The web's own: it runs the check on the device or by the server, as a person chooses
+/// (REQ-WEB-001). The native apps check on the device and confirm with the server in the
+/// background (REQ-NAT-011), so there is nothing to choose.
+pub const MODE_SWITCH: Element = element(
+    "mode-switch",
+    Kind::Segmented,
+    "eligibility.mode.legend",
+    Touch::Control,
+    Presence::Always,
+)
+.only(&[Platform::Web]);
 
 pub const SPLASH_PROGRESS: Element = element(
     "splash-progress",
@@ -101,10 +146,11 @@ pub const OFFLINE_RESULT: Element = element(
     Presence::Always,
 );
 /// Why the last check was refused. Separate from `offline-result`: the web announces errors through
-/// `role="alert"`, never through the result's status region (REQ-A11Y-003).
+/// `role="alert"`, never through the result's status region (REQ-A11Y-003). A live region, not a
+/// text: every platform announces it when it appears (found by `pnpm screens:check`, REQ-SCR-008).
 pub const VALIDATION_MESSAGE: Element = element(
     "validation-message",
-    Kind::Text,
+    Kind::LiveRegion,
     "eligibility.validation.label",
     Touch::None,
     Presence::When(state::VALIDATION_FAILED),
@@ -182,7 +228,12 @@ pub const SCREENS: [Screen; 4] = [
         id: "auth_welcome",
         destination: AppDestination::AuthWelcome,
         intent: "screen.authWelcome.intent",
-        elements: &[VOTER_BRANCH_BUTTON, AUDITOR_BRANCH_BUTTON],
+        elements: &[
+            VOTER_BRANCH_BUTTON,
+            AUDITOR_BRANCH_BUTTON,
+            SKIP_LINK,
+            LANGUAGE_PICKER,
+        ],
         scenarios: scenarios::AUTH_WELCOME,
     },
     Screen {
@@ -205,6 +256,9 @@ pub const SCREENS: [Screen; 4] = [
             TOAST_DISMISS,
             DIALOG_CONFIRM,
             DIALOG_CANCEL,
+            SKIP_LINK,
+            LANGUAGE_PICKER,
+            MODE_SWITCH,
         ],
         scenarios: scenarios::ELIGIBILITY,
     },
@@ -212,7 +266,14 @@ pub const SCREENS: [Screen; 4] = [
         id: "auditor",
         destination: AppDestination::AuditorDashboard,
         intent: "screen.auditor.intent",
-        elements: &[SIGN_OUT_BUTTON, ROLE_BADGE, DIALOG_CONFIRM, DIALOG_CANCEL],
+        elements: &[
+            SIGN_OUT_BUTTON,
+            ROLE_BADGE,
+            DIALOG_CONFIRM,
+            DIALOG_CANCEL,
+            SKIP_LINK,
+            LANGUAGE_PICKER,
+        ],
         scenarios: scenarios::AUDITOR,
     },
 ];

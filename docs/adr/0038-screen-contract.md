@@ -1,6 +1,6 @@
 # ADR-0038 The screen is a declared contract in Rust, and the platforms are checked against it
 
-**Status:** proposed · **Date:** 2026-11-09 · **Spec:** [021](../specs/021-screen-contract.md)
+**Status:** accepted · **Date:** 2026-11-09 · **Accepted:** 2026-11-10 · **Spec:** [021](../specs/021-screen-contract.md)
 
 ## Context
 
@@ -43,6 +43,25 @@ and one test, even when the pixels are not.
    checker diffs it against the contract (presence, role, accessible name, touch minimum, no undeclared interactive
    elements). Exact uses Chrome as its layout oracle; here the oracle is the declaration, because layout is allowed to
    differ.
+
+### How the oracle reads a platform (added on acceptance, REQ-SCR-008)
+
+- **Every platform is read in its own vocabulary.** The manifests keep the platform's roles (ARIA, `XCUIElement`
+  types, Compose roles); the checker holds one kind-to-role table per platform. The contract stays semantic.
+- **A deliberate difference is declared, not tolerated.** An element only one platform offers carries the platforms
+  that offer it (`Element::only`) and the reason beside it; the checker then neither requires it elsewhere nor accepts
+  it there. The first real run found the web's skip link, language picker and check-mode switch, all required by web
+  specs, and declared them; it found the web's auditor "Switch to Citizen Voter" button and its theme picker and API
+  status outside the voter dashboard, which nothing required, and removed them from the web.
+- **Content is named by its label.** A text or live region whose content changes (the verdict, the API status, the
+  role) is announced as its label and then its content: `aria-label` or a screen-reader-only prefix on the web,
+  `accessibilityLabel` plus `accessibilityValue` on iOS, a content description of label and text on Android.
+- **An unreachable state is a listed gap.** A conditional element whose state no scenario reaches would fail "never
+  observed" on every platform. When the closed verb set cannot reach it (the toast follows a server answer, and the
+  web's device check never asks the server), the state is listed with its reason in `UNREACHED_STATES`, as
+  `KNOWN_GAPS` lists ids a platform lacks; a test fails once a scenario reaches it, so the entry goes.
+- **Platform-owned controls are an allowlist in the checker,** each with its reason: today only the iOS keyboard and
+  a navigation bar back button.
 
 ## Alternatives considered
 

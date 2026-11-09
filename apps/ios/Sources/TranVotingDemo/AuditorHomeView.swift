@@ -16,7 +16,7 @@ struct AuditorHomeView: View {
                         TranInline(gap: .md) {
                             TranStack(gap: .xs, alignment: .leading) {
                                 // The title names the role, so it is the role badge here.
-                                TranText(L10n.Common.roleElectionAuditor, variant: .title)
+                                TranText(L10n.Common.roleElectionAuditor, variant: .title, label: L10n.Common.roleLabel)
                                     .accessibilityIdentifier(ScreenContract.Auditor.roleBadge)
                                 TranText(L10n.Auditor.subtitle, variant: .muted)
                             }

@@ -1,16 +1,14 @@
 import { SUPPORTED_COUNTRIES, type SupportedLocale, t } from '@tran/core';
 import { TranBox } from '../../shared/ui/TranBox.js';
-import { TranButton } from '../../shared/ui/TranButton.js';
-import { TranStack } from '../../shared/ui/TranStack.js';
 import { TranTable, TranTd, TranTh } from '../../shared/ui/TranTable.js';
 import { TranText } from '../../shared/ui/TranText.js';
 
 export interface AuditorPageProps {
   locale: SupportedLocale;
-  onBackToVoter: () => void;
 }
 
-export function AuditorPage({ locale, onBackToVoter }: AuditorPageProps) {
+/** The auditor's screen offers what the contract declares: changing role goes through sign-out. */
+export function AuditorPage({ locale }: AuditorPageProps) {
   return (
     <div className="auditor-page card">
       <TranText variant="title" as="h2">
@@ -37,11 +35,6 @@ export function AuditorPage({ locale, onBackToVoter }: AuditorPageProps) {
           </tbody>
         </TranTable>
       </TranBox>
-      <TranStack gap="lg">
-        <TranButton type="button" onClick={onBackToVoter}>
-          {t('auditor.backToVoter', locale)}
-        </TranButton>
-      </TranStack>
     </div>
   );
 }

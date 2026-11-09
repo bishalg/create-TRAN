@@ -29,6 +29,13 @@ describe('Header', () => {
     expect(onThemeChange).toHaveBeenCalledWith('sepia');
   });
 
+  // Verifies: REQ-SCR-008 — the contract offers the theme picker on the voter dashboard only.
+  it('offers no theme picker when the screen has none', () => {
+    render(<Header locale="en" onLocaleChange={() => {}} theme="light" />);
+    expect(screen.queryByRole('group', { name: 'Theme' })).toBeNull();
+    expect(screen.getByRole('group', { name: 'Language' })).toBeVisible();
+  });
+
   it('renders one choice per generated theme, in registry order', () => {
     render(<Header locale="en" onLocaleChange={() => {}} theme="light" onThemeChange={() => {}} />);
     const themes = screen.getByRole('group', { name: 'Theme' });

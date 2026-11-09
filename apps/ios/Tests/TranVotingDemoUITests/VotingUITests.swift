@@ -47,9 +47,9 @@ final class VotingUITests: XCTestCase {
         launch(["-TranApiStub", "hang"])
         check(age: "20", country: "NP")
         let verdict = copy("eligibility.result.reasonMeets")
-        waitForLabel(app.staticTexts[ScreenContract.Eligibility.verdictSource], copy("eligibility.result.updating"))
+        waitForText(app.staticTexts[ScreenContract.Eligibility.verdictSource], copy("eligibility.result.updating"))
         XCTAssertEqual(
-            app.staticTexts[ScreenContract.Eligibility.offlineResult].label,
+            app.staticTexts[ScreenContract.Eligibility.offlineResult].value as? String,
             String(format: verdict, "20", "18", "NP")
         )
         XCTAssertFalse(app.descendants(matching: .any)[ScreenContract.Eligibility.toast].exists)
@@ -61,18 +61,19 @@ final class VotingUITests: XCTestCase {
     func testUnreachableApiLabelsTheVerdictAsCheckedOnTheDevice() {
         launch(["-TranApiBaseUrl", "http://127.0.0.1:1"])
         check(age: "20", country: "NP")
-        waitForLabel(
+        waitForText(
             app.staticTexts[ScreenContract.Eligibility.verdictSource],
             copy("eligibility.result.sourceFallback")
         )
     }
 
-    private func waitForLabel(_ element: XCUIElement, _ label: String, timeout: TimeInterval = 10) {
+    /// A labelled text (`TranText(label:)`) reads its content as its accessibility value.
+    private func waitForText(_ element: XCUIElement, _ text: String, timeout: TimeInterval = 10) {
         let expectation = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "label == %@", label), object: element)
+            predicate: NSPredicate(format: "value == %@", text), object: element)
         XCTAssertEqual(
             XCTWaiter().wait(for: [expectation], timeout: timeout), .completed,
-            "expected \"\(label)\", got \"\(element.exists ? element.label : "nothing")\""
+            "expected \"\(text)\", got \"\(element.exists ? String(describing: element.value) : "nothing")\""
         )
     }
 }
