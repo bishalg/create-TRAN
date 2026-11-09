@@ -54,6 +54,7 @@ ID that no spec defines.
 | [017 Release](./017-release.md)                               | One version, conventional commits, changelog, tagged releases    | `REQ-REL`             |
 | [018 Loading and offline](./018-loading-and-offline.md)       | Delayed indicators, kept verdicts, cancellation, device fallback | `REQ-LOAD`            |
 | [020 Issue-driven agents](./020-issue-driven-agents.md)       | Issue intake, quality gate, triage labels, plan and approval     | `REQ-ISS`             |
+| [021 Screen contract](./021-screen-contract.md)               | Declared screens, elements, scenarios, conformance oracle        | `REQ-SCR`             |
 
 ## Template
 
