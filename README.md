@@ -92,7 +92,7 @@ Full endpoint reference: [docs/API.md](./docs/API.md).
 1. **Install** — `cp .env.example .env`, then `pnpm install`.
 2. **API** — `pnpm dev:api` → health at `http://127.0.0.1:3001/api/health`.
 3. **Web** — `pnpm dev:web` → eligibility demo (feature-based layout under `apps/web/src/features/eligibility`).
-4. **On this device** — **On this device**, age `20`, country `NP`, **Check eligibility** (`evaluateVoteEligibilityOffline`).
+4. **On this device** — **On this device**, age `20`, country `NP`, **Check offline** (`evaluateVoteEligibilityOffline`).
 5. **Ask the server** — **Ask the server** (`checkVoteEligibility`; country sent as `X-Debug-Country`).
 6. **Theme / locale** — header controls; colours from `theme.css` / tokens.
 7. **Native (optional)** — `pnpm tokens:sync` then `pnpm uniffi:generate` after FFI changes; open iOS Xcode project or build Android APK (`pnpm ios:build`, `pnpm android:build`). Both native apps confirm verdicts against `pnpm dev:api` — the iOS simulator defaults to `http://127.0.0.1:3001`, the Android emulator to `http://10.0.2.2:3001`; override with `TRAN_API_BASE_URL` (iOS build setting / Android Gradle property). Cleartext is debug-only and `X-Debug-Country` is never sent by release builds (REQ-NAT-011).

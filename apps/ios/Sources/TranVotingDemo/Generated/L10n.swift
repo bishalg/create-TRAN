@@ -81,6 +81,7 @@ enum L10n {
         static var submit: String { String(localized: "eligibility.submit", table: "Eligibility") }
         static var submitting: String { String(localized: "eligibility.submitting", table: "Eligibility") }
         static var subtitle: String { String(localized: "eligibility.subtitle", table: "Eligibility") }
+        static var validationLabel: String { String(localized: "eligibility.validation.label", table: "Eligibility") }
         static var verdictEligible: String { String(localized: "eligibility.verdict.eligible", table: "Eligibility") }
         static var verdictIneligible: String { String(localized: "eligibility.verdict.ineligible", table: "Eligibility") }
     }

@@ -1,4 +1,4 @@
-// Verifies: REQ-WEB-005, REQ-I18N-007, REQ-LOAD-003, REQ-LOAD-005
+// Verifies: REQ-WEB-005, REQ-I18N-007, REQ-LOAD-002, REQ-LOAD-003, REQ-LOAD-005, REQ-A11Y-003
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { type EligibilityView, ResultCard } from './ResultCard.js';
@@ -71,5 +71,32 @@ describe('ResultCard', () => {
 
     expect(screen.queryByText('Checking with the server…')).toBeNull();
     expect(container.querySelector('article')).not.toHaveAttribute('data-updating');
+  });
+
+  it('[REQ-A11Y-003] the live region holds the reason sentence alone', () => {
+    render(<ResultCard result={view} locale="en" />);
+
+    expect(screen.getByRole('status', { name: 'Result' })).toHaveTextContent(
+      /^Age 20 meets the minimum voting age of 18 in NP\.$/
+    );
+  });
+
+  it('[REQ-LOAD-002] with no result the card draws only its live region: empty, or the pending copy', () => {
+    const { container, rerender } = render(<ResultCard result={null} locale="en" />);
+    const region = screen.getByRole('status', { name: 'Result' });
+
+    expect(region).toBeEmptyDOMElement();
+    expect(container.querySelector('article')).toHaveAttribute('data-empty', 'true');
+    expect(screen.queryByRole('heading')).toBeNull();
+
+    rerender(<ResultCard result={null} locale="en" updating />);
+    expect(region).toHaveTextContent('Checking with the server…');
+    expect(region).toHaveAttribute('aria-busy', 'true');
+    expect(container.querySelector('article')).not.toHaveAttribute('data-updating');
+
+    rerender(<ResultCard result={view} locale="en" />);
+    // The same node: a screen reader announces the change.
+    expect(screen.getByRole('status', { name: 'Result' })).toBe(region);
+    expect(container.querySelector('article')).not.toHaveAttribute('data-empty');
   });
 });

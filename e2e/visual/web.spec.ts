@@ -3,7 +3,7 @@
  * Every registry theme × every locale, plus the states a user passes through. The matrix comes
  * from `@tran/core`, so a new theme or language is captured without editing this file.
  */
-import { TRAN_LOCALES, themeNames } from '@tran/core';
+import { ScreenIds, TRAN_LOCALES, themeNames } from '@tran/core';
 import { expect, test, type Page } from '@playwright/test';
 
 /** The production build, in `theme`, with the startup health check settled. */
@@ -39,7 +39,7 @@ for (const theme of themeNames) {
     await page.getByRole('radio', { name: /On this device/ }).check();
     await page.getByLabel('Your age').fill('20');
     await page.getByLabel('Country code').fill('NP');
-    await page.getByRole('button', { name: 'Check eligibility' }).click();
+    await page.getByTestId(ScreenIds.eligibility.checkButton).click();
     await expect(page.getByText('Age 20 meets the minimum voting age of 18 in NP.')).toBeVisible();
     await expect(page).toHaveScreenshot(`result-${theme}.png`, { fullPage: true });
   });

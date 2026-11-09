@@ -152,6 +152,12 @@ pub const ELIGIBILITY: &[Scenario] = &[
         &[age!("18"), country!("ZZ"), CHECK],
         &[verdict!(MEETS, "18", "18", "ZZ")],
     ),
+    // Decision (package 2, REQ-A11Y-003, REQ-WEB-002): the refusal is its own element,
+    // `validation-message`, not text inside `offline-result`. The web must announce errors through
+    // `role="alert"` and keep the result's status region for verdicts, so one region cannot serve
+    // both there. The copy is `errors.ageOutOfRange`, the key the Rust feedback catalogue gives
+    // `validation.age_out_of_range`, so every platform shows the catalogue's sentence instead of
+    // its own (`errors.ageInvalid`, `errors.ageAndCountry`).
     Scenario::new(
         "An age that is not a number is explained",
         &["REQ-NAT-002", "REQ-WEB-002"],
@@ -159,13 +165,18 @@ pub const ELIGIBILITY: &[Scenario] = &[
         &[age!("abc"), country!("NP"), CHECK],
         &[
             TextIs {
-                id: "offline-result",
-                key: "errors.ageInvalid",
+                id: "validation-message",
+                key: "errors.ageOutOfRange",
                 args: &[],
             },
             Missing("verdict-source"),
         ],
     ),
+    // Decision (package 2, REQ-WEB-001): `verdict-source` must be shown but its copy is not pinned.
+    // The native device check confirms with the server in the background, so an unreachable API
+    // reads `eligibility.result.sourceFallback` there; the web's device mode never calls the server
+    // (REQ-WEB-001), so it reads `eligibility.result.sourceDevice`. The fallback label stays proven
+    // by the web's server-mode suite and the native tests (REQ-LOAD-005).
     Scenario::new(
         "The device verdict survives an unreachable API",
         &[
@@ -186,11 +197,7 @@ pub const ELIGIBILITY: &[Scenario] = &[
                 args: &[],
             },
             verdict!(MEETS, "20", "18", "NP"),
-            TextIs {
-                id: "verdict-source",
-                key: "eligibility.result.sourceFallback",
-                args: &[],
-            },
+            Exists("verdict-source"),
         ],
     ),
     Scenario::new(

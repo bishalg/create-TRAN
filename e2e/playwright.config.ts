@@ -2,7 +2,8 @@ import { defineBddConfig } from 'playwright-bdd';
 import { defineConfig, devices } from '@playwright/test';
 
 const testDir = defineBddConfig({
-  features: 'features/*.feature',
+  // Hand-written features, and the ones `pnpm tokens:sync` renders to features/screens/ (ADR-0038).
+  features: 'features/**/*.feature',
   steps: 'steps/*.ts',
 });
 

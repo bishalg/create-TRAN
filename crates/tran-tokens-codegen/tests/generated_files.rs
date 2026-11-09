@@ -1,4 +1,4 @@
-// Verifies: REQ-GEN-001 REQ-I18N-005
+// Verifies: REQ-GEN-001 REQ-I18N-005 REQ-SCR-005
 //! The committed generated files are the snapshots (ADR-0030): rendering everything in memory must
 //! reproduce each one byte for byte, and leave nothing stale behind.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
@@ -81,6 +81,11 @@ fn every_target_is_generated() {
         "TranStrings.kt",
         "strings_shell.xml",
         "DESIGN.md",
+        "screens.json",
+        "splash.feature",
+        "auth_welcome.feature",
+        "eligibility.feature",
+        "auditor.feature",
     ] {
         assert!(names.contains(expected), "{expected} is not generated");
     }

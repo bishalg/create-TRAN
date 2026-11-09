@@ -58,7 +58,8 @@ error toast with a reference id; destructive actions are dialogs.
 
 Signing out MUST open a confirmation dialog with Cancel and a destructive Sign out button. Cancel or Escape MUST keep
 the session and return focus to the trigger; only Sign out ends the session.
-**Verified by:** BDD "Signing out asks for confirmation", "Cancelling sign-out keeps the session", `TranDialog.test.tsx`,
+**Verified by:** the screen scenarios "Signing out asks first and Cancel keeps the session" and "Confirming sign-out
+returns to role selection", BDD "Cancelling sign-out with Escape keeps the session and restores focus", `TranDialog.test.tsx`,
 `VotingUITests.swift`, `VotingHomeAccessibilityTest.kt`, Maestro `navigation-auth` flow.
 
 ### REQ-ERR-008 [verified] Success is acknowledged briefly

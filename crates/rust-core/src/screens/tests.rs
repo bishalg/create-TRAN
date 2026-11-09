@@ -126,6 +126,21 @@ fn ids_are_kebab_case_and_one_id_is_one_element() {
     assert!(!is_kebab_case("") && !is_kebab_case("check--button"));
 }
 
+// Verifies: REQ-SCR-005 REQ-SCR-006 — a scenario's name is how every interpreter finds its data
+// (the Gherkin title on the web, the `screens.json` entry natively), so it names one scenario.
+#[test]
+fn scenario_names_are_unique_and_quotable() {
+    let mut names = BTreeSet::new();
+    for scenario in all_scenarios() {
+        assert!(names.insert(scenario.name), "`{}` twice", scenario.name);
+        assert!(
+            !scenario.name.contains('"') && !scenario.name.contains('\n'),
+            "`{}` cannot be a Gherkin title",
+            scenario.name
+        );
+    }
+}
+
 // Verifies: REQ-SCR-001
 #[test]
 fn every_destination_has_exactly_one_screen() {

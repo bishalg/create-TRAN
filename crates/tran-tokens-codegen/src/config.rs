@@ -33,6 +33,13 @@ pub struct CodegenConfig {
     pub android_app_package: String,
     /// Google DESIGN.md (Stitch / agents) — usually repo-root `DESIGN.md`.
     pub design_md_path: String,
+    /// Rendered screen scenarios, one `<screen>.feature` each (ADR-0038). Only this folder is
+    /// generated; hand-written features live beside it.
+    pub screen_features_dir: String,
+    /// iOS UI-test bundle resources: the scenario catalogue `screens.json`.
+    pub ios_ui_test_resources_dir: String,
+    /// Android instrumentation-test assets: the same `screens.json`.
+    pub android_test_assets_dir: String,
 }
 
 impl CodegenConfig {
@@ -49,6 +56,9 @@ impl CodegenConfig {
             android_kotlin_package: "com.tran.voting.generated".into(),
             android_app_package: "com.tran.voting".into(),
             design_md_path: "DESIGN.md".into(),
+            screen_features_dir: "e2e/features/screens".into(),
+            ios_ui_test_resources_dir: "apps/ios/Tests/TranVotingDemoUITests/Resources".into(),
+            android_test_assets_dir: "apps/android/app/src/androidTest/assets".into(),
         }
     }
 
@@ -76,6 +86,9 @@ impl CodegenConfig {
             android_kotlin_package: self.android_kotlin_package.clone(),
             android_app_package: self.android_app_package.clone(),
             design_md_path: workspace_root.join(&self.design_md_path),
+            screen_features_dir: workspace_root.join(&self.screen_features_dir),
+            ios_ui_test_resources_dir: workspace_root.join(&self.ios_ui_test_resources_dir),
+            android_test_assets_dir: workspace_root.join(&self.android_test_assets_dir),
         }
     }
 }
@@ -92,6 +105,9 @@ pub struct CodegenPaths {
     pub android_kotlin_package: String,
     pub android_app_package: String,
     pub design_md_path: PathBuf,
+    pub screen_features_dir: PathBuf,
+    pub ios_ui_test_resources_dir: PathBuf,
+    pub android_test_assets_dir: PathBuf,
 }
 
 #[cfg(test)]
@@ -128,7 +144,10 @@ mod tests {
   "android_res_dir": "apps/android/app/src/main/res",
   "android_kotlin_package": "com.example.generated",
   "android_app_package": "com.example",
-  "design_md_path": "DESIGN.md"
+  "design_md_path": "DESIGN.md",
+  "screen_features_dir": "e2e/features/screens",
+  "ios_ui_test_resources_dir": "apps/ios/Tests/RenamedUITests/Resources",
+  "android_test_assets_dir": "apps/android/app/src/androidTest/assets"
 }}"#
         )
         .expect("write");

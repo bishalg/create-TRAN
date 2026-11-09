@@ -63,9 +63,11 @@ Then('the result region was never busy', async ({ page }) => {
   );
 });
 
+// The region holds the reason sentence; with a verdict on screen the pending copy is the card's
+// source chip, next to the region (ADR-0038).
 Then('the result region is busy and says {string}', async ({ page }, text: string) => {
   await expect(resultRegion(page)).toHaveAttribute('aria-busy', 'true');
-  await expect(resultRegion(page)).toContainText(text);
+  await expect(page.locator('article').filter({ has: resultRegion(page) })).toContainText(text);
 });
 
 Then('the result region is not busy', async ({ page }) => {

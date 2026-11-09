@@ -25,6 +25,9 @@
   "submit": "Check eligibility",
   "submitting": "Checking…",
   "checkOffline": "Check offline",
+  "validation": {
+    "label": "Input problem"
+  },
   "offlineNotice": "API unreachable — using offline rules mirrored from Rust Core.",
   "verdict": {
     "eligible": "Eligible to vote",

@@ -68,6 +68,7 @@ export type TranStringKey =
   | 'eligibility.submit'
   | 'eligibility.submitting'
   | 'eligibility.subtitle'
+  | 'eligibility.validation.label'
   | 'eligibility.verdict.eligible'
   | 'eligibility.verdict.ineligible'
   | 'errors.ageAndCountry'

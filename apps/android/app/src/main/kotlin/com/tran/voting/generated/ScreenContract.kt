@@ -21,6 +21,7 @@ object ScreenContract {
         const val countryField = "country-field"
         const val checkButton = "check-button"
         const val offlineResult = "offline-result"
+        const val validationMessage = "validation-message"
         const val verdictSource = "verdict-source"
         const val themePicker = "theme-picker"
         const val apiStatus = "api-status"

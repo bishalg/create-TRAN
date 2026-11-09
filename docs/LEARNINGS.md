@@ -86,3 +86,12 @@ button twice, and every query for it fails with "Multiple matching elements foun
 resume from `Dispatchers.IO` back to Robolectric's main looper was lost. Idling the looper did not fix it.
 **Action:** Classes that switch dispatchers take the dispatcher as a constructor parameter (`TranApiClient(io = …)`);
 JVM UI tests pass `Dispatchers.Unconfined`.
+
+## 2026-11-10 - The screen id guard reads comments too
+
+**Learning:** `packages/core-ts/tests/screen-ids.test.ts` flags any quoted or backticked string spelled like a
+declared element id, comments included, and a `data-testid={cond ? …}` expression looks like a literal to it. Both
+failed the guard while adding the web interpreter.
+**Action:** In app and test code, name elements in comments in plain words ("the check button") and compute a
+conditional test id into a variable first (`data-testid={checkButtonId}`). The generated Gherkin is the only place ids
+are spelled out, and the interpreter reads them from there at run time.

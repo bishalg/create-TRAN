@@ -44,13 +44,9 @@ Feature: Errors and feedback
     And I am told I am "Eligible to vote"
     And the result shows "The server could not answer — checked on this device."
 
-  Scenario: Signing out asks for confirmation
-    When I click the sign out button
-    Then a dialog asks "Sign out?"
-    When I confirm the dialog with "Sign out"
-    Then I see the role selection options "Continue as Citizen Voter" and "Continue as Election Auditor"
-
-  Scenario: Cancelling sign-out keeps the session
+  # Confirming and cancelling sign-out by tapping are screen contract scenarios
+  # (e2e/features/screens/eligibility.feature). Escape and the focus it restores are web-only.
+  Scenario: Cancelling sign-out with Escape keeps the session and restores focus
     When I click the sign out button
     And I press Escape
     Then no dialog is open

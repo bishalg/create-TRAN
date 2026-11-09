@@ -42,7 +42,9 @@ async function askServer(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('radio', { name: /Ask the server/ }));
   await user.clear(screen.getByLabelText('Your age'));
   await user.type(screen.getByLabelText('Your age'), '30');
-  await user.click(screen.getByRole('button', { name: /Check eligibility|Checking/ }));
+  await user.click(
+    screen.getByRole('button', { name: /Check offline|Check eligibility|Checking/ })
+  );
 }
 
 beforeEach(() => {
@@ -93,7 +95,9 @@ describe('App: toast pressure (REQ-ERR-012)', () => {
     const { user } = await renderApp({ status: 403, code: 'auth.forbidden' });
     await askServer(user);
     await screen.findByRole('alert');
-    await user.click(screen.getByRole('button', { name: /Check eligibility|Checking/ }));
+    await user.click(
+      screen.getByRole('button', { name: /Check offline|Check eligibility|Checking/ })
+    );
     await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
     expect(screen.getAllByRole('alert')).toHaveLength(1);
   });

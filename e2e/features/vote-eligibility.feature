@@ -1,4 +1,4 @@
-# Verifies: REQ-WEB-001 REQ-WEB-003 REQ-WEB-004 REQ-WEB-007 REQ-WEB-014 REQ-A11Y-001 REQ-A11Y-003 REQ-A11Y-004 REQ-A11Y-005 REQ-A11Y-006 REQ-I18N-002 REQ-I18N-006
+# Verifies: REQ-WEB-001 REQ-WEB-003 REQ-WEB-007 REQ-WEB-014 REQ-A11Y-001 REQ-A11Y-003 REQ-A11Y-004 REQ-A11Y-005 REQ-A11Y-006 REQ-I18N-002 REQ-I18N-006
 Feature: Voting eligibility
   As a visitor
   I want to know whether I am old enough to vote in a country
@@ -7,19 +7,14 @@ Feature: Voting eligibility
   The same rules run in two places: on the device (TypeScript) and on the server
   (Rust behind Axum). These scenarios drive the real web app against the real API.
 
+  Device verdicts, the invalid-age message, an unreachable API, the announced verdict,
+  the largest text scale and theme selection are screen contract scenarios
+  (e2e/features/screens/, ADR-0038). What stays here is web-only: the server mode,
+  the boundary inputs, colour schemes, first paint, language switching, keyboard and
+  focus behaviour, axe audits, reflow, target sizes of every control and motion.
+
   Background:
     Given I open the voting eligibility app
-
-  Scenario Outline: The device decides by age and country
-    When I check on this device with age "<age>" and country "<country>"
-    Then I am told I am "<verdict>"
-    And the result says "<reason>"
-
-    Examples:
-      | age | country | verdict              | reason                                              |
-      | 20  | NP      | Eligible to vote     | Age 20 meets the minimum voting age of 18 in NP.    |
-      | 17  | US      | Not eligible to vote | Age 17 is below the minimum voting age of 18 in US. |
-      | 16  | BR      | Eligible to vote     | Age 16 meets the minimum voting age of 16 in BR.    |
 
   Scenario: The Rust server gives the same answer as the device
     When I ask the server with age "16" and country "BR"
@@ -32,22 +27,16 @@ Feature: Voting eligibility
     Then I see the error "Country must be two letters"
     And I do not see the offline notice
 
-  Scenario Outline: Invalid ages are explained, not ignored
+  Scenario Outline: Boundary ages are explained, not ignored
+    # "abc" is the contract scenario "An age that is not a number is explained".
     When I check on this device with age "<age>" and country "US"
     Then I see the error "Enter a whole-number age between 0 and 150."
 
     Examples:
       | age  |
-      | abc  |
       | -1   |
       | 151  |
       | 21.5 |
-
-  Scenario: Device checks keep working when the API is unreachable
-    Given the API is unreachable
-    When I check on this device with age "30" and country "US"
-    Then I see the offline notice
-    And I am told I am "Eligible to vote"
 
   Scenario: The footer shows the API is online
     Then the API status is "API online"
@@ -69,17 +58,19 @@ Feature: Voting eligibility
     And I reload the page with the app code blocked
     Then the page uses the "sepia" theme
 
-  Scenario: Results are announced to screen readers
+  Scenario: The result's live region exists before the first result
+    # The announced sentence itself is the contract scenario "The verdict is announced by
+    # the result's live region"; that the region is already on the page is web-only.
     Then an empty "Result" live region is already on the page
     When I check on this device with age "30" and country "US"
-    Then the "Result" live region says "Eligible to vote"
+    Then the "Result" live region says "Age 30 meets the minimum voting age of 18 in US."
 
   Scenario: Switching the language localizes the whole interface
     When I switch the language to "NE"
     Then the document language is "ne"
     And the page heading says "मतदान योग्यता"
     And the age field is labelled "तपाईंको उमेर"
-    And the submit button says "योग्यता जाँच्नुहोस्"
+    And the submit button says "अफलाइन जाँच"
     When I switch the language to "HI"
     Then the document language is "hi"
     And the page heading says "मतदान पात्रता"
@@ -126,7 +117,7 @@ Feature: Voting eligibility
   Scenario: Controls are large enough to tap
     # Verifies: REQ-A11Y-008
     Then every button and field is at least 24 CSS pixels tall and wide
-    And the "Check eligibility" button is at least 44 CSS pixels tall
+    And the "Check offline" button is at least 44 CSS pixels tall
 
   Scenario: Motion is removed when the user asks for less
     # Verifies: REQ-A11Y-009

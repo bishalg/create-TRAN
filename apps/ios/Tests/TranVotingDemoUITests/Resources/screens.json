@@ -1,0 +1,1032 @@
+{
+  "scenario_bound_ms": 4300,
+  "screens": [
+    {
+      "id": "splash",
+      "destination": "splash",
+      "intent": "screen.splash.intent",
+      "elements": [
+        {
+          "id": "splash-progress",
+          "kind": "progress",
+          "label": "common.loading",
+          "touch": "none",
+          "presence": "always"
+        }
+      ],
+      "scenarios": [
+        {
+          "name": "Without a stored session the app boots to role selection",
+          "verifies": [
+            "REQ-NAV-001",
+            "REQ-NAV-002"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "none"
+            }
+          ],
+          "when": [],
+          "then": [
+            {
+              "verb": "exists",
+              "id": "voter-branch-button"
+            },
+            {
+              "verb": "exists",
+              "id": "auditor-branch-button"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "auth_welcome",
+      "destination": "auth_welcome",
+      "intent": "screen.authWelcome.intent",
+      "elements": [
+        {
+          "id": "voter-branch-button",
+          "kind": "button",
+          "label": "auth.continueAsVoter",
+          "touch": "primary",
+          "presence": "always"
+        },
+        {
+          "id": "auditor-branch-button",
+          "kind": "button",
+          "label": "auth.continueAsAuditor",
+          "touch": "control",
+          "presence": "always"
+        }
+      ],
+      "scenarios": [
+        {
+          "name": "A signed-out person is offered both roles",
+          "verifies": [
+            "REQ-NAV-002"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "unauthenticated"
+            }
+          ],
+          "when": [],
+          "then": [
+            {
+              "verb": "exists",
+              "id": "voter-branch-button"
+            },
+            {
+              "verb": "exists",
+              "id": "auditor-branch-button"
+            }
+          ]
+        },
+        {
+          "name": "Choosing Citizen Voter opens the voter dashboard",
+          "verifies": [
+            "REQ-NAV-003"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "unauthenticated"
+            }
+          ],
+          "when": [
+            {
+              "verb": "tap",
+              "id": "voter-branch-button"
+            }
+          ],
+          "then": [
+            {
+              "verb": "exists",
+              "id": "check-button"
+            },
+            {
+              "verb": "exists",
+              "id": "sign-out-button"
+            }
+          ]
+        },
+        {
+          "name": "Choosing Election Auditor opens the auditor dashboard",
+          "verifies": [
+            "REQ-NAV-004"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "unauthenticated"
+            }
+          ],
+          "when": [
+            {
+              "verb": "tap",
+              "id": "auditor-branch-button"
+            }
+          ],
+          "then": [
+            {
+              "verb": "exists",
+              "id": "sign-out-button"
+            },
+            {
+              "verb": "missing",
+              "id": "check-button"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "eligibility",
+      "destination": "voter_dashboard",
+      "intent": "screen.eligibility.intent",
+      "elements": [
+        {
+          "id": "sign-out-button",
+          "kind": "button",
+          "label": "common.signOut",
+          "touch": "control",
+          "presence": "always"
+        },
+        {
+          "id": "role-badge",
+          "kind": "text",
+          "label": "common.role.label",
+          "touch": "none",
+          "presence": "always"
+        },
+        {
+          "id": "age-field",
+          "kind": "field",
+          "label": "eligibility.age.label",
+          "touch": "control",
+          "presence": "always"
+        },
+        {
+          "id": "country-field",
+          "kind": "field",
+          "label": "eligibility.country.label",
+          "touch": "control",
+          "presence": "always"
+        },
+        {
+          "id": "check-button",
+          "kind": "button",
+          "label": "eligibility.checkOffline",
+          "touch": "primary",
+          "presence": "always"
+        },
+        {
+          "id": "offline-result",
+          "kind": "live_region",
+          "label": "eligibility.result.label",
+          "touch": "none",
+          "presence": "always"
+        },
+        {
+          "id": "validation-message",
+          "kind": "text",
+          "label": "eligibility.validation.label",
+          "touch": "none",
+          "presence": "when",
+          "state": "validation_failed"
+        },
+        {
+          "id": "verdict-source",
+          "kind": "text",
+          "label": "eligibility.result.source",
+          "touch": "none",
+          "presence": "when",
+          "state": "verdict_shown"
+        },
+        {
+          "id": "theme-picker",
+          "kind": "segmented",
+          "label": "shell.theme.label",
+          "touch": "control",
+          "presence": "always"
+        },
+        {
+          "id": "api-status",
+          "kind": "live_region",
+          "label": "shell.status.label",
+          "touch": "none",
+          "presence": "always"
+        },
+        {
+          "id": "offline-notice",
+          "kind": "banner",
+          "label": "eligibility.offlineNotice",
+          "touch": "none",
+          "presence": "when",
+          "state": "api_unreachable"
+        },
+        {
+          "id": "toast",
+          "kind": "toast",
+          "label": "common.notifications",
+          "touch": "none",
+          "presence": "when",
+          "state": "toast_shown"
+        },
+        {
+          "id": "toast-dismiss",
+          "kind": "button",
+          "label": "common.dismiss",
+          "touch": "control",
+          "presence": "when",
+          "state": "toast_shown"
+        },
+        {
+          "id": "dialog-confirm",
+          "kind": "button",
+          "label": "common.signOut",
+          "touch": "control",
+          "presence": "when",
+          "state": "sign_out_confirm"
+        },
+        {
+          "id": "dialog-cancel",
+          "kind": "button",
+          "label": "common.cancel",
+          "touch": "control",
+          "presence": "when",
+          "state": "sign_out_confirm"
+        }
+      ],
+      "scenarios": [
+        {
+          "name": "An adult in Nepal is eligible",
+          "verifies": [
+            "REQ-NAT-001",
+            "REQ-NAT-002",
+            "REQ-WEB-001"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            }
+          ],
+          "when": [
+            {
+              "verb": "type",
+              "id": "age-field",
+              "text": "20"
+            },
+            {
+              "verb": "type",
+              "id": "country-field",
+              "text": "NP"
+            },
+            {
+              "verb": "tap",
+              "id": "check-button"
+            }
+          ],
+          "then": [
+            {
+              "verb": "text_is",
+              "id": "offline-result",
+              "key": "eligibility.result.reasonMeets",
+              "args": [
+                {
+                  "name": "age",
+                  "value": "20"
+                },
+                {
+                  "name": "minimumAge",
+                  "value": "18"
+                },
+                {
+                  "name": "country",
+                  "value": "NP"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "A 17 year old in the US is not eligible",
+          "verifies": [
+            "REQ-NAT-001",
+            "REQ-NAT-002",
+            "REQ-WEB-001"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            }
+          ],
+          "when": [
+            {
+              "verb": "type",
+              "id": "age-field",
+              "text": "17"
+            },
+            {
+              "verb": "type",
+              "id": "country-field",
+              "text": "US"
+            },
+            {
+              "verb": "tap",
+              "id": "check-button"
+            }
+          ],
+          "then": [
+            {
+              "verb": "text_is",
+              "id": "offline-result",
+              "key": "eligibility.result.reasonBelow",
+              "args": [
+                {
+                  "name": "age",
+                  "value": "17"
+                },
+                {
+                  "name": "minimumAge",
+                  "value": "18"
+                },
+                {
+                  "name": "country",
+                  "value": "US"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "A 16 year old in Brazil is eligible",
+          "verifies": [
+            "REQ-NAT-001",
+            "REQ-NAT-002",
+            "REQ-WEB-001"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            }
+          ],
+          "when": [
+            {
+              "verb": "type",
+              "id": "age-field",
+              "text": "16"
+            },
+            {
+              "verb": "type",
+              "id": "country-field",
+              "text": "BR"
+            },
+            {
+              "verb": "tap",
+              "id": "check-button"
+            }
+          ],
+          "then": [
+            {
+              "verb": "text_is",
+              "id": "offline-result",
+              "key": "eligibility.result.reasonMeets",
+              "args": [
+                {
+                  "name": "age",
+                  "value": "16"
+                },
+                {
+                  "name": "minimumAge",
+                  "value": "16"
+                },
+                {
+                  "name": "country",
+                  "value": "BR"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Age 150 is the oldest accepted",
+          "verifies": [
+            "REQ-NAT-001",
+            "REQ-NAT-002",
+            "REQ-WEB-001"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            }
+          ],
+          "when": [
+            {
+              "verb": "type",
+              "id": "age-field",
+              "text": "150"
+            },
+            {
+              "verb": "type",
+              "id": "country-field",
+              "text": "US"
+            },
+            {
+              "verb": "tap",
+              "id": "check-button"
+            }
+          ],
+          "then": [
+            {
+              "verb": "text_is",
+              "id": "offline-result",
+              "key": "eligibility.result.reasonMeets",
+              "args": [
+                {
+                  "name": "age",
+                  "value": "150"
+                },
+                {
+                  "name": "minimumAge",
+                  "value": "18"
+                },
+                {
+                  "name": "country",
+                  "value": "US"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "An unknown but well-formed country uses the default age",
+          "verifies": [
+            "REQ-NAT-001",
+            "REQ-NAT-002",
+            "REQ-WEB-001"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            }
+          ],
+          "when": [
+            {
+              "verb": "type",
+              "id": "age-field",
+              "text": "18"
+            },
+            {
+              "verb": "type",
+              "id": "country-field",
+              "text": "ZZ"
+            },
+            {
+              "verb": "tap",
+              "id": "check-button"
+            }
+          ],
+          "then": [
+            {
+              "verb": "text_is",
+              "id": "offline-result",
+              "key": "eligibility.result.reasonMeets",
+              "args": [
+                {
+                  "name": "age",
+                  "value": "18"
+                },
+                {
+                  "name": "minimumAge",
+                  "value": "18"
+                },
+                {
+                  "name": "country",
+                  "value": "ZZ"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "An age that is not a number is explained",
+          "verifies": [
+            "REQ-NAT-002",
+            "REQ-WEB-002"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            }
+          ],
+          "when": [
+            {
+              "verb": "type",
+              "id": "age-field",
+              "text": "abc"
+            },
+            {
+              "verb": "type",
+              "id": "country-field",
+              "text": "NP"
+            },
+            {
+              "verb": "tap",
+              "id": "check-button"
+            }
+          ],
+          "then": [
+            {
+              "verb": "text_is",
+              "id": "validation-message",
+              "key": "errors.ageOutOfRange",
+              "args": []
+            },
+            {
+              "verb": "missing",
+              "id": "verdict-source"
+            }
+          ]
+        },
+        {
+          "name": "The device verdict survives an unreachable API",
+          "verifies": [
+            "REQ-NAT-011",
+            "REQ-WEB-004",
+            "REQ-ERR-006",
+            "REQ-LOAD-003",
+            "REQ-LOAD-005"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            },
+            {
+              "verb": "api_unreachable"
+            }
+          ],
+          "when": [
+            {
+              "verb": "type",
+              "id": "age-field",
+              "text": "20"
+            },
+            {
+              "verb": "type",
+              "id": "country-field",
+              "text": "NP"
+            },
+            {
+              "verb": "tap",
+              "id": "check-button"
+            }
+          ],
+          "then": [
+            {
+              "verb": "exists",
+              "id": "offline-notice"
+            },
+            {
+              "verb": "missing",
+              "id": "toast"
+            },
+            {
+              "verb": "text_is",
+              "id": "api-status",
+              "key": "shell.status.offline",
+              "args": []
+            },
+            {
+              "verb": "text_is",
+              "id": "offline-result",
+              "key": "eligibility.result.reasonMeets",
+              "args": [
+                {
+                  "name": "age",
+                  "value": "20"
+                },
+                {
+                  "name": "minimumAge",
+                  "value": "18"
+                },
+                {
+                  "name": "country",
+                  "value": "NP"
+                }
+              ]
+            },
+            {
+              "verb": "exists",
+              "id": "verdict-source"
+            }
+          ]
+        },
+        {
+          "name": "The verdict is announced by the result's live region",
+          "verifies": [
+            "REQ-A11Y-003",
+            "REQ-NAT-003"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            }
+          ],
+          "when": [
+            {
+              "verb": "type",
+              "id": "age-field",
+              "text": "20"
+            },
+            {
+              "verb": "type",
+              "id": "country-field",
+              "text": "NP"
+            },
+            {
+              "verb": "tap",
+              "id": "check-button"
+            }
+          ],
+          "then": [
+            {
+              "verb": "announced",
+              "id": "offline-result",
+              "key": "eligibility.result.reasonMeets",
+              "args": [
+                {
+                  "name": "age",
+                  "value": "20"
+                },
+                {
+                  "name": "minimumAge",
+                  "value": "18"
+                },
+                {
+                  "name": "country",
+                  "value": "NP"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "The largest text scale keeps every control and the verdict reachable",
+          "verifies": [
+            "REQ-NAT-004",
+            "REQ-NAT-013",
+            "REQ-A11Y-007"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            },
+            {
+              "verb": "largest_text_scale"
+            }
+          ],
+          "when": [
+            {
+              "verb": "type",
+              "id": "age-field",
+              "text": "20"
+            },
+            {
+              "verb": "type",
+              "id": "country-field",
+              "text": "NP"
+            },
+            {
+              "verb": "tap",
+              "id": "check-button"
+            }
+          ],
+          "then": [
+            {
+              "verb": "text_is",
+              "id": "offline-result",
+              "key": "eligibility.result.reasonMeets",
+              "args": [
+                {
+                  "name": "age",
+                  "value": "20"
+                },
+                {
+                  "name": "minimumAge",
+                  "value": "18"
+                },
+                {
+                  "name": "country",
+                  "value": "NP"
+                }
+              ]
+            },
+            {
+              "verb": "exists",
+              "id": "sign-out-button"
+            },
+            {
+              "verb": "exists",
+              "id": "theme-picker"
+            }
+          ]
+        },
+        {
+          "name": "Signing out asks first and Cancel keeps the session",
+          "verifies": [
+            "REQ-ERR-007"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            }
+          ],
+          "when": [
+            {
+              "verb": "tap",
+              "id": "sign-out-button"
+            },
+            {
+              "verb": "tap",
+              "id": "dialog-cancel"
+            }
+          ],
+          "then": [
+            {
+              "verb": "missing",
+              "id": "dialog-confirm"
+            },
+            {
+              "verb": "exists",
+              "id": "check-button"
+            },
+            {
+              "verb": "count",
+              "id": "sign-out-button",
+              "n": 1
+            }
+          ]
+        },
+        {
+          "name": "Confirming sign-out returns to role selection",
+          "verifies": [
+            "REQ-ERR-007",
+            "REQ-NAV-005"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            }
+          ],
+          "when": [
+            {
+              "verb": "tap",
+              "id": "sign-out-button"
+            },
+            {
+              "verb": "tap",
+              "id": "dialog-confirm"
+            }
+          ],
+          "then": [
+            {
+              "verb": "exists",
+              "id": "voter-branch-button"
+            },
+            {
+              "verb": "missing",
+              "id": "check-button"
+            }
+          ]
+        },
+        {
+          "name": "The light theme is selectable",
+          "verifies": [
+            "REQ-NAT-007",
+            "REQ-WEB-014"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            }
+          ],
+          "when": [
+            {
+              "verb": "select",
+              "id": "theme-picker",
+              "option": "light"
+            }
+          ],
+          "then": [
+            {
+              "verb": "exists",
+              "id": "theme-picker"
+            },
+            {
+              "verb": "exists",
+              "id": "check-button"
+            }
+          ]
+        },
+        {
+          "name": "The dark theme is selectable",
+          "verifies": [
+            "REQ-NAT-007",
+            "REQ-WEB-014"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            }
+          ],
+          "when": [
+            {
+              "verb": "select",
+              "id": "theme-picker",
+              "option": "dark"
+            }
+          ],
+          "then": [
+            {
+              "verb": "exists",
+              "id": "theme-picker"
+            },
+            {
+              "verb": "exists",
+              "id": "check-button"
+            }
+          ]
+        },
+        {
+          "name": "The black theme is selectable",
+          "verifies": [
+            "REQ-NAT-007",
+            "REQ-WEB-014"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            }
+          ],
+          "when": [
+            {
+              "verb": "select",
+              "id": "theme-picker",
+              "option": "black"
+            }
+          ],
+          "then": [
+            {
+              "verb": "exists",
+              "id": "theme-picker"
+            },
+            {
+              "verb": "exists",
+              "id": "check-button"
+            }
+          ]
+        },
+        {
+          "name": "The sepia theme is selectable",
+          "verifies": [
+            "REQ-NAT-007",
+            "REQ-WEB-014"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            }
+          ],
+          "when": [
+            {
+              "verb": "select",
+              "id": "theme-picker",
+              "option": "sepia"
+            }
+          ],
+          "then": [
+            {
+              "verb": "exists",
+              "id": "theme-picker"
+            },
+            {
+              "verb": "exists",
+              "id": "check-button"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "auditor",
+      "destination": "auditor_dashboard",
+      "intent": "screen.auditor.intent",
+      "elements": [
+        {
+          "id": "sign-out-button",
+          "kind": "button",
+          "label": "common.signOut",
+          "touch": "control",
+          "presence": "always"
+        },
+        {
+          "id": "role-badge",
+          "kind": "text",
+          "label": "common.role.label",
+          "touch": "none",
+          "presence": "always"
+        },
+        {
+          "id": "dialog-confirm",
+          "kind": "button",
+          "label": "common.signOut",
+          "touch": "control",
+          "presence": "when",
+          "state": "sign_out_confirm"
+        },
+        {
+          "id": "dialog-cancel",
+          "kind": "button",
+          "label": "common.cancel",
+          "touch": "control",
+          "presence": "when",
+          "state": "sign_out_confirm"
+        }
+      ],
+      "scenarios": [
+        {
+          "name": "Signing out of the auditor dashboard returns to role selection",
+          "verifies": [
+            "REQ-NAV-005",
+            "REQ-ERR-007"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "election_auditor"
+            }
+          ],
+          "when": [
+            {
+              "verb": "tap",
+              "id": "sign-out-button"
+            },
+            {
+              "verb": "tap",
+              "id": "dialog-confirm"
+            }
+          ],
+          "then": [
+            {
+              "verb": "exists",
+              "id": "auditor-branch-button"
+            },
+            {
+              "verb": "missing",
+              "id": "sign-out-button"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

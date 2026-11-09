@@ -25,6 +25,9 @@
   "submit": "योग्यता जाँच्नुहोस्",
   "submitting": "जाँच हुँदैछ…",
   "checkOffline": "अफलाइन जाँच",
+  "validation": {
+    "label": "इनपुटमा समस्या"
+  },
   "offlineNotice": "API उपलब्ध छैन — Rust Core सँग मिल्दो अफलाइन नियम।",
   "verdict": {
     "eligible": "मतदान गर्न योग्य",

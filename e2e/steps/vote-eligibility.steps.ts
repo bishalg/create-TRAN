@@ -12,36 +12,32 @@ Given('I open the voting eligibility app', async ({ page }) => {
   await expect(page.getByText(/API (online|offline)/)).toBeVisible();
 });
 
-Given('the API is unreachable', async ({ page }) => {
-  await page.route('http://127.0.0.1:3001/**', (route) => route.abort('connectionrefused'));
-  await page.reload();
-  await expect(page.getByText('API offline')).toBeVisible();
-});
-
 Given('I use a phone-sized screen', async ({ page }) => {
   // 320 CSS px is the WCAG 2.2 reflow baseline (SC 1.4.10).
   await page.setViewportSize({ width: 320, height: 640 });
 });
 
-async function fillAndSubmit(page: import('@playwright/test').Page, age: string, country: string) {
+async function fill(page: import('@playwright/test').Page, age: string, country: string) {
   await page.getByLabel('Your age').fill(age);
   await page.getByLabel('Country code').fill(country);
-  await page.getByRole('button', { name: 'Check eligibility' }).click();
 }
 
 When(
   'I check on this device with age {string} and country {string}',
   async ({ page }, age: string, country: string) => {
     await page.getByRole('radio', { name: /On this device/ }).check();
-    await fillAndSubmit(page, age, country);
+    await fill(page, age, country);
+    await page.getByTestId(ScreenIds.eligibility.checkButton).click();
   }
 );
 
+// Asking the server is web-only: its button has no contract id (ADR-0038).
 When(
   'I ask the server with age {string} and country {string}',
   async ({ page }, age: string, country: string) => {
     await page.getByRole('radio', { name: /Ask the server/ }).check();
-    await fillAndSubmit(page, age, country);
+    await fill(page, age, country);
+    await page.getByRole('button', { name: 'Check eligibility' }).click();
   }
 );
 

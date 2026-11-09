@@ -65,14 +65,22 @@ and never exceeding it. A test MUST pin the verb list so that adding a verb chan
 **Verified by:** `crates/rust-core/src/screens/tests.rs` (citations resolve, bounds hold, verb snapshot
 `the_verb_set_is_closed`, expected messages resolve with their arguments, eligibility verdicts agree with the rules).
 
-### REQ-SCR-005 [planned] Scenarios render to Gherkin and to machine-readable JSON
+### REQ-SCR-005 [verified] Scenarios render to Gherkin and to machine-readable JSON
 
 `pnpm tokens:sync` MUST render every scenario to `e2e/features/screens/<screen>.feature` with `@REQ-…` tags and a
 header naming the generator, to `packages/core-ts/src/generated/screens.ts` (typed scenario data for Playwright) and
 to a JSON resource each native test bundle loads (`apps/ios/Tests/.../Resources/screens.json`,
 `apps/android/app/src/androidTest/assets/screens.json`). Hand-editing a rendered file MUST fail `cargo test`.
 `pnpm spec:check` MUST accept the generated Gherkin as the citing test for the requirements it tags.
-**Verified by:** `crates/tran-tokens-codegen/tests/generated_files.rs`, `tooling/spec-check/spec-check.test.mjs`.
+The phrasing is one fixed sentence per verb, with every id, key and value quoted (the table at the top of
+`screens_gherkin.rs`); `screens.json` gives every step as one flat object with a `verb` (the comment at the top of
+`screens_json.rs`). Only `e2e/features/screens/` is generated: stale-file pruning never touches a hand-written feature.
+**Verified by:** `crates/tran-tokens-codegen/src/screens_gherkin.rs` (`every_verb_has_one_phrasing`,
+`a_feature_carries_its_header_tags_and_steps`), `screens_json.rs` (`steps_are_flat_objects`,
+`the_catalogue_carries_every_screen_element_and_scenario`), `files.rs`
+(`finds_only_unwritten_generated_files_and_removes_emptied_folders`), `crates/rust-core/src/screens/tests.rs`
+(`scenario_names_are_unique_and_quotable`), `crates/tran-tokens-codegen/tests/generated_files.rs`,
+`tooling/spec-check/spec-check.test.mjs` (`isCitingSource` counts `e2e/features/screens/*.feature`).
 
 ### REQ-SCR-006 [planned] One scenario interpreter per platform runs every scenario
 
@@ -81,7 +89,9 @@ each execute every scenario by interpreting its verbs over element ids, with no 
 report the scenario name, the step and the element. Each interpreter MUST resolve `text_is` through the shared
 dictionaries for the scenario's locale ([008](008-localization.md)), never through hard-coded copy.
 **Verified by:** `e2e/steps/screens.steps.ts`, `ScreenContractUITests.swift`, `ScreenContractTest.kt`, each citing
-the scenario tags it runs.
+the scenario tags it runs. Web part done: `e2e/steps/screens.steps.ts` runs every scenario of
+`e2e/features/screens/*.feature` under `pnpm test:e2e`, finds each scenario's data in the generated `SCREENS` by its
+title, resolves keys with `t()` and fails with "scenario › step › element". iOS and Android follow (package 3).
 
 ### REQ-SCR-007 [planned] Non-functional rules come from the element's declaration
 
@@ -91,7 +101,10 @@ platform's announcement mechanism (`role="status"`, `.updatesFrequently` or anno
 for a scenario given the largest text scale it MUST assert every always-present element stays reachable. Numbers MUST
 NOT appear in platform test code.
 **Verified by:** the three interpreters (REQ-SCR-006) and `crates/rust-core/src/screens/tests.rs`
-(`platform_minimums_are_one_table`, the Rust half).
+(`platform_minimums_are_one_table`, the Rust half). Web part done in `e2e/steps/screens.steps.ts`: every `control`
+and `primary` element a scenario taps, types into, selects in or expects to exist meets `PLATFORM_MINIMUMS.web` on
+both axes; every `live_region` it reads has `role="status"`, `alert`, `log` or `aria-live`; the largest text scale
+halves the CSS viewport (200% zoom) and every always-present element must then be visible and within the width.
 
 ### REQ-SCR-008 [planned] A conformance manifest is checked against the contract
 
@@ -108,4 +121,7 @@ class), and the nightly native workflow running the real suites ([009](009-nativ
 A hand-written UI journey (XCUITest, Compose test, Maestro flow or Playwright step) that a scenario covers MUST be
 removed in the change that adds the scenario; what remains MUST be behaviour the verb set cannot express, named as
 such in `docs/TESTING.md`. New user-visible behaviour MUST start as a scenario in `screens.rs`.
-**Verified by:** review, and `docs/TESTING.md` listing the remaining hand-written suites with their reason.
+**Verified by:** review, and `docs/TESTING.md` listing the remaining hand-written suites with their reason. Web part
+done: the Playwright journeys the scenarios cover are gone from `e2e/features/` (device verdicts, the non-numeric
+age, an unreachable API, the announced verdict, launch and role branching, sign-out confirm and cancel), and
+`docs/TESTING.md` "Hand-written suites that remain" names what stays. XCUITest, Compose and Maestro follow.

@@ -22,6 +22,7 @@ enum ScreenContract {
         static let countryField = "country-field"
         static let checkButton = "check-button"
         static let offlineResult = "offline-result"
+        static let validationMessage = "validation-message"
         static let verdictSource = "verdict-source"
         static let themePicker = "theme-picker"
         static let apiStatus = "api-status"

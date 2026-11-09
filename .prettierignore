@@ -7,6 +7,9 @@ pnpm-lock.yaml
 # Emitted by tran-tokens-codegen; formatting them breaks the CI drift check
 **/generated/
 DESIGN.md
+# The scenario catalogue for the native test bundles, outside a generated/ folder (ADR-0038)
+apps/ios/Tests/TranVotingDemoUITests/Resources/screens.json
+apps/android/app/src/androidTest/assets/screens.json
 
 # Generated reports: mutation (ADR-0029) and docs/reports/ metrics, written by `pnpm metrics --record` (ADR-0031)
 reports/

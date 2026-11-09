@@ -27,6 +27,7 @@ export type ElementId =
   | 'country-field'
   | 'check-button'
   | 'offline-result'
+  | 'validation-message'
   | 'verdict-source'
   | 'theme-picker'
   | 'api-status'
@@ -308,6 +309,15 @@ export const SCREENS: readonly Screen[] = [
         "label": "eligibility.result.label",
         "touch": "none",
         "presence": "always"
+      },
+      {
+        "id": "validation-message",
+        "kind": "text",
+        "label": "eligibility.validation.label",
+        "touch": "none",
+        "presence": {
+          "when": "validation_failed"
+        }
       },
       {
         "id": "verdict-source",
@@ -675,8 +685,8 @@ export const SCREENS: readonly Screen[] = [
         "then": [
           {
             "text_is": {
-              "id": "offline-result",
-              "key": "errors.ageInvalid",
+              "id": "validation-message",
+              "key": "errors.ageOutOfRange",
               "args": []
             }
           },
@@ -753,11 +763,7 @@ export const SCREENS: readonly Screen[] = [
             }
           },
           {
-            "text_is": {
-              "id": "verdict-source",
-              "key": "eligibility.result.sourceFallback",
-              "args": []
-            }
+            "exists": "verdict-source"
           }
         ],
         "within_ms": 4300
@@ -1176,6 +1182,7 @@ export const ScreenIds = {
     countryField: 'country-field',
     checkButton: 'check-button',
     offlineResult: 'offline-result',
+    validationMessage: 'validation-message',
     verdictSource: 'verdict-source',
     themePicker: 'theme-picker',
     apiStatus: 'api-status',

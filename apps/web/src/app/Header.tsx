@@ -68,10 +68,12 @@ export function Header({
           aria-label={t('shell.theme.label', locale)}
           data-testid={ScreenIds.eligibility.themePicker}
         >
+          {/* `value` names the option, so a scenario's `select` finds it in any language. */}
           {themeNames.map((mode) => (
             <TranButton
               key={mode}
               type="button"
+              value={mode}
               variant="secondary"
               size="md"
               className="segmented-item"

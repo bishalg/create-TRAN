@@ -147,6 +147,27 @@ slowly gets heavier or slower. Both are measured here, with opposite storage rul
 - **Generated output stays untracked.** `output-guards.test.ts` fails if a report, screenshot, log or coverage file
   is tracked or not ignored, or if `docs/reports/` holds anything but text.
 
+## Hand-written suites that remain
+
+The screen contract (ADR-0038, spec 021) renders the journeys every platform shares to `e2e/features/screens/`, and
+`e2e/steps/screens.steps.ts` runs them in Playwright. A hand-written Playwright journey that a scenario covers is
+deleted (REQ-SCR-009). What stays in `e2e/features/` is behaviour the verb set cannot express or that only the web has:
+
+| Feature                        | What stays                                                                                      | Why it is not a scenario                                                                                                                     |
+| ------------------------------ | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vote-eligibility.feature`     | Server mode, malformed country from the server                                                  | Asking the server is a web-only mode (REQ-WEB-001); natives confirm in the background                                                        |
+|                                | Boundary ages `-1`, `151`, `21.5`                                                               | Web strict-input edges (REQ-WEB-002); the non-numeric case is a scenario                                                                     |
+|                                | Footer reads "API online" with the version                                                      | Web footer detail; no scenario expects a reachable API's copy yet                                                                            |
+|                                | Every theme's colour scheme, theme before first paint                                           | CSS `color-scheme` and the boot script are web-only (REQ-WEB-014); selecting a theme is a scenario                                           |
+|                                | The result's live region exists before the first result                                         | A DOM timing rule (REQ-A11Y-003); the announced sentence is a scenario                                                                       |
+|                                | Language switching, localized result sentence                                                   | No scenario uses the `locale` given yet; these check `<html lang>` and headings too (REQ-I18N-002, 006, 007)                                 |
+|                                | Focus to the age field, keyboard-only check, skip link, landmarks                               | Keyboard and focus order are web-only (REQ-A11Y-004, 010)                                                                                    |
+|                                | axe audits per theme, no sideways scroll at 320 px, every control's target size, reduced motion | axe, reflow and every-control sizing are web tools (REQ-A11Y-001, 007, 008, 009); the interpreter sizes only the elements a scenario touches |
+| `error-feedback.feature`       | Toasts, retries, server errors, session expiry, one toast per failure, banner recovery          | All staged on the server mode (REQ-ERR-005..013)                                                                                             |
+|                                | Cancelling sign-out with Escape restores focus                                                  | Keyboard dismissal and focus return are web-only; tapping Cancel is a scenario                                                               |
+| `loading-and-offline.feature`  | Progress after the indicator delay, last result kept, late answer discarded, server fallback    | Need a held or delayed server answer, which the verb set cannot stage (REQ-LOAD-002..005)                                                    |
+| `navigation-auth-flow.feature` | The auditor dashboard lists the country rules                                                   | The rules table is not a contract element yet                                                                                                |
+
 ## Dependencies (ADR-0033)
 
 - **Advisories fail CI.** `pnpm deps:audit` runs what CI runs: `pnpm audit --audit-level high` and
@@ -160,7 +181,10 @@ slowly gets heavier or slower. Both are measured here, with opposite storage rul
 ## Adding a feature (checklist)
 
 1. Add rows to `fixtures/vote-eligibility.json` (or a new fixture file) — the rejected and failure-mode rows too.
-2. Add/extend a scenario in a `.feature` file (plain language, `Scenario Outline` for tables).
+2. Cross-platform screen behaviour: add a scenario to `crates/rust-core/src/screens/scenarios.rs` and run
+   `pnpm tokens:sync` (it renders `e2e/features/screens/*.feature` and the native `screens.json`; the interpreters run
+   it, no step code to write). Web-only behaviour: add/extend a hand-written scenario in an `e2e/features/*.feature`
+   file (plain language, `Scenario Outline` for tables).
 3. Red unit tests → implement in `rust-core` → mirror in `core-ts` → route in `apps/api` → UI.
 4. Write the step definitions last, reusing existing steps where possible.
 5. `pnpm test:all` and update `docs/API.md` if an endpoint changed.

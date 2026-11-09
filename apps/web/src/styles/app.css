@@ -549,8 +549,12 @@ main:focus {
   background: color-mix(in srgb, var(--tran-color-danger) 12%, transparent);
 }
 
-.shell > .result-slot:empty {
-  /* Stays in the accessibility tree (live region) but takes no space. */
+/* No result yet: the card draws nothing, and its live region stays in the accessibility tree. */
+.result[data-empty='true'] {
+  display: contents;
+}
+
+.result[data-empty='true'] .tran-text[data-variant] {
   margin: 0;
 }
 
@@ -620,7 +624,7 @@ main:focus {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .result {
+  .result:not([data-empty='true']) {
     animation: rise var(--tran-motion-base) ease-out;
   }
 }

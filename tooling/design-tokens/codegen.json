@@ -7,5 +7,8 @@
   "android_res_dir": "apps/android/app/src/main/res",
   "android_kotlin_package": "com.tran.voting.generated",
   "android_app_package": "com.tran.voting",
-  "design_md_path": "DESIGN.md"
+  "design_md_path": "DESIGN.md",
+  "screen_features_dir": "e2e/features/screens",
+  "ios_ui_test_resources_dir": "apps/ios/Tests/TranVotingDemoUITests/Resources",
+  "android_test_assets_dir": "apps/android/app/src/androidTest/assets"
 }

@@ -33,6 +33,8 @@ pub mod state {
     pub const TOAST_SHOWN: &str = "toast_shown";
     /// The sign-out confirmation is open (REQ-ERR-007).
     pub const SIGN_OUT_CONFIRM: &str = "sign_out_confirm";
+    /// The last check was refused because an input did not parse (REQ-WEB-002, REQ-NAT-002).
+    pub const VALIDATION_FAILED: &str = "validation_failed";
 }
 
 pub const SPLASH_PROGRESS: Element = element(
@@ -97,6 +99,15 @@ pub const OFFLINE_RESULT: Element = element(
     "eligibility.result.label",
     Touch::None,
     Presence::Always,
+);
+/// Why the last check was refused. Separate from `offline-result`: the web announces errors through
+/// `role="alert"`, never through the result's status region (REQ-A11Y-003).
+pub const VALIDATION_MESSAGE: Element = element(
+    "validation-message",
+    Kind::Text,
+    "eligibility.validation.label",
+    Touch::None,
+    Presence::When(state::VALIDATION_FAILED),
 );
 pub const VERDICT_SOURCE: Element = element(
     "verdict-source",
@@ -182,6 +193,7 @@ pub const SCREENS: [Screen; 4] = [
             COUNTRY_FIELD,
             CHECK_BUTTON,
             OFFLINE_RESULT,
+            VALIDATION_MESSAGE,
             VERDICT_SOURCE,
             THEME_PICKER,
             API_STATUS,

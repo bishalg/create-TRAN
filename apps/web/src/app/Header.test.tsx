@@ -37,6 +37,12 @@ describe('Header', () => {
         .getAllByRole('button')
         .map((button) => button.textContent)
     ).toEqual(['Light', 'Dark', 'Black', 'Sepia']);
+    // A scenario's `select` addresses an option by its registry name (ADR-0038).
+    expect(
+      within(themes)
+        .getAllByRole('button')
+        .map((button) => button.getAttribute('value'))
+    ).toEqual(['light', 'dark', 'black', 'sepia']);
     expect(within(themes).getByRole('button', { name: 'Light' })).toHaveAttribute(
       'aria-pressed',
       'true'

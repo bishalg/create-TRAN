@@ -25,6 +25,9 @@
   "submit": "पात्रता जाँचें",
   "submitting": "जाँच हो रही है…",
   "checkOffline": "ऑफ़लाइन जाँचें",
+  "validation": {
+    "label": "इनपुट में समस्या"
+  },
   "offlineNotice": "API उपलब्ध नहीं — Rust Core से मेल खाते ऑफ़लाइन नियम।",
   "verdict": {
     "eligible": "मतदान के लिए पात्र",

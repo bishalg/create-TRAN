@@ -34,8 +34,9 @@ pub fn read_file(path: &Path) -> Result<String, String> {
 }
 
 /// Generated files of the kinds this tool owns that `written` does not include: String Catalogs in
-/// the iOS output (and its `Strings/` folder), and `strings*.xml` in every Android `values*` folder.
-/// Anything else in those folders is left alone.
+/// the iOS output (and its `Strings/` folder), `strings*.xml` in every Android `values*` folder and
+/// `*.feature` in the screen features folder (a removed screen). Anything else in those folders,
+/// and every hand-written feature beside that folder, is left alone.
 pub fn stale_files(
     paths: &CodegenPaths,
     written: &BTreeSet<PathBuf>,
@@ -44,14 +45,16 @@ pub fn stale_files(
     let is_android_strings: Matcher = |name| name.starts_with("strings") && name.ends_with(".xml");
     let ios = &paths.ios_generated_dir;
     // The pre-module layout kept a single `Generated/Localizable.xcstrings`.
+    let is_feature: Matcher = |name| name.ends_with(".feature");
     let catalogs = [ios.join("Strings"), ios.clone()].map(|folder| (folder, is_catalog));
+    let features = [(paths.screen_features_dir.clone(), is_feature)];
     let android = existing(&paths.android_res_dir)?
         .into_iter()
         .filter(|folder| folder.is_dir() && file_name(folder).starts_with("values"))
         .map(|folder| (folder, is_android_strings));
 
     let mut stale = Vec::new();
-    for (folder, matches) in catalogs.into_iter().chain(android) {
+    for (folder, matches) in catalogs.into_iter().chain(features).chain(android) {
         stale.extend(unwritten(&folder, written, matches)?);
     }
     Ok(stale)
@@ -134,21 +137,44 @@ pub(crate) mod tests {
         let colors = touch(root, &format!("{res}/values/colors.xml"));
         let drawable = touch(root, &format!("{res}/drawable/strings_icon.xml"));
         touch(root, &format!("{res}/values-file-not-folder"));
+        let kept_feature = touch(root, "e2e/features/screens/eligibility.feature");
+        let removed_screen = touch(root, "e2e/features/screens/removed.feature");
+        let hand_written = touch(root, "e2e/features/vote-eligibility.feature");
 
-        let written = BTreeSet::from([kept_catalog.clone(), kept_strings.clone()]);
+        let written = BTreeSet::from([
+            kept_catalog.clone(),
+            kept_strings.clone(),
+            kept_feature.clone(),
+        ]);
         let stale = stale_files(&paths, &written).unwrap();
         assert_eq!(
             stale,
-            [old_catalog.clone(), legacy_catalog, dropped_locale.clone()]
+            [
+                old_catalog.clone(),
+                legacy_catalog,
+                removed_screen.clone(),
+                dropped_locale.clone()
+            ]
         );
 
         remove_stale(&stale).unwrap();
         let exists = |paths: &[&PathBuf]| paths.iter().map(|p| p.exists()).collect::<Vec<_>>();
-        assert_eq!(exists(&[&old_catalog, &dropped_locale]), [false, false]);
+        assert_eq!(
+            exists(&[&old_catalog, &dropped_locale, &removed_screen]),
+            [false; 3]
+        );
         // The emptied `values-fr/` goes too.
         assert!(!dropped_locale.parent().unwrap().exists());
-        let kept = [&kept_catalog, &swift, &kept_strings, &colors, &drawable];
-        assert_eq!(exists(&kept), [true; 5]);
+        let kept = [
+            &kept_catalog,
+            &swift,
+            &kept_strings,
+            &colors,
+            &drawable,
+            &kept_feature,
+            &hand_written,
+        ];
+        assert_eq!(exists(&kept), [true; 7]);
         assert_eq!(
             stale_files(&paths, &written).unwrap(),
             Vec::<PathBuf>::new()

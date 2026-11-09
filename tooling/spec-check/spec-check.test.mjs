@@ -81,6 +81,8 @@ describe('isCitingSource', () => {
     for (const path of [
       'packages/core-ts/tests/parity.test.ts',
       'e2e/features/vote-eligibility.feature',
+      // Rendered from the screen contract by `pnpm tokens:sync`: its `@REQ-…` tags cite (REQ-SCR-005).
+      'e2e/features/screens/eligibility.feature',
       'e2e/maestro/flows/offline-eligibility.yaml',
       'crates/rust-core/tests/parity_fixtures.rs',
       'crates/rust-core/src/voting.rs',

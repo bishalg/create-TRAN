@@ -92,6 +92,8 @@ targets:
   TranVotingDemoUITests:
     type: bundle.ui-testing
     platform: iOS
+    # Tests/TranVotingDemoUITests/Resources/screens.json, the scenario catalogue `pnpm tokens:sync`
+    # writes (ADR-0038), is bundled as a resource from this folder: Bundle(for:) loads it.
     sources:
       - Tests/TranVotingDemoUITests
       - Sources/TranVotingDemo/Generated/ScreenContract.swift

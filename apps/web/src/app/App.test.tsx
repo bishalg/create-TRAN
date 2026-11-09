@@ -22,7 +22,8 @@ async function renderApp(opts: Parameters<typeof createFakeApi>[0] = {}, props: 
 
 const ageInput = () => screen.getByLabelText('Your age');
 const countryInput = () => screen.getByLabelText('Country code');
-const submit = () => screen.getByRole('button', { name: /Check eligibility|Checking/ });
+const submit = () =>
+  screen.getByRole('button', { name: /Check offline|Check eligibility|Checking/ });
 
 /** Holds every eligibility answer until `release()`; health and info answer at once. */
 function gateEligibility(api: ReturnType<typeof createFakeApi>) {
@@ -131,7 +132,21 @@ describe('App: accessibility behaviour', () => {
     expect(region).toBeEmptyDOMElement();
 
     await check(user, '30');
-    expect(region).toHaveTextContent('Eligible to vote');
+    // The region announces the reason sentence alone, as the result does on every platform.
+    expect(region).toHaveTextContent(/^Age 30 meets the minimum voting age of 18 in US\.$/);
+    expect(screen.getByRole('heading', { name: 'Eligible to vote' })).toBeVisible();
+  });
+
+  it('labels the device check "Check offline" and gives it the contract id; the server check has none', async () => {
+    const { user } = await renderApp();
+    expect(screen.getByRole('button', { name: 'Check offline' })).toHaveAttribute(
+      'data-testid',
+      ScreenIds.eligibility.checkButton
+    );
+    await user.click(screen.getByRole('radio', { name: /Ask the server/ }));
+    expect(screen.getByRole('button', { name: 'Check eligibility' })).not.toHaveAttribute(
+      'data-testid'
+    );
   });
 });
 
@@ -178,9 +193,9 @@ describe('App: on this device', () => {
     const { user } = await renderApp();
     await check(user, value);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Enter a whole-number age between 0 and 150.'
-    );
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Enter a whole-number age between 0 and 150.');
+    expect(alert).toHaveAttribute('data-testid', ScreenIds.eligibility.validationMessage);
     expect(ageInput()).toBeInvalid();
     expect(screen.queryByRole('heading', { name: /to vote/ })).toBeNull();
   });
@@ -267,7 +282,7 @@ describe('App: ask the server', () => {
     expect(screen.getByText(before)).toBeVisible();
     expect(screen.getByText('Checking with the server…')).toBeVisible();
     expect(screen.queryByText('Checked by the server')).toBeNull();
-    expect(region.querySelector('article')).toHaveAttribute('data-updating', 'true');
+    expect(region.closest('article')).toHaveAttribute('data-updating', 'true');
 
     release();
     expect(
@@ -275,7 +290,7 @@ describe('App: ask the server', () => {
     ).toBeVisible();
     expect(screen.queryByText(before)).toBeNull();
     expect(region).toHaveAttribute('aria-busy', 'false');
-    expect(region.querySelector('article')).not.toHaveAttribute('data-updating');
+    expect(region.closest('article')).not.toHaveAttribute('data-updating');
     expect(screen.getByText('Checked by the server')).toBeVisible();
   });
 
@@ -291,7 +306,7 @@ describe('App: ask the server', () => {
     const region = screen.getByRole('status', { name: 'Result' });
     expect(region).toHaveAttribute('aria-busy', 'false');
     expect(screen.getByText('Checked on this device')).toBeVisible();
-    expect(region.querySelector('article')).not.toHaveAttribute('data-updating');
+    expect(region.closest('article')).not.toHaveAttribute('data-updating');
   });
 
   it('shows a rejected input inline, in the user’s language, without claiming the API is offline', async () => {

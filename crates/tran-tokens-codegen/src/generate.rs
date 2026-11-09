@@ -10,6 +10,8 @@ use crate::locales::{
 };
 use crate::names::pascal_case;
 use crate::scale::Scale;
+use crate::screens_gherkin::render_screen_feature;
+use crate::screens_json::render_screens_json;
 use crate::screens_native::{render_screen_contract_kotlin, render_screen_contract_swift};
 use crate::strings::{
     android_resource_dir, render_android_module_strings, render_translations_json, render_ts_keys,
@@ -102,6 +104,19 @@ pub fn generate_from(
         ),
         file(paths.design_md_path.clone(), render_design_md(snapshot)),
     ];
+    let catalogue = render_screens_json(&screens_json_snapshot());
+    for folder in [
+        &paths.ios_ui_test_resources_dir,
+        &paths.android_test_assets_dir,
+    ] {
+        files.push(file(folder.join("screens.json"), catalogue.clone()));
+    }
+    for screen in &SCREENS {
+        let feature = paths
+            .screen_features_dir
+            .join(format!("{}.feature", screen.id));
+        files.push(file(feature, render_screen_feature(screen)));
+    }
     for module in base.modules.keys() {
         let catalog = ios
             .join("Strings")
@@ -258,6 +273,9 @@ mod tests {
             &paths.ios_generated_dir,
             &paths.android_kotlin_generated_dir,
             &paths.android_res_dir,
+            &paths.screen_features_dir,
+            &paths.ios_ui_test_resources_dir,
+            &paths.android_test_assets_dir,
         ];
         for file in &files {
             let inside = roots.iter().any(|root| file.path.starts_with(root));

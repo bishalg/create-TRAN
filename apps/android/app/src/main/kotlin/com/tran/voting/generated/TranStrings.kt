@@ -137,6 +137,8 @@ object TranStrings {
         @StringRes
         val subtitle: Int = R.string.eligibility_subtitle // eligibility.subtitle
         @StringRes
+        val validationLabel: Int = R.string.eligibility_validation_label // eligibility.validation.label
+        @StringRes
         val verdictEligible: Int = R.string.eligibility_verdict_eligible // eligibility.verdict.eligible
         @StringRes
         val verdictIneligible: Int = R.string.eligibility_verdict_ineligible // eligibility.verdict.ineligible

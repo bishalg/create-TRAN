@@ -14,7 +14,9 @@ This is a **template**: keep the sample tiny, exemplary and fully tested.
 - Design tokens: edit `crates/rust-core/src/tokens.rs`, then `pnpm tokens:sync` (TS, CSS, Swift, Kotlin, root `DESIGN.md` for agents/Stitch). Destinations live in `tooling/design-tokens/codegen.json`; keep the binary in this monorepo (ADR-0025). Pipeline playbook: `docs/DESIGN.md`; do not hand-edit generated `DESIGN.md` (ADR-0026). `cargo test`
   fails while any generated file is stale (ADR-0030).
 - Web UI: token-bound atoms in `apps/web/src/shared/ui/` only (no inline `style` / raw semantic tags in features; see [docs/ATOMIC.md](docs/ATOMIC.md)).
-- New user-visible behaviour needs a Gherkin scenario in `e2e/features/`.
+- New cross-platform screen behaviour starts as a scenario in `crates/rust-core/src/screens/scenarios.rs`
+  (`pnpm tokens:sync` renders it to `e2e/features/screens/`, never edit those); web-only behaviour still gets a
+  hand-written Gherkin scenario in `e2e/features/` (ADR-0038).
 - UI changes: `pnpm visual` / `pnpm android:screenshots` / `pnpm ios:screenshots` (references are local and gitignored — never commit images). A change that may move performance or size: `pnpm metrics`, and `--record` to commit the numbers in `docs/reports/` (ADR-0031). Never hand-edit `docs/reports/`. Release builds: `pnpm smoke`.
 - Native apps: `pnpm ios:build` (XcodeGen; regenerate with `pnpm ios:project`) and `pnpm android:build` stay part of the loop when touching `apps/ios` or `apps/android`.
 - Dependencies: fix an advisory by the smallest bump; if upstream has not bumped, add a ranged override

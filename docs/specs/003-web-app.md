@@ -10,13 +10,15 @@ Scope: behaviour and accessibility of `apps/web`. Rendering, routing and metadat
 
 The user MUST be able to run an eligibility check **on this device** (shared TypeScript rules, no network) or **by the
 server** (Rust via the API). Each mode keeps its own last result; switching mode shows that mode's result.
-**Verified by:** `App.test.tsx`, BDD "device decides" and "server gives the same answer".
+**Verified by:** `App.test.tsx`, the screen scenarios "An adult in Nepal is eligible" and siblings
+(`e2e/features/screens/eligibility.feature`), BDD "server gives the same answer".
 
 ### REQ-WEB-002 [verified] Strict input
 
 The age field MUST accept only whole numbers 0–150 (`"21abc"`, `""`, `"-1"`, `"21.5"` are invalid; nothing is silently
 truncated). The country field MUST be upper-cased and limited to two letters.
-**Verified by:** `parse-age.test.ts`, `App.test.tsx`, BDD "Invalid ages are explained".
+**Verified by:** `parse-age.test.ts`, `App.test.tsx`, the screen scenario "An age that is not a number is explained",
+BDD "Boundary ages are explained".
 
 ### REQ-WEB-003 [verified] Errors are classified, not lumped together
 
@@ -28,7 +30,8 @@ error. A rejection MUST NOT mark the API offline.
 ### REQ-WEB-004 [verified] Device checks survive an outage
 
 When the API is unreachable, checks on this device MUST still work.
-**Verified by:** BDD "Device checks keep working when the API is unreachable".
+**Verified by:** the screen scenario "The device verdict survives an unreachable API"
+(`e2e/features/screens/eligibility.feature`).
 
 ### REQ-WEB-005 [verified] Result is not conveyed by colour alone
 
@@ -104,7 +107,8 @@ Every input MUST have a visible `<label>`; hints MUST be linked with `aria-descr
 
 The result MUST be rendered in a live region (`role="status"`) that exists before the first result; errors MUST use
 `role="alert"`.
-**Verified by:** `App.test.tsx`, BDD "Results are announced to screen readers".
+**Verified by:** `App.test.tsx`, `ResultCard.test.tsx`, the screen scenario "The verdict is announced by the result's live
+region", BDD "The result's live region exists before the first result".
 
 ### REQ-A11Y-004 [verified] Focus management
 

@@ -53,6 +53,14 @@ export function EligibilityPage({
   const fieldCode = ageRejected ? 'validation.age_out_of_range' : api.fieldError?.code;
   const alertKey = ageRejected ? 'errors.ageOutOfRange' : api.fieldError?.spec.messageKey;
   const countryRejected = fieldCode === 'validation.invalid_country_code';
+  // The device check is the contract's check button (ADR-0038); asking the server is web-only and
+  // carries no contract id.
+  const checkButtonId = mode === 'device' ? ScreenIds.eligibility.checkButton : undefined;
+  const submitKey = pending
+    ? 'eligibility.submitting'
+    : mode === 'device'
+      ? 'eligibility.checkOffline'
+      : 'eligibility.submit';
 
   return (
     <>
@@ -104,31 +112,24 @@ export function EligibilityPage({
           type="submit"
           disabled={api.isChecking}
           aria-busy={api.isChecking}
-          data-testid={ScreenIds.eligibility.checkButton}
+          data-testid={checkButtonId}
         >
-          {t(pending ? 'eligibility.submitting' : 'eligibility.submit', locale)}
+          {t(submitKey, locale)}
         </TranButton>
       </form>
 
       {alertKey && (
-        <TranText variant="danger" className="error" role="alert">
+        <TranText
+          variant="danger"
+          className="error"
+          role="alert"
+          data-testid={ScreenIds.eligibility.validationMessage}
+        >
           {t(alertKey, locale)}
         </TranText>
       )}
 
-      {/* Always mounted: screen readers only announce changes inside a region that already exists. */}
-      <div
-        className="result-slot"
-        data-testid={ScreenIds.eligibility.offlineResult}
-        role="status"
-        aria-label={t('eligibility.result.label', locale)}
-        aria-busy={updating}
-      >
-        {result && <ResultCard result={result} locale={locale} updating={updating} />}
-        {updating && !result && (
-          <TranText variant="muted">{t(LOADING_POLICY.pendingMessageKey, locale)}</TranText>
-        )}
-      </div>
+      <ResultCard result={result} locale={locale} updating={updating} />
     </>
   );
 }

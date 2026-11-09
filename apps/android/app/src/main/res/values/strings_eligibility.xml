@@ -32,6 +32,7 @@
     <string name="eligibility_submit">Check eligibility</string>
     <string name="eligibility_submitting">Checking…</string>
     <string name="eligibility_subtitle">Offline voting (UniFFI → rust-core)</string>
+    <string name="eligibility_validation_label">Input problem</string>
     <string name="eligibility_verdict_eligible">Eligible to vote</string>
     <string name="eligibility_verdict_ineligible">Not eligible to vote</string>
 </resources>

@@ -47,23 +47,6 @@ Then('I see the global voting age rules for countries', async ({ page }) => {
   await expect(page.getByText('BR')).toBeVisible();
 });
 
-Given(
-  'I am on the {string} dashboard as {string}',
-  async ({ page }, _dashboard: string, role: string) => {
-    await page.goto('/');
-    await signOut(page);
-    await page.getByRole('button', { name: new RegExp(`Continue as ${role}`) }).click();
-    await expect(page.getByTestId(ScreenIds.eligibility.roleBadge)).toHaveText(role);
-  }
-);
-
 When('I click the sign out button', async ({ page }) => {
   await page.getByTestId(ScreenIds.eligibility.signOutButton).click();
-});
-
-When('I confirm signing out', async ({ page }) => {
-  await page
-    .getByRole('dialog', { name: 'Sign out?' })
-    .getByRole('button', { name: 'Sign out' })
-    .click();
 });

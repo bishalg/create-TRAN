@@ -24,6 +24,7 @@
 		3A8B39AC561AF19A119D6CED /* ServerConfirmation.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCCE0CE297BF291A83E2AF8B /* ServerConfirmation.swift */; };
 		3C5A80F935B5ADEDDB2895E2 /* TranApiStub.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB6DC8233A9ED541C7A22F7D /* TranApiStub.swift */; };
 		3D08EBFB3CBC04C780A05C6C /* VoteEligibilityParityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2416105BFC37987133B79587 /* VoteEligibilityParityTests.swift */; };
+		3D743A56CCDB211CAD3C1BB0 /* screens.json in Resources */ = {isa = PBXBuildFile; fileRef = A11501118A23965A69E81723 /* screens.json */; };
 		3F5C9C2AC33FF4D365E265DE /* TranApiStubTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECA1515D07C3D2B19C4269EC /* TranApiStubTests.swift */; };
 		4064B4A0E18C8AA31EE28915 /* tran_uniffi.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2AF051840CF2BCD45F86C7 /* tran_uniffi.swift */; };
 		4BB5334E4B2D08172421A102 /* TranReferenceDate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B83934E01F2D9C881B1710ED /* TranReferenceDate.swift */; };
@@ -130,6 +131,7 @@
 		8E88174C22C857E2C4A32A1C /* AuthWelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthWelcomeView.swift; sourceTree = "<group>"; };
 		909818B002EAE3A6B7CF3660 /* TranGap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranGap.swift; sourceTree = "<group>"; };
 		9C81897D258076C9D6DAA915 /* FeedbackParityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackParityTests.swift; sourceTree = "<group>"; };
+		A11501118A23965A69E81723 /* screens.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = screens.json; sourceTree = "<group>"; };
 		A926F22DCF183846E1B15619 /* TranField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranField.swift; sourceTree = "<group>"; };
 		B2004B2EEC44B7971ED61E9C /* TranDialog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranDialog.swift; sourceTree = "<group>"; };
 		B390E496B5F1AF4FB4F92F21 /* Errors.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Errors.xcstrings; sourceTree = "<group>"; };
@@ -244,6 +246,14 @@
 			path = UniFFI;
 			sourceTree = "<group>";
 		};
+		9A1ED9BB3087CAF9950F2EEB /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A11501118A23965A69E81723 /* screens.json */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		AB32CD1BAF24E68C58430743 /* Api */ = {
 			isa = PBXGroup;
 			children = (
@@ -288,6 +298,7 @@
 			isa = PBXGroup;
 			children = (
 				B85C1ED9728B5EF5BE132CA8 /* VotingUITests.swift */,
+				9A1ED9BB3087CAF9950F2EEB /* Resources */,
 			);
 			path = TranVotingDemoUITests;
 			sourceTree = "<group>";
@@ -363,6 +374,7 @@
 			buildConfigurationList = 2DBA3F655179BEA56BB39EC0 /* Build configuration list for PBXNativeTarget "TranVotingDemoUITests" */;
 			buildPhases = (
 				A32CD854018318779464B264 /* Sources */,
+				6C44F213BB117B3032A00DA0 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -456,6 +468,14 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		6C44F213BB117B3032A00DA0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3D743A56CCDB211CAD3C1BB0 /* screens.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CD90DC4E1E289E9FAFE7DE67 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;

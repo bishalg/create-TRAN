@@ -21,6 +21,8 @@ pub mod locales;
 pub mod names;
 pub mod rules_ts;
 pub mod scale;
+pub mod screens_gherkin;
+pub mod screens_json;
 pub mod screens_native;
 pub mod screens_ts;
 pub mod strings;
