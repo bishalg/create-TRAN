@@ -1,4 +1,4 @@
-// Verifies: REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-010 REQ-ERR-012 REQ-ERR-014
+// Verifies: REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-010 REQ-ERR-012 REQ-ERR-014 REQ-ACC-005
 package com.tran.voting.ui.feedback
 
 import android.util.Log
@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.tran.voting.api.TranRequestFailure
+import com.tran.voting.generated.ScreenContract
 import com.tran.voting.generated.TranStrings
 import com.tran.voting.generated.feedbackMessageRes
 import java.util.UUID
@@ -41,8 +42,21 @@ class TranConfirmation(
     val confirmRes: Int,
     val cancelRes: Int = TranStrings.Common.cancel,
     val destructive: Boolean,
+    /** The contract ids of its buttons: each action's dialog has its own (REQ-ACC-005). */
+    val tags: DialogTags = DialogTags.Shared,
     val onConfirm: () -> Unit,
 )
+
+/** Body, confirm label and button ids of an action's dialog; the title is the catalogue's `messageKey`. */
+data class ActionDialogCopy(val body: Int, val confirm: Int, val tags: DialogTags = DialogTags.Shared)
+
+/** The screen contract ids of a dialog's confirm and cancel buttons. */
+data class DialogTags(val confirm: String, val cancel: String) {
+    companion object {
+        /** The shared confirm and cancel ids of the sign-out and session-expired dialogs. */
+        val Shared = DialogTags(ScreenContract.Eligibility.dialogConfirm, ScreenContract.Eligibility.dialogCancel)
+    }
+}
 
 /**
  * The Android implementation of the Rust feedback policy (ADR-0028, ADR-0036). Screens say *what*
@@ -80,9 +94,10 @@ class TranFeedback(
         }
         confirmation = TranConfirmation(
             titleRes = messageRes(spec.messageKey),
-            bodyRes = copy.first,
-            confirmRes = copy.second,
+            bodyRes = copy.body,
+            confirmRes = copy.confirm,
             destructive = presentation.destructive,
+            tags = copy.tags,
             onConfirm = {
                 confirmation = null
                 perform()
@@ -184,12 +199,18 @@ class TranFeedback(
                 "request_id=${failure.requestId ?: "-"}"
 
         /**
-         * Body and confirm label per action; the title is the catalogue's `messageKey`. Exhaustive,
-         * so a new action from Rust fails to compile until it has copy.
+         * Body, confirm label and button ids per action; the title is the catalogue's `messageKey`.
+         * Exhaustive, so a new action from Rust fails to compile until it has copy.
          */
-        fun dialogCopy(action: TranUserAction): Pair<Int, Int>? = when (action) {
-            TranUserAction.SIGN_OUT -> TranStrings.Auth.signOutConfirmBody to TranStrings.Common.signOut
-            TranUserAction.SERVER_CHECK_SUCCEEDED -> null
+        fun dialogCopy(action: TranUserAction): ActionDialogCopy? = when (action) {
+            TranUserAction.SIGN_OUT -> ActionDialogCopy(TranStrings.Auth.signOutConfirmBody, TranStrings.Common.signOut)
+            // Its own buttons: the confirm names the action, never "Sign out" (REQ-ACC-005).
+            TranUserAction.DELETE_ACCOUNT -> ActionDialogCopy(
+                body = TranStrings.Auth.deleteAccountConfirmBody,
+                confirm = TranStrings.Common.deleteAccount,
+                tags = DialogTags(ScreenContract.Eligibility.deleteAccountConfirm, ScreenContract.Eligibility.deleteAccountCancel),
+            )
+            TranUserAction.SERVER_CHECK_SUCCEEDED, TranUserAction.ACCOUNT_DELETED -> null
         }
 
         /** Dialog copy for failures the catalogue presents as a dialog; a parity test keeps it complete. */

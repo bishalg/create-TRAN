@@ -555,6 +555,23 @@
         "duration": "short"
       },
       "messageKey": "eligibility.serverCheckDone"
+    },
+    {
+      "action": "delete_account",
+      "presentation": {
+        "kind": "dialog",
+        "destructive": true
+      },
+      "messageKey": "auth.deleteAccountConfirm.title"
+    },
+    {
+      "action": "account_deleted",
+      "presentation": {
+        "kind": "toast",
+        "tone": "success",
+        "duration": "medium"
+      },
+      "messageKey": "auth.accountDeleted"
     }
   ]
 }

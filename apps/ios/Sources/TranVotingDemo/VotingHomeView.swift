@@ -22,6 +22,8 @@ struct VotingHomeView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var onSignOut: (() -> Void)? = nil
+    /// Asks, then deletes; a failure comes back for the screen's own banner (REQ-ACC-006).
+    var onDeleteAccount: TranAccountDeletion.Request? = nil
     var api: TranApiClient = TranApiClient()
 
     var body: some View {
@@ -29,22 +31,15 @@ struct VotingHomeView: View {
             ScrollView {
                 TranBox(padding: .lg) {
                     TranStack(gap: .md, alignment: .leading) {
-                        TranInline(gap: .md) {
-                            TranStack(gap: .xs, alignment: .leading) {
-                                TranText(L10n.Shell.header("iOS"), variant: .title)
-                                TranText(L10n.Eligibility.subtitle, variant: .muted)
-                                TranText(L10n.Common.roleCitizenVoter, variant: .caption, label: L10n.Common.roleLabel)
-                                    .accessibilityIdentifier(ScreenContract.Eligibility.roleBadge)
-                            }
-                            // The titles take what the button leaves, wrapping on a narrow screen or at
-                            // the largest text size, as on Android (REQ-NAT-004, REQ-NAT-013).
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            if let onSignOut {
-                                TranButton(label: L10n.Common.signOut, variant: .secondary, size: .md) {
-                                    onSignOut()
-                                }
-                                .accessibilityIdentifier(ScreenContract.Eligibility.signOutButton)
-                            }
+                        if let onSignOut, let onDeleteAccount {
+                            SignedInHeader(
+                                signOutId: ScreenContract.Eligibility.signOutButton,
+                                deleteAccountId: ScreenContract.Eligibility.deleteAccountButton,
+                                onSignOut: onSignOut,
+                                onDeleteAccount: { onDeleteAccount { failure in failed(failure) } }
+                            ) { titles }
+                        } else {
+                            titles
                         }
 
                         TranStack(gap: .base, alignment: .leading) {
@@ -136,6 +131,15 @@ struct VotingHomeView: View {
         .onDisappear {
             confirmation.cancel()
             recovery.stop()
+        }
+    }
+
+    private var titles: some View {
+        TranStack(gap: .xs, alignment: .leading) {
+            TranText(L10n.Shell.header("iOS"), variant: .title)
+            TranText(L10n.Eligibility.subtitle, variant: .muted)
+            TranText(L10n.Common.roleCitizenVoter, variant: .caption, label: L10n.Common.roleLabel)
+                .accessibilityIdentifier(ScreenContract.Eligibility.roleBadge)
         }
     }
 

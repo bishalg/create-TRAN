@@ -13,6 +13,7 @@ import {
   type ErrorCode,
   logFailure,
   type Presentation,
+  ScreenIds,
   type SupportedLocale,
   t,
   TOAST_DURATIONS_MS,
@@ -46,6 +47,9 @@ export interface DialogCopy {
   confirm: TranStringKey;
   /** Defaults to `common.cancel`. */
   cancel?: TranStringKey;
+  /** The buttons' screen contract ids, when the contract declares this dialog's own. */
+  confirmId?: string;
+  cancelId?: string;
 }
 
 /**
@@ -55,6 +59,14 @@ export interface DialogCopy {
 export const DIALOG_COPY: Record<UserAction, DialogCopy | null> = {
   sign_out: { body: 'auth.signOutConfirm.body', confirm: 'common.signOut' },
   server_check_succeeded: null,
+  // Its own ids, so a scenario can never confirm a deletion by tapping the sign-out dialog.
+  delete_account: {
+    body: 'auth.deleteAccountConfirm.body',
+    confirm: 'common.deleteAccount',
+    confirmId: ScreenIds.eligibility.deleteAccountConfirm,
+    cancelId: ScreenIds.eligibility.deleteAccountCancel,
+  },
+  account_deleted: null,
 };
 
 /** Dialog copy for failures the catalogue presents as a dialog; a test keeps it complete. */
@@ -211,6 +223,8 @@ export function FeedbackProvider({ locale, children }: FeedbackProviderProps) {
           confirmLabel={t(pending.copy.confirm, locale)}
           cancelLabel={t(pending.copy.cancel ?? 'common.cancel', locale)}
           destructive={pending.destructive}
+          confirmTestId={pending.copy.confirmId}
+          cancelTestId={pending.copy.cancelId}
           onConfirm={() => settle(true)}
           onCancel={() => settle(false)}
         />

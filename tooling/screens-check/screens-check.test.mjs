@@ -56,7 +56,7 @@ function passing(platform) {
     for (const state of states) {
       if (contract.unreached.has(state)) continue;
       const extra = screen.elements.filter((e) => e.state === state).map((e) => node(platform, e));
-      const modal = state === 'sign_out_confirm';
+      const modal = state.endsWith('_confirm');
       snapshots.push({
         platform,
         scenario,

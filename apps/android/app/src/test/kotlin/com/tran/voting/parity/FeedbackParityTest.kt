@@ -1,7 +1,8 @@
-// Verifies: REQ-ERR-001 REQ-ERR-010 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-009
+// Verifies: REQ-ERR-001 REQ-ERR-010 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-009 REQ-ACC-005
 package com.tran.voting.parity
 
 import com.tran.voting.api.TranRequestFailure
+import com.tran.voting.generated.ScreenContract
 import com.tran.voting.generated.TranStrings
 import com.tran.voting.generated.feedbackMessageRes
 import com.tran.voting.ui.feedback.TranFeedback
@@ -174,6 +175,36 @@ class FeedbackParityTest {
         feedback.confirmation!!.onConfirm()
         assertTrue(signedOut)
         assertNull(feedback.confirmation)
+    }
+
+    @Test
+    fun deletingTheAccountAsksFirstWithItsOwnCopyAndButtons() {
+        val feedback = quietFeedback()
+        var deleted = false
+        feedback.confirm(TranUserAction.DELETE_ACCOUNT) { deleted = true }
+        val pending = feedback.confirmation!!
+        assertEquals(TranStrings.Auth.deleteAccountConfirmTitle, pending.titleRes)
+        assertEquals(TranStrings.Auth.deleteAccountConfirmBody, pending.bodyRes)
+        assertEquals(TranStrings.Common.deleteAccount, pending.confirmRes)
+        assertEquals(TranStrings.Common.cancel, pending.cancelRes)
+        assertTrue(pending.destructive)
+        // Not the sign-out dialog's buttons: the contract tells the two apart (REQ-ACC-005).
+        assertEquals(ScreenContract.Eligibility.deleteAccountConfirm, pending.tags.confirm)
+        assertEquals(ScreenContract.Eligibility.deleteAccountCancel, pending.tags.cancel)
+        assertFalse("nothing happens until the user confirms", deleted)
+
+        feedback.cancelConfirmation()
+        assertFalse(deleted)
+    }
+
+    @Test
+    fun aDeletedAccountIsAcknowledgedWithASuccessToast() {
+        val feedback = quietFeedback()
+        feedback.acknowledge(TranUserAction.ACCOUNT_DELETED)
+        val toast = feedback.toast!!
+        assertEquals(TranToastTone.SUCCESS, toast.tone)
+        assertEquals(TranStrings.Auth.accountDeleted, toast.messageRes)
+        assertNull(TranFeedback.dialogCopy(TranUserAction.ACCOUNT_DELETED))
     }
 
     @Test

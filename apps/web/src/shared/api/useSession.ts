@@ -43,6 +43,8 @@ const log = (failure: unknown) => logFailure(classifyError(failure));
  * - Sign-in: the device session starts at once and works offline; the API session is established
  *   behind it, and its failure only reaches the log (ADR-0039, decision 7).
  * - Sign-out: the device forgets the session first, then tells the server (REQ-SEC-022).
+ * - Deletion: the opposite order. The server decides, and only its success signs the device out
+ *   and acknowledges it (REQ-ACC-006); a failure leaves the session exactly as it was.
  * - A session the recovery table signed out opens the `auth.session_expired` dialog (REQ-ERR-010).
  */
 export function useSession({ feedback, initialSession, client: injected }: UseSessionOptions) {
@@ -97,5 +99,19 @@ export function useSession({ feedback, initialSession, client: injected }: UseSe
     void client.signOut().then((failure) => failure && log(failure));
   }, [client]);
 
-  return { session, signIn, signOut };
+  /** Resolves `null` once the server deleted the account and the device followed, else the
+   * failure, untouched, for the screen to report. */
+  const deleteAccount = useCallback(async (): Promise<unknown> => {
+    try {
+      await client.deleteAccount();
+    } catch (failure) {
+      return failure;
+    }
+    epoch.current += 1;
+    setSession(SIGNED_OUT);
+    feedback.acknowledge('account_deleted');
+    return null;
+  }, [client, feedback]);
+
+  return { session, signIn, signOut, deleteAccount };
 }

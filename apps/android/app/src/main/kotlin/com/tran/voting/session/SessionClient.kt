@@ -1,4 +1,4 @@
-// Verifies: REQ-SEC-014 REQ-SEC-015 REQ-SEC-016 REQ-SEC-017 REQ-SEC-022
+// Verifies: REQ-SEC-014 REQ-SEC-015 REQ-SEC-016 REQ-SEC-017 REQ-SEC-022 REQ-ACC-006
 package com.tran.voting.session
 
 import com.tran.voting.api.TranApiClient
@@ -37,6 +37,8 @@ data class SessionUser(val userId: String, val role: TranUserRole)
  * and the Rust `sessionRecovery` decision stay in plain, testable code instead of OkHttp's threads.
  *
  * No token is ever logged: log lines are `TranFeedback.logLine` (code, status, request id only).
+ * One event per failure (REQ-ROB-007): a failure this client throws is the caller's to log and
+ * present (`TranFeedback.report` or `log`); only one it swallows (the sign-out revoke) is logged here.
  */
 class SessionClient(
     private val vault: SessionVault,
@@ -52,6 +54,7 @@ class SessionClient(
 
     private val lock = Any()
     private var inFlight: CompletableDeferred<RefreshOutcome>? = null
+    private var deletion: CompletableDeferred<Throwable?>? = null
 
     /** Whether an access token is held in memory (never exposed itself). */
     val hasAccessToken: Boolean get() = accessToken != null
@@ -63,14 +66,47 @@ class SessionClient(
     suspend fun signIn(role: TranUserRole): SessionUser {
         val body = JSONObject().put("role", role.wire).put("transport", "body")
         val answer = send(post("/api/auth/session", body))
-        answer.failure?.let { throw logged(it) }
+        answer.failure?.let { throw it }
         return store(answer.json())
     }
 
     /** `GET /api/auth/session`: who the stored session belongs to, refreshing once if needed. */
     suspend fun currentUser(): SessionUser {
-        val json = authorized { Request.Builder().url(url("/api/auth/session")).get() }
-        return user(json)
+        val answer = authorized { Request.Builder().url(url("/api/auth/session")).get() }
+        return user(answer.json())
+    }
+
+    /**
+     * `DELETE /api/account` (spec 024, ADR-0041 decision 4): the server decides, then the device
+     * follows. Only a `2xx` clears the vault and the access token; any failure is thrown with the
+     * session untouched, except a `401` that Rust's `sessionRecovery` turns into a sign-out.
+     *
+     * Unlike other calls, a device with no credential at all still asks: its session may be one whose
+     * API sign-in never landed, and only the server's `401` (not the missing token) may end it, so
+     * an unreachable server keeps the user where they are.
+     *
+     * Single-flight (REQ-ACC-006): a call made while one is in flight sends nothing and shares its
+     * outcome, so a second `DELETE` never answers `401` for an account the first one just deleted.
+     */
+    suspend fun deleteAccount() {
+        val (shared, owner) = synchronized(lock) {
+            deletion?.let { return@synchronized it to false }
+            CompletableDeferred<Throwable?>().also { deletion = it } to true
+        }
+        if (!owner) {
+            shared.await()?.let { throw it }
+            return
+        }
+        val outcome = try {
+            authorized(askWithoutCredential = true) { Request.Builder().url(url("/api/account")).delete() }
+            endLocally()
+            null
+        } catch (failure: Throwable) {
+            failure
+        }
+        synchronized(lock) { deletion = null }
+        shared.complete(outcome)
+        outcome?.let { throw it }
     }
 
     /**
@@ -104,16 +140,19 @@ class SessionClient(
     /**
      * Sends a request with `Authorization: Bearer`; on `401` asks Rust what to do (REQ-SEC-015),
      * refreshing at most once and repeating the call once with the new token.
+     * [askWithoutCredential] sends the call bare when there is neither an access nor a refresh token.
      */
-    private suspend fun authorized(build: () -> Request.Builder): JSONObject {
+    private suspend fun authorized(askWithoutCredential: Boolean = false, build: () -> Request.Builder): Answer {
         var retried = false
         while (true) {
             val token = accessToken
-            // After a restart there is no access token: that is a 401 we need not send to learn.
-            if (token != null) {
-                val answer = send(build().header("Authorization", "Bearer $token").build())
-                if (answer.failure == null) return answer.json()
-                if (answer.failure.status != UNAUTHORIZED) throw logged(answer.failure)
+            // After a restart there is no access token: that is a 401 we need not send to learn,
+            // unless the caller must hear it from the server.
+            if (token != null || (askWithoutCredential && vault.read() == null)) {
+                val request = build().apply { if (token != null) header("Authorization", "Bearer $token") }.build()
+                val answer = send(request)
+                if (answer.failure == null) return answer
+                if (answer.failure.status != UNAUTHORIZED) throw answer.failure
             }
             val event = TranSessionEvent.Unauthorized(hasRefreshCredential = vault.read() != null, alreadyRetried = retried)
             when (sessionRecovery(event)) {
@@ -159,7 +198,7 @@ class SessionClient(
         } catch (failure: TranRequestFailure) {
             // No HTTP answer at all.
             val event = sessionRefreshEvent(null) ?: TranSessionEvent.RefreshFailed
-            return RefreshOutcome.Failed(sessionRecovery(event), logged(failure))
+            return RefreshOutcome.Failed(sessionRecovery(event), failure)
         }
         val status = answer.status.coerceIn(0, 65535).toUShort()
         val event = sessionRefreshEvent(status)
@@ -167,16 +206,16 @@ class SessionClient(
                 store(answer.json())
                 RefreshOutcome.Refreshed
             } catch (failure: TranRequestFailure) {
-                RefreshOutcome.Failed(sessionRecovery(TranSessionEvent.RefreshFailed), logged(failure))
+                RefreshOutcome.Failed(sessionRecovery(TranSessionEvent.RefreshFailed), failure)
             }
-        return RefreshOutcome.Failed(sessionRecovery(event), logged(answer.failure ?: expired()))
+        return RefreshOutcome.Failed(sessionRecovery(event), answer.failure ?: expired())
     }
 
     /** Applies a Rust action that ends the call: `SIGN_OUT` forgets the session; `KEEP` keeps it. */
     private fun act(action: TranSessionAction, failure: TranRequestFailure): TranRequestFailure = when (action) {
         TranSessionAction.SIGN_OUT -> {
             endLocally()
-            logged(expired())
+            expired()
         }
         TranSessionAction.KEEP, TranSessionAction.REFRESH -> failure
     }
@@ -246,6 +285,15 @@ class SessionClient(
     }
 
     companion object {
+        /**
+         * A client with no stored session, on [api]'s server and transport: what a device session
+         * without an API session (the screen contract's preset, a sign-in that never reached the
+         * API) uses to delete the account. It holds no credential, so the server's answer decides:
+         * `401` ends the session, no answer keeps it. The app passes its vault-backed client instead.
+         */
+        fun deviceOnly(api: TranApiClient): SessionClient =
+            SessionClient(InMemorySessionVault(), baseUrl = api.baseUrl, http = api.http, io = api.io)
+
         private const val UNAUTHORIZED = 401
         private val JSON = "application/json".toMediaType()
     }

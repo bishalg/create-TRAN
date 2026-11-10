@@ -1,4 +1,4 @@
-// Verifies: REQ-SEC-021
+// Verifies: REQ-SEC-021 REQ-ROB-007
 package com.tran.voting.session
 
 import com.tran.voting.api.TranRequestFailure
@@ -27,11 +27,17 @@ fun restoredSession(vault: SessionVault): AuthSession =
 /**
  * Validates the restored session against `GET /api/auth/session`, refreshing first when needed. The
  * client already acted on Rust's `sessionRecovery`; this only names the result for the UI. An
- * unreachable API never signs the user out.
+ * unreachable API never signs the user out. A kept failure is shown nowhere, so it goes to [log]
+ * (its one event, REQ-ROB-007); a sign-out is logged when the caller presents it.
  */
-suspend fun validateRestoredSession(client: SessionClient): RestoreOutcome = try {
+suspend fun validateRestoredSession(client: SessionClient, log: (TranRequestFailure) -> Unit = {}): RestoreOutcome = try {
     client.currentUser()
     RestoreOutcome.VALID
 } catch (failure: TranRequestFailure) {
-    if (failure.code == TranErrorCode.AUTH_SESSION_EXPIRED) RestoreOutcome.SIGNED_OUT else RestoreOutcome.KEPT
+    if (failure.code == TranErrorCode.AUTH_SESSION_EXPIRED) {
+        RestoreOutcome.SIGNED_OUT
+    } else {
+        log(failure)
+        RestoreOutcome.KEPT
+    }
 }

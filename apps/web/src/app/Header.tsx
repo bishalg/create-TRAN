@@ -26,6 +26,10 @@ export interface HeaderProps {
   currentRole?: import('@tran/core').UserRole | null;
   /** May open a confirmation first, so it can be async. */
   onSignOut?: () => void | Promise<void>;
+  /** Shown beside sign-out on every signed-in screen (REQ-ACC-004); asks first, so it can be async. */
+  onDeleteAccount?: () => void | Promise<void>;
+  /** A deletion is in flight: the control is busy and starts no other (REQ-ACC-006). */
+  deletingAccount?: boolean;
 }
 
 export function Header({
@@ -35,6 +39,8 @@ export function Header({
   onThemeChange,
   currentRole,
   onSignOut,
+  onDeleteAccount,
+  deletingAccount = false,
 }: HeaderProps) {
   return (
     <header className="header">
@@ -126,6 +132,21 @@ export function Header({
             aria-label={t('common.signOut', locale)}
           >
             {t('common.signOut', locale)}
+          </TranButton>
+        )}
+
+        {onDeleteAccount && (
+          <TranButton
+            type="button"
+            variant="danger"
+            size="md"
+            className="delete-account-button"
+            data-testid={ScreenIds.eligibility.deleteAccountButton}
+            disabled={deletingAccount}
+            aria-busy={deletingAccount}
+            onClick={() => void onDeleteAccount()}
+          >
+            {t('common.deleteAccount', locale)}
           </TranButton>
         )}
       </div>

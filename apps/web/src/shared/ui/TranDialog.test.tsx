@@ -1,5 +1,6 @@
 // Verifies: REQ-ERR-006 REQ-ERR-007
 import { fireEvent, render, screen } from '@testing-library/react';
+import { ScreenIds } from '@tran/core';
 import { describe, expect, it, vi } from 'vitest';
 import { TranDialog } from './TranDialog.js';
 
@@ -61,6 +62,40 @@ describe('TranDialog', () => {
     const dialog = screen.getByRole('dialog');
     unmount();
     expect(dialog).not.toHaveAttribute('open');
+  });
+
+  // Verifies: REQ-ACC-005 — each confirmation can name its own buttons in the screen contract.
+  it('carries the generic dialog ids unless the caller names its own', () => {
+    const { unmount } = renderDialog(true);
+    expect(screen.getByRole('button', { name: 'Sign out' })).toHaveAttribute(
+      'data-testid',
+      ScreenIds.eligibility.dialogConfirm
+    );
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveAttribute(
+      'data-testid',
+      ScreenIds.eligibility.dialogCancel
+    );
+    unmount();
+
+    render(
+      <TranDialog
+        title="Delete?"
+        confirmLabel="Delete"
+        cancelLabel="Keep"
+        confirmTestId={ScreenIds.eligibility.deleteAccountConfirm}
+        cancelTestId={ScreenIds.eligibility.deleteAccountCancel}
+        onConfirm={() => {}}
+        onCancel={() => {}}
+      />
+    );
+    expect(screen.getByRole('button', { name: 'Delete' })).toHaveAttribute(
+      'data-testid',
+      ScreenIds.eligibility.deleteAccountConfirm
+    );
+    expect(screen.getByRole('button', { name: 'Keep' })).toHaveAttribute(
+      'data-testid',
+      ScreenIds.eligibility.deleteAccountCancel
+    );
   });
 
   it('has no description when there is no body', () => {

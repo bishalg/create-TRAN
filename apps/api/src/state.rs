@@ -3,6 +3,7 @@ use std::time::Instant;
 
 use rust_core::TranEngine;
 
+use crate::account::{AccountEraser, SessionsOnly};
 use crate::config::{AppConfig, LOCAL_DEV_ORIGINS};
 use crate::sessions::Sessions;
 
@@ -23,6 +24,8 @@ pub struct AppState {
     pub allow_debug_headers: bool,
     pub edge: EdgePolicy,
     pub sessions: Sessions,
+    /// What `DELETE /api/account` erases (REQ-ACC-001); a fork puts its own tables here.
+    pub eraser: Arc<dyn AccountEraser>,
 }
 
 impl AppState {
@@ -38,6 +41,7 @@ impl AppState {
                 requires_https: false,
             },
             sessions: Sessions::in_memory(),
+            eraser: Arc::new(SessionsOnly),
         }
     }
 

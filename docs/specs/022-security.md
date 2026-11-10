@@ -110,16 +110,17 @@ to repeat.
 
 ### REQ-SEC-012 [verified] Auth endpoints reject a foreign origin
 
-A request to `/api/auth/*` whose `Origin` header is present and not in the CORS allowlist (REQ-API-007) MUST answer
-`403` `auth.forbidden` and change nothing. A request without `Origin` (a native client, a server) is not affected.
-**Verified by:** `auth_test.rs` (`foreign_origin_*`).
+A request to `/api/auth/*` (or to `/api/account`, REQ-ACC-001) whose `Origin` header is present and not in the CORS
+allowlist (REQ-API-007) MUST answer `403` `auth.forbidden` and change nothing. A request without `Origin` (a native
+client, a server) is not affected.
+**Verified by:** `auth_test.rs` (`foreign_origin_*`), `account_test.rs` (`foreign_origin_cannot_delete_the_account`).
 
 ### REQ-SEC-013 [verified] Every API response carries the security headers
 
 Every response MUST carry `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY`
 and `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'`. When `APP_ENV` is not `development` or
-`test` it MUST also carry `Strict-Transport-Security: max-age=63072000; includeSubDomains`. Every `/api/auth/*`
-response MUST carry `Cache-Control: no-store`.
+`test` it MUST also carry `Strict-Transport-Security: max-age=63072000; includeSubDomains`. Every `/api/auth/*` and
+`/api/account` response MUST carry `Cache-Control: no-store`.
 **Verified by:** `apps/api/tests/security_headers_test.rs`.
 
 ### REQ-SEC-014 [verified] Tokens never reach a log, an error body or a report

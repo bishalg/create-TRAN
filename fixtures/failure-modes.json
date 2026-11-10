@@ -273,6 +273,22 @@
       },
       "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" },
       "mustNotLeak": ["{refresh_token}", "{access_token}", "SENTINEL-role"]
+    },
+    {
+      "id": "FM-A08",
+      "name": "account deletion with the refresh token as the bearer and in the cookie",
+      "setup": { "transport": "cookie" },
+      "request": {
+        "method": "DELETE",
+        "path": "/api/account",
+        "headers": {
+          "authorization": "Bearer {refresh_token}",
+          "cookie": "tran_refresh={refresh_token}"
+        },
+        "contentType": null
+      },
+      "expect": { "status": 401, "code": "auth.session_expired", "logLevel": "info" },
+      "mustNotLeak": ["{refresh_token}", "{access_token}", "voter-001"]
     }
   ],
   "responses": [

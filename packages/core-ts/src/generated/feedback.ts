@@ -29,7 +29,9 @@ export type ErrorCode =
 
 export type UserAction =
   | 'sign_out'
-  | 'server_check_succeeded';
+  | 'server_check_succeeded'
+  | 'delete_account'
+  | 'account_deleted';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -235,6 +237,16 @@ export const ACTION_CATALOGUE: readonly ActionSpec[] = [
     action: 'server_check_succeeded',
     presentation: { kind: 'toast', tone: 'success', duration: 'short' },
     messageKey: 'eligibility.serverCheckDone',
+  },
+  {
+    action: 'delete_account',
+    presentation: { kind: 'dialog', destructive: true },
+    messageKey: 'auth.deleteAccountConfirm.title',
+  },
+  {
+    action: 'account_deleted',
+    presentation: { kind: 'toast', tone: 'success', duration: 'medium' },
+    messageKey: 'auth.accountDeleted',
   },
 ];
 

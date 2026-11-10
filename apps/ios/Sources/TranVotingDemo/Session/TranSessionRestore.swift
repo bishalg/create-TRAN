@@ -1,4 +1,4 @@
-// Verifies: REQ-SEC-021
+// Verifies: REQ-SEC-021 REQ-ROB-007
 import Foundation
 
 /// The background half of launch (REQ-SEC-021): the Splash has already routed from the vault;
@@ -11,7 +11,8 @@ enum TranSessionRestore {
         _ client: TranSessionClient, feedback: TranFeedback
     ) async -> TranSessionClient.Validation {
         let outcome = await client.validate()
-        if outcome == .signedOut { feedback.report(TranSessionClient.expired) }
+        // The client logged the request that failed; present only, so it is one event (REQ-ROB-007).
+        if outcome == .signedOut { feedback.present(TranSessionClient.expired) }
         return outcome
     }
 }

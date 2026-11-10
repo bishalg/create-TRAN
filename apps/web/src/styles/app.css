@@ -392,7 +392,8 @@ main:focus {
   color: var(--btn-fg);
 }
 
-.tran-button.sign-out-button {
+.tran-button.sign-out-button,
+.tran-button.delete-account-button {
   min-height: var(--tran-spacing-touch);
 }
 
@@ -850,4 +851,31 @@ main:focus {
     opacity: 0;
     transform: translateY(var(--tran-spacing-sm));
   }
+}
+
+/* ── Public account-deletion page (REQ-ACC-007): static, no script ─────────────────────────── */
+
+/* Links that act as buttons on the static page share the button's look and touch size. */
+a.tran-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.deletion-steps {
+  margin: 0;
+  padding-inline-start: var(--tran-spacing-lg);
+}
+
+.deletion-steps > li + li {
+  margin-top: var(--tran-spacing-sm);
+}
+
+.deletion-open-app {
+  align-self: flex-start;
+}
+
+.deletion-section {
+  scroll-margin-top: var(--tran-spacing-md);
 }

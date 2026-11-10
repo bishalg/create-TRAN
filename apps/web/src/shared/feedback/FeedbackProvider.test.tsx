@@ -1,9 +1,10 @@
-// Verifies: REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-010 REQ-ERR-012
+// Verifies: REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-010 REQ-ERR-012 REQ-ACC-005
 import { act, render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   ACTION_CATALOGUE,
   ERROR_CATALOGUE,
+  ScreenIds,
   TranRequestError,
   type SupportedLocale,
 } from '@tran/core';
@@ -150,6 +151,35 @@ describe('FeedbackProvider: confirm', () => {
 
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
     await expect(answer!).resolves.toBe(false);
+  });
+
+  it('asks before deleting the account, says it is permanent and names its own buttons', async () => {
+    const user = userEvent.setup();
+    const feedback = mount();
+    let answer: Promise<boolean>;
+    act(() => {
+      answer = feedback().confirm('delete_account');
+    });
+
+    const dialog = screen.getByRole('dialog', { name: 'Delete your account?' });
+    expect(dialog).toHaveTextContent(/deleted permanently/);
+    const cancel = screen.getByTestId(ScreenIds.eligibility.deleteAccountCancel);
+    const confirm = screen.getByTestId(ScreenIds.eligibility.deleteAccountConfirm);
+    // Destructive: Cancel has focus, the confirm names the action and is styled as danger.
+    expect(cancel).toHaveFocus();
+    expect(cancel).toHaveTextContent('Cancel');
+    expect(confirm).toHaveTextContent('Delete account');
+    expect(confirm).toHaveAttribute('data-variant', 'danger');
+    expect(screen.queryByTestId(ScreenIds.eligibility.dialogConfirm)).toBeNull();
+
+    await user.click(confirm);
+    await expect(answer!).resolves.toBe(true);
+  });
+
+  it('acknowledges a deleted account with a success toast', () => {
+    const feedback = mount();
+    act(() => feedback().acknowledge('account_deleted'));
+    expect(screen.getByRole('status', { name: '' })).toHaveTextContent('Your account was deleted');
   });
 
   it('resolves immediately when the catalogue asks for no dialog', async () => {

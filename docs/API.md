@@ -232,6 +232,37 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:3001/api/auth/
 `204` always, with or without a known token, so it reveals nothing and is safe to repeat. The session is revoked and,
 unless the token came in the body, the cookie is cleared.
 
+## Account: `DELETE /api/account`
+
+Deletes the caller's account for good ([spec 024](./specs/024-account-deletion.md),
+[ADR-0041](./adr/0041-account-deletion.md)). Authenticated by the access token like any other call; it falls under the
+same `Origin` check and `Cache-Control: no-store` as `/api/auth/*`.
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' -X DELETE http://127.0.0.1:3001/api/account \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+`204`, no body. The account's data is erased through the `AccountEraser` (`apps/api/src/account.rs`; the sample's
+holds only sessions) and **every** session of that user is gone: on every device and either transport, each access and
+refresh token issued before answers `401 auth.session_expired`. Other users are untouched. When the caller's session
+uses the cookie transport, the answer also sends the header that clears the cookie:
+
+```http
+Set-Cookie: tran_refresh=; HttpOnly; SameSite=Strict; Path=/api/auth; Max-Age=0
+```
+
+A browser ignores that header here: the request goes out without credentials (only `/api/auth/*` carries the cookie,
+REQ-SEC-018). So the web client follows a successful deletion with the best-effort `POST /api/auth/sign-out`, which
+carries the cookie and gets it removed; whether that call succeeds does not change the deletion, whose sessions are
+already revoked.
+
+A missing, unknown, revoked or expired access token answers `401 auth.session_expired` with `WWW-Authenticate: Bearer`
+and erases nothing; so does a second delete with the same token. If the eraser fails (a fork's database), the answer is
+`500 server.internal` and nothing was revoked, so the client keeps its session. A deletion logs one `info` event,
+`account deleted`, carrying the request id and nothing about the user. The demo accounts are shared per role, so
+deleting one signs out everyone using that role; signing in again creates it anew.
+
 ---
 
 ## Errors
@@ -375,14 +406,15 @@ try {
 
 ## Route modules
 
-| Path                    | Rust module                     |
-| :---------------------- | :------------------------------ |
-| `/api/health`           | `apps/api/src/routes/health.rs` |
-| `/api/tran/info`        | `apps/api/src/routes/tran.rs`   |
-| `/api/vote/eligibility` | `apps/api/src/routes/vote.rs`   |
-| `/api/auth/*`           | `apps/api/src/routes/auth.rs`   |
+| Path                    | Rust module                      |
+| :---------------------- | :------------------------------- |
+| `/api/health`           | `apps/api/src/routes/health.rs`  |
+| `/api/tran/info`        | `apps/api/src/routes/tran.rs`    |
+| `/api/vote/eligibility` | `apps/api/src/routes/vote.rs`    |
+| `/api/auth/*`           | `apps/api/src/routes/auth.rs`    |
+| `/api/account`          | `apps/api/src/routes/account.rs` |
 
 Router wiring: `apps/api/src/routes/mod.rs`.
 
-Integration tests: `apps/api/tests/api_test.rs`, `apps/api/tests/auth_test.rs`,
+Integration tests: `apps/api/tests/api_test.rs`, `apps/api/tests/auth_test.rs`, `apps/api/tests/account_test.rs`,
 `apps/api/tests/security_headers_test.rs`.

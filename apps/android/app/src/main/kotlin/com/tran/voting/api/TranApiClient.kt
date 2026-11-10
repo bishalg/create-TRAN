@@ -142,12 +142,13 @@ object TranApiConfig {
  * body is not parsed — the call only confirms the API is reachable and agrees.
  */
 class TranApiClient(
-    private val baseUrl: String = TranApiConfig.baseUrl,
+    // Internal: a device-only session's account calls go to the same server the same way (`SessionClient.deviceOnly`).
+    internal val baseUrl: String = TranApiConfig.baseUrl,
     private val includeDebugCountry: Boolean = TranApiConfig.includeDebugCountry,
-    private val http: OkHttpClient = sharedHttpClient,
+    internal val http: OkHttpClient = sharedHttpClient,
     private val retry: TranRetry = TranRetry(),
     /** Where the blocking call runs; a JVM screenshot test passes `Unconfined` to stay on one thread. */
-    private val io: CoroutineDispatcher = Dispatchers.IO,
+    internal val io: CoroutineDispatcher = Dispatchers.IO,
 ) {
     suspend fun checkHealth() {
         retry.run(idempotent = true) {

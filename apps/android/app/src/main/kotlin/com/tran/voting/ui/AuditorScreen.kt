@@ -11,9 +11,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import com.tran.voting.api.TranRequestFailure
 import com.tran.voting.generated.ScreenContract
 import com.tran.voting.generated.TranSpace
 import com.tran.voting.generated.TranStrings
+import com.tran.voting.ui.atoms.TranBanner
 import com.tran.voting.ui.atoms.TranButton
 import com.tran.voting.ui.atoms.TranButtonSize
 import com.tran.voting.ui.atoms.TranButtonVariant
@@ -24,6 +26,8 @@ import com.tran.voting.ui.atoms.TranScreen
 import com.tran.voting.ui.atoms.TranStack
 import com.tran.voting.ui.atoms.TranText
 import com.tran.voting.ui.atoms.TranTextVariant
+import com.tran.voting.ui.feedback.TranFeedback
+import uniffi.tran_uniffi.TranPresentation
 import uniffi.tran_uniffi.supportedCountriesOffline
 
 /**
@@ -32,7 +36,13 @@ import uniffi.tran_uniffi.supportedCountriesOffline
  * Verifies: REQ-NAV-004 REQ-NAV-005
  */
 @Composable
-fun AuditorScreen(onSignOut: () -> Unit) {
+fun AuditorScreen(
+    onSignOut: () -> Unit,
+    onDeleteAccount: (() -> Unit)? = null,
+    deleting: Boolean = false,
+    // The last failed deletion; a banner failure has no other place on this screen (REQ-ACC-006).
+    accountFailure: TranRequestFailure? = null,
+) {
     // The rule table from rust-core — the same rows the verdict reads.
     val rules = remember { supportedCountriesOffline() }
 
@@ -60,6 +70,12 @@ fun AuditorScreen(onSignOut: () -> Unit) {
                     size = TranButtonSize.MD,
                     modifier = Modifier.testTag(ScreenContract.Auditor.signOutButton),
                 )
+            }
+            if (onDeleteAccount != null) {
+                DeleteAccountRow(onDeleteAccount, ScreenContract.Auditor.deleteAccountButton, enabled = !deleting)
+            }
+            accountFailure?.takeIf { it.spec.presentation is TranPresentation.Banner }?.let {
+                TranBanner(message = stringResource(TranFeedback.messageRes(it.spec.messageKey)))
             }
 
             TranText(

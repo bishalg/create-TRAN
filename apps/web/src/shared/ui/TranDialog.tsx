@@ -9,6 +9,9 @@ export interface TranDialogProps {
   cancelLabel: string;
   /** A destructive confirm is styled as danger and focus starts on Cancel (the safe choice). */
   destructive?: boolean;
+  /** The screen contract ids of the two buttons; a confirmation may declare its own. */
+  confirmTestId?: string;
+  cancelTestId?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -23,6 +26,8 @@ export function TranDialog({
   confirmLabel,
   cancelLabel,
   destructive = false,
+  confirmTestId = ScreenIds.eligibility.dialogConfirm,
+  cancelTestId = ScreenIds.eligibility.dialogCancel,
   onConfirm,
   onCancel,
 }: TranDialogProps) {
@@ -72,7 +77,7 @@ export function TranDialog({
           variant="secondary"
           size="md"
           autoFocus={destructive}
-          data-testid={ScreenIds.eligibility.dialogCancel}
+          data-testid={cancelTestId}
           onClick={onCancel}
         >
           {cancelLabel}
@@ -82,7 +87,7 @@ export function TranDialog({
           variant={destructive ? 'danger' : 'primary'}
           size="md"
           autoFocus={!destructive}
-          data-testid={ScreenIds.eligibility.dialogConfirm}
+          data-testid={confirmTestId}
           onClick={onConfirm}
         >
           {confirmLabel}

@@ -3,6 +3,7 @@ import SwiftUI
 /// Root Coordinator View implementing the Central Navigation Director, launch/splash bootstrap, and role-based branching.
 ///
 /// Verifies: REQ-NAV-001 REQ-NAV-002 REQ-NAV-003 REQ-NAV-004 REQ-NAV-005 REQ-SEC-021 REQ-SEC-023
+/// Verifies: REQ-ACC-004 REQ-ACC-005 REQ-ACC-006
 struct NavigationCoordinatorView: View {
     @State private var session: AuthSession
     @State private var isBootstrapping: Bool
@@ -17,6 +18,8 @@ struct NavigationCoordinatorView: View {
         UserDefaults.standard.string(forKey: "TranTheme").flatMap(TranTheme.init(rawValue:)) ?? .dark
     /// One feedback center for the app: toasts and confirmations render above every screen.
     @State private var feedback = TranFeedback()
+    /// The one account deletion; the "Delete account" control reads whether it is in flight.
+    @State private var deletion = TranAccountDeletion()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var palette: TranPalette { TranBrandTokens.palette(for: theme) }
@@ -81,9 +84,9 @@ struct NavigationCoordinatorView: View {
                         Task { try? await client.signIn(role: selectedRole) }
                     }
                 case .voterDashboard:
-                    VotingHomeView(theme: $theme, onSignOut: signOut)
+                    VotingHomeView(theme: $theme, onSignOut: signOut, onDeleteAccount: deleteAccount)
                 case .auditorDashboard:
-                    AuditorHomeView(onSignOut: signOut)
+                    AuditorHomeView(onSignOut: signOut, onDeleteAccount: deleteAccount)
                 }
             }
         }
@@ -113,6 +116,7 @@ struct NavigationCoordinatorView: View {
             await TranSessionRestore.validate(sessionClient, feedback: feedback)
         }
         .environment(feedback)
+        .environment(deletion)
         // Atoms read the registry palette from the environment; appearance follows the palette's
         // own metadata (token data, not a theme-name check).
         .environment(\.tranPalette, palette)
@@ -129,5 +133,20 @@ struct NavigationCoordinatorView: View {
             let client = sessionClient
             Task { await client.signOut() }
         }
+    }
+
+    /// Destructive and permanent, so the catalogue asks first (REQ-ACC-005). Unlike sign-out, the
+    /// screen changes only after the server confirms (REQ-ACC-006).
+    private func deleteAccount(onFailed: @escaping @MainActor (TranRequestFailure) -> Void) {
+        deletion.confirm(
+            client: sessionClient,
+            feedback: feedback,
+            onDeleted: {
+                withAnimation(TranMotion.animation(reduceMotion: reduceMotion)) {
+                    session = .unauthenticated
+                }
+            },
+            onFailed: onFailed
+        )
     }
 }

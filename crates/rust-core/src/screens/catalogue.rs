@@ -1,7 +1,7 @@
 //! The four screens every platform implements, and the elements each must offer (REQ-SCR-001).
 //!
-//! An element shared by two screens (sign out, the confirmation dialog's buttons, the role badge) is
-//! declared once below and listed on each screen, so one id always means one element.
+//! An element shared by two screens (sign out, delete account, the confirmation dialogs' buttons, the
+//! role badge) is declared once below and listed on each screen, so one id always means one element.
 
 use super::model::{
     Element, ElementKind as Kind, Platform, Presence, Screen, TouchClass as Touch, UnreachedState,
@@ -36,6 +36,8 @@ pub mod state {
     pub const TOAST_SHOWN: &str = "toast_shown";
     /// The sign-out confirmation is open (REQ-ERR-007).
     pub const SIGN_OUT_CONFIRM: &str = "sign_out_confirm";
+    /// The account-deletion confirmation is open (REQ-ACC-005).
+    pub const DELETE_ACCOUNT_CONFIRM: &str = "delete_account_confirm";
     /// The last check was refused because an input did not parse (REQ-WEB-002, REQ-NAT-002).
     pub const VALIDATION_FAILED: &str = "validation_failed";
 }
@@ -107,6 +109,14 @@ pub const SIGN_OUT_BUTTON: Element = element(
     "sign-out-button",
     Kind::Button,
     "common.signOut",
+    Touch::Control,
+    Presence::Always,
+);
+/// Beside sign-out on every signed-in screen, never a link out of the app (REQ-ACC-004).
+pub const DELETE_ACCOUNT_BUTTON: Element = element(
+    "delete-account-button",
+    Kind::Button,
+    "common.deleteAccount",
     Touch::Control,
     Presence::Always,
 );
@@ -214,6 +224,22 @@ pub const DIALOG_CANCEL: Element = element(
     Touch::Control,
     Presence::When(state::SIGN_OUT_CONFIRM),
 );
+/// The deletion dialog's own buttons: its confirm names the action, not "Sign out" (REQ-ACC-005),
+/// so they are not the sign-out dialog's `dialog-confirm` and `dialog-cancel`.
+pub const DELETE_ACCOUNT_CONFIRM: Element = element(
+    "delete-account-confirm",
+    Kind::Button,
+    "common.deleteAccount",
+    Touch::Control,
+    Presence::When(state::DELETE_ACCOUNT_CONFIRM),
+);
+pub const DELETE_ACCOUNT_CANCEL: Element = element(
+    "delete-account-cancel",
+    Kind::Button,
+    "common.cancel",
+    Touch::Control,
+    Presence::When(state::DELETE_ACCOUNT_CONFIRM),
+);
 
 /// Every screen, in navigation order. Codegen and the guards follow this order.
 pub const SCREENS: [Screen; 4] = [
@@ -242,6 +268,7 @@ pub const SCREENS: [Screen; 4] = [
         intent: "screen.eligibility.intent",
         elements: &[
             SIGN_OUT_BUTTON,
+            DELETE_ACCOUNT_BUTTON,
             ROLE_BADGE,
             AGE_FIELD,
             COUNTRY_FIELD,
@@ -256,6 +283,8 @@ pub const SCREENS: [Screen; 4] = [
             TOAST_DISMISS,
             DIALOG_CONFIRM,
             DIALOG_CANCEL,
+            DELETE_ACCOUNT_CONFIRM,
+            DELETE_ACCOUNT_CANCEL,
             SKIP_LINK,
             LANGUAGE_PICKER,
             MODE_SWITCH,
@@ -268,9 +297,12 @@ pub const SCREENS: [Screen; 4] = [
         intent: "screen.auditor.intent",
         elements: &[
             SIGN_OUT_BUTTON,
+            DELETE_ACCOUNT_BUTTON,
             ROLE_BADGE,
             DIALOG_CONFIRM,
             DIALOG_CANCEL,
+            DELETE_ACCOUNT_CONFIRM,
+            DELETE_ACCOUNT_CANCEL,
             SKIP_LINK,
             LANGUAGE_PICKER,
         ],

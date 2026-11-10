@@ -77,6 +77,14 @@ final class TranFeedback {
     @discardableResult
     func report(_ failure: TranRequestFailure) -> TranPresentation {
         log(failure)
+        return present(failure)
+    }
+
+    /// `report` without the log event, for a failure whose `request failed` event is already
+    /// written: the session client logs every request it sends, so its callers present only.
+    /// One event per failure (REQ-ROB-007).
+    @discardableResult
+    func present(_ failure: TranRequestFailure) -> TranPresentation {
         let spec = failure.spec
         show(spec.presentation, messageKey: spec.messageKey, requestId: failure.requestId)
         if case let .dialog(destructive) = spec.presentation, let copy = Self.errorDialogCopy(failure.code) {
@@ -103,8 +111,11 @@ final class TranFeedback {
     /// Logs at the catalogue level — for background calls the user did not start — and hands
     /// `error`-level failures to the reporter (REQ-ERR-014).
     func log(_ failure: TranRequestFailure) {
-        Self.write(failure)
+        writer(failure)
     }
+
+    /// Where `log` writes; a test swaps it to count the events (REQ-ROB-007).
+    @ObservationIgnored var writer: @Sendable (TranRequestFailure) -> Void = TranFeedback.write
 
     /// `log` for code off the main actor, such as the session client (REQ-SEC-014).
     @Sendable
@@ -135,7 +146,9 @@ final class TranFeedback {
     nonisolated static func dialogCopy(_ action: TranUserAction) -> (body: String, confirm: String)? {
         switch action {
         case .signOut: return (L10n.Auth.signOutConfirmBody, L10n.Common.signOut)
-        case .serverCheckSucceeded: return nil
+        // A different action from sign-out, with copy that says "permanent" (REQ-ACC-005).
+        case .deleteAccount: return (L10n.Auth.deleteAccountConfirmBody, L10n.Common.deleteAccount)
+        case .serverCheckSucceeded, .accountDeleted: return nil
         }
     }
 

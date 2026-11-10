@@ -2603,6 +2603,14 @@ public enum TranUserAction: Equatable, Hashable {
      * A server eligibility check completed (REQ-ERR-008).
      */
     case serverCheckSucceeded
+    /**
+     * Erases the account for good — destructive, so it asks first (REQ-ACC-005).
+     */
+    case deleteAccount
+    /**
+     * The server confirmed a deletion (REQ-ACC-006).
+     */
+    case accountDeleted
 
 
 
@@ -2628,6 +2636,10 @@ public struct FfiConverterTypeTranUserAction: FfiConverterRustBuffer {
         
         case 2: return .serverCheckSucceeded
         
+        case 3: return .deleteAccount
+        
+        case 4: return .accountDeleted
+        
         default: throw UniffiInternalError.unexpectedEnumCase
         }
     }
@@ -2642,6 +2654,14 @@ public struct FfiConverterTypeTranUserAction: FfiConverterRustBuffer {
         
         case .serverCheckSucceeded:
             writeInt(&buf, Int32(2))
+        
+        
+        case .deleteAccount:
+            writeInt(&buf, Int32(3))
+        
+        
+        case .accountDeleted:
+            writeInt(&buf, Int32(4))
         
         }
     }

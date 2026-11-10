@@ -44,7 +44,7 @@ export interface SessionClientOptions {
 }
 
 export interface SessionRequest {
-  method?: 'GET' | 'POST';
+  method?: 'GET' | 'POST' | 'DELETE';
   /** JSON text; `Content-Type` is set only when there is a body. */
   body?: string;
   headers?: Record<string, string>;
@@ -76,6 +76,7 @@ export class SessionClient {
   /** The browser holds the cookie: true from a sign-in or refresh until a sign-out. */
   #refreshCredential = false;
   #refreshing: Promise<RefreshOutcome> | null = null;
+  #deleting: Promise<void> | null = null;
   /** Bumped by `signOut`, so an answer that lands afterwards is thrown away. */
   #generation = 0;
 
@@ -149,6 +150,31 @@ export class SessionClient {
     const response = await this.fetch('/api/auth/session', { signal });
     if (!response.ok) throw await readApiError(response);
     return parse(response, SessionUserSchema);
+  }
+
+  /**
+   * `DELETE /api/account` (REQ-ACC-006, ADR-0041): the server decides, then the device follows.
+   * Only a success forgets the session; any failure (offline, timeout, `5xx`) rejects with that
+   * failure and leaves the session as it was. A `401` takes the recovery path of every authorized
+   * call. It is sent even while no token is held: the server, not the device, says whether there
+   * is a session to delete. One at a time: a second deletion would only answer `401`.
+   */
+  deleteAccount({ signal }: { signal?: AbortSignal } = {}): Promise<void> {
+    this.#deleting ??= this.#deleteAccount(signal).finally(() => {
+      this.#deleting = null;
+    });
+    return this.#deleting;
+  }
+
+  async #deleteAccount(signal?: AbortSignal): Promise<void> {
+    const response = await this.fetch('/api/account', { method: 'DELETE', signal });
+    if (!response.ok) throw await readApiError(response);
+    // Like a sign-out: an answer about the old session that lands afterwards is thrown away.
+    this.#generation += 1;
+    this.#clear();
+    // The deletion carried no cookie (REQ-SEC-018), so the browser ignored the header that clears
+    // it. The sign-out call carries it and removes it; best effort, the account is gone either way.
+    void this.#revoke();
   }
 
   /**

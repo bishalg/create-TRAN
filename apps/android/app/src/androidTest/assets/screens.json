@@ -229,6 +229,18 @@
           ]
         },
         {
+          "id": "delete-account-button",
+          "kind": "button",
+          "label": "common.deleteAccount",
+          "touch": "control",
+          "presence": "always",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
+        },
+        {
           "id": "role-badge",
           "kind": "text",
           "label": "common.role.label",
@@ -397,6 +409,32 @@
           "touch": "control",
           "presence": "when",
           "state": "sign_out_confirm",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
+        },
+        {
+          "id": "delete-account-confirm",
+          "kind": "button",
+          "label": "common.deleteAccount",
+          "touch": "control",
+          "presence": "when",
+          "state": "delete_account_confirm",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
+        },
+        {
+          "id": "delete-account-cancel",
+          "kind": "button",
+          "label": "common.cancel",
+          "touch": "control",
+          "presence": "when",
+          "state": "delete_account_confirm",
           "platforms": [
             "web",
             "ios",
@@ -999,6 +1037,94 @@
           ]
         },
         {
+          "name": "Deleting the account asks first and Cancel keeps it",
+          "verifies": [
+            "REQ-ACC-004",
+            "REQ-ACC-005"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            }
+          ],
+          "when": [
+            {
+              "verb": "tap",
+              "id": "delete-account-button"
+            },
+            {
+              "verb": "tap",
+              "id": "delete-account-cancel"
+            }
+          ],
+          "then": [
+            {
+              "verb": "missing",
+              "id": "delete-account-confirm"
+            },
+            {
+              "verb": "exists",
+              "id": "check-button"
+            },
+            {
+              "verb": "count",
+              "id": "delete-account-button",
+              "n": 1
+            }
+          ]
+        },
+        {
+          "name": "A deletion that cannot reach the server keeps the account",
+          "verifies": [
+            "REQ-ACC-006",
+            "REQ-ERR-006"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            },
+            {
+              "verb": "api_unreachable"
+            }
+          ],
+          "when": [
+            {
+              "verb": "tap",
+              "id": "delete-account-button"
+            },
+            {
+              "verb": "tap",
+              "id": "delete-account-confirm"
+            }
+          ],
+          "then": [
+            {
+              "verb": "missing",
+              "id": "delete-account-confirm"
+            },
+            {
+              "verb": "exists",
+              "id": "offline-notice"
+            },
+            {
+              "verb": "exists",
+              "id": "check-button"
+            },
+            {
+              "verb": "exists",
+              "id": "delete-account-button"
+            },
+            {
+              "verb": "missing",
+              "id": "voter-branch-button"
+            }
+          ]
+        },
+        {
           "name": "The light theme is selectable",
           "verifies": [
             "REQ-NAT-007",
@@ -1142,6 +1268,18 @@
           ]
         },
         {
+          "id": "delete-account-button",
+          "kind": "button",
+          "label": "common.deleteAccount",
+          "touch": "control",
+          "presence": "always",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
+        },
+        {
           "id": "role-badge",
           "kind": "text",
           "label": "common.role.label",
@@ -1173,6 +1311,32 @@
           "touch": "control",
           "presence": "when",
           "state": "sign_out_confirm",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
+        },
+        {
+          "id": "delete-account-confirm",
+          "kind": "button",
+          "label": "common.deleteAccount",
+          "touch": "control",
+          "presence": "when",
+          "state": "delete_account_confirm",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
+        },
+        {
+          "id": "delete-account-cancel",
+          "kind": "button",
+          "label": "common.cancel",
+          "touch": "control",
+          "presence": "when",
+          "state": "delete_account_confirm",
           "platforms": [
             "web",
             "ios",
@@ -1231,6 +1395,40 @@
             },
             {
               "verb": "missing",
+              "id": "sign-out-button"
+            }
+          ]
+        },
+        {
+          "name": "Deleting the account from the auditor dashboard asks first and Cancel keeps it",
+          "verifies": [
+            "REQ-ACC-004",
+            "REQ-ACC-005"
+          ],
+          "within_ms": 4300,
+          "given": [
+            {
+              "verb": "session",
+              "value": "election_auditor"
+            }
+          ],
+          "when": [
+            {
+              "verb": "tap",
+              "id": "delete-account-button"
+            },
+            {
+              "verb": "tap",
+              "id": "delete-account-cancel"
+            }
+          ],
+          "then": [
+            {
+              "verb": "missing",
+              "id": "delete-account-confirm"
+            },
+            {
+              "verb": "exists",
               "id": "sign-out-button"
             }
           ]

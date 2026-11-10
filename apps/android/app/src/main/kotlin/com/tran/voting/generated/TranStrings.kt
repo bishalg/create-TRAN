@@ -29,9 +29,37 @@ object TranStrings {
 
     object Auth {
         @StringRes
+        val accountDeleted: Int = R.string.auth_account_deleted // auth.accountDeleted
+        @StringRes
         val continueAsAuditor: Int = R.string.auth_continue_as_auditor // auth.continueAsAuditor
         @StringRes
         val continueAsVoter: Int = R.string.auth_continue_as_voter // auth.continueAsVoter
+        @StringRes
+        val deleteAccountConfirmBody: Int = R.string.auth_delete_account_confirm_body // auth.deleteAccountConfirm.body
+        @StringRes
+        val deleteAccountConfirmTitle: Int = R.string.auth_delete_account_confirm_title // auth.deleteAccountConfirm.title
+        @StringRes
+        val deletionPageDeletedBody: Int = R.string.auth_deletion_page_deleted_body // auth.deletionPage.deletedBody
+        @StringRes
+        val deletionPageDeletedTitle: Int = R.string.auth_deletion_page_deleted_title // auth.deletionPage.deletedTitle
+        @StringRes
+        val deletionPageHowTitle: Int = R.string.auth_deletion_page_how_title // auth.deletionPage.howTitle
+        @StringRes
+        val deletionPageIntro: Int = R.string.auth_deletion_page_intro // auth.deletionPage.intro
+        @StringRes
+        val deletionPageKeptBody: Int = R.string.auth_deletion_page_kept_body // auth.deletionPage.keptBody
+        @StringRes
+        val deletionPageKeptTitle: Int = R.string.auth_deletion_page_kept_title // auth.deletionPage.keptTitle
+        @StringRes
+        val deletionPageOpenApp: Int = R.string.auth_deletion_page_open_app // auth.deletionPage.openApp
+        @StringRes
+        val deletionPageStepChoose: Int = R.string.auth_deletion_page_step_choose // auth.deletionPage.stepChoose
+        @StringRes
+        val deletionPageStepConfirm: Int = R.string.auth_deletion_page_step_confirm // auth.deletionPage.stepConfirm
+        @StringRes
+        val deletionPageStepOpen: Int = R.string.auth_deletion_page_step_open // auth.deletionPage.stepOpen
+        @StringRes
+        val deletionPageTitle: Int = R.string.auth_deletion_page_title // auth.deletionPage.title
         @StringRes
         val signInAgain: Int = R.string.auth_sign_in_again // auth.signInAgain
         @StringRes
@@ -51,6 +79,8 @@ object TranStrings {
         val brand: Int = R.string.common_brand // common.brand
         @StringRes
         val cancel: Int = R.string.common_cancel // common.cancel
+        @StringRes
+        val deleteAccount: Int = R.string.common_delete_account // common.deleteAccount
         @StringRes
         val dismiss: Int = R.string.common_dismiss // common.dismiss
         @StringRes
@@ -238,6 +268,8 @@ val TranTheme.labelRes: Int
 
 /** String resource for every key the Rust feedback catalogue names (ADR-0028). */
 val feedbackMessageRes: Map<String, Int> = mapOf(
+    "auth.accountDeleted" to R.string.auth_account_deleted,
+    "auth.deleteAccountConfirm.title" to R.string.auth_delete_account_confirm_title,
     "auth.signOutConfirm.title" to R.string.auth_sign_out_confirm_title,
     "eligibility.offlineNotice" to R.string.eligibility_offline_notice,
     "eligibility.result.sourceDevice" to R.string.eligibility_result_source_device,

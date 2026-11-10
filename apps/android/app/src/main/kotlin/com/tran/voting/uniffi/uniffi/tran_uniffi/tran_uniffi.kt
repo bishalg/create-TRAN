@@ -2692,7 +2692,15 @@ enum class TranUserAction {
     /**
      * A server eligibility check completed (REQ-ERR-008).
      */
-    SERVER_CHECK_SUCCEEDED;
+    SERVER_CHECK_SUCCEEDED,
+    /**
+     * Erases the account for good — destructive, so it asks first (REQ-ACC-005).
+     */
+    DELETE_ACCOUNT,
+    /**
+     * The server confirmed a deletion (REQ-ACC-006).
+     */
+    ACCOUNT_DELETED;
 
     
 

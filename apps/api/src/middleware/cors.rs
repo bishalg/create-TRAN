@@ -14,7 +14,7 @@ pub fn create_cors_layer(origins: &[String]) -> CorsLayer {
     CorsLayer::new()
         .allow_origin(origins)
         .allow_credentials(true)
-        .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
+        .allow_methods([Method::GET, Method::POST, Method::DELETE, Method::OPTIONS])
         .allow_headers([
             header::CONTENT_TYPE,
             header::ACCEPT,

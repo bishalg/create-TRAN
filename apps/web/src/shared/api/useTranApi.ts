@@ -138,6 +138,19 @@ export function useTranApi({ feedback, client: injected, baseUrl, retry }: UseTr
     [feedback]
   );
 
+  /**
+   * A failure of a call the user started elsewhere (deleting the account): logged and shown as the
+   * catalogue says; a connectivity failure raises this screen's banner like any other call.
+   */
+  const reportFailure = useCallback(
+    (raw: unknown) => {
+      const error = classifyError(raw);
+      if (feedback.report(error).kind === 'banner')
+        setState((prev) => ({ ...prev, banner: error }));
+    },
+    [feedback]
+  );
+
   const fetchStatus = useCallback(async () => {
     setState((prev) => ({ ...prev, isLoading: true }));
     const outcome = await latest('status', (signal) =>
@@ -253,6 +266,7 @@ export function useTranApi({ feedback, client: injected, baseUrl, retry }: UseTr
     checkOffline,
     checkViaApi,
     cancelCheck,
+    reportFailure,
   };
 }
 

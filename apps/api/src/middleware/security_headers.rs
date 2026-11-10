@@ -1,12 +1,13 @@
 //! Security headers on every response (REQ-SEC-013). The API serves JSON only, so the policy
-//! forbids everything a browser could do with it as a document; auth answers are never cached.
+//! forbids everything a browser could do with it as a document; auth and account answers are never
+//! cached.
 
 use axum::extract::{Request, State};
 use axum::http::{header, HeaderValue};
 use axum::middleware::Next;
 use axum::response::Response;
 
-use super::is_auth_path;
+use super::is_session_path;
 
 pub const CONTENT_SECURITY_POLICY: &str = "default-src 'none'; frame-ancestors 'none'";
 pub const STRICT_TRANSPORT_SECURITY: &str = "max-age=63072000; includeSubDomains";
@@ -17,7 +18,7 @@ pub async fn security_headers(
     request: Request,
     next: Next,
 ) -> Response {
-    let auth = is_auth_path(request.uri().path());
+    let auth = is_session_path(request.uri().path());
     let mut response = next.run(request).await;
     let headers = response.headers_mut();
     let set = |value: &'static str| HeaderValue::from_static(value);

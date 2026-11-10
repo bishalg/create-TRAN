@@ -1,9 +1,12 @@
 import SwiftUI
 
 /// Auditor dashboard displaying the global voting rules matrix.
-/// Verifies: REQ-NAV-004 REQ-NAV-005
+/// Verifies: REQ-NAV-004 REQ-NAV-005 REQ-ACC-004
 struct AuditorHomeView: View {
     let onSignOut: () -> Void
+    /// Asks, then deletes; a failure comes back for the banner below the header (REQ-ACC-006).
+    let onDeleteAccount: TranAccountDeletion.Request
+    @State private var banner: TranRequestFailure?
 
     /// The rule table from `rust-core` — the same rows the verdict reads.
     private let countryRules = supportedCountriesOffline()
@@ -13,20 +16,23 @@ struct AuditorHomeView: View {
             ScrollView {
                 TranBox(padding: .lg) {
                     TranStack(gap: .lg, alignment: .leading) {
-                        TranInline(gap: .md) {
+                        SignedInHeader(
+                            signOutId: ScreenContract.Auditor.signOutButton,
+                            deleteAccountId: ScreenContract.Auditor.deleteAccountButton,
+                            onSignOut: onSignOut,
+                            onDeleteAccount: { onDeleteAccount { failure in failed(failure) } }
+                        ) {
                             TranStack(gap: .xs, alignment: .leading) {
                                 // The title names the role, so it is the role badge here.
                                 TranText(L10n.Common.roleElectionAuditor, variant: .title, label: L10n.Common.roleLabel)
                                     .accessibilityIdentifier(ScreenContract.Auditor.roleBadge)
                                 TranText(L10n.Auditor.subtitle, variant: .muted)
                             }
-                            // The titles take what the button leaves, wrapping on a narrow screen or at
-                            // the largest text size, as on Android (REQ-NAT-004, REQ-NAT-013).
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            TranButton(label: L10n.Common.signOut, variant: .secondary, size: .md) {
-                                onSignOut()
-                            }
-                            .accessibilityIdentifier(ScreenContract.Auditor.signOutButton)
+                        }
+                        // A deletion that could not reach the server says so here, as the
+                        // catalogue's banner; the screen has no other network call (REQ-ACC-006).
+                        if let banner {
+                            TranBanner(message: TranFeedback.message(banner.spec.messageKey))
                         }
 
                         TranSurface {
@@ -51,5 +57,10 @@ struct AuditorHomeView: View {
                 }
             }
         }
+    }
+
+    /// Any other answer came from the server, so an older offline banner no longer holds.
+    private func failed(_ failure: TranRequestFailure) {
+        if case .banner = failure.spec.presentation { banner = failure } else { banner = nil }
     }
 }

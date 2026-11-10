@@ -44,6 +44,7 @@ import com.tran.voting.session.validateRestoredSession
 import kotlinx.coroutines.launch
 import uniffi.tran_uniffi.TranAppDestination
 import uniffi.tran_uniffi.TranErrorCode
+import uniffi.tran_uniffi.TranPresentation
 import uniffi.tran_uniffi.TranUserAction
 import uniffi.tran_uniffi.TranUserRole
 
@@ -76,7 +77,7 @@ class MainActivity : ComponentActivity() {
 /**
  * Root Navigation Coordinator implementing the central director and role branching.
  *
- * Verifies: REQ-NAV-001 REQ-NAV-002 REQ-NAV-003 REQ-NAV-004 REQ-NAV-005
+ * Verifies: REQ-NAV-001 REQ-NAV-002 REQ-NAV-003 REQ-NAV-004 REQ-NAV-005 REQ-ACC-004 REQ-ACC-006
  */
 @Composable
 fun NavigationCoordinator(
@@ -109,7 +110,7 @@ fun NavigationCoordinator(
     // the `auth.session_expired` dialog. An unreachable API keeps the user where they are.
     LaunchedEffect(sessions) {
         if (sessions != null && session is AuthSession.Authenticated &&
-            validateRestoredSession(sessions) == RestoreOutcome.SIGNED_OUT
+            validateRestoredSession(sessions, feedback::log) == RestoreOutcome.SIGNED_OUT
         ) {
             feedback.report(TranRequestFailure(TranErrorCode.AUTH_SESSION_EXPIRED, status = 401))
         }
@@ -121,6 +122,34 @@ fun NavigationCoordinator(
             val refreshToken = sessions?.endLocally()
             session = AuthSession.Unauthenticated
             if (sessions != null) scope.launch { sessions.revoke(refreshToken) }
+        }
+    }
+    // Deleting is the opposite of signing out (ADR-0041 decision 4): it asks first, and the device
+    // follows only the server's `204`. A failure changes nothing and is presented like any other;
+    // a banner failure is the screen's to show. Without an API session (the screen contract's
+    // preset) the request still goes out, with no credential, so only the server can end it.
+    val accountClient = sessions ?: remember(api) { SessionClient.deviceOnly(api) }
+    var accountFailure by remember { mutableStateOf<TranRequestFailure?>(null) }
+    // One deletion at a time: the control is disabled until the answer arrives (REQ-ACC-006).
+    var deleting by remember { mutableStateOf(false) }
+    LaunchedEffect(session) { accountFailure = null }
+    val deleteAccount = {
+        if (!deleting) {
+            feedback.confirm(TranUserAction.DELETE_ACCOUNT) {
+                deleting = true
+                scope.launch {
+                    try {
+                        accountClient.deleteAccount()
+                        session = AuthSession.Unauthenticated
+                        feedback.acknowledge(TranUserAction.ACCOUNT_DELETED)
+                    } catch (failure: TranRequestFailure) {
+                        // The failure's one log event (REQ-ROB-007) and its presentation.
+                        if (feedback.report(failure) is TranPresentation.Banner) accountFailure = failure
+                    } finally {
+                        deleting = false
+                    }
+                }
+            }
         }
     }
     val signedIn = session.destination.let {
@@ -152,7 +181,9 @@ fun NavigationCoordinator(
                             scope.launch {
                                 try {
                                     sessions.signIn(role)
-                                } catch (_: TranRequestFailure) {
+                                } catch (failure: TranRequestFailure) {
+                                    // Not the user's call to hear about: log it, never toast.
+                                    feedback.log(failure)
                                 }
                             }
                         }
@@ -164,10 +195,18 @@ fun NavigationCoordinator(
                         onThemeChange = { theme = it },
                         onSignOut = signOut,
                         api = api,
+                        onDeleteAccount = deleteAccount,
+                        deleting = deleting,
+                        accountFailure = accountFailure,
                     )
                 }
                 TranAppDestination.AUDITOR_DASHBOARD -> {
-                    AuditorScreen(onSignOut = signOut)
+                    AuditorScreen(
+                        onSignOut = signOut,
+                        onDeleteAccount = deleteAccount,
+                        deleting = deleting,
+                        accountFailure = accountFailure,
+                    )
                 }
             }
           }

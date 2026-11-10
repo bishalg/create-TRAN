@@ -11,6 +11,7 @@
 		033C5EFE87867769BC85393E /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47217D862BDF4F5BACE65574 /* L10n.swift */; };
 		0826DFF6755A336094EC46D2 /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47217D862BDF4F5BACE65574 /* L10n.swift */; };
 		09D2CF17D4E662407FCDFFB8 /* PrivacyCoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5E111CB3FF688FED915A22 /* PrivacyCoverView.swift */; };
+		0CD1B8A91B7F10EA447300E3 /* TranAccountDeletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19905B0CE9FE16E4F7FF6A7D /* TranAccountDeletion.swift */; };
 		0D7CC9267C8C25EF5BA73A99 /* KeychainSessionVault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ABB2F2DE67F5DE2910E8717 /* KeychainSessionVault.swift */; };
 		0E674F768E949C57D92B5456 /* Common.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = D69AA90B4D08AF2C8F3EECEC /* Common.xcstrings */; };
 		13A67E2C80FD4C70DE81D7F9 /* VotingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B85C1ED9728B5EF5BE132CA8 /* VotingUITests.swift */; };
@@ -58,6 +59,7 @@
 		716AB97BB83BAFE29808C866 /* Auth.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F8C57904C226928C1009850D /* Auth.xcstrings */; };
 		7409C5E1434A0DCFF70A07B9 /* RecoveryProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1071C7642F75C8DD53627A2 /* RecoveryProbe.swift */; };
 		7470EB204FFB751DAB9D7F17 /* TranSessionLaunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24A3BBFCBFE2D6F96DF2259B /* TranSessionLaunch.swift */; };
+		76A30F1C84F0F69296023BC0 /* TranAccountDeletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19905B0CE9FE16E4F7FF6A7D /* TranAccountDeletion.swift */; };
 		788C5A5986A24F49A9B574D0 /* TranSegmented.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80AD0CC17ECB82BFFFD53D53 /* TranSegmented.swift */; };
 		79A802B80645147C7D970211 /* TranMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10BA7AEEF263598B8C38A9B8 /* TranMotion.swift */; };
 		79F2B36FDEF094305B3AB009 /* Errors.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B390E496B5F1AF4FB4F92F21 /* Errors.xcstrings */; };
@@ -71,6 +73,7 @@
 		9A6A23BA00B03719BE715994 /* TranLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = DABDD20CECDFABD9AD5AAA49 /* TranLayout.swift */; };
 		9DE149D15E74C7A9A1AB9379 /* TranReporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = C034730D3B05B84233E15C80 /* TranReporting.swift */; };
 		A2C4F0EA863E5390237329B3 /* Auth.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F8C57904C226928C1009850D /* Auth.xcstrings */; };
+		A42FD16AC9416B44DF9AB215 /* AccountDeletionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF3403FD52C0B1B49A23EA3 /* AccountDeletionTests.swift */; };
 		A66AE7803D01184F5D6894EB /* TranReferenceDate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B83934E01F2D9C881B1710ED /* TranReferenceDate.swift */; };
 		A7D7682FF87B6131E4D7B724 /* NavigationParityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843D7B0C3D41329248AA92A8 /* NavigationParityTests.swift */; };
 		A823D66932990903547033C6 /* KeychainSessionVault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ABB2F2DE67F5DE2910E8717 /* KeychainSessionVault.swift */; };
@@ -105,6 +108,7 @@
 		E896B84AFBA2FB3079204EC5 /* PrivacyCoverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC8B194574B8DBB324921E44 /* PrivacyCoverTests.swift */; };
 		F11ADDB7E97690CB7467B05C /* TranApiStub.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB6DC8233A9ED541C7A22F7D /* TranApiStub.swift */; };
 		F23C19D070B4D46967F1F757 /* AuthWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E88174C22C857E2C4A32A1C /* AuthWelcomeView.swift */; };
+		FCC18B3444F9893405033F22 /* SignedInHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2E6BF6A206D1427D2DDEEB /* SignedInHeader.swift */; };
 		FF5D8649083D8DA80DE2A533 /* TranConnectivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DBF97D18A77AA990F3F2B0D /* TranConnectivity.swift */; };
 /* End PBXBuildFile section */
 
@@ -138,6 +142,7 @@
 		10BA7AEEF263598B8C38A9B8 /* TranMotion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranMotion.swift; sourceTree = "<group>"; };
 		10F9A85B277AE7C4D1833B9C /* SessionRestoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRestoreTests.swift; sourceTree = "<group>"; };
 		13296B1C87BC71AF04BF997B /* TranButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranButton.swift; sourceTree = "<group>"; };
+		19905B0CE9FE16E4F7FF6A7D /* TranAccountDeletion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranAccountDeletion.swift; sourceTree = "<group>"; };
 		1A659AC166910DCC044847A5 /* TranApiClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranApiClientTests.swift; sourceTree = "<group>"; };
 		2416105BFC37987133B79587 /* VoteEligibilityParityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoteEligibilityParityTests.swift; sourceTree = "<group>"; };
 		24A3BBFCBFE2D6F96DF2259B /* TranSessionLaunch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranSessionLaunch.swift; sourceTree = "<group>"; };
@@ -173,6 +178,7 @@
 		9C81897D258076C9D6DAA915 /* FeedbackParityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackParityTests.swift; sourceTree = "<group>"; };
 		A11501118A23965A69E81723 /* screens.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = screens.json; sourceTree = "<group>"; };
 		A926F22DCF183846E1B15619 /* TranField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranField.swift; sourceTree = "<group>"; };
+		AFF3403FD52C0B1B49A23EA3 /* AccountDeletionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountDeletionTests.swift; sourceTree = "<group>"; };
 		B2004B2EEC44B7971ED61E9C /* TranDialog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranDialog.swift; sourceTree = "<group>"; };
 		B390E496B5F1AF4FB4F92F21 /* Errors.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Errors.xcstrings; sourceTree = "<group>"; };
 		B5575124847CD87F66535AE5 /* Eligibility.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Eligibility.xcstrings; sourceTree = "<group>"; };
@@ -180,6 +186,7 @@
 		B85C1ED9728B5EF5BE132CA8 /* VotingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VotingUITests.swift; sourceTree = "<group>"; };
 		BA06632C9F25E413CBC9A505 /* ConformanceManifest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConformanceManifest.swift; sourceTree = "<group>"; };
 		BA5E111CB3FF688FED915A22 /* PrivacyCoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyCoverView.swift; sourceTree = "<group>"; };
+		BB2E6BF6A206D1427D2DDEEB /* SignedInHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignedInHeader.swift; sourceTree = "<group>"; };
 		BBBC0CB4657353B14FD31B78 /* RecoveryProbeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecoveryProbeTests.swift; sourceTree = "<group>"; };
 		BCCE0CE297BF291A83E2AF8B /* ServerConfirmation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerConfirmation.swift; sourceTree = "<group>"; };
 		C034730D3B05B84233E15C80 /* TranReporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranReporting.swift; sourceTree = "<group>"; };
@@ -260,6 +267,7 @@
 		5A10610A4FE9FD79FD5ED948 /* TranVotingDemoTests */ = {
 			isa = PBXGroup;
 			children = (
+				AFF3403FD52C0B1B49A23EA3 /* AccountDeletionTests.swift */,
 				9C81897D258076C9D6DAA915 /* FeedbackParityTests.swift */,
 				D3B914E98DFB9B3F53DC79BD /* FeedbackPressureTests.swift */,
 				E2F8E3ACB9D8AC5B72946B98 /* KeychainSessionVaultTests.swift */,
@@ -313,6 +321,7 @@
 			children = (
 				7ABB2F2DE67F5DE2910E8717 /* KeychainSessionVault.swift */,
 				F0E12B106C5CDB7BBB32C6FB /* SessionVault.swift */,
+				19905B0CE9FE16E4F7FF6A7D /* TranAccountDeletion.swift */,
 				7202D41D6320055C4D3B9F58 /* TranSessionClient.swift */,
 				24A3BBFCBFE2D6F96DF2259B /* TranSessionLaunch.swift */,
 				CFC267A98176DD7F1781C31B /* TranSessionRestore.swift */,
@@ -340,6 +349,7 @@
 				8E88174C22C857E2C4A32A1C /* AuthWelcomeView.swift */,
 				E48F532295512AFE483F2438 /* NavigationCoordinatorView.swift */,
 				BA5E111CB3FF688FED915A22 /* PrivacyCoverView.swift */,
+				BB2E6BF6A206D1427D2DDEEB /* SignedInHeader.swift */,
 				10BA7AEEF263598B8C38A9B8 /* TranMotion.swift */,
 				50205EBE0EB7A80BE144F622 /* TranVotingDemoApp.swift */,
 				D67D27EB3D5D770789B21FDF /* VotingHomeView.swift */,
@@ -631,6 +641,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A42FD16AC9416B44DF9AB215 /* AccountDeletionTests.swift in Sources */,
 				31D20A7EDFB22768A01A4CE2 /* AuthSession.swift in Sources */,
 				CD2B4681BCD8C9AEE8303A9D /* BrandTokens.swift in Sources */,
 				97F3F73EE97A02DD04AF51B1 /* FeedbackParityTests.swift in Sources */,
@@ -650,6 +661,7 @@
 				66DFBBEB8A3DA360C0379341 /* SessionTestSupport.swift in Sources */,
 				B83A1B669DB52EA209C921EC /* SessionVault.swift in Sources */,
 				C0138A42A2925F3962194EEC /* SessionVaultGuardTests.swift in Sources */,
+				0CD1B8A91B7F10EA447300E3 /* TranAccountDeletion.swift in Sources */,
 				C52F1FC2C50EF718E0AD42AA /* TranApiClient.swift in Sources */,
 				4FEF69E87E2281A47A026A3C /* TranApiClientTests.swift in Sources */,
 				F11ADDB7E97690CB7467B05C /* TranApiStub.swift in Sources */,
@@ -687,6 +699,8 @@
 				B06350C8F7A5C89C4422167F /* ScreenContract.swift in Sources */,
 				E351E28BA0FBDC110B73F48A /* ServerConfirmation.swift in Sources */,
 				C3B16AAE36C09CB0AAF56265 /* SessionVault.swift in Sources */,
+				FCC18B3444F9893405033F22 /* SignedInHeader.swift in Sources */,
+				76A30F1C84F0F69296023BC0 /* TranAccountDeletion.swift in Sources */,
 				AFEB6F75711555ECA349D6D0 /* TranApiClient.swift in Sources */,
 				3C5A80F935B5ADEDDB2895E2 /* TranApiStub.swift in Sources */,
 				986C167775B3BAD191B31F7E /* TranBanner.swift in Sources */,

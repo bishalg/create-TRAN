@@ -1,6 +1,7 @@
-//! The auth endpoints refuse a browser on a foreign origin (REQ-SEC-012), the third CSRF defence
-//! after `SameSite=Strict` and the cookie's narrow path (ADR-0039). A request without `Origin` (a
-//! native app, a server) is not a browser's cross-site request and passes.
+//! The auth endpoints and account deletion refuse a browser on a foreign origin (REQ-SEC-012,
+//! REQ-ACC-001), the third CSRF defence after `SameSite=Strict` and the cookie's narrow path
+//! (ADR-0039). A request without `Origin` (a native app, a server) is not a browser's cross-site
+//! request and passes.
 
 use std::sync::Arc;
 
@@ -12,10 +13,13 @@ use rust_core::feedback::ErrorCode;
 
 use crate::error::ApiError;
 
-/// `/api/auth` and everything under it.
-pub fn is_auth_path(path: &str) -> bool {
-    path.strip_prefix("/api/auth")
-        .is_some_and(|rest| rest.is_empty() || rest.starts_with('/'))
+/// The trees that start, use up or end a session: `/api/auth` and `/api/account`, each with
+/// everything under it. They get the `Origin` check and `Cache-Control: no-store`.
+pub fn is_session_path(path: &str) -> bool {
+    ["/api/auth", "/api/account"].iter().any(|tree| {
+        path.strip_prefix(tree)
+            .is_some_and(|rest| rest.is_empty() || rest.starts_with('/'))
+    })
 }
 
 pub async fn auth_origin(
@@ -23,7 +27,7 @@ pub async fn auth_origin(
     request: Request,
     next: Next,
 ) -> Response {
-    let foreign = is_auth_path(request.uri().path())
+    let foreign = is_session_path(request.uri().path())
         && request
             .headers()
             .get(header::ORIGIN)
@@ -43,12 +47,15 @@ pub async fn auth_origin(
 mod tests {
     use super::*;
 
-    // Verifies: REQ-SEC-012
+    // Verifies: REQ-SEC-012 REQ-ACC-001
     #[test]
-    fn only_the_auth_tree_is_an_auth_path() {
-        assert!(is_auth_path("/api/auth"));
-        assert!(is_auth_path("/api/auth/session"));
-        assert!(!is_auth_path("/api/authority"));
-        assert!(!is_auth_path("/api/health"));
+    fn only_the_auth_and_account_trees_are_session_paths() {
+        assert!(is_session_path("/api/auth"));
+        assert!(is_session_path("/api/auth/session"));
+        assert!(is_session_path("/api/account"));
+        assert!(is_session_path("/api/account/export"));
+        assert!(!is_session_path("/api/authority"));
+        assert!(!is_session_path("/api/accounts"));
+        assert!(!is_session_path("/api/health"));
     }
 }

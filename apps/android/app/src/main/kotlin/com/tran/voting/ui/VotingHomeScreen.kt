@@ -63,6 +63,12 @@ fun VotingHomeScreen(
     onThemeChange: (TranTheme) -> Unit,
     onSignOut: (() -> Unit)? = null,
     api: TranApiClient = TranApiClient(),
+    // Shown beside sign-out (REQ-ACC-004); the coordinator owns the request.
+    onDeleteAccount: (() -> Unit)? = null,
+    // A deletion is in flight: the control waits for its answer (REQ-ACC-006).
+    deleting: Boolean = false,
+    // The last failed deletion: a banner failure is this screen's to show (REQ-ACC-006, REQ-ERR-006).
+    accountFailure: TranRequestFailure? = null,
 ) {
     var ageText by remember { mutableStateOf("20") }
     var countryCode by remember { mutableStateOf("NP") }
@@ -93,6 +99,10 @@ fun VotingHomeScreen(
     // A background call the user did not start: log it, never toast.
     LaunchedEffect(Unit) {
         record(attempt { api.checkHealth() }?.also(feedback::log))
+    }
+    // Each failed deletion is a new object, so a repeat shows again.
+    LaunchedEffect(accountFailure) {
+        accountFailure?.let(::record)
     }
 
     // The banner recovers by itself: probe on the Rust schedule, and at once when the network
@@ -156,6 +166,9 @@ fun VotingHomeScreen(
                         modifier = Modifier.testTag(ScreenContract.Eligibility.signOutButton),
                     )
                 }
+            }
+            if (onDeleteAccount != null) {
+                DeleteAccountRow(onDeleteAccount, ScreenContract.Eligibility.deleteAccountButton, enabled = !deleting)
             }
             TranInline(gap = TranGap.SM, modifier = Modifier.fillMaxWidth()) {
                 TranField(

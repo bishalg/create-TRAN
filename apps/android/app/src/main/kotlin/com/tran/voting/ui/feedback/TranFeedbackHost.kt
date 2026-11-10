@@ -62,6 +62,8 @@ fun TranFeedbackHost(feedback: TranFeedback, content: @Composable () -> Unit) {
                 confirmLabel = stringResource(pending.confirmRes),
                 cancelLabel = stringResource(pending.cancelRes),
                 destructive = pending.destructive,
+                confirmTag = pending.tags.confirm,
+                cancelTag = pending.tags.cancel,
                 onConfirm = pending.onConfirm,
                 onCancel = feedback::cancelConfirmation,
             )

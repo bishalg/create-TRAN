@@ -20,8 +20,24 @@ enum L10n {
     }
 
     enum Auth {
+        static var accountDeleted: String { String(localized: "auth.accountDeleted", table: "Auth") }
         static var continueAsAuditor: String { String(localized: "auth.continueAsAuditor", table: "Auth") }
         static var continueAsVoter: String { String(localized: "auth.continueAsVoter", table: "Auth") }
+        static var deleteAccountConfirmBody: String { String(localized: "auth.deleteAccountConfirm.body", table: "Auth") }
+        static var deleteAccountConfirmTitle: String { String(localized: "auth.deleteAccountConfirm.title", table: "Auth") }
+        static var deletionPageDeletedBody: String { String(localized: "auth.deletionPage.deletedBody", table: "Auth") }
+        static var deletionPageDeletedTitle: String { String(localized: "auth.deletionPage.deletedTitle", table: "Auth") }
+        static var deletionPageHowTitle: String { String(localized: "auth.deletionPage.howTitle", table: "Auth") }
+        static var deletionPageIntro: String { String(localized: "auth.deletionPage.intro", table: "Auth") }
+        static var deletionPageKeptBody: String { String(localized: "auth.deletionPage.keptBody", table: "Auth") }
+        static var deletionPageKeptTitle: String { String(localized: "auth.deletionPage.keptTitle", table: "Auth") }
+        static var deletionPageOpenApp: String { String(localized: "auth.deletionPage.openApp", table: "Auth") }
+        static func deletionPageStepChoose(_ deleteAction: String, _ signOutAction: String) -> String {
+            String(format: String(localized: "auth.deletionPage.stepChoose", table: "Auth"), deleteAction, signOutAction)
+        }
+        static var deletionPageStepConfirm: String { String(localized: "auth.deletionPage.stepConfirm", table: "Auth") }
+        static var deletionPageStepOpen: String { String(localized: "auth.deletionPage.stepOpen", table: "Auth") }
+        static var deletionPageTitle: String { String(localized: "auth.deletionPage.title", table: "Auth") }
         static var signInAgain: String { String(localized: "auth.signInAgain", table: "Auth") }
         static var signOutConfirmBody: String { String(localized: "auth.signOutConfirm.body", table: "Auth") }
         static var signOutConfirmTitle: String { String(localized: "auth.signOutConfirm.title", table: "Auth") }
@@ -33,6 +49,7 @@ enum L10n {
         static var appName: String { String(localized: "common.appName", table: "Common") }
         static var brand: String { String(localized: "common.brand", table: "Common") }
         static var cancel: String { String(localized: "common.cancel", table: "Common") }
+        static var deleteAccount: String { String(localized: "common.deleteAccount", table: "Common") }
         static var dismiss: String { String(localized: "common.dismiss", table: "Common") }
         static var loading: String { String(localized: "common.loading", table: "Common") }
         static var notNow: String { String(localized: "common.notNow", table: "Common") }
@@ -153,6 +170,8 @@ extension L10n {
     /// Localized copy for a key the Rust feedback catalogue names (ADR-0028).
     static func feedback(_ key: String) -> String? {
         switch key {
+        case "auth.accountDeleted": return L10n.Auth.accountDeleted
+        case "auth.deleteAccountConfirm.title": return L10n.Auth.deleteAccountConfirmTitle
         case "auth.signOutConfirm.title": return L10n.Auth.signOutConfirmTitle
         case "eligibility.offlineNotice": return L10n.Eligibility.offlineNotice
         case "eligibility.result.sourceDevice": return L10n.Eligibility.resultSourceDevice

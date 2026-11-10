@@ -1,4 +1,4 @@
-// Verifies: REQ-PERF-008 REQ-SEC-024
+// Verifies: REQ-PERF-008 REQ-SEC-024 REQ-ACC-007
 /**
  * Release builds start and work — the builds users get, not the debug ones every other suite
  * runs. `pnpm smoke` builds them first. A check whose tool or device is missing is reported as
@@ -9,7 +9,7 @@ import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ScreenIds } from '@tran/core';
+import { PLATFORM_MINIMUMS, ScreenIds } from '@tran/core';
 import { expect, test } from '@playwright/test';
 
 const ROOT = path.resolve(fileURLToPath(import.meta.url), '../../..');
@@ -89,6 +89,36 @@ test('web: the production build loads cleanly and answers a server check', async
 
   expect(violations).toEqual([]);
   expect(errors).toEqual([]);
+});
+
+// The page the stores link to is a second page of the build: static, no script, same policy.
+test('web: the public account-deletion page loads under the production CSP', async ({ page }) => {
+  const problems: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') problems.push(message.text());
+  });
+  page.on('pageerror', (error) => problems.push(error.message));
+  await page.exposeFunction('reportCspViolation', (violation: string) => problems.push(violation));
+  await page.addInitScript(() =>
+    document.addEventListener('securitypolicyviolation', (event) =>
+      (window as unknown as { reportCspViolation: (v: string) => void }).reportCspViolation(
+        `${event.effectiveDirective} ${event.blockedURI}`
+      )
+    )
+  );
+
+  const response = await page.goto('/account-deletion.html');
+  expect(response?.status()).toBe(200);
+  const csp = await page
+    .locator('meta[http-equiv="Content-Security-Policy"]')
+    .getAttribute('content');
+  expect(csp).toMatch(/^default-src 'self'; script-src 'self';/);
+  expect(await page.locator('script').count()).toBe(0);
+  // Styled by the build's stylesheet: the button-like link gets the token touch size.
+  const link = page.getByRole('link', { name: 'Open the web app to delete your account' });
+  const web = PLATFORM_MINIMUMS.find((minimum) => minimum.platform === 'web')!;
+  expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(web.control);
+  expect(problems).toEqual([]);
 });
 
 test('android: the release APK ships the Rust core for every ABI', () => {

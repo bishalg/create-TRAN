@@ -171,6 +171,8 @@ fn actions_match_the_fixture() {
         let action = match case.action.as_str() {
             "sign_out" => TranUserAction::SignOut,
             "server_check_succeeded" => TranUserAction::ServerCheckSucceeded,
+            "delete_account" => TranUserAction::DeleteAccount,
+            "account_deleted" => TranUserAction::AccountDeleted,
             other => panic!("unknown fixture action {other:?}"),
         };
         let spec = action_spec(action);

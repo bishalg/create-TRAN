@@ -24,6 +24,7 @@ export type ElementId =
   | 'skip-link'
   | 'language-picker'
   | 'sign-out-button'
+  | 'delete-account-button'
   | 'role-badge'
   | 'age-field'
   | 'country-field'
@@ -38,6 +39,8 @@ export type ElementId =
   | 'toast-dismiss'
   | 'dialog-confirm'
   | 'dialog-cancel'
+  | 'delete-account-confirm'
+  | 'delete-account-cancel'
   | 'mode-switch';
 
 /** What an element is, never how it looks (REQ-SCR-003). */
@@ -321,6 +324,18 @@ export const SCREENS: readonly Screen[] = [
         ]
       },
       {
+        "id": "delete-account-button",
+        "kind": "button",
+        "label": "common.deleteAccount",
+        "touch": "control",
+        "presence": "always",
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
+      },
+      {
         "id": "role-badge",
         "kind": "text",
         "label": "common.role.label",
@@ -495,6 +510,34 @@ export const SCREENS: readonly Screen[] = [
         "touch": "control",
         "presence": {
           "when": "sign_out_confirm"
+        },
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "id": "delete-account-confirm",
+        "kind": "button",
+        "label": "common.deleteAccount",
+        "touch": "control",
+        "presence": {
+          "when": "delete_account_confirm"
+        },
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "id": "delete-account-cancel",
+        "kind": "button",
+        "label": "common.cancel",
+        "touch": "control",
+        "presence": {
+          "when": "delete_account_confirm"
         },
         "platforms": [
           "web",
@@ -1089,6 +1132,80 @@ export const SCREENS: readonly Screen[] = [
         "within_ms": 4300
       },
       {
+        "name": "Deleting the account asks first and Cancel keeps it",
+        "verifies": [
+          "REQ-ACC-004",
+          "REQ-ACC-005"
+        ],
+        "given": [
+          {
+            "session": "citizen_voter"
+          }
+        ],
+        "when": [
+          {
+            "tap": "delete-account-button"
+          },
+          {
+            "tap": "delete-account-cancel"
+          }
+        ],
+        "then": [
+          {
+            "missing": "delete-account-confirm"
+          },
+          {
+            "exists": "check-button"
+          },
+          {
+            "count": {
+              "id": "delete-account-button",
+              "n": 1
+            }
+          }
+        ],
+        "within_ms": 4300
+      },
+      {
+        "name": "A deletion that cannot reach the server keeps the account",
+        "verifies": [
+          "REQ-ACC-006",
+          "REQ-ERR-006"
+        ],
+        "given": [
+          {
+            "session": "citizen_voter"
+          },
+          "api_unreachable"
+        ],
+        "when": [
+          {
+            "tap": "delete-account-button"
+          },
+          {
+            "tap": "delete-account-confirm"
+          }
+        ],
+        "then": [
+          {
+            "missing": "delete-account-confirm"
+          },
+          {
+            "exists": "offline-notice"
+          },
+          {
+            "exists": "check-button"
+          },
+          {
+            "exists": "delete-account-button"
+          },
+          {
+            "missing": "voter-branch-button"
+          }
+        ],
+        "within_ms": 4300
+      },
+      {
         "name": "The light theme is selectable",
         "verifies": [
           "REQ-NAT-007",
@@ -1224,6 +1341,18 @@ export const SCREENS: readonly Screen[] = [
         ]
       },
       {
+        "id": "delete-account-button",
+        "kind": "button",
+        "label": "common.deleteAccount",
+        "touch": "control",
+        "presence": "always",
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
+      },
+      {
         "id": "role-badge",
         "kind": "text",
         "label": "common.role.label",
@@ -1256,6 +1385,34 @@ export const SCREENS: readonly Screen[] = [
         "touch": "control",
         "presence": {
           "when": "sign_out_confirm"
+        },
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "id": "delete-account-confirm",
+        "kind": "button",
+        "label": "common.deleteAccount",
+        "touch": "control",
+        "presence": {
+          "when": "delete_account_confirm"
+        },
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "id": "delete-account-cancel",
+        "kind": "button",
+        "label": "common.cancel",
+        "touch": "control",
+        "presence": {
+          "when": "delete_account_confirm"
         },
         "platforms": [
           "web",
@@ -1313,6 +1470,35 @@ export const SCREENS: readonly Screen[] = [
           }
         ],
         "within_ms": 4300
+      },
+      {
+        "name": "Deleting the account from the auditor dashboard asks first and Cancel keeps it",
+        "verifies": [
+          "REQ-ACC-004",
+          "REQ-ACC-005"
+        ],
+        "given": [
+          {
+            "session": "election_auditor"
+          }
+        ],
+        "when": [
+          {
+            "tap": "delete-account-button"
+          },
+          {
+            "tap": "delete-account-cancel"
+          }
+        ],
+        "then": [
+          {
+            "missing": "delete-account-confirm"
+          },
+          {
+            "exists": "sign-out-button"
+          }
+        ],
+        "within_ms": 4300
       }
     ]
   }
@@ -1364,6 +1550,7 @@ export const ScreenIds = {
   },
   eligibility: {
     signOutButton: 'sign-out-button',
+    deleteAccountButton: 'delete-account-button',
     roleBadge: 'role-badge',
     ageField: 'age-field',
     countryField: 'country-field',
@@ -1378,15 +1565,20 @@ export const ScreenIds = {
     toastDismiss: 'toast-dismiss',
     dialogConfirm: 'dialog-confirm',
     dialogCancel: 'dialog-cancel',
+    deleteAccountConfirm: 'delete-account-confirm',
+    deleteAccountCancel: 'delete-account-cancel',
     skipLink: 'skip-link',
     languagePicker: 'language-picker',
     modeSwitch: 'mode-switch',
   },
   auditor: {
     signOutButton: 'sign-out-button',
+    deleteAccountButton: 'delete-account-button',
     roleBadge: 'role-badge',
     dialogConfirm: 'dialog-confirm',
     dialogCancel: 'dialog-cancel',
+    deleteAccountConfirm: 'delete-account-confirm',
+    deleteAccountCancel: 'delete-account-cancel',
     skipLink: 'skip-link',
     languagePicker: 'language-picker',
   },

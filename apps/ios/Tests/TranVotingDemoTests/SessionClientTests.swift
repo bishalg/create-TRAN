@@ -1,8 +1,9 @@
-// Verifies: REQ-SEC-014 REQ-SEC-016 REQ-SEC-017 REQ-SEC-022
+// Verifies: REQ-SEC-014 REQ-SEC-015 REQ-SEC-016 REQ-SEC-017 REQ-SEC-022 REQ-ACC-006 REQ-ROB-007
 import XCTest
 
 /// The session client on a scripted transport (ADR-0023): sign-in on the body transport, the
-/// bearer header, one shared refresh, sign-out device-first, and no token in any log or report.
+/// bearer header, one shared refresh, sign-out device-first, account deletion server-first, and
+/// no token in any log or report.
 final class SessionClientTests: XCTestCase {
     private var vault: InMemorySessionVault!
     private var log: FailureLog!
@@ -260,6 +261,156 @@ final class SessionClientTests: XCTestCase {
         let outcome = await validation
         XCTAssertEqual(outcome, .signedOut)
         XCTAssertNil(vault.load(), "a late refresh must not sign the user back in")
+    }
+
+    // MARK: - Delete the account (REQ-ACC-006)
+
+    /// A client signed in as `access-1` / `refresh-1`, with the transport then answering `reply`.
+    private func signedInClient(_ reply: @escaping @Sendable (SessionStubProtocol.Recorded) -> SessionStubProtocol.Reply)
+        async throws -> TranSessionClient
+    {
+        SessionStubProtocol.reset { _ in .status(201, body: SessionWire.pair(access: "access-1", refresh: "refresh-1")) }
+        let client = makeClient()
+        try await client.signIn(role: .citizenVoter)
+        SessionStubProtocol.reset(reply)
+        return client
+    }
+
+    private func deletionFailure(_ client: TranSessionClient) async -> TranRequestFailure? {
+        do {
+            try await client.deleteAccount()
+            return nil
+        } catch {
+            return error as? TranRequestFailure
+        }
+    }
+
+    func testA204DeletesTheAccountAndOnlyThenClearsTheDevice() async throws {
+        let vault = self.vault!
+        let vaultAtDeletion = LockedFlag()
+        let client = try await signedInClient { request in
+            if request.path == "/api/account" { vaultAtDeletion.set(vault.load() != nil) }
+            return .status(204, body: "")
+        }
+
+        try await client.deleteAccount()
+
+        let deletion = try XCTUnwrap(SessionStubProtocol.requests(to: "/api/account").first)
+        XCTAssertEqual(deletion.method, "DELETE")
+        XCTAssertEqual(deletion.authorization, "Bearer access-1")
+        XCTAssertEqual(deletion.body, [:], "no body")
+        XCTAssertEqual(vaultAtDeletion.value, true, "the device still held the session while the server decided")
+        XCTAssertNil(vault.load())
+        // The access token went too: the next call has nothing to send and ends there.
+        let outcome = await client.validate()
+        XCTAssertEqual(outcome, .signedOut)
+        XCTAssertEqual(SessionStubProtocol.requests.count, 1)
+        assertNoTokenLogged(["access-1", "refresh-1"])
+    }
+
+    func testADeletionThatFailsKeepsTheSessionOnTheDevice() async throws {
+        for (reply, code) in [
+            (SessionStubProtocol.Reply.failure(.cannotConnectToHost), TranErrorCode.networkOffline),
+            (.failure(.timedOut), .networkTimeout),
+            (.status(500, body: #"{"success":false,"error":"x","code":"server.internal","request_id":"req-7"}"#), .serverInternal),
+            (.status(503, body: "{}"), .serverUnavailable),
+        ] {
+            vault.clear()
+            let client = try await signedInClient { _ in reply }
+
+            let failure = await deletionFailure(client)
+
+            XCTAssertEqual(failure?.code, code, "\(reply)")
+            XCTAssertEqual(vault.load()?.refreshToken, "refresh-1", "\(reply): the vault is untouched")
+            // The access token is kept in memory: a retry sends it again, without a refresh.
+            SessionStubProtocol.reset { _ in .status(204, body: "") }
+            try await client.deleteAccount()
+            XCTAssertEqual(SessionStubProtocol.requests.map(\.authorization), ["Bearer access-1"], "\(reply)")
+        }
+        assertNoTokenLogged(["access-1", "refresh-1"])
+    }
+
+    func testA401DuringDeletionRefreshesOnceAndRepeats() async throws {
+        let client = try await signedInClient { request in
+            switch request.path {
+            case "/api/auth/refresh":
+                return .status(200, body: SessionWire.pair(access: "access-2", refresh: "refresh-2"))
+            default:
+                return request.authorization == "Bearer access-2"
+                    ? .status(204, body: "")
+                    : .status(401, body: SessionWire.expired)
+            }
+        }
+
+        try await client.deleteAccount()
+
+        XCTAssertEqual(SessionStubProtocol.requests.map(\.path), ["/api/account", "/api/auth/refresh", "/api/account"])
+        XCTAssertEqual(SessionStubProtocol.requests.last?.authorization, "Bearer access-2")
+        XCTAssertNil(vault.load())
+        assertNoTokenLogged(["access-1", "access-2", "refresh-1", "refresh-2"])
+    }
+
+    func testADeadSessionDuringDeletionEndsLikeAnyOther() async throws {
+        let client = try await signedInClient { _ in .status(401, body: SessionWire.expired) }
+
+        let failure = await deletionFailure(client)
+
+        XCTAssertEqual(failure, TranSessionClient.expired, "the recovery table signs out")
+        XCTAssertEqual(SessionStubProtocol.requests.map(\.path), ["/api/account", "/api/auth/refresh"])
+        XCTAssertNil(vault.load())
+    }
+
+    /// The debug launch preset opens a dashboard with no credential at all. Deletion still asks the
+    /// server, so an unreachable API is a network failure, never "signed out".
+    func testWithoutAnyCredentialTheServerStillAnswers() async throws {
+        SessionStubProtocol.reset { _ in .failure(.cannotConnectToHost) }
+        let client = makeClient()
+
+        let offline = await deletionFailure(client)
+
+        XCTAssertEqual(offline?.code, .networkOffline)
+        let sent = try XCTUnwrap(SessionStubProtocol.requests.first)
+        XCTAssertEqual([sent.method, sent.path], ["DELETE", "/api/account"])
+        XCTAssertNil(sent.authorization)
+        XCTAssertEqual(SessionStubProtocol.requests.count, 1)
+
+        SessionStubProtocol.reset { _ in .status(401, body: SessionWire.expired) }
+        let rejected = await deletionFailure(client)
+
+        XCTAssertEqual(rejected, TranSessionClient.expired, "the server's 401 goes through the table")
+        XCTAssertEqual(SessionStubProtocol.requests.map(\.path), ["/api/account"], "nothing to refresh with")
+    }
+
+    func testConcurrentDeletionsSendOneRequestAndShareItsAnswer() async throws {
+        let client = try await signedInClient { _ in .status(204, body: "", delay: 0.3) }
+
+        async let first: Void = client.deleteAccount()
+        async let second: Void = client.deleteAccount()
+        _ = try await (first, second)
+
+        XCTAssertEqual(SessionStubProtocol.requests(to: "/api/account").count, 1, "one DELETE")
+        XCTAssertNil(vault.load())
+
+        // The flight is over: a later call is a new request (and the server's 401 for it).
+        SessionStubProtocol.reset { _ in .status(401, body: SessionWire.expired) }
+        let later = await deletionFailure(client)
+        XCTAssertEqual(later, TranSessionClient.expired)
+        XCTAssertEqual(SessionStubProtocol.requests(to: "/api/account").count, 1)
+    }
+
+    func testEveryFailedRequestIsLoggedOnce() async throws {
+        let client = try await signedInClient { _ in .status(401, body: SessionWire.expired) }
+
+        let failure = await deletionFailure(client)
+
+        XCTAssertEqual(failure, TranSessionClient.expired)
+        // The DELETE's 401 and the refresh's 401: two requests, two events, nothing more.
+        XCTAssertEqual(log.entries.map(\.status), [401, 401])
+
+        // No credential at all: no request is sent, and the table's answer is the one event.
+        log = FailureLog()
+        _ = await makeClient().validate()
+        XCTAssertEqual(log.entries, [TranSessionClient.expired])
     }
 }
 

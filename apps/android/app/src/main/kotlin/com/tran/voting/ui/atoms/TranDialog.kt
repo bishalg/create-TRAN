@@ -26,6 +26,9 @@ fun TranDialog(
     destructive: Boolean,
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
+    // Contract ids of the buttons; each action's dialog may have its own (REQ-ACC-005).
+    confirmTag: String = ScreenContract.Eligibility.dialogConfirm,
+    cancelTag: String = ScreenContract.Eligibility.dialogCancel,
 ) {
     val palette = LocalTranPalette.current
     AlertDialog(
@@ -37,7 +40,7 @@ fun TranDialog(
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
-                modifier = Modifier.testTag(ScreenContract.Eligibility.dialogConfirm),
+                modifier = Modifier.testTag(confirmTag),
                 colors = if (destructive) {
                     ButtonDefaults.textButtonColors(contentColor = palette.danger)
                 } else {
@@ -46,7 +49,7 @@ fun TranDialog(
             ) { Text(confirmLabel) }
         },
         dismissButton = {
-            TextButton(onClick = onCancel, modifier = Modifier.testTag(ScreenContract.Eligibility.dialogCancel)) { Text(cancelLabel) }
+            TextButton(onClick = onCancel, modifier = Modifier.testTag(cancelTag)) { Text(cancelLabel) }
         },
     )
 }

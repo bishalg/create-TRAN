@@ -27,17 +27,19 @@ struct ContractScreenDriver {
 
     // MARK: - Finding elements
 
-    /// The state in which the app presents a system alert. SwiftUI cannot give a system alert's
-    /// buttons an `accessibilityIdentifier` without XCUITest seeing each button twice (LEARNINGS,
-    /// 2026-10-21), so the elements present only in this state (the confirm and cancel buttons)
-    /// are found inside `app.alerts` by their contract label, resolved like any other copy. This is
-    /// the one place the iOS interpreter finds an element by anything but its id.
-    static let systemAlertState = "sign_out_confirm"
+    /// The states in which the app presents a system alert, one per confirmed action. SwiftUI
+    /// cannot give a system alert's buttons an `accessibilityIdentifier` without XCUITest seeing
+    /// each button twice (LEARNINGS, 2026-10-21), so the elements present only in these states
+    /// (each dialog's confirm and cancel) are found inside `app.alerts` by their contract label,
+    /// resolved like any other copy. Every action's dialog has its own confirm label, so a label
+    /// names one dialog's button. This is the one place the iOS interpreter finds an element by
+    /// anything but its id.
+    static let systemAlertStates: Set<String> = ["sign_out_confirm", "delete_account_confirm"]
 
     /// Every match of `id`, typed by the element's kind.
     func query(_ id: String, _ step: ContractStep) -> XCUIElementQuery {
         let element = declared(id, step)
-        if element.state == Self.systemAlertState {
+        if let state = element.state, Self.systemAlertStates.contains(state) {
             let title = ContractStrings.resolve(element.label, locale: locale)
             return app.alerts.buttons.matching(NSPredicate(format: "label == %@", title))
         }

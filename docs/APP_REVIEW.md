@@ -12,7 +12,7 @@ shown without a project's own accounts or content; the row says what to do).
 
 | Rule                                                                                     | Guideline | Status  | Where                                        |
 | :--------------------------------------------------------------------------------------- | :-------- | :------ | :------------------------------------------- |
-| An account can be deleted inside the app, and from a public web page (Play)              | 5.1.1(v)  | planned | [spec 024](./specs/024-account-deletion.md)  |
+| An account can be deleted inside the app, and from a public web page (Play)              | 5.1.1(v)  | done    | [spec 024](./specs/024-account-deletion.md)  |
 | Do not force sign-in for features that do not need an account                            | 5.1.1(v)  | done    | The device check works signed out (spec 005) |
 | If a third-party sign-in is offered (Google, Facebook), offer Sign in with Apple as well | 4.8       | planned | Sign-in providers phase                      |
 | Deleting an account revokes Sign in with Apple tokens                                    | 5.1.1(v)  | planned | Sign-in providers phase                      |

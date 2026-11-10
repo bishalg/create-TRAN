@@ -169,6 +169,10 @@ pub enum TranUserAction {
     SignOut,
     /// A server eligibility check completed (REQ-ERR-008).
     ServerCheckSucceeded,
+    /// Erases the account for good — destructive, so it asks first (REQ-ACC-005).
+    DeleteAccount,
+    /// The server confirmed a deletion (REQ-ACC-006).
+    AccountDeleted,
 }
 
 /// How a [`TranUserAction`] is presented.
@@ -286,6 +290,8 @@ pub fn action_spec(action: TranUserAction) -> TranActionSpec {
     let core = match action {
         TranUserAction::SignOut => UserAction::SignOut,
         TranUserAction::ServerCheckSucceeded => UserAction::ServerCheckSucceeded,
+        TranUserAction::DeleteAccount => UserAction::DeleteAccount,
+        TranUserAction::AccountDeleted => UserAction::AccountDeleted,
     };
     let spec = core.spec();
     TranActionSpec {

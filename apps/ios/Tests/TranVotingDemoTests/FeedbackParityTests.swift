@@ -1,4 +1,5 @@
 // Verifies: REQ-ERR-001 REQ-ERR-010 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-009 REQ-ROB-007 REQ-LOAD-001
+// Verifies: REQ-ACC-005 REQ-ACC-006
 import XCTest
 
 /// `fixtures/feedback.json` through the UniFFI surface, plus the iOS feedback center that applies it.
@@ -140,8 +141,55 @@ final class FeedbackParityTests: XCTestCase {
         XCTAssertNil(feedback.confirmation)
     }
 
+    /// Every user action, by its wire name in `fixtures/feedback.json`.
+    private static let actions: [String: TranUserAction] = [
+        "sign_out": .signOut,
+        "server_check_succeeded": .serverCheckSucceeded,
+        "delete_account": .deleteAccount,
+        "account_deleted": .accountDeleted,
+    ]
+
+    func testActionsMatchTheGoldenFixtureAndEveryMessageIsLocalized() throws {
+        // [REQ-ACC-005] deletion is a destructive dialog of its own; [REQ-ACC-006] its success a toast
+        let rows = try fixture()["actions"] as! [[String: Any]]
+        XCTAssertEqual(Set(rows.map { $0["action"] as! String }), Set(Self.actions.keys))
+        for row in rows {
+            let name = row["action"] as! String
+            let spec = actionSpec(action: Self.actions[name]!)
+            let expected = (row["presentation"] as! [String: Any]).mapValues { $0 as! AnyHashable }
+            XCTAssertEqual(json(spec.presentation), expected, name)
+            XCTAssertEqual(spec.messageKey, row["messageKey"] as? String, name)
+            XCTAssertNotNil(L10n.feedback(spec.messageKey), "\(spec.messageKey) has no iOS string")
+        }
+    }
+
+    func testDeletingTheAccountAsksWithItsOwnPermanentCopy() {
+        let feedback = TranFeedback()
+        var deleted = false
+        feedback.confirm(.deleteAccount) { deleted = true }
+
+        let pending = try? XCTUnwrap(feedback.confirmation)
+        XCTAssertEqual(pending?.title, L10n.Auth.deleteAccountConfirmTitle)
+        XCTAssertEqual(pending?.body, L10n.Auth.deleteAccountConfirmBody)
+        XCTAssertEqual(pending?.confirmLabel, L10n.Common.deleteAccount)
+        XCTAssertNotEqual(pending?.body, L10n.Auth.signOutConfirmBody, "not the sign-out dialog")
+        XCTAssertEqual(pending?.destructive, true)
+        XCTAssertFalse(deleted, "nothing happens until the user confirms")
+
+        pending?.onConfirm()
+        XCTAssertTrue(deleted)
+    }
+
+    func testAccountDeletedIsASuccessToast() {
+        let feedback = TranFeedback()
+        feedback.acknowledge(.accountDeleted)
+        XCTAssertEqual(feedback.toast?.tone, .success)
+        XCTAssertEqual(feedback.toast?.message, L10n.Auth.accountDeleted)
+        XCTAssertNil(TranFeedback.dialogCopy(.accountDeleted))
+    }
+
     func testEveryDialogActionHasCopy() {
-        for action in [TranUserAction.signOut, .serverCheckSucceeded] {
+        for action in Self.actions.values {
             if case .dialog = actionSpec(action: action).presentation {
                 XCTAssertNotNil(TranFeedback.dialogCopy(action), "\(action) needs dialog copy")
             }

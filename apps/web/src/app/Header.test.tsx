@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ScreenIds } from '@tran/core';
 import { describe, expect, it, vi } from 'vitest';
 import { Header } from './Header.js';
 
@@ -54,5 +55,33 @@ describe('Header', () => {
       'aria-pressed',
       'true'
     );
+  });
+
+  // Verifies: REQ-ACC-004 — the control sits next to sign-out and looks destructive.
+  it('offers deleting the account next to sign-out when the screen allows it', async () => {
+    const onDeleteAccount = vi.fn();
+    render(
+      <Header
+        locale="en"
+        onLocaleChange={() => {}}
+        theme="light"
+        currentRole="citizen_voter"
+        onSignOut={() => {}}
+        onDeleteAccount={onDeleteAccount}
+      />
+    );
+    const control = screen.getByTestId(ScreenIds.eligibility.deleteAccountButton);
+    expect(control).toHaveAccessibleName('Delete account');
+    expect(control).toHaveAttribute('data-variant', 'danger');
+    expect(control.previousElementSibling).toBe(
+      screen.getByTestId(ScreenIds.eligibility.signOutButton)
+    );
+    await userEvent.click(control);
+    expect(onDeleteAccount).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers no deletion while signed out', () => {
+    render(<Header locale="en" onLocaleChange={() => {}} theme="light" />);
+    expect(screen.queryByTestId(ScreenIds.eligibility.deleteAccountButton)).toBeNull();
   });
 });

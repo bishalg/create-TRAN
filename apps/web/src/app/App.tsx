@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ScreenIds,
   t,
@@ -57,7 +57,7 @@ function Shell({
       ? 'offline'
       : 'online';
 
-  const { session, signIn, signOut } = useSession({ feedback, initialSession });
+  const { session, signIn, signOut, deleteAccount } = useSession({ feedback, initialSession });
 
   // Until the boot refresh answers, the Splash: nothing to choose yet (REQ-NAV-001, REQ-SEC-021).
   const destination: AppDestination = session ? resolveDestination(session) : 'splash';
@@ -69,6 +69,17 @@ function Shell({
   // Destructive: the catalogue makes this a confirmation dialog (REQ-ERR-007).
   const handleSignOut = async () => {
     if (await feedback.confirm('sign_out')) signOut();
+  };
+
+  // Permanent, so it asks with its own copy; a failure is reported like any other call (REQ-ACC-006).
+  // While it is in flight the control is busy: a second deletion could only answer 401.
+  const [deleting, setDeleting] = useState(false);
+  const handleDeleteAccount = async () => {
+    if (!(await feedback.confirm('delete_account'))) return;
+    setDeleting(true);
+    const failure = await deleteAccount();
+    setDeleting(false);
+    if (failure) api.reportFailure(failure);
   };
 
   return (
@@ -83,6 +94,8 @@ function Shell({
         onThemeChange={destination === 'voter_dashboard' ? setTheme : undefined}
         currentRole={currentRole}
         onSignOut={currentRole ? handleSignOut : undefined}
+        onDeleteAccount={currentRole ? handleDeleteAccount : undefined}
+        deletingAccount={deleting}
       />
 
       <main id="main" className="shell" tabIndex={-1}>
@@ -101,7 +114,9 @@ function Shell({
           <EligibilityPage api={api} locale={locale} indicatorDelayMs={loading?.indicatorDelayMs} />
         )}
 
-        {destination === 'auditor_dashboard' && <AuditorPage locale={locale} />}
+        {destination === 'auditor_dashboard' && (
+          <AuditorPage locale={locale} notice={api.banner?.spec.messageKey} />
+        )}
       </main>
 
       <StatusFooter

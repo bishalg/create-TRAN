@@ -76,7 +76,7 @@ and one short playbook in `docs/` (what the topic is, why it matters, the rules 
 
 1. [x] **Security** ([spec 022](./specs/022-security.md), ADR-0039, [playbook](./SECURITY.md)): secrets, rotating
        sessions, Keychain and Keystore storage, sensitive data.
-2. [ ] **Account deletion** ([spec 024](./specs/024-account-deletion.md), ADR-0041,
+2. [x] **Account deletion** ([spec 024](./specs/024-account-deletion.md), ADR-0041,
        [playbook](./ACCOUNT_DELETION.md)): delete the account from inside the app (App Store guideline 5.1.1(v)) and from a public
        web page (Google Play's account-deletion policy), confirmed first, with every session revoked, the device
        vault cleared and the server data erased or scheduled for erasure.

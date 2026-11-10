@@ -100,7 +100,7 @@ fn refresh_cookie(value: &str, max_age: u64, requires_https: bool) -> HeaderValu
     HeaderValue::from_str(&cookie).expect("a refresh cookie is header-safe")
 }
 
-fn clear_cookie(response: &mut Response, requires_https: bool) {
+pub(crate) fn clear_cookie(response: &mut Response, requires_https: bool) {
     response
         .headers_mut()
         .insert(header::SET_COOKIE, refresh_cookie("", 0, requires_https));

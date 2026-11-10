@@ -67,20 +67,44 @@ enum ConformanceManifest {
     ]
 
     /// The alert's buttons are the one element iOS cannot identify (`ContractScreenDriver`, the
-    /// system alert state): they take the contract id whose label they read, as the driver finds them.
-    private static func alertButtonId(_ label: String, locale: String) -> String? {
-        ScreenCatalogue.shared.screens.lazy.flatMap(\.elements)
-            .first { $0.state == ContractScreenDriver.systemAlertState && ContractStrings.resolve($0.label, locale: locale) == label }?
-            .id
+    /// system alert states): they take the contract id whose label they read, as the driver finds
+    /// them, within the dialog whose labels the alert shows (each action has its own confirm label,
+    /// while Cancel reads the same in every dialog).
+    private static func alertButtonId(_ label: String, state: String?, locale: String) -> String? {
+        alertElements(locale: locale).first { $0.state == state && $0.label == label }?.id
+    }
+
+    /// The system alert state whose button labels include every label the alert shows.
+    private static func alertState(_ alert: XCUIElementSnapshot, locale: String) -> String? {
+        let shown = Set(buttons(in: alert).map(\.label))
+        let elements = alertElements(locale: locale)
+        return ContractScreenDriver.systemAlertStates.sorted().first { state in
+            shown.isSubset(of: Set(elements.filter { $0.state == state }.map(\.label)))
+        }
+    }
+
+    /// Every element of a system alert state, with its label resolved in `locale`.
+    private static func alertElements(locale: String) -> [(id: String, state: String, label: String)] {
+        ScreenCatalogue.shared.screens.flatMap(\.elements).compactMap { element in
+            guard let state = element.state, ContractScreenDriver.systemAlertStates.contains(state) else { return nil }
+            return (element.id, state, ContractStrings.resolve(element.label, locale: locale))
+        }
+    }
+
+    private static func buttons(in node: XCUIElementSnapshot) -> [XCUIElementSnapshot] {
+        (node.elementType == .button ? [node] : []) + node.children.flatMap { buttons(in: $0) }
     }
 
     private static func collect(
-        _ node: XCUIElementSnapshot, within: String?, under: [String], locale: String, into elements: inout [[String: Any]]
+        _ node: XCUIElementSnapshot, within: String?, under: [String], alert: String? = nil, locale: String,
+        into elements: inout [[String: Any]]
     ) {
         let role = name(of: node.elementType)
+        let alert = node.elementType == .alert ? alertState(node, locale: locale) : alert
         var id = node.identifier.isEmpty ? nil : node.identifier
         var matched: String?
-        if id == nil, node.elementType == .button, under.contains("alert"), let byLabel = alertButtonId(node.label, locale: locale) {
+        if id == nil, node.elementType == .button, under.contains("alert"),
+           let byLabel = alertButtonId(node.label, state: alert, locale: locale) {
             id = byLabel
             matched = "label"
         }
@@ -103,7 +127,7 @@ enum ConformanceManifest {
         let containers = [XCUIElement.ElementType.keyboard, .alert, .navigationBar, .statusBar, .sheet]
         let nextUnder = containers.contains(node.elementType) ? under + [role] : under
         for child in node.children {
-            collect(child, within: id ?? within, under: nextUnder, locale: locale, into: &elements)
+            collect(child, within: id ?? within, under: nextUnder, alert: alert, locale: locale, into: &elements)
         }
     }
 

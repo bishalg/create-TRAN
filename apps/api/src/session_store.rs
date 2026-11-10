@@ -4,7 +4,8 @@
 //! replayed against the API. [`InMemorySessionStore`] is the sample's: it empties on restart and
 //! never prunes. A fork replaces it with its database behind the same [`SessionStore`] trait,
 //! keeping [`SessionStore::rotate`] atomic (one transaction), because two concurrent rotations of
-//! the same token must not both succeed.
+//! the same token must not both succeed. [`SessionStore::revoke_user`] is what account deletion
+//! calls (REQ-ACC-002): it forgets the user's sessions instead of marking them.
 
 use std::collections::HashMap;
 use std::sync::{Mutex, PoisonError};
@@ -74,6 +75,10 @@ pub trait SessionStore: Send + Sync {
 
     /// Revokes the session a refresh token (spent or not) belongs to; unknown tokens are ignored.
     fn revoke(&self, refresh: &TokenDigest);
+
+    /// Removes every session of `user_id`, on every device and either transport, with all their
+    /// tokens, so nothing of the user remains (REQ-ACC-002, REQ-ACC-003). Other users keep theirs.
+    fn revoke_user(&self, user_id: &str);
 }
 
 #[derive(Debug, Default)]
@@ -81,8 +86,9 @@ pub struct InMemorySessionStore(Mutex<Tables>);
 
 #[derive(Debug, Default)]
 struct Tables {
-    /// Indexed by family id.
-    families: Vec<Family>,
+    /// By family id; a removed family's grants are removed with it.
+    families: HashMap<usize, Family>,
+    next_family: usize,
     access: HashMap<TokenDigest, Grant>,
     refresh: HashMap<TokenDigest, Grant>,
 }
@@ -123,11 +129,15 @@ impl InMemorySessionStore {
 impl SessionStore for InMemorySessionStore {
     fn start(&self, session: StoredSession, pair: PairDigests) {
         let mut tables = self.tables();
-        let family = tables.families.len();
-        tables.families.push(Family {
-            session,
-            revoked: false,
-        });
+        let family = tables.next_family;
+        tables.next_family += 1;
+        tables.families.insert(
+            family,
+            Family {
+                session,
+                revoked: false,
+            },
+        );
         tables.attach(family, pair);
     }
 
@@ -138,7 +148,7 @@ impl SessionStore for InMemorySessionStore {
     ) -> Option<StoredSession> {
         let tables = self.tables();
         let grant = tables.access.get(access).filter(|g| now < g.expires_at)?;
-        let family = &tables.families[grant.family];
+        let family = &tables.families[&grant.family];
         (!family.revoked).then(|| family.session.clone())
     }
 
@@ -152,10 +162,9 @@ impl SessionStore for InMemorySessionStore {
         let Some(grant) = refresh_grants.get_mut(refresh) else {
             return Rotation::Unknown;
         };
-        let family = &mut families[grant.family];
-        if family.revoked {
+        let Some(family) = families.get_mut(&grant.family).filter(|f| !f.revoked) else {
             return Rotation::Unknown;
-        }
+        };
         if grant.spent {
             family.revoked = true;
             return Rotation::Replayed;
@@ -171,9 +180,30 @@ impl SessionStore for InMemorySessionStore {
 
     fn revoke(&self, refresh: &TokenDigest) {
         let mut tables = self.tables();
-        if let Some(id) = tables.refresh.get(refresh).map(|g| g.family) {
-            tables.families[id].revoked = true;
+        let Tables {
+            families,
+            refresh: refresh_grants,
+            ..
+        } = &mut *tables;
+        if let Some(family) = refresh_grants
+            .get(refresh)
+            .and_then(|grant| families.get_mut(&grant.family))
+        {
+            family.revoked = true;
         }
+    }
+
+    fn revoke_user(&self, user_id: &str) {
+        let mut tables = self.tables();
+        let Tables {
+            families,
+            access,
+            refresh,
+            ..
+        } = &mut *tables;
+        families.retain(|_, family| family.session.user.user_id != user_id);
+        access.retain(|_, grant| families.contains_key(&grant.family));
+        refresh.retain(|_, grant| families.contains_key(&grant.family));
     }
 }
 
@@ -273,5 +303,60 @@ mod tests {
         assert_eq!(store.session_for_access(&[1; 32], t(1)), None);
         assert_eq!(store.rotate(&[101; 32], pair(2), t(1)), Rotation::Unknown);
         assert_eq!(store.session_for_access(&[5; 32], t(1)), Some(other));
+    }
+
+    fn user(user_id: &str, transport: Transport) -> StoredSession {
+        StoredSession {
+            user: SessionUser {
+                user_id: user_id.into(),
+                role: UserRole::CitizenVoter,
+            },
+            transport,
+        }
+    }
+
+    // Verifies: REQ-ACC-002
+    #[test]
+    fn revoking_a_user_ends_every_session_of_that_user_only() {
+        let store = started();
+        store.start(user("voter-001", Transport::Cookie), pair(2));
+        store.rotate(&[102; 32], pair(3), t(1));
+        let other = user("auditor-001", Transport::Body);
+        store.start(other.clone(), pair(4));
+
+        store.revoke_user("voter-001");
+        for access in [[1; 32], [2; 32], [3; 32]] {
+            assert_eq!(store.session_for_access(&access, t(2)), None);
+        }
+        for refresh in [[101; 32], [102; 32], [103; 32]] {
+            assert_eq!(store.rotate(&refresh, pair(9), t(2)), Rotation::Unknown);
+        }
+        assert_eq!(
+            store.session_for_access(&[4; 32], t(2)),
+            Some(other.clone())
+        );
+        assert_eq!(
+            store.rotate(&[104; 32], pair(5), t(2)),
+            Rotation::Rotated(other)
+        );
+        store.revoke_user("nobody");
+        store.revoke(&[101; 32]);
+    }
+
+    // Verifies: REQ-ACC-003
+    #[test]
+    fn revoking_a_user_leaves_no_record_of_them() {
+        let store = started();
+        store.start(user("voter-001", Transport::Cookie), pair(2));
+        store.start(user("auditor-001", Transport::Body), pair(4));
+
+        store.revoke_user("voter-001");
+        let tables = store.tables();
+        assert!(tables
+            .families
+            .values()
+            .all(|family| family.session.user.user_id == "auditor-001"));
+        assert_eq!(tables.families.len(), 1);
+        assert_eq!((tables.access.len(), tables.refresh.len()), (1, 1));
     }
 }

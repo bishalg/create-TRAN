@@ -67,6 +67,28 @@
         }
       }
     },
+    "common.deleteAccount": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete account"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "खाता हटाएँ"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "खाता मेटाउनुहोस्"
+          }
+        }
+      }
+    },
     "common.dismiss": {
       "localizations": {
         "en": {

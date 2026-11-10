@@ -4,6 +4,7 @@
     <string name="common_app_name">TRAN Voting</string>
     <string name="common_brand">TRAN</string>
     <string name="common_cancel">Cancel</string>
+    <string name="common_delete_account">Delete account</string>
     <string name="common_dismiss">Dismiss</string>
     <string name="common_loading">Loading</string>
     <string name="common_not_now">Not now</string>

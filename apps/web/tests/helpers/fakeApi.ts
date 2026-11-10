@@ -104,6 +104,14 @@ export function createFakeApi(options: FakeApiOptions = {}) {
       accessToken = null;
       return json(null, 204);
     }
+    if (path === '/api/account' && init?.method === 'DELETE') {
+      // Deletion revokes every session of the user, cookie included (REQ-ACC-001, REQ-ACC-002).
+      if (!cookie || bearer !== `Bearer ${accessToken}`)
+        return envelope(401, 'auth.session_expired');
+      cookie = null;
+      accessToken = null;
+      return json(null, 204);
+    }
 
     if (path === '/api/health') return json(healthReport);
     if (path === '/api/tran/info') return json(stackInfo);

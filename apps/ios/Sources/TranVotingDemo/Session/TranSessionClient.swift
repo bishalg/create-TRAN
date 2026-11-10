@@ -1,4 +1,4 @@
-// Verifies: REQ-SEC-014 REQ-SEC-015 REQ-SEC-016 REQ-SEC-017 REQ-SEC-021 REQ-SEC-022
+// Verifies: REQ-SEC-014 REQ-SEC-015 REQ-SEC-016 REQ-SEC-017 REQ-SEC-021 REQ-SEC-022 REQ-ACC-006 REQ-ROB-007
 import Foundation
 import os
 
@@ -26,6 +26,8 @@ actor TranSessionClient {
     private var accessToken: String?
     /// The one refresh in flight; concurrent `401`s wait for it (REQ-SEC-016).
     private var refreshTask: Task<Void, Error>?
+    /// The one deletion in flight; a second call waits for it (REQ-ACC-006).
+    private var deletionTask: Task<Void, Error>?
     /// Bumped whenever the session ends, so a refresh that lands afterwards is discarded.
     private var epoch = 0
 
@@ -66,6 +68,43 @@ actor TranSessionClient {
         _ = try? await send(request("/api/auth/sign-out", method: "POST", body: body))
     }
 
+    // MARK: - Delete the account
+
+    /// `DELETE /api/account` (REQ-ACC-006, ADR-0041 decision 4). The opposite order to sign-out:
+    /// the device is cleared only once the server answers `2xx`; any failure leaves the vault and
+    /// the access token as they were and is thrown for the normal error feedback. A `401` follows
+    /// `sessionRecovery` like any other call (REQ-SEC-015).
+    func deleteAccount() async throws {
+        // Single flight: a second request would answer `401` (the first revoked every session)
+        // and raise a misleading session-expired dialog. Callers share the one answer.
+        if let running = deletionTask { return try await running.value }
+        let task = Task { try await self.performDeletion() }
+        deletionTask = task
+        defer { deletionTask = nil }
+        try await task.value
+    }
+
+    private func performDeletion() async throws {
+        if accessToken == nil, vault.load() == nil {
+            // Nothing to send and nothing to refresh with (the debug launch preset holds no
+            // token). Ask the server anyway, so an unreachable API is a network failure and only
+            // the server's `401` reaches the recovery table.
+            do {
+                _ = try await send(request("/api/account", method: "DELETE"))
+                endSession()
+                return
+            } catch let failure as TranRequestFailure where failure.status == 401 {
+                // `send` logged this 401; the table decides what it means (REQ-SEC-015).
+                let event = TranSessionEvent.unauthorized(hasRefreshCredential: false, alreadyRetried: false)
+                guard case .signOut = sessionRecovery(event: event) else { throw failure }
+                endSession()
+                throw Self.expired
+            }
+        }
+        _ = try await authorized(path: "/api/account", method: "DELETE")
+        endSession()
+    }
+
     // MARK: - Authorised calls
 
     /// Checks a restored session in the background (REQ-SEC-021). Only a dead credential signs
@@ -104,6 +143,9 @@ actor TranSessionClient {
                 retried = true
             case .signOut:
                 endSession()
+                // With no token and nothing to refresh with, no request was sent, so nothing has
+                // logged this failure yet; otherwise `send` did (one event, REQ-ROB-007).
+                if token == nil, !retried { log(Self.expired) }
                 throw Self.expired
             case .keep:
                 // Not a row of the table for a 401; keep the credential and fail this call.
@@ -124,7 +166,9 @@ actor TranSessionClient {
 
     private func performRefresh() async throws {
         guard let stored = vault.load() else {
+            // Cleared since the call asked; no request is sent, so this is its one event.
             endSession()
+            log(Self.expired)
             throw Self.expired
         }
         let started = epoch
@@ -166,14 +210,14 @@ actor TranSessionClient {
     private func adopt(_ data: Data, epoch started: Int) throws -> TranStoredSession {
         guard let pair = try? JSONDecoder().decode(TokenPair.self, from: data),
             TranUserRole(wire: pair.user.role) != nil
-        else { throw TranRequestFailure(code: .clientUnexpected) }
+        else { throw logged(TranRequestFailure(code: .clientUnexpected)) }
         let stored = TranStoredSession(
             refreshToken: pair.refresh_token, userId: pair.user.user_id, roleWire: pair.user.role)
         guard started == epoch else { throw Self.expired }
         do {
             try vault.save(stored)
         } catch {
-            throw TranRequestFailure(code: .clientUnexpected)
+            throw logged(TranRequestFailure(code: .clientUnexpected))
         }
         accessToken = pair.access_token
         return stored
@@ -216,6 +260,12 @@ actor TranSessionClient {
             log(failure)
             throw failure
         }
+    }
+
+    /// A failure that no `send` logged (the request succeeded, its answer did not): its one event.
+    private func logged(_ failure: TranRequestFailure) -> TranRequestFailure {
+        log(failure)
+        return failure
     }
 
     private static func json(_ object: [String: String]) -> Data {

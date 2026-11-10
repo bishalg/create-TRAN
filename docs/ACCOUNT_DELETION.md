@@ -26,12 +26,12 @@ tap "Delete account" → confirmation dialog → DELETE /api/account (bearer)
 
 ## Where it lives
 
-| Part                   | Place                                                            |
-| :--------------------- | :--------------------------------------------------------------- |
-| Route and erasure seam | `apps/api` (`DELETE /api/account`, `AccountEraser`)              |
-| Confirmation and copy  | `crates/rust-core/src/feedback.rs` (`UserAction::DeleteAccount`) |
-| Control and scenarios  | `crates/rust-core/src/screens/` (`delete-account-button`)        |
-| Public page            | `apps/web/public/account-deletion.html`                          |
+| Part                   | Place                                                                                        |
+| :--------------------- | :------------------------------------------------------------------------------------------- |
+| Route and erasure seam | `apps/api/src/routes/account.rs`, `AccountEraser` in `apps/api/src/account.rs`               |
+| Confirmation and copy  | `crates/rust-core/src/feedback.rs` (`UserAction::DeleteAccount`, `AccountDeleted`)           |
+| Control and scenarios  | `crates/rust-core/src/screens/` (`delete-account-button`, `delete-account-confirm`)          |
+| Public page            | `apps/web/account-deletion.html`, filled from `locales/` by `apps/web/src/account-deletion/` |
 
 ## What a fork must add
 

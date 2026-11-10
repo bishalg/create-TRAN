@@ -1,6 +1,9 @@
-// Verifies: REQ-NAT-013
+// Verifies: REQ-NAT-013 REQ-ACC-004
 package com.tran.voting.ui
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasTestTag
@@ -8,6 +11,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
@@ -46,7 +50,34 @@ class NarrowScreenTest {
         val bounds = node.getUnclippedBoundsInRoot()
         val screen = compose.onRoot().getUnclippedBoundsInRoot()
         assertTrue("$name is ${bounds.width} wide, under the 48 dp touch floor", bounds.width >= 48.dp)
+        assertTrue("$name starts at ${bounds.left}, before the screen", bounds.left >= 0.dp)
         assertTrue("$name ends at ${bounds.right}, past the ${screen.right} screen", bounds.right <= screen.right)
+    }
+
+    /** At the contract's largest font scale (REQ-NAT-004). */
+    private fun largestText(content: @Composable () -> Unit) {
+        compose.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, ScreenContract.Minimums.largestFontScale)) {
+                content()
+            }
+        }
+    }
+
+    /** Sign-out and delete account both whole, on screen and apart (REQ-ACC-004). */
+    private fun assertAccountControls(signOut: String, deleteAccount: String) {
+        compose.waitUntil(5_000) { compose.onAllNodes(hasTestTag(deleteAccount)).fetchSemanticsNodes().isNotEmpty() }
+        val signOutNode = compose.onNodeWithTag(signOut)
+        val deleteNode = compose.onNodeWithTag(deleteAccount)
+        assertWhollyOnScreen(signOutNode, "sign out")
+        assertWhollyOnScreen(deleteNode, "delete account")
+        // Material draws a 40 dp button and pads its touch target to 48 dp (REQ-NAT-005).
+        val touch = deleteNode.fetchSemanticsNode().touchBoundsInRoot
+        val density = RuntimeEnvironment.getApplication().resources.displayMetrics.density
+        assertTrue("delete account's touch target is ${touch.height / density} dp tall", touch.height / density >= 48f)
+        val above = signOutNode.getUnclippedBoundsInRoot()
+        val below = deleteNode.getUnclippedBoundsInRoot()
+        assertTrue("delete account (${below.top}) overlaps sign out (${above.bottom})", below.top >= above.bottom)
     }
 
     @Test
@@ -66,6 +97,24 @@ class NarrowScreenTest {
     fun `REQ-NAT-013 the auditor can reach sign out on a 320 dp screen`() {
         compose.setContent { AuditorScreen(onSignOut = {}) }
         assertWhollyOnScreen(compose.onNodeWithTag(ScreenContract.Eligibility.signOutButton), "sign out")
+    }
+
+    @Test
+    fun `REQ-ACC-004 the voter can reach sign out and delete account at the largest text scale`() {
+        largestText { NavigationCoordinator(api = FakeApis.healthy()) }
+        assertAccountControls(ScreenContract.Eligibility.signOutButton, ScreenContract.Eligibility.deleteAccountButton)
+    }
+
+    @Test
+    fun `REQ-ACC-004 the auditor can reach sign out and delete account at the largest text scale`() {
+        largestText { AuditorScreen(onSignOut = {}, onDeleteAccount = {}) }
+        assertAccountControls(ScreenContract.Auditor.signOutButton, ScreenContract.Auditor.deleteAccountButton)
+    }
+
+    @Test
+    fun `REQ-ACC-004 both account controls fit a 320 dp screen at the default text scale`() {
+        compose.setContent { AuditorScreen(onSignOut = {}, onDeleteAccount = {}) }
+        assertAccountControls(ScreenContract.Auditor.signOutButton, ScreenContract.Auditor.deleteAccountButton)
     }
 
     companion object {

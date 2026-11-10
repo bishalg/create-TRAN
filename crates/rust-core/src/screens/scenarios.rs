@@ -256,16 +256,56 @@ pub const ELIGIBILITY: &[Scenario] = &[
         &[Tap("sign-out-button"), Tap("dialog-confirm")],
         &[Exists("voter-branch-button"), Missing("check-button")],
     ),
+    Scenario::new(
+        "Deleting the account asks first and Cancel keeps it",
+        &["REQ-ACC-004", "REQ-ACC-005"],
+        &[VOTER],
+        &[Tap("delete-account-button"), Tap("delete-account-cancel")],
+        &[
+            Missing("delete-account-confirm"),
+            Exists("check-button"),
+            Count {
+                id: "delete-account-button",
+                n: 1,
+            },
+        ],
+    ),
+    // Decision (REQ-ACC-006): the happy path, "Confirming deletes the account and returns to role
+    // selection", is not a scenario. The native suites run without an API and their `session`
+    // given holds no token, so no verb can stage a deletion the server confirms on all three
+    // platforms; each platform's session-client and UI tests prove it instead.
+    Scenario::new(
+        "A deletion that cannot reach the server keeps the account",
+        &["REQ-ACC-006", "REQ-ERR-006"],
+        &[VOTER, Given::ApiUnreachable],
+        &[Tap("delete-account-button"), Tap("delete-account-confirm")],
+        &[
+            Missing("delete-account-confirm"),
+            Exists("offline-notice"),
+            Exists("check-button"),
+            Exists("delete-account-button"),
+            Missing("voter-branch-button"),
+        ],
+    ),
     theme!("The light theme is selectable", "light"),
     theme!("The dark theme is selectable", "dark"),
     theme!("The black theme is selectable", "black"),
     theme!("The sepia theme is selectable", "sepia"),
 ];
 
-pub const AUDITOR: &[Scenario] = &[Scenario::new(
-    "Signing out of the auditor dashboard returns to role selection",
-    &["REQ-NAV-005", "REQ-ERR-007"],
-    &[Given::Session(SessionKind::ElectionAuditor)],
-    &[Tap("sign-out-button"), Tap("dialog-confirm")],
-    &[Exists("auditor-branch-button"), Missing("sign-out-button")],
-)];
+pub const AUDITOR: &[Scenario] = &[
+    Scenario::new(
+        "Signing out of the auditor dashboard returns to role selection",
+        &["REQ-NAV-005", "REQ-ERR-007"],
+        &[Given::Session(SessionKind::ElectionAuditor)],
+        &[Tap("sign-out-button"), Tap("dialog-confirm")],
+        &[Exists("auditor-branch-button"), Missing("sign-out-button")],
+    ),
+    Scenario::new(
+        "Deleting the account from the auditor dashboard asks first and Cancel keeps it",
+        &["REQ-ACC-004", "REQ-ACC-005"],
+        &[Given::Session(SessionKind::ElectionAuditor)],
+        &[Tap("delete-account-button"), Tap("delete-account-cancel")],
+        &[Missing("delete-account-confirm"), Exists("sign-out-button")],
+    ),
+];

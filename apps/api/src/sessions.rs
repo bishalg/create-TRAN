@@ -1,4 +1,5 @@
-//! Issuing, checking, rotating and revoking sessions (REQ-SEC-006 to REQ-SEC-011, ADR-0039).
+//! Issuing, checking, rotating and revoking sessions (REQ-SEC-006 to REQ-SEC-011, ADR-0039), and
+//! ending all of a user's at once when the account is deleted (REQ-ACC-002).
 //!
 //! Tokens are [`SESSION_POLICY`]`.token_bytes` bytes from the operating system's CSPRNG, encoded
 //! as unpadded base64url, and held as [`Secret`]s. Only their SHA-256 digests reach the
@@ -76,6 +77,11 @@ impl Sessions {
     /// Revokes the session of `refresh`, if there is one.
     pub fn sign_out(&self, refresh: &str) {
         self.store.revoke(&digest(refresh));
+    }
+
+    /// Ends every session of `user_id` on every device (REQ-ACC-002).
+    pub fn revoke_user(&self, user_id: &str) {
+        self.store.revoke_user(user_id);
     }
 
     fn mint_pair(&self) -> (IssuedTokens, PairDigests) {

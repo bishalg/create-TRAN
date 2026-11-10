@@ -1,4 +1,4 @@
-// Verifies: REQ-SEC-014 REQ-SEC-016 REQ-SEC-017 REQ-SEC-018 REQ-SEC-022 (the web session client)
+// Verifies: REQ-SEC-014 REQ-SEC-016 REQ-SEC-017 REQ-SEC-018 REQ-SEC-022 REQ-ACC-006 (the web session client)
 import { afterEach, describe, expect, it, vi } from 'vitest';
 // The real recovery table, from its TypeScript mirror (`@tran/core` depends on this package).
 import { refreshEvent, sessionRecovery } from '../../core-ts/src/session.js';
@@ -60,6 +60,11 @@ function fakeServer(options: { onRefresh?: () => Promise<Response> | Response } 
         current = `at-${++issuedCount}`;
         return issued(current);
       case '/api/auth/sign-out':
+        current = null;
+        return reply(204);
+      case '/api/account':
+        // Deletion revokes every session of the user (REQ-ACC-002).
+        if (bearer !== `Bearer ${current}`) return expired();
         current = null;
         return reply(204);
       default:
@@ -326,6 +331,158 @@ describe('signing out clears the device first (REQ-SEC-022)', () => {
     expect(await refreshing).toMatchObject({ kind: 'signed_out' });
     expect(server.client.user).toBeNull();
     await vi.waitFor(() => expect(server.to('/api/auth/sign-out')).toHaveLength(2));
+  });
+});
+
+describe('deleting the account: the server decides, then the device follows (REQ-ACC-006)', () => {
+  it('sends DELETE /api/account with the bearer and no body or cookie, and forgets the session on 204', async () => {
+    const server = fakeServer();
+    await server.client.signIn('citizen_voter');
+    let userDuringCall: unknown = 'not called';
+    const real = server.fetchFn.getMockImplementation()!;
+    server.fetchFn.mockImplementationOnce(async (url, init) => {
+      userDuringCall = server.client.user;
+      return real(url, init);
+    });
+
+    await expect(server.client.deleteAccount()).resolves.toBeUndefined();
+    // The device was still signed in while the server decided.
+    expect(userDuringCall).toEqual(VOTER);
+    const [call] = server.to('/api/account');
+    expect(call!.init).toMatchObject({ method: 'DELETE', credentials: 'omit', body: undefined });
+    expect(server.bearerOf(call!)).toBe('Bearer at-1');
+    expect(call!.init.headers).not.toHaveProperty('Content-Type');
+    expect(server.client.user).toBeNull();
+
+    // Nothing is left in memory: the next call carries no token and nothing refreshes it.
+    await server.client.fetch('/api/vote/a');
+    expect(server.bearerOf(server.to('/api/vote/a')[0]!)).toBeUndefined();
+    expect(server.to('/api/auth/refresh')).toHaveLength(0);
+  });
+
+  it('then signs out with the cookie, so the browser removes it; that call cannot undo the deletion', async () => {
+    const server = fakeServer();
+    await server.client.signIn('citizen_voter');
+    await server.client.deleteAccount();
+    // The deletion carried no cookie, so only this call can clear it (REQ-SEC-018).
+    await vi.waitFor(() => expect(server.to('/api/auth/sign-out')).toHaveLength(1));
+    const [signOut] = server.to('/api/auth/sign-out');
+    expect(signOut!.init).toMatchObject({ method: 'POST', credentials: 'include' });
+    expect(server.bearerOf(signOut!)).toBeUndefined();
+
+    const again = fakeServer();
+    await again.client.signIn('citizen_voter');
+    const real = again.fetchFn.getMockImplementation()!;
+    again.fetchFn.mockImplementation(async (url, init) => {
+      if (String(url).endsWith('/api/auth/sign-out')) throw new TypeError('Failed to fetch');
+      return real(url, init);
+    });
+    await expect(again.client.deleteAccount()).resolves.toBeUndefined();
+    expect(again.client.user).toBeNull();
+  });
+
+  it('sends one deletion while one is in flight; every caller gets its answer (REQ-ACC-006)', async () => {
+    let answer!: (response: Response) => void;
+    const server = fakeServer();
+    await server.client.signIn('citizen_voter');
+    server.fetchFn.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)));
+    const first = server.client.deleteAccount();
+    const second = server.client.deleteAccount();
+    answer(reply(204));
+    await expect(Promise.all([first, second])).resolves.toEqual([undefined, undefined]);
+    expect(
+      server.fetchFn.mock.calls.filter(([url]) => String(url).endsWith('/api/account'))
+    ).toHaveLength(1);
+
+    // Settled, a new call is a new request.
+    await server.client.deleteAccount().catch(() => undefined);
+    expect(server.to('/api/account')).toHaveLength(1);
+  });
+
+  it('keeps the session and rejects with the failure when the server cannot be reached', async () => {
+    const server = fakeServer();
+    await server.client.signIn('citizen_voter');
+    const offline = new TypeError('Failed to fetch');
+    server.fetchFn.mockRejectedValueOnce(offline);
+
+    await expect(server.client.deleteAccount()).rejects.toBe(offline);
+    expect(server.client.user).toEqual(VOTER);
+    await server.client.fetch('/api/vote/a');
+    expect(server.bearerOf(server.to('/api/vote/a')[0]!)).toBe('Bearer at-1');
+  });
+
+  it('keeps the session and rejects with the envelope when the server fails', async () => {
+    const server = fakeServer();
+    await server.client.signIn('citizen_voter');
+    server.fetchFn.mockResolvedValueOnce(
+      reply(500, { success: false, error: 'boom', code: 'server.internal' })
+    );
+
+    const error = (await server.client.deleteAccount().catch((e: unknown) => e)) as TranApiError;
+    expect(error).toBeInstanceOf(TranApiError);
+    expect(error.status).toBe(500);
+    expect(error.code).toBe('server.internal');
+    expect(server.client.user).toEqual(VOTER);
+  });
+
+  it('on 401 refreshes once and repeats the deletion with the new token', async () => {
+    const server = fakeServer();
+    await server.client.signIn('citizen_voter');
+    server.expire();
+    let refreshed = false;
+    const real = server.fetchFn.getMockImplementation()!;
+    server.fetchFn.mockImplementation(async (url, init) => {
+      if (String(url).endsWith('/api/auth/refresh')) refreshed = true;
+      return real(url, init);
+    });
+
+    await server.client.deleteAccount();
+    expect(refreshed).toBe(true);
+    expect(server.to('/api/account').map(server.bearerOf)).toEqual(['Bearer at-1', 'Bearer at-2']);
+    expect(server.client.user).toBeNull();
+  });
+
+  it('on 401 with a dead refresh signs out as the table says and rejects with the 401', async () => {
+    const server = fakeServer({ onRefresh: expired });
+    await server.client.signIn('citizen_voter');
+    server.expire();
+
+    const error = (await server.client.deleteAccount().catch((e: unknown) => e)) as TranApiError;
+    expect(error.status).toBe(401);
+    expect(error.code).toBe('auth.session_expired');
+    expect(server.client.user).toBeNull();
+  });
+
+  it('asks the server even without a token: only the answer says whether there is a session', async () => {
+    const server = fakeServer();
+    const offline = new TypeError('Failed to fetch');
+    server.fetchFn.mockRejectedValueOnce(offline);
+    await expect(server.client.deleteAccount()).rejects.toBe(offline);
+    const [[url, init]] = server.fetchFn.mock.calls;
+    expect(url).toBe(`${API}/api/account`);
+    expect(server.bearerOf({ path: '', init: init! })).toBeUndefined();
+
+    // Reachable, the server refuses it and the recovery table has nothing to refresh.
+    const error = (await server.client.deleteAccount().catch((e: unknown) => e)) as TranApiError;
+    expect(error.status).toBe(401);
+    expect(server.to('/api/auth/refresh')).toHaveLength(0);
+  });
+
+  it('throws away a refresh that answers after the deletion, and revokes it', async () => {
+    let answer!: (response: Response) => void;
+    let holdRefresh = false;
+    const server = fakeServer({
+      onRefresh: () =>
+        holdRefresh ? new Promise((resolve) => (answer = resolve)) : issued('at-2'),
+    });
+    await server.client.signIn('citizen_voter');
+    holdRefresh = true;
+    const refreshing = server.client.refresh();
+    await server.client.deleteAccount();
+    answer(issued('at-late'));
+
+    expect(await refreshing).toMatchObject({ kind: 'signed_out' });
+    expect(server.client.user).toBeNull();
   });
 });
 

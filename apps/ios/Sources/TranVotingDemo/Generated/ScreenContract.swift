@@ -17,6 +17,7 @@ enum ScreenContract {
 
     enum Eligibility {
         static let signOutButton = "sign-out-button"
+        static let deleteAccountButton = "delete-account-button"
         static let roleBadge = "role-badge"
         static let ageField = "age-field"
         static let countryField = "country-field"
@@ -31,13 +32,18 @@ enum ScreenContract {
         static let toastDismiss = "toast-dismiss"
         static let dialogConfirm = "dialog-confirm"
         static let dialogCancel = "dialog-cancel"
+        static let deleteAccountConfirm = "delete-account-confirm"
+        static let deleteAccountCancel = "delete-account-cancel"
     }
 
     enum Auditor {
         static let signOutButton = "sign-out-button"
+        static let deleteAccountButton = "delete-account-button"
         static let roleBadge = "role-badge"
         static let dialogConfirm = "dialog-confirm"
         static let dialogCancel = "dialog-cancel"
+        static let deleteAccountConfirm = "delete-account-confirm"
+        static let deleteAccountCancel = "delete-account-cancel"
     }
 
     /// Minimums from `PLATFORM_MINIMUMS` (REQ-SCR-007), in pt.

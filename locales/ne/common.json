@@ -2,6 +2,7 @@
   "brand": "TRAN",
   "appName": "TRAN मतदान",
   "signOut": "साइन आउट",
+  "deleteAccount": "खाता मेटाउनुहोस्",
   "role": {
     "citizenVoter": "नागरिक मतदाता",
     "electionAuditor": "निर्वाचन अडिटर",

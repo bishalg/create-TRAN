@@ -4,6 +4,7 @@
     <string name="common_app_name">TRAN मतदान</string>
     <string name="common_brand">TRAN</string>
     <string name="common_cancel">रद्द गर्नुहोस्</string>
+    <string name="common_delete_account">खाता मेटाउनुहोस्</string>
     <string name="common_dismiss">बन्द गर्नुहोस्</string>
     <string name="common_loading">लोड हुँदैछ</string>
     <string name="common_not_now">अहिले होइन</string>

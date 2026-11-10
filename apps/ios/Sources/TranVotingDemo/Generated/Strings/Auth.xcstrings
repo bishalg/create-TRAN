@@ -1,6 +1,28 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "auth.accountDeleted": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your account was deleted"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपका खाता हटा दिया गया"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "तपाईंको खाता मेटाइयो"
+          }
+        }
+      }
+    },
     "auth.continueAsAuditor": {
       "localizations": {
         "en": {
@@ -41,6 +63,292 @@
           "stringUnit": {
             "state": "translated",
             "value": "नागरिक मतदाताको रूपमा जारी राख्नुहोस्"
+          }
+        }
+      }
+    },
+    "auth.deleteAccountConfirm.body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your account and its data will be deleted permanently. This cannot be undone, and nothing can be recovered."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपका खाता और उसका डेटा स्थायी रूप से हटा दिया जाएगा। इसे पूर्ववत नहीं किया जा सकता और कुछ भी वापस नहीं पाया जा सकता।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "तपाईंको खाता र यसको डेटा स्थायी रूपमा मेटाइनेछ। यसलाई पूर्ववत गर्न सकिँदैन, र केही पनि फिर्ता पाउन सकिँदैन।"
+          }
+        }
+      }
+    },
+    "auth.deleteAccountConfirm.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete your account?"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अपना खाता हटाएँ?"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आफ्नो खाता मेटाउने?"
+          }
+        }
+      }
+    },
+    "auth.deletionPage.deletedBody": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your account and everything the server holds for it, including your sign-ins on every device. Deletion is permanent: it cannot be undone and nothing can be recovered."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपका खाता और सर्वर के पास उसका सब कुछ, हर डिवाइस पर आपके साइन इन सहित। हटाना स्थायी है: इसे पूर्ववत नहीं किया जा सकता और कुछ भी वापस नहीं पाया जा सकता।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "तपाईंको खाता र सर्भरसँग भएको त्यसको सबै कुरा, हरेक उपकरणमा तपाईंको साइन इन सहित। मेटाउनु स्थायी हो: यसलाई पूर्ववत गर्न सकिँदैन र केही पनि फिर्ता पाउन सकिँदैन।"
+          }
+        }
+      }
+    },
+    "auth.deletionPage.deletedTitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What is deleted"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "क्या हटाया जाता है"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "के मेटिन्छ"
+          }
+        }
+      }
+    },
+    "auth.deletionPage.howTitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How to delete your account"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अपना खाता कैसे हटाएँ"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आफ्नो खाता कसरी मेटाउने"
+          }
+        }
+      }
+    },
+    "auth.deletionPage.intro": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can delete your account yourself, at any time, from inside the app. You do not need to write to us or fill in a form."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आप ऐप के अंदर से, किसी भी समय, स्वयं अपना खाता हटा सकते हैं। आपको हमें लिखने या कोई फ़ॉर्म भरने की ज़रूरत नहीं है।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "तपाईं एपभित्रैबाट, जुनसुकै बेला, आफैं आफ्नो खाता मेटाउन सक्नुहुन्छ। हामीलाई लेख्न वा कुनै फारम भर्न आवश्यक छैन।"
+          }
+        }
+      }
+    },
+    "auth.deletionPage.keptBody": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing. No copy of your account or its data is kept after deletion, so there is no retention period. The server records only that a deletion happened, never whose account it was."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कुछ नहीं। हटाने के बाद आपके खाते या उसके डेटा की कोई प्रति नहीं रखी जाती, इसलिए कोई अवधि नहीं है। सर्वर केवल यह दर्ज करता है कि एक खाता हटाया गया, यह कभी नहीं कि वह किसका था।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "केही पनि होइन। मेटाएपछि तपाईंको खाता वा यसको डेटाको कुनै प्रति राखिँदैन, त्यसैले कुनै अवधि छैन। सर्भरले एउटा खाता मेटियो भन्ने मात्र राख्छ, कसको थियो भन्ने कहिल्यै राख्दैन।"
+          }
+        }
+      }
+    },
+    "auth.deletionPage.keptTitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What is kept, and for how long"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "क्या रखा जाता है, और कितने समय तक"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "के राखिन्छ, र कति समयसम्म"
+          }
+        }
+      }
+    },
+    "auth.deletionPage.openApp": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the web app to delete your account"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अपना खाता हटाने के लिए वेब ऐप खोलें"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आफ्नो खाता मेटाउन वेब एप खोल्नुहोस्"
+          }
+        }
+      }
+    },
+    "auth.deletionPage.stepChoose": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose “%1$@”. It is next to “%2$@” on every signed-in screen."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%1$@” चुनें। यह साइन इन के बाद की हर स्क्रीन पर “%2$@” के पास है।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%1$@” छान्नुहोस्। यो साइन इन पछिको हरेक स्क्रिनमा “%2$@” को छेउमा छ।"
+          }
+        }
+      }
+    },
+    "auth.deletionPage.stepConfirm": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm. Your account is deleted as soon as the server confirms it, and every device that used it is signed out."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पुष्टि करें। सर्वर के पुष्टि करते ही आपका खाता हट जाता है, और उसका उपयोग करने वाला हर डिवाइस साइन आउट हो जाता है।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पुष्टि गर्नुहोस्। सर्भरले पुष्टि गर्नेबित्तिकै तपाईंको खाता मेटिन्छ, र त्यो प्रयोग गर्ने हरेक उपकरण साइन आउट हुन्छ।"
+          }
+        }
+      }
+    },
+    "auth.deletionPage.stepOpen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open TRAN Voting on the web, on iPhone or on Android, and sign in."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "वेब, iPhone या Android पर TRAN वोटिंग खोलें और साइन इन करें।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "वेब, iPhone वा Android मा TRAN मतदान खोल्नुहोस् र साइन इन गर्नुहोस्।"
+          }
+        }
+      }
+    },
+    "auth.deletionPage.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deleting your TRAN Voting account"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अपना TRAN वोटिंग खाता हटाना"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आफ्नो TRAN मतदान खाता मेटाउने"
           }
         }
       }

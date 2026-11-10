@@ -1,4 +1,4 @@
-// Verifies: REQ-SEC-014 REQ-SEC-016 REQ-SEC-017 REQ-SEC-022
+// Verifies: REQ-SEC-014 REQ-SEC-016 REQ-SEC-017 REQ-SEC-022 REQ-ACC-006
 package com.tran.voting.session
 
 import com.tran.voting.api.TranRequestFailure
@@ -28,6 +28,7 @@ import org.junit.Test
 import uniffi.tran_uniffi.TranErrorCode
 import uniffi.tran_uniffi.TranLogLevel
 import uniffi.tran_uniffi.TranUserRole
+import uniffi.tran_uniffi.errorSpec
 
 /** The Android session client on a stubbed API (hermetic, ADR-0023): body transport, bearer, refresh, sign-out. */
 class SessionClientTest {
@@ -52,6 +53,7 @@ class SessionClientTest {
     private var refreshAnswer: () -> MockResponse = { pair(ACCESS_2, REFRESH_2, 200) }
     private var validAccess = setOf(ACCESS_2)
     private var signOutHook: (RecordedRequest) -> Unit = {}
+    private var accountAnswer: () -> MockResponse = { MockResponse().setResponseCode(204) }
 
     @Before
     fun setUp() {
@@ -71,6 +73,10 @@ class SessionClientTest {
                 "/api/auth/sign-out" -> {
                     signOutHook(request)
                     MockResponse().setResponseCode(204)
+                }
+                "/api/account" -> {
+                    val bearer = request.getHeader("Authorization")?.removePrefix("Bearer ")
+                    if (request.method == "DELETE" && bearer in validAccess) accountAnswer() else expired()
                 }
                 else -> MockResponse().setResponseCode(404)
             }
@@ -284,6 +290,156 @@ class SessionClientTest {
         assertFalse(client.hasAccessToken)
         assertTrue("the failed call is logged", logLines.isNotEmpty())
         assertNothingLeaked()
+    }
+
+    // Account deletion (REQ-ACC-006): the server decides, then the device follows.
+
+    @Test
+    fun deletionSendsTheBearerAndClearsTheDeviceOnlyAfterTheServerConfirms() = runBlocking {
+        validAccess = setOf(ACCESS_1)
+        val client = client()
+        client.signIn(TranUserRole.CITIZEN_VOTER)
+        var vaultAtAnswer: StoredSession? = null
+        accountAnswer = {
+            vaultAtAnswer = vault.read()
+            MockResponse().setResponseCode(204)
+        }
+
+        client.deleteAccount()
+
+        val call = requests().last()
+        assertEquals("DELETE", call.method)
+        assertEquals("/api/account", call.path)
+        assertEquals("Bearer $ACCESS_1", call.getHeader("Authorization"))
+        assertEquals(0L, call.bodySize)
+        assertEquals("the device keeps the session until the server answers", REFRESH_1, vaultAtAnswer?.refreshToken)
+        assertNull(vault.read())
+        assertFalse(client.hasAccessToken)
+        assertNothingLeaked()
+    }
+
+    @Test
+    fun concurrentDeletionsSendOneRequestAndShareItsAnswer() = runBlocking {
+        // REQ-ACC-006: a second activation while one is in flight must not send another DELETE,
+        // whose 401 would raise a misleading session-expired dialog.
+        validAccess = setOf(ACCESS_1)
+        accountAnswer = { MockResponse().setResponseCode(204).setHeadersDelay(300, TimeUnit.MILLISECONDS) }
+        val client = client()
+        client.signIn(TranUserRole.CITIZEN_VOTER)
+
+        (1..2).map { async(Dispatchers.IO) { client.deleteAccount() } }.awaitAll()
+
+        assertEquals(1, requests().count { it.path == "/api/account" })
+        assertNull(vault.read())
+    }
+
+    @Test
+    fun aDeletionAfterAFailedOneAsksAgain() = runBlocking {
+        validAccess = setOf(ACCESS_1)
+        accountAnswer = { json(500, """{"success":false,"error":"Failed"}""") }
+        val client = client()
+        client.signIn(TranUserRole.CITIZEN_VOTER)
+        failureOf { client.deleteAccount() }
+
+        accountAnswer = { MockResponse().setResponseCode(204) }
+        client.deleteAccount()
+
+        assertEquals(2, requests().count { it.path == "/api/account" })
+        assertNull(vault.read())
+    }
+
+    @Test
+    fun aThrownFailureIsTheCallersToLog() = runBlocking {
+        // REQ-ROB-007: the caller presents and logs what it is thrown, so the client must not log it
+        // as well; only a failure it swallows (sign-out's revoke) is logged here.
+        validAccess = setOf(ACCESS_1)
+        accountAnswer = { json(500, """{"success":false,"error":"Failed"}""") }
+        refreshAnswer = { expired() }
+        val client = client()
+        client.signIn(TranUserRole.CITIZEN_VOTER)
+
+        failureOf { client.deleteAccount() }
+        validAccess = emptySet()
+        failureOf { client.currentUser() }
+
+        assertEquals(emptyList<String>(), logLines)
+    }
+
+    @Test
+    fun aDeletionTheServerRefusesKeepsTheSession() = runBlocking {
+        validAccess = setOf(ACCESS_1)
+        val expected = mapOf(500 to TranErrorCode.SERVER_INTERNAL, 503 to TranErrorCode.SERVER_UNAVAILABLE)
+        for ((status, code) in expected) {
+            accountAnswer = { json(status, """{"success":false,"error":"Failed","code":"${errorSpec(code).wireCode}"}""") }
+            val client = client()
+            client.signIn(TranUserRole.CITIZEN_VOTER)
+
+            val failure = failureOf { client.deleteAccount() }
+
+            assertEquals("status $status", code, failure.code)
+            assertEquals("status $status", REFRESH_1, vault.read()?.refreshToken)
+            assertTrue("status $status", client.hasAccessToken)
+        }
+        assertNothingLeaked()
+    }
+
+    @Test
+    fun aDeletionThatCannotReachTheServerKeepsTheSession() = runBlocking {
+        val client = client()
+        client.signIn(TranUserRole.CITIZEN_VOTER)
+        server.shutdown()
+
+        val failure = failureOf { client.deleteAccount() }
+
+        assertNotEquals(TranErrorCode.AUTH_SESSION_EXPIRED, failure.code)
+        assertNull(failure.status)
+        assertEquals(REFRESH_1, vault.read()?.refreshToken)
+        assertTrue(client.hasAccessToken)
+    }
+
+    @Test
+    fun aDeletionWithAnExpiredAccessTokenRefreshesAndRepeatsOnce() = runBlocking {
+        // REQ-SEC-015: ACCESS_1 is refused; the refresh brings ACCESS_2, which the server accepts.
+        val client = client()
+        client.signIn(TranUserRole.CITIZEN_VOTER)
+
+        client.deleteAccount()
+
+        val deletes = requests().filter { it.path == "/api/account" }
+        assertEquals(listOf("Bearer $ACCESS_1", "Bearer $ACCESS_2"), deletes.map { it.getHeader("Authorization") })
+        assertEquals(1, refreshes.get())
+        assertNull(vault.read())
+        assertFalse(client.hasAccessToken)
+    }
+
+    @Test
+    fun aDeletionWhoseRefreshIsRejectedSignsOut() = runBlocking {
+        refreshAnswer = { expired() }
+        val client = client()
+        client.signIn(TranUserRole.CITIZEN_VOTER)
+
+        val failure = failureOf { client.deleteAccount() }
+
+        assertEquals(TranErrorCode.AUTH_SESSION_EXPIRED, failure.code)
+        assertNull(vault.read())
+        assertFalse(client.hasAccessToken)
+    }
+
+    @Test
+    fun withoutAnyCredentialTheDeletionStillAsksTheServer() = runBlocking {
+        // A device session whose API sign-in never landed: "no token" is not "signed out" until the
+        // server says so, so an unreachable server keeps the user where they are.
+        val failure = failureOf { client().deleteAccount() }
+
+        val call = requests().single()
+        assertEquals("/api/account", call.path)
+        assertNull(call.getHeader("Authorization"))
+        assertEquals(TranErrorCode.AUTH_SESSION_EXPIRED, failure.code)
+
+        server.shutdown()
+        val offline = failureOf { client().deleteAccount() }
+        assertNotEquals(TranErrorCode.AUTH_SESSION_EXPIRED, offline.code)
+        assertNull(offline.status)
     }
 
     @Test

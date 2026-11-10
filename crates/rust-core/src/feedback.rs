@@ -391,6 +391,10 @@ pub enum UserAction {
     SignOut,
     /// A server check completed (REQ-ERR-008).
     ServerCheckSucceeded,
+    /// Destructive and permanent: erases the account, so it asks first (REQ-ACC-005).
+    DeleteAccount,
+    /// The server confirmed a deletion; shown on role selection (REQ-ACC-006).
+    AccountDeleted,
 }
 
 /// How a [`UserAction`] is presented, and the locale key of its headline.
@@ -401,12 +405,19 @@ pub struct ActionSpec {
 }
 
 impl UserAction {
-    pub const ALL: [Self; 2] = [Self::SignOut, Self::ServerCheckSucceeded];
+    pub const ALL: [Self; 4] = [
+        Self::SignOut,
+        Self::ServerCheckSucceeded,
+        Self::DeleteAccount,
+        Self::AccountDeleted,
+    ];
 
     pub fn as_str(self) -> &'static str {
         match self {
             Self::SignOut => "sign_out",
             Self::ServerCheckSucceeded => "server_check_succeeded",
+            Self::DeleteAccount => "delete_account",
+            Self::AccountDeleted => "account_deleted",
         }
     }
 
@@ -422,6 +433,18 @@ impl UserAction {
                     duration: ToastDuration::Short,
                 },
                 message_key: "eligibility.serverCheckDone",
+            },
+            Self::DeleteAccount => ActionSpec {
+                presentation: Presentation::Dialog { destructive: true },
+                message_key: "auth.deleteAccountConfirm.title",
+            },
+            // Medium, not short: it lands together with the change of screen.
+            Self::AccountDeleted => ActionSpec {
+                presentation: Presentation::Toast {
+                    tone: Tone::Success,
+                    duration: ToastDuration::Medium,
+                },
+                message_key: "auth.accountDeleted",
             },
         }
     }

@@ -16,6 +16,7 @@ object ScreenContract {
 
     object Eligibility {
         const val signOutButton = "sign-out-button"
+        const val deleteAccountButton = "delete-account-button"
         const val roleBadge = "role-badge"
         const val ageField = "age-field"
         const val countryField = "country-field"
@@ -30,13 +31,18 @@ object ScreenContract {
         const val toastDismiss = "toast-dismiss"
         const val dialogConfirm = "dialog-confirm"
         const val dialogCancel = "dialog-cancel"
+        const val deleteAccountConfirm = "delete-account-confirm"
+        const val deleteAccountCancel = "delete-account-cancel"
     }
 
     object Auditor {
         const val signOutButton = "sign-out-button"
+        const val deleteAccountButton = "delete-account-button"
         const val roleBadge = "role-badge"
         const val dialogConfirm = "dialog-confirm"
         const val dialogCancel = "dialog-cancel"
+        const val deleteAccountConfirm = "delete-account-confirm"
+        const val deleteAccountCancel = "delete-account-cancel"
     }
 
     /** Minimums from `PLATFORM_MINIMUMS` (REQ-SCR-007), in dp. */

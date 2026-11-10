@@ -1,4 +1,4 @@
-// Verifies: REQ-SEC-019 REQ-SEC-021
+// Verifies: REQ-SEC-019 REQ-SEC-021 REQ-ROB-007
 import XCTest
 
 /// Launch: the Splash routes from the vault with no network, then the session is checked in the
@@ -135,5 +135,23 @@ final class SessionRestoreTests: XCTestCase {
         XCTAssertEqual(dialog?.title, TranFeedback.message(errorSpec(code: .authSessionExpired).messageKey))
         dialog?.onConfirm()
         XCTAssertTrue(signedInAgain, "the dialog's confirm runs the app's sign-in-again handler")
+    }
+
+    /// The client logs the `401` it received; the dialog it leads to adds no second event.
+    func testADeadCredentialIsLoggedOnce() async {
+        let events = FailureLog()
+        let vault = InMemorySessionVault(SessionWire.stored())
+        SessionStubProtocol.reset { _ in .status(401, body: SessionWire.expired) }
+        let feedback = TranFeedback()
+        feedback.writer = events.record
+        let client = TranSessionClient(
+            vault: vault, baseUrl: URL(string: "http://127.0.0.1:3001")!,
+            session: SessionStubProtocol.session(), log: events.record)
+
+        await TranSessionRestore.validate(client, feedback: feedback)
+
+        XCTAssertEqual(SessionStubProtocol.requests.map(\.path), ["/api/auth/refresh"])
+        XCTAssertEqual(events.entries.map(\.code), [.authSessionExpired], "one request failed, one event")
+        XCTAssertNotNil(feedback.confirmation, "and the dialog still asks")
     }
 }
