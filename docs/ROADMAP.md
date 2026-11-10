@@ -80,11 +80,12 @@ and one short playbook in `docs/` (what the topic is, why it matters, the rules 
        [playbook](./ACCOUNT_DELETION.md)): delete the account from inside the app (App Store guideline 5.1.1(v)) and from a public
        web page (Google Play's account-deletion policy), confirmed first, with every session revoked, the device
        vault cleared and the server data erased or scheduled for erasure.
-3. [ ] **Mobile release automation (fastlane)** ([spec 025](./specs/025-mobile-release.md), ADR-0042,
+3. [x] **Mobile release automation (fastlane)** ([spec 025](./specs/025-mobile-release.md), ADR-0042,
        [playbook](./MOBILE_RELEASE.md)): one `Fastfile` per platform with the same lanes (`test`, `beta`,
        `release`), signing kept out of the repo, store credentials only in CI secrets, versions still from
        `pnpm release` (ADR-0034).
-4. [ ] **Permissions and privacy prompts**: ask in context with a purpose string, work when denied, optional personal
+4. [ ] **Permissions and privacy prompts** ([spec 026](./specs/026-permissions-and-privacy.md), ADR-0043,
+       [playbook](./PERMISSIONS.md)): ask in context with a purpose string, work when denied, optional personal
        questions (gender, birth date), no tracking without App Tracking Transparency (a guard: the template does not
        track).
 5. [ ] **Push notifications and device registration**: optional push, the device token registered to the signed-in

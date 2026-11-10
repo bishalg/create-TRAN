@@ -6,6 +6,7 @@
 - **Tokens:** [DESIGN.md](./DESIGN.md) · **Backlog:** [ROADMAP.md](./ROADMAP.md)
 - **Security:** [SECURITY.md](./SECURITY.md) (secrets, sessions, token storage) · [account deletion](./ACCOUNT_DELETION.md) · [reporting](../SECURITY.md)
 - **Store rules:** [APP_REVIEW.md](./APP_REVIEW.md) (what gets an app rejected, and where each rule is answered)
+- **Permissions:** [PERMISSIONS.md](./PERMISSIONS.md) (asking in context, refusal, personal questions, no tracking)
 - **Shipping mobile:** [MOBILE_RELEASE.md](./MOBILE_RELEASE.md) (fastlane lanes, signing, store readiness)
 - **Operations:** [OBSERVABILITY.md](./OBSERVABILITY.md) (logs, traces, metrics, lifecycle)
 - **Agents:** [setup](../.agents/README.md) · **Lessons learned:** [LEARNINGS.md](./LEARNINGS.md)

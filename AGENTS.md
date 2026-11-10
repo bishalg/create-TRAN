@@ -35,6 +35,9 @@ This is a **template**: keep the sample tiny, exemplary and fully tested.
 - No third-party product SDKs (purchases, sign-in, analytics, push, crash reporting): build on the platform APIs behind
   a seam and learn the pattern from the best SDK instead of importing it, so the template shows how the thing works. A
   fork may swap an SDK in behind the seam. Record an unavoidable exception in an ADR.
+- Permissions ([docs/PERMISSIONS.md](docs/PERMISSIONS.md), spec 026): a permission is a catalogue entry in
+  `crates/rust-core`, asked only from the control that needs it, after priming, through the platform gateway; refusal
+  is a fallback, never an error; personal questions are optional; no tracking code.
 - Hand-written code and test files stay at or under 800 lines (`pnpm tooling:test`): split by responsibility, not
   by line count. Generated files are exempt; docs have no hard limit but are split by topic.
 - Commits are Conventional Commits (`feat(scope): …`, `fix!: …`; the `commit-msg` hook checks). One version for every
