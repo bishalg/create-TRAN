@@ -40,6 +40,11 @@ This is a **template**: keep the sample tiny, exemplary and fully tested.
   is a fallback, never an error; personal questions are optional; no tracking code.
 - Push ([docs/PUSH.md](docs/PUSH.md), spec 027): a registration is bound to a session and removed by the server when
   the session ends; one token, one user; a payload carries no personal data; never log a token or an installation id.
+- Latest platforms only (ADR-0045): iOS deployment target is the previous major release, Android `minSdk` is 33; no
+  availability checks, version branches or shims below the floor, and no deprecated API that has a replacement.
+- Needs real credentials ([docs/CREDENTIALS.md](docs/CREDENTIALS.md), ADR-0046): implement it fully, switch it off by
+  missing configuration, and skip its tests with `TODO(credentials): <VARIABLES> - <what it proves>`. The suite passes
+  with nothing configured; never fake a credential to make a test pass.
 - Hand-written code and test files stay at or under 800 lines (`pnpm tooling:test`): split by responsibility, not
   by line count. Generated files are exempt; docs have no hard limit but are split by topic.
 - Commits are Conventional Commits (`feat(scope): …`, `fix!: …`; the `commit-msg` hook checks). One version for every

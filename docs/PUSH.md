@@ -40,14 +40,25 @@ provider says dead  → the server drops that registration
 | `PushSender` seam and payload builders | `apps/api/src/push/`                                          |
 | `push_sync` and `DEVICE_POLICY`        | `crates/rust-core/src/push.rs`, `fixtures/push.json`          |
 | Permission entry and priming copy      | the permission catalogue ([PERMISSIONS.md](./PERMISSIONS.md)) |
-| The only code that asks for a token    | the push gateway on each platform                             |
+| The only code that asks for a token    | `Push/SystemPushGateway.swift`, `push/SystemPushGateway.kt`   |
+| The notification permission prompt     | `Permissions/SystemPermissionGateway` on each platform        |
+| Notification text                      | `eligibility.notification.*` in `locales/`, chosen by the API |
+
+## Testing without a real token
+
+The debug apps never reach APNs or FCM under a test preset. A screen scenario stages push as available only through a
+`permission` given that names `notifications` (iOS `-TranPermission notifications=<status>`; Android
+`stagedPermission("notifications=<status>")`): the interpreter then also hands the app a fake push gateway that reports
+push available and, once permission is granted, a fixed fake token. Without that given the fake reports push
+unavailable, so `notify-me-button` is absent and every other scenario sees the screen it always saw. The API side is
+tested with `FakeSender` (`apps/api/src/push/sender.rs`).
 
 ## What a fork must add
 
 - **Apple:** the Push Notifications capability and an APNs auth key (`.p8`, key id, team id) on the server.
 - **Google:** a Firebase project; its public values in the Android build; a service account on the server.
-- **The two real senders** behind `PushSender`: APNs over HTTP/2 with a signed provider token, FCM v1 with OAuth. Map
-  each provider's "token is dead" answers to the feedback the trait already handles.
+- **The credentials for the two real senders** (already implemented and switched off): see
+  [CREDENTIALS.md](./CREDENTIALS.md). Then delete the `TODO(credentials)` skips on their live tests.
 - **A durable `DeviceStore`** and a scheduled prune.
 - **Content fetch:** the route the app calls when a doorbell rings.
 - **A marketing opt-in screen** if marketing messages are sent, and a way to turn them off.
