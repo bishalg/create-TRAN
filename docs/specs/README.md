@@ -56,6 +56,7 @@ ID that no spec defines.
 | [020 Issue-driven agents](./020-issue-driven-agents.md)       | Issue intake, quality gate, triage labels, plan and approval     | `REQ-ISS`             |
 | [021 Screen contract](./021-screen-contract.md)               | Declared screens, elements, scenarios, conformance oracle        | `REQ-SCR`             |
 | [022 Security](./022-security.md)                             | Secrets, sessions, token storage, sensitive data                 | `REQ-SEC`             |
+| [023 Observability](./023-observability.md)                   | Trace context, log schema, RED metrics, readiness, shutdown      | `REQ-OBS`             |
 
 ## Template
 

@@ -66,6 +66,23 @@ Platform-native iOS (`apps/ios`) and Android (`apps/android`) are the real **N**
 
 ---
 
+## 6. Production-readiness topics, one at a time
+
+Each topic is documented first (spec, ADR, a playbook), then built and tested on every platform before the next starts.
+
+- [ ] **Security** ([spec 022](./specs/022-security.md), ADR-0039): secrets, rotating sessions, Keychain and Keystore
+      storage, sensitive data.
+- [ ] **Observability** ([spec 023](./specs/023-observability.md), ADR-0040): trace context, log schema, RED metrics,
+      readiness and graceful shutdown.
+- [ ] **API versioning and compatibility**: a versioned base path, additive-change rules checked against contract
+      snapshots (REQ-API-011), deprecation headers, and a minimum supported client version that old apps obey.
+- [ ] **Persistence and migrations**: a durable `SessionStore`, forward-only schema migrations run and verified at
+      start-up, and versioned client-side stored records.
+- [ ] Candidates after that: rate limiting and abuse protection, feature flags and remote configuration, container
+      image and deploy pipeline.
+
+---
+
 ## Done recently (reference)
 
 - [x] Parity fixtures + 100% Rust/TS coverage gates (`a0283cb`, `b89b2c6`).
