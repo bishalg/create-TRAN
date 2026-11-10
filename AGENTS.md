@@ -45,6 +45,10 @@ This is a **template**: keep the sample tiny, exemplary and fully tested.
 - Needs real credentials ([docs/CREDENTIALS.md](docs/CREDENTIALS.md), ADR-0046): implement it fully, switch it off by
   missing configuration, and skip its tests with `TODO(credentials): <VARIABLES> - <what it proves>`. The suite passes
   with nothing configured; never fake a credential to make a test pass.
+- API changes ([docs/API_VERSIONING.md](docs/API_VERSIONING.md), spec 028): add, never change, inside `/api/v1`; a
+  breaking change is a new version path; clients ignore unknown fields and fall back on unknown enum values.
+- Flags ([docs/REMOTE_CONFIG.md](docs/REMOTE_CONFIG.md), spec 029): declare a flag in `crates/rust-core` with a safe
+  default and an expiry; a new feature ships with its flag off; never wait for config; a flag is not a lock.
 - Hand-written code and test files stay at or under 800 lines (`pnpm tooling:test`): split by responsibility, not
   by line count. Generated files are exempt; docs have no hard limit but are split by topic.
 - Commits are Conventional Commits (`feat(scope): …`, `fix!: …`; the `commit-msg` hook checks). One version for every

@@ -91,9 +91,11 @@ and one short playbook in `docs/` (what the topic is, why it matters, the rules 
 5. [x] **Push notifications and device registration** ([spec 027](./specs/027-push-and-devices.md), ADR-0044,
        [playbook](./PUSH.md)): optional push, the device token registered to the signed-in
        user on the API, replaced when it changes, removed on sign-out and account deletion.
-6. [ ] **API versioning and compatibility**: a versioned base path, additive-change rules checked against contract
+6. [ ] **API versioning and compatibility** ([spec 028](./specs/028-api-versioning.md), ADR-0047,
+       [playbook](./API_VERSIONING.md)): a versioned base path, additive-change rules checked against contract
        snapshots (REQ-API-011), deprecation headers, and a minimum supported client version that old apps obey.
-7. [ ] **Feature flags and remote configuration**: typed flags with safe defaults, evaluated in one place, a kill
+7. [ ] **Feature flags and remote configuration** ([spec 029](./specs/029-remote-config.md), ADR-0048,
+       [playbook](./REMOTE_CONFIG.md)): typed flags with safe defaults, evaluated in one place, a kill
        switch, and stale flags removed by a check.
 8. [ ] **Sign-in providers**: a provider seam with Google and Sign in with Apple, the rule that Apple is offered
        whenever a third-party provider is (guideline 4.8) as a check, the system Apple button and Google's branded

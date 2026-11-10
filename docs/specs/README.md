@@ -61,6 +61,8 @@ ID that no spec defines.
 | [025 Mobile release](./025-mobile-release.md)                   | fastlane lanes, signing, identifiers, store readiness                    | `REQ-MOB`             |
 | [026 Permissions and privacy](./026-permissions-and-privacy.md) | Priming, refusal, least data, personal questions, no tracking            | `REQ-PRV`             |
 | [027 Push and devices](./027-push-and-devices.md)               | Device registry, token lifecycle, payload rules, notification permission | `REQ-PSH`             |
+| [028 API versioning](./028-api-versioning.md)                   | Versioned path, additive changes, client replay, minimum version         | `REQ-VER`             |
+| [029 Remote config](./029-remote-config.md)                     | Flags, evaluation, caching, ship dark, kill switch                       | `REQ-CFG`             |
 
 ## Template
 
