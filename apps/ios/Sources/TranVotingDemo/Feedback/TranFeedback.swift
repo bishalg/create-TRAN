@@ -1,4 +1,4 @@
-// Verifies: REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-010 REQ-ERR-012 REQ-ERR-014
+// Verifies: REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-010 REQ-ERR-012 REQ-ERR-014 REQ-VER-010
 import Foundation
 import Observation
 import os
@@ -29,6 +29,8 @@ final class TranFeedback {
         var cancelLabel: String = L10n.Common.cancel
         let destructive: Bool
         let onConfirm: () -> Void
+        /// What the cancel button does besides closing: "Not now" remembers the dismissal.
+        var onCancel: () -> Void = {}
     }
 
     /// Oldest first; at most `toastPolicy().maxVisible` (REQ-ERR-012).
@@ -49,8 +51,8 @@ final class TranFeedback {
     }
 
     /// Runs `perform` once the user agrees — immediately when the catalogue asks for no dialog
-    /// (REQ-ERR-007).
-    func confirm(_ action: TranUserAction, perform: @escaping () -> Void) {
+    /// (REQ-ERR-007); `onCancel` when the user declines a dialog.
+    func confirm(_ action: TranUserAction, perform: @escaping () -> Void, onCancel: @escaping () -> Void = {}) {
         let spec = actionSpec(action: action)
         guard case let .dialog(destructive) = spec.presentation, let copy = Self.dialogCopy(action)
         else {
@@ -61,8 +63,10 @@ final class TranFeedback {
             title: Self.message(spec.messageKey),
             body: copy.body,
             confirmLabel: copy.confirm,
+            cancelLabel: copy.cancel,
             destructive: destructive,
-            onConfirm: perform
+            onConfirm: perform,
+            onCancel: onCancel
         )
     }
 
@@ -143,13 +147,19 @@ final class TranFeedback {
         L10n.feedback(key) ?? L10n.Errors.unexpected
     }
 
-    /// Body and confirm label per action; the title is the catalogue's `messageKey`. Exhaustive,
-    /// so a new action from Rust fails to compile until it has copy.
-    nonisolated static func dialogCopy(_ action: TranUserAction) -> (body: String, confirm: String)? {
+    /// Body, confirm and cancel labels per action; the title is the catalogue's `messageKey`.
+    /// Exhaustive, so a new action from Rust fails to compile until it has copy.
+    nonisolated static func dialogCopy(
+        _ action: TranUserAction
+    ) -> (body: String, confirm: String, cancel: String)? {
         switch action {
-        case .signOut: return (L10n.Auth.signOutConfirmBody, L10n.Common.signOut)
+        case .signOut: return (L10n.Auth.signOutConfirmBody, L10n.Common.signOut, L10n.Common.cancel)
         // A different action from sign-out, with copy that says "permanent" (REQ-ACC-005).
-        case .deleteAccount: return (L10n.Auth.deleteAccountConfirmBody, L10n.Common.deleteAccount)
+        case .deleteAccount:
+            return (L10n.Auth.deleteAccountConfirmBody, L10n.Common.deleteAccount, L10n.Common.cancel)
+        // A nudge, not a block: "Not now" is remembered for this version (REQ-VER-010).
+        case .updateRecommended:
+            return (L10n.Shell.updateRecommendedBody, L10n.Common.update, L10n.Common.notNow)
         case .serverCheckSucceeded, .accountDeleted, .notificationReceived: return nil
         }
     }

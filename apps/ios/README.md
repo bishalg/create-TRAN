@@ -4,17 +4,18 @@ Platform-native **N** in TRAN: Swift + SwiftUI, sharing brand tokens and **offli
 
 ## What works today
 
-| Feature                             | Status                                                                                                                                            |
-| :---------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Design tokens (`BrandTokens.swift`) | `pnpm tokens:sync` from `crates/rust-core/src/tokens.rs`                                                                                          |
-| Offline vote eligibility            | `evaluateVoteEligibilityOffline` via `crates/tran-uniffi` → `TranEngine`                                                                          |
-| Golden parity tests                 | `Tests/TranVotingDemoTests` reads `fixtures/vote-eligibility.json`                                                                                |
-| Accessibility tests                 | `pnpm ios:test` — XCUITest journeys + `performAccessibilityAudit` on every theme (`Tests/TranVotingDemoUITests`)                                  |
-| HTTP API client                     | `TranApiClient` — `GET /api/health` + `POST /api/vote/eligibility`; base URL from `TRAN_API_BASE_URL`, loopback-only ATS exception (REQ-NAT-011)  |
-| API session (spec 022)              | `Session/`: `TranSessionClient` (access token in memory, one shared refresh), `KeychainSessionVault`, restore on launch, privacy cover (ADR-0039) |
-| Permissions (spec 026)              | `Permissions/`: "Use my location" asks only after a tap and the priming; `SystemPermissionGateway` is the only caller of `CLLocationManager`      |
-| Push (spec 027)                     | `Push/`: `pushSync` keeps the registration; off unless built with `TRAN_PUSH_ENABLED=YES` (docs/CREDENTIALS.md)                                   |
-| Store readiness (REQ-MOB-010)       | `Support/PrivacyInfo.xcprivacy` (no tracking, required-reason APIs), `ITSAppUsesNonExemptEncryption: false`; guarded by `store-readiness.test.ts` |
+| Feature                             | Status                                                                                                                                              |
+| :---------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Design tokens (`BrandTokens.swift`) | `pnpm tokens:sync` from `crates/rust-core/src/tokens.rs`                                                                                            |
+| Offline vote eligibility            | `evaluateVoteEligibilityOffline` via `crates/tran-uniffi` → `TranEngine`                                                                            |
+| Golden parity tests                 | `Tests/TranVotingDemoTests` reads `fixtures/vote-eligibility.json`                                                                                  |
+| Accessibility tests                 | `pnpm ios:test` — XCUITest journeys + `performAccessibilityAudit` on every theme (`Tests/TranVotingDemoUITests`)                                    |
+| HTTP API client                     | `TranApiClient` — `GET /api/health` + `POST /api/v1/vote/eligibility`; base URL from `TRAN_API_BASE_URL`, loopback-only ATS exception (REQ-NAT-011) |
+| API versioning (spec 028)           | `Api/TranEndpoint` (every request, on `ApiContract.basePath`), `Api/TranHttp` (`X-Tran-Client`), `TranUpdateCenter`: `426` → `UpdateRequiredView`   |
+| API session (spec 022)              | `Session/`: `TranSessionClient` (access token in memory, one shared refresh), `KeychainSessionVault`, restore on launch, privacy cover (ADR-0039)   |
+| Permissions (spec 026)              | `Permissions/`: "Use my location" asks only after a tap and the priming; `SystemPermissionGateway` is the only caller of `CLLocationManager`        |
+| Push (spec 027)                     | `Push/`: `pushSync` keeps the registration; off unless built with `TRAN_PUSH_ENABLED=YES` (docs/CREDENTIALS.md)                                     |
+| Store readiness (REQ-MOB-010)       | `Support/PrivacyInfo.xcprivacy` (no tracking, required-reason APIs), `ITSAppUsesNonExemptEncryption: false`; guarded by `store-readiness.test.ts`   |
 
 `KeychainSessionVaultTests` needs a signed test host: under `pnpm ios:test` (`CODE_SIGNING_ALLOWED=NO`) the simulator
 denies Keychain access and the suite reports itself skipped. Run it against the real Keychain with ad-hoc signing:
@@ -77,6 +78,10 @@ code:
 
 - build setting: `xcodebuild … TRAN_API_BASE_URL=https://api.example.com` (lands in `Info.plist`)
 - launch argument: `-TranApiBaseUrl http://127.0.0.1:4001` (wins over the plist; used by the UI tests)
+
+The update screen's store page is the `TRAN_IOS_STORE_URL` build setting (placeholder
+`https://tran.example/ios`), read as `TranStoreUrl` (REQ-VER-011). What the app sends and reads is
+`fixtures/contract/clients/ios/current.json`; `ClientManifestTests` fails when the code drifts from it.
 
 Only loopback is exempted from ATS (`NSAllowsLocalNetworking`), and `X-Debug-Country` is compiled out
 of release builds. The unit tests stub `URLSession`; no test needs the API running (REQ-NAT-011).

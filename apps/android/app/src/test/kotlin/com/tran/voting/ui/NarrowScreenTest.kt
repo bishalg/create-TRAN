@@ -1,4 +1,4 @@
-// Verifies: REQ-NAT-013 REQ-ACC-004 REQ-PRV-007 REQ-PSH-008
+// Verifies: REQ-NAT-013 REQ-ACC-004 REQ-PRV-007 REQ-PSH-008 REQ-VER-009
 package com.tran.voting.ui
 
 import androidx.compose.runtime.Composable
@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import com.tran.voting.NavigationCoordinator
 import com.tran.voting.generated.ScreenContract
+import com.tran.voting.generated.TranStrings
 import com.tran.voting.generated.TranTheme
 import com.tran.voting.generated.labelRes
 import com.tran.voting.parity.VoteEligibilityParityTest
@@ -122,6 +123,23 @@ class NarrowScreenTest {
     fun `REQ-ACC-004 both account controls fit a 320 dp screen at the default text scale`() {
         compose.setContent { AuditorScreen(onSignOut = {}, onDeleteAccount = {}) }
         assertAccountControls(ScreenContract.Auditor.signOutButton, ScreenContract.Auditor.deleteAccountButton)
+    }
+
+    /** The blocking update screen: its title, body and one action, whole and on screen (spec 028). */
+    @Test
+    fun `REQ-VER-009 the update screen fits a 320 dp screen at the largest text scale`() {
+        largestText { UpdateRequiredScreen(onUpdate = {}) }
+        val button = ScreenContract.Eligibility.updateButton
+        compose.waitUntil(5_000) { compose.onAllNodes(hasTestTag(button)).fetchSemanticsNodes().isNotEmpty() }
+        val body = compose.onNodeWithText(text(TranStrings.Errors.updateRequiredBody))
+        val screen = compose.onRoot().getUnclippedBoundsInRoot()
+        assertTrue("the body ends past the screen", body.getUnclippedBoundsInRoot().right <= screen.right)
+        assertWhollyOnScreen(compose.onNodeWithText(text(TranStrings.Errors.updateRequired)), "the title")
+        val node = compose.onNodeWithTag(button).performScrollTo()
+        assertWhollyOnScreen(node, "update")
+        val bounds = node.getUnclippedBoundsInRoot()
+        assertTrue("update is ${bounds.height} tall", bounds.height >= ScreenContract.Minimums.primaryAction.dp)
+        assertTrue("update ends below the screen at ${bounds.bottom}", bounds.bottom <= screen.bottom)
     }
 
     /** "Use my location", its Settings note and "Open Settings", whole and on screen (spec 026). */

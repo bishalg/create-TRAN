@@ -41,6 +41,8 @@ targets:
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         TranApiBaseUrl: $(TRAN_API_BASE_URL)
+        # The store page "Update" opens (REQ-VER-011): the TRAN_IOS_STORE_URL build setting below.
+        TranStoreUrl: $(TRAN_IOS_STORE_URL)
         # Export compliance (REQ-MOB-010): the app's only encryption is HTTPS through URLSession and the
         # system Keychain, which Apple exempts, so App Store Connect asks nothing per upload. A fork
         # that adds its own or a third-party cryptography (end-to-end messages, a VPN, a crypto
@@ -60,6 +62,9 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tran.voting
         TRAN_API_BASE_URL: http://127.0.0.1:3001
+        # The App Store page of this app (REQ-VER-011); the placeholder until it has a listing:
+        #   xcodebuild … TRAN_IOS_STORE_URL=https://apps.apple.com/app/id<TRAN_ASC_APP_ID>
+        TRAN_IOS_STORE_URL: https://tran.example/ios
         SWIFT_VERSION: '5.0'
         MARKETING_VERSION: '0.1.0'
         CURRENT_PROJECT_VERSION: '1000'
@@ -99,6 +104,7 @@ targets:
     sources:
       - Tests/TranVotingDemoTests
       - Sources/TranVotingDemo/Generated/UniFFI
+      - Sources/TranVotingDemo/Generated/ApiContract.swift
       - Sources/TranVotingDemo/Generated/L10n.swift
       - Sources/TranVotingDemo/Generated/BrandTokens.swift
       - Sources/TranVotingDemo/Api

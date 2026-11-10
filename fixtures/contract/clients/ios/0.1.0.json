@@ -1,0 +1,134 @@
+{
+  "$comment": "The ios client 0.1.0 as released: written by `pnpm release` from current.json (REQ-VER-003). Replayed by apps/api/tests/client_replay_test.rs until 0.1.0 is below the ios minimum; then delete this file.",
+  "platform": "ios",
+  "version": "0.1.0",
+  "requests": [
+    {
+      "name": "checkHealth",
+      "method": "GET",
+      "path": "/api/health",
+      "headers": {
+        "X-Tran-Client": "ios/0.1.0"
+      },
+      "status": 200,
+      "reads": {}
+    },
+    {
+      "name": "confirmEligibility",
+      "method": "POST",
+      "path": "/api/v1/vote/eligibility",
+      "headers": {
+        "X-Tran-Client": "ios/0.1.0"
+      },
+      "body": {
+        "age": 20
+      },
+      "status": 200,
+      "reads": {}
+    },
+    {
+      "name": "signIn",
+      "method": "POST",
+      "path": "/api/v1/auth/session",
+      "headers": {
+        "X-Tran-Client": "ios/0.1.0"
+      },
+      "body": {
+        "role": "citizen_voter",
+        "transport": "body"
+      },
+      "status": 201,
+      "reads": {
+        "access_token": "string",
+        "refresh_token": "string",
+        "user.user_id": "string",
+        "user.role": "string"
+      }
+    },
+    {
+      "name": "refresh",
+      "method": "POST",
+      "path": "/api/v1/auth/refresh",
+      "auth": "refresh_token",
+      "headers": {
+        "X-Tran-Client": "ios/0.1.0"
+      },
+      "body": {
+        "refresh_token": "{refresh_token}"
+      },
+      "status": 200,
+      "reads": {
+        "access_token": "string",
+        "refresh_token": "string",
+        "user.user_id": "string",
+        "user.role": "string"
+      }
+    },
+    {
+      "name": "signOut",
+      "method": "POST",
+      "path": "/api/v1/auth/sign-out",
+      "auth": "refresh_token",
+      "headers": {
+        "X-Tran-Client": "ios/0.1.0"
+      },
+      "body": {
+        "refresh_token": "{refresh_token}"
+      },
+      "status": 204,
+      "reads": {}
+    },
+    {
+      "name": "validateSession",
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "auth": "bearer",
+      "headers": {
+        "X-Tran-Client": "ios/0.1.0"
+      },
+      "status": 200,
+      "reads": {}
+    },
+    {
+      "name": "deleteAccount",
+      "method": "DELETE",
+      "path": "/api/v1/account",
+      "auth": "bearer",
+      "headers": {
+        "X-Tran-Client": "ios/0.1.0"
+      },
+      "status": 204,
+      "reads": {}
+    },
+    {
+      "name": "registerDevice",
+      "method": "PUT",
+      "path": "/api/v1/devices/{installation_id}",
+      "auth": "bearer",
+      "headers": {
+        "X-Tran-Client": "ios/0.1.0"
+      },
+      "body": {
+        "app_version": "0.1.0",
+        "environment": "sandbox",
+        "locale": "en",
+        "marketing": false,
+        "platform": "ios",
+        "push_token": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1"
+      },
+      "status": 204,
+      "reads": {}
+    },
+    {
+      "name": "unregisterDevice",
+      "method": "DELETE",
+      "path": "/api/v1/devices/{installation_id}",
+      "auth": "bearer",
+      "headers": {
+        "X-Tran-Client": "ios/0.1.0"
+      },
+      "status": 204,
+      "reads": {}
+    }
+  ]
+}

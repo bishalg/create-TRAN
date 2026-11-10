@@ -1,0 +1,134 @@
+{
+  "$comment": "What the iOS app in this tree sends and reads (spec 028, REQ-VER-003): one entry per case of `TranEndpoint` (apps/ios/Sources/TranVotingDemo/Api/TranEndpoint.swift), the only way the app builds a request, `reads` being every field its decoders look at (the token pair of sign-in and refresh; every other body is not read). Maintained by hand and checked against the client code by apps/ios/Tests/TranVotingDemoTests/ClientManifestTests.swift, which runs every call on a recording transport, so it cannot drift. `pnpm release` copies it to `<version>.json` with `{version}` filled in; apps/api/tests/client_replay_test.rs replays this file and every released one against today's router. `auth` is as in clients/web/current.json; the native app uses the body transport, so `refresh_token` puts the refresh token where the body says `{refresh_token}`. A debug build also sends `X-Debug-Country` with the eligibility check; a release build never does, so it is not listed.",
+  "platform": "ios",
+  "version": "{version}",
+  "requests": [
+    {
+      "name": "checkHealth",
+      "method": "GET",
+      "path": "/api/health",
+      "headers": {
+        "X-Tran-Client": "ios/{version}"
+      },
+      "status": 200,
+      "reads": {}
+    },
+    {
+      "name": "confirmEligibility",
+      "method": "POST",
+      "path": "/api/v1/vote/eligibility",
+      "headers": {
+        "X-Tran-Client": "ios/{version}"
+      },
+      "body": {
+        "age": 20
+      },
+      "status": 200,
+      "reads": {}
+    },
+    {
+      "name": "signIn",
+      "method": "POST",
+      "path": "/api/v1/auth/session",
+      "headers": {
+        "X-Tran-Client": "ios/{version}"
+      },
+      "body": {
+        "role": "citizen_voter",
+        "transport": "body"
+      },
+      "status": 201,
+      "reads": {
+        "access_token": "string",
+        "refresh_token": "string",
+        "user.user_id": "string",
+        "user.role": "string"
+      }
+    },
+    {
+      "name": "refresh",
+      "method": "POST",
+      "path": "/api/v1/auth/refresh",
+      "auth": "refresh_token",
+      "headers": {
+        "X-Tran-Client": "ios/{version}"
+      },
+      "body": {
+        "refresh_token": "{refresh_token}"
+      },
+      "status": 200,
+      "reads": {
+        "access_token": "string",
+        "refresh_token": "string",
+        "user.user_id": "string",
+        "user.role": "string"
+      }
+    },
+    {
+      "name": "signOut",
+      "method": "POST",
+      "path": "/api/v1/auth/sign-out",
+      "auth": "refresh_token",
+      "headers": {
+        "X-Tran-Client": "ios/{version}"
+      },
+      "body": {
+        "refresh_token": "{refresh_token}"
+      },
+      "status": 204,
+      "reads": {}
+    },
+    {
+      "name": "validateSession",
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "auth": "bearer",
+      "headers": {
+        "X-Tran-Client": "ios/{version}"
+      },
+      "status": 200,
+      "reads": {}
+    },
+    {
+      "name": "deleteAccount",
+      "method": "DELETE",
+      "path": "/api/v1/account",
+      "auth": "bearer",
+      "headers": {
+        "X-Tran-Client": "ios/{version}"
+      },
+      "status": 204,
+      "reads": {}
+    },
+    {
+      "name": "registerDevice",
+      "method": "PUT",
+      "path": "/api/v1/devices/{installation_id}",
+      "auth": "bearer",
+      "headers": {
+        "X-Tran-Client": "ios/{version}"
+      },
+      "body": {
+        "app_version": "{version}",
+        "environment": "sandbox",
+        "locale": "en",
+        "marketing": false,
+        "platform": "ios",
+        "push_token": "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1"
+      },
+      "status": 204,
+      "reads": {}
+    },
+    {
+      "name": "unregisterDevice",
+      "method": "DELETE",
+      "path": "/api/v1/devices/{installation_id}",
+      "auth": "bearer",
+      "headers": {
+        "X-Tran-Client": "ios/{version}"
+      },
+      "status": 204,
+      "reads": {}
+    }
+  ]
+}

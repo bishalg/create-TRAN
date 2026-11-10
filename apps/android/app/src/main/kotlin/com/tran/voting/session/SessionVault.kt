@@ -1,6 +1,7 @@
-// Verifies: REQ-SEC-017 REQ-SEC-020
+// Verifies: REQ-SEC-017 REQ-SEC-020 REQ-VER-008
 package com.tran.voting.session
 
+import com.tran.voting.generated.ApiContract
 import uniffi.tran_uniffi.TranUserRole
 
 /**
@@ -54,3 +55,13 @@ val TranUserRole.wire: String
 
 /** The role a wire name stands for, or `null` for anything else. */
 fun tranUserRoleFromWire(raw: String): TranUserRole? = TranUserRole.entries.firstOrNull { it.wire == raw }
+
+/**
+ * The role in an API answer, read tolerantly (REQ-VER-008): a value this build does not know is the
+ * generated fallback (`citizen_voter`), so a newer server's role never breaks an older app.
+ */
+fun tranUserRoleFromApi(raw: String): TranUserRole {
+    val known = ApiContract.WireEnums.UserRole.values
+    val decoded = if (raw in known) raw else ApiContract.WireEnums.UserRole.fallback
+    return checkNotNull(tranUserRoleFromWire(decoded)) { "the generated user_role values match TranUserRole" }
+}

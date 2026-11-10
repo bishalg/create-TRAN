@@ -83,7 +83,7 @@ class TranApiClientTests {
             enqueueOk()
             client().confirmEligibility(20, "NP")
             val request = server.takeRequest()
-            assertEquals("/api/vote/eligibility", request.path)
+            assertEquals("/api/v1/vote/eligibility", request.path)
             assertEquals("POST", request.method)
             assertEquals("application/json", request.getHeader("Content-Type")?.substringBefore(';'))
             assertEquals("""{"age":20}""", request.body.readUtf8())

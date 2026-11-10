@@ -1,5 +1,5 @@
 // Verifies: REQ-ERR-001 REQ-ERR-010 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-009 REQ-ROB-007 REQ-LOAD-001
-// Verifies: REQ-ACC-005 REQ-ACC-006
+// Verifies: REQ-ACC-005 REQ-ACC-006 REQ-VER-010
 import XCTest
 
 /// `fixtures/feedback.json` through the UniFFI surface, plus the iOS feedback center that applies it.
@@ -148,6 +148,7 @@ final class FeedbackParityTests: XCTestCase {
         "delete_account": .deleteAccount,
         "account_deleted": .accountDeleted,
         "notification_received": .notificationReceived,
+        "update_recommended": .updateRecommended,
     ]
 
     func testActionsMatchTheGoldenFixtureAndEveryMessageIsLocalized() throws {

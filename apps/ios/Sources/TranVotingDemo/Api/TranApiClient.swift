@@ -1,4 +1,4 @@
-// Verifies: REQ-NAT-011 REQ-ERR-004 REQ-ERR-005 REQ-ROB-002 REQ-ROB-010
+// Verifies: REQ-NAT-011 REQ-ERR-004 REQ-ERR-005 REQ-ROB-002 REQ-ROB-010 REQ-VER-001
 import Foundation
 
 /// Status pill states — the same vocabulary as the web footer (`shell.status.*`).
@@ -146,8 +146,7 @@ enum TranApiConfig {
 /// Thin client for the Axum API: the device verdict is the product (REQ-NAT-002), so the response
 /// body is not parsed — the call only confirms the API is reachable and agrees.
 struct TranApiClient {
-    private let baseUrl: URL
-    private let session: URLSession
+    private let http: TranHttp
     private let includeDebugCountry: Bool
     private let retry: TranRetry
 
@@ -155,10 +154,11 @@ struct TranApiClient {
         baseUrl: URL = TranApiConfig.baseUrl(),
         session: URLSession = TranApiClient.defaultSession,
         includeDebugCountry: Bool = TranApiConfig.includeDebugCountry,
-        retry: TranRetry = TranRetry()
+        retry: TranRetry = TranRetry(),
+        client: String = TranClientIdentity.current,
+        onStanding: @escaping @Sendable (TranStandingSignal) -> Void = TranUpdateCenter.post
     ) {
-        self.baseUrl = baseUrl
-        self.session = session
+        self.http = TranHttp(baseUrl: baseUrl, session: session, client: client, onStanding: onStanding)
         self.includeDebugCountry = includeDebugCountry
         self.retry = retry
     }
@@ -177,48 +177,30 @@ struct TranApiClient {
 
     func checkHealth() async throws {
         try await retry.run(idempotent: true) {
-            try await send(path: "/api/health", method: "GET", body: nil, countryCode: nil)
+            try await send(.checkHealth, body: nil, countryCode: nil)
         }
     }
 
     /// One health request without retries: the recovery probe's question (REQ-ERR-013).
     func probeHealth() async throws {
-        try await send(path: "/api/health", method: "GET", body: nil, countryCode: nil)
+        try await send(.checkHealth, body: nil, countryCode: nil)
     }
 
     /// A pure computation on the server, so it is safe to retry.
     func confirmEligibility(age: UInt16, countryCode: String) async throws {
         let body = Data("{\"age\":\(age)}".utf8)
         try await retry.run(idempotent: true) {
-            try await send(
-                path: "/api/vote/eligibility", method: "POST", body: body, countryCode: countryCode)
+            try await send(.confirmEligibility, body: body, countryCode: countryCode)
         }
     }
 
-    private func send(path: String, method: String, body: Data?, countryCode: String?) async throws {
-        var request = URLRequest(url: baseUrl.appending(path: path))
-        request.httpMethod = method
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        if let body {
-            request.httpBody = body
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        }
+    /// The answer's body is not read: success is the whole answer (REQ-NAT-002, REQ-VER-008).
+    private func send(_ endpoint: TranEndpoint, body: Data?, countryCode: String?) async throws {
+        var request = http.request(endpoint, body: body)
         if includeDebugCountry, let countryCode, Self.isCountryCode(countryCode) {
             request.setValue(countryCode.uppercased(), forHTTPHeaderField: "X-Debug-Country")
         }
-
-        let (data, response): (Data, URLResponse)
-        do {
-            (data, response) = try await session.data(for: request)
-        } catch {
-            throw TranRequestFailure.classify(error)
-        }
-        guard let http = response as? HTTPURLResponse else {
-            throw TranRequestFailure(code: .clientUnexpected)
-        }
-        guard (200..<300).contains(http.statusCode) else {
-            throw TranRequestFailure.rejected(http, body: data)
-        }
+        _ = try await http.send(request)
     }
 
     private static func isCountryCode(_ value: String) -> Bool {

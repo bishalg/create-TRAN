@@ -57,6 +57,8 @@ export const ANDROID_OPTIONAL_BUILD_VALUES = [
   'TRAN_FCM_APP_ID',
   'TRAN_FCM_API_KEY',
   'TRAN_FCM_SENDER_ID',
+  // The store page "Update" opens (spec 028, REQ-VER-011); a placeholder default.
+  'TRAN_ANDROID_STORE_URL',
 ];
 
 /** Gradle signing reads these four; when any is absent the release build stays unsigned (REQ-MOB-008). */

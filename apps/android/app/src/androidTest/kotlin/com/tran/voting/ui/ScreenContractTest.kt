@@ -5,6 +5,7 @@
 // Verifies: REQ-ACC-004 REQ-ACC-005 REQ-ACC-006
 // Verifies: REQ-PRV-003 REQ-PRV-004 REQ-PRV-007
 // Verifies: REQ-PSH-008
+// Verifies: REQ-VER-009
 package com.tran.voting.ui
 
 import android.content.res.Configuration
@@ -22,6 +23,7 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.Density
 import com.tran.voting.NavigationCoordinator
 import com.tran.voting.api.TranApiClient
+import com.tran.voting.generated.ApiContract
 import com.tran.voting.generated.ScreenContract
 import com.tran.voting.generated.TranTheme
 import com.tran.voting.permissions.StagedPermissionGateway
@@ -29,6 +31,11 @@ import com.tran.voting.permissions.stagedPermission
 import com.tran.voting.push.stagedPushGateway
 import com.tran.voting.ui.atoms.optionTag
 import kotlinx.coroutines.runBlocking
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
@@ -74,6 +81,7 @@ class ScreenContractTest(private val name: String) {
     // The launch state, from the givens.
     private var session: AuthSession = AuthSession.Authenticated(userId = "voter-001", role = TranUserRole.CITIZEN_VOTER)
     private var apiUnreachable = false
+    private var upgradeRequired = false
     private var localeTag = "en"
     private var theme = TranTheme.DARK
     private var largestText = false
@@ -125,6 +133,7 @@ class ScreenContractTest(private val name: String) {
             }
             "api_reachable" -> apiUnreachable = false
             "api_unreachable" -> apiUnreachable = true
+            "upgrade_required" -> upgradeRequired = true
             "locale" -> localeTag = step.value ?: localeTag
             "theme" -> theme = TranTheme.entries.firstOrNull { it.id == step.value }
                 ?: throw AssertionError("${driver.place(step)}: unknown theme")
@@ -148,7 +157,11 @@ class ScreenContractTest(private val name: String) {
         if (launched) return
         launched = true
         // 127.0.0.1:1 refuses at once; the debug network config still allows loopback.
-        val api = if (apiUnreachable) TranApiClient(baseUrl = "http://127.0.0.1:1") else TranApiClient()
+        val api = when {
+            apiUnreachable -> TranApiClient(baseUrl = "http://127.0.0.1:1")
+            upgradeRequired -> TranApiClient(http = upgradeRequiredApi())
+            else -> TranApiClient()
+        }
         val fontScale = if (largestText) ScreenContract.Minimums.largestFontScale else null
         compose.setContent {
             val context = LocalContext.current
@@ -164,6 +177,27 @@ class ScreenContractTest(private val name: String) {
         }
         record("given")
     }
+
+    /**
+     * An API that no longer serves this version (REQ-VER-005): health answers, every product route
+     * answers `426 client.upgrade_required`. Answered on the device, so no server is needed.
+     */
+    private fun upgradeRequiredApi(): OkHttpClient = OkHttpClient.Builder().addInterceptor { chain ->
+        val request = chain.request()
+        val product = request.url.encodedPath.startsWith(ApiContract.basePath + "/")
+        val body = if (product) {
+            """{"success":false,"error":"This app version is no longer supported","code":"client.upgrade_required","retryable":false}"""
+        } else {
+            """{"overall_status":"HEALTHY"}"""
+        }
+        Response.Builder()
+            .request(request)
+            .protocol(Protocol.HTTP_1_1)
+            .code(if (product) 426 else 200)
+            .message(if (product) "Upgrade Required" else "OK")
+            .body(body.toResponseBody("application/json".toMediaType()))
+            .build()
+    }.build()
 
     // When
 

@@ -108,7 +108,7 @@ class UseLocationControlTest {
         assertEquals(1, gateway.requests.size)
         compose.onNodeWithTag(ScreenContract.Eligibility.ageField).performTextReplacement("20")
         tap(ScreenContract.Eligibility.checkButton)
-        compose.waitUntil(5_000) { synchronized(sent) { sent.any { "/api/vote/eligibility" in it } } }
+        compose.waitUntil(5_000) { synchronized(sent) { sent.any { "/api/v1/vote/eligibility" in it } } }
         val requests = synchronized(sent) { sent.toList() }
         assertTrue("the check still names the country: $requests", requests.any { "X-Debug-Country: IN" in it })
         for (request in requests) {

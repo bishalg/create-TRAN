@@ -51,6 +51,7 @@ import com.tran.voting.push.pushGatewayFor
 import com.tran.voting.ui.AuditorScreen
 import com.tran.voting.ui.AuthSession
 import com.tran.voting.ui.AuthWelcomeScreen
+import com.tran.voting.ui.UpdateRequiredScreen
 import com.tran.voting.ui.VotingHomeScreen
 import com.tran.voting.ui.atoms.LocalTranPalette
 import com.tran.voting.ui.destination
@@ -68,13 +69,20 @@ import com.tran.voting.session.applyPrivacyMeasure
 import com.tran.voting.session.privacyMeasure
 import com.tran.voting.session.restoredSession
 import com.tran.voting.session.validateRestoredSession
+import com.tran.voting.update.DismissedUpdate
+import com.tran.voting.update.InMemoryDismissedUpdate
+import com.tran.voting.update.StorePage
+import com.tran.voting.update.UpdatePreferences
 import kotlinx.coroutines.launch
 import uniffi.tran_uniffi.TranAppDestination
+import uniffi.tran_uniffi.TranClientStanding
 import uniffi.tran_uniffi.TranErrorCode
 import uniffi.tran_uniffi.TranLogLevel
 import uniffi.tran_uniffi.TranPresentation
 import uniffi.tran_uniffi.TranUserAction
+import uniffi.tran_uniffi.TranUpdatePromptState
 import uniffi.tran_uniffi.TranUserRole
+import uniffi.tran_uniffi.updatePrompt
 
 class MainActivity : ComponentActivity() {
     // Notification taps while the activity lives (REQ-PSH-013); a cold start reads the vault anyway.
@@ -88,7 +96,10 @@ class MainActivity : ComponentActivity() {
         // REQ-SEC-021: the stored session decides the first screen at once, with no network.
         val vault = KeystoreSessionVault(this)
         val initialSession = restoredSession(vault)
-        val sessions = SessionClient(vault)
+        // One API client for the app: its answers say whether this version is still served (spec 028),
+        // and the session client reports to the same standing.
+        val api = TranApiClient()
+        val sessions = SessionClient(vault, http = api.transport, standing = api.standing)
         // REQ-SEC-023: a debug screenshot run may switch the shield off; a release build ignores the flag.
         val shieldOffRequested = intent?.getBooleanExtra(EXTRA_DISABLE_PRIVACY_SHIELD, false) == true
         val shield = ActivityPrivacyShieldTarget(this)
@@ -105,8 +116,10 @@ class MainActivity : ComponentActivity() {
         val pushStore = PushPreferences(this)
         setContent {
             NavigationCoordinator(
+                api = api,
                 initialSession = initialSession,
                 sessions = sessions,
+                dismissedUpdate = UpdatePreferences(this),
                 permissions = permissions,
                 geocoder = geocoder,
                 push = push,
@@ -132,13 +145,13 @@ class MainActivity : ComponentActivity() {
  * Root Navigation Coordinator implementing the central director and role branching.
  *
  * Verifies: REQ-NAV-001 REQ-NAV-002 REQ-NAV-003 REQ-NAV-004 REQ-NAV-005 REQ-ACC-004 REQ-ACC-006
- * Verifies: REQ-PSH-009 REQ-PSH-011 REQ-PSH-013
+ * Verifies: REQ-PSH-009 REQ-PSH-011 REQ-PSH-013 REQ-VER-009 REQ-VER-010
  */
 @Composable
 fun NavigationCoordinator(
     // Screenshot tests start in each registry theme and talk to a canned API (ADR-0031).
     initialTheme: TranTheme = TranTheme.DARK,
-    api: TranApiClient = TranApiClient(),
+    api: TranApiClient = remember { TranApiClient() },
     // The stored session to open with. The app passes the vault's; the screen contract's UI tests and
     // the JVM tests start from a preset and pass no [sessions], so they never touch the vault (ADR-0039).
     initialSession: AuthSession = AuthSession.Authenticated(userId = "voter-001", role = TranUserRole.CITIZEN_VOTER),
@@ -157,6 +170,10 @@ fun NavigationCoordinator(
     // Where a notification tap leads: the stored session, through the director. The app reads the
     // vault; without one, the session in memory is the stored one.
     storedSession: (() -> AuthSession)? = null,
+    // The version the update prompt was last declined for (REQ-VER-010); the app keeps it in preferences.
+    dismissedUpdate: DismissedUpdate = remember { InMemoryDismissedUpdate() },
+    // "Update" on the blocking screen and in the prompt; the app opens its store page (REQ-VER-011).
+    openStore: (() -> Unit)? = null,
 ) {
     var session by remember { mutableStateOf(initialSession) }
     val scope = rememberCoroutineScope()
@@ -271,6 +288,19 @@ fun NavigationCoordinator(
             }
         }
     }
+    // Spec 028: what the API's answers say about this version. A recommendation is offered once per
+    // recommended version, as Rust's `updatePrompt` decides; never over the blocking screen.
+    val standing = api.standing
+    val update = openStore ?: { StorePage.open(context) }
+    val asked = remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(standing.recommendation) {
+        val recommended = standing.recommendation ?: return@LaunchedEffect
+        val state = TranUpdatePromptState(TranClientStanding.UPDATE_RECOMMENDED, recommended.version, dismissedUpdate.version)
+        val key = recommended.version.orEmpty()
+        if (standing.upgradeRequired || !updatePrompt(state) || asked.value == key) return@LaunchedEffect
+        asked.value = key
+        feedback.confirm(TranUserAction.UPDATE_RECOMMENDED, onCancel = { dismissedUpdate.version = key }) { update() }
+    }
     val signedIn = session.destination.let {
         it == TranAppDestination.VOTER_DASHBOARD || it == TranAppDestination.AUDITOR_DASHBOARD
     }
@@ -289,48 +319,54 @@ fun NavigationCoordinator(
     MaterialTheme(colorScheme = tranColorScheme(palette)) {
         // Atoms read the registry palette from the composition (web's CSS-variable analogue).
         CompositionLocalProvider(LocalTranPalette provides palette, LocalTranFeedback provides feedback) {
-          TranFeedbackHost(feedback) {
-            when (session.destination) {
-                TranAppDestination.SPLASH, TranAppDestination.AUTH_WELCOME -> {
-                    AuthWelcomeScreen { role ->
-                        // Signed in on the device at once, offline too; the API session follows behind
-                        // and lands in the vault. A failure leaves the device session as it is.
-                        session = AuthSession.Authenticated(userId = "user-001", role = role)
-                        if (sessions != null) {
-                            scope.launch {
-                                try {
-                                    sessions.signIn(role)
-                                    registration.sync(PushTrigger.SIGN_IN)
-                                } catch (failure: TranRequestFailure) {
-                                    // Not the user's call to hear about: log it, never toast.
-                                    feedback.log(failure)
-                                }
-                            }
-                        }
-                    }
-                }
-                TranAppDestination.VOTER_DASHBOARD -> {
-                    VotingHomeScreen(
-                        theme = theme,
-                        onThemeChange = { theme = it },
-                        onSignOut = signOut,
-                        api = api,
-                        onDeleteAccount = deleteAccount,
-                        deleting = deleting,
-                        accountFailure = accountFailure,
-                        permissions = permissions,
-                        geocoder = geocoder,
-                        notifications = reminder,
-                    )
-                }
-                TranAppDestination.AUDITOR_DASHBOARD -> {
-                    AuditorScreen(
-                        onSignOut = signOut,
-                        onDeleteAccount = deleteAccount,
-                        deleting = deleting,
-                        accountFailure = accountFailure,
-                    )
-                }
+          // The catalogue's `screen` for `client.upgrade_required` replaces everything, toasts and
+          // dialogs included (REQ-VER-009); the session stays as it is.
+          if (standing.upgradeRequired) {
+            UpdateRequiredScreen(onUpdate = update)
+          } else {
+            TranFeedbackHost(feedback) {
+              when (session.destination) {
+                  TranAppDestination.SPLASH, TranAppDestination.AUTH_WELCOME -> {
+                      AuthWelcomeScreen { role ->
+                          // Signed in on the device at once, offline too; the API session follows behind
+                          // and lands in the vault. A failure leaves the device session as it is.
+                          session = AuthSession.Authenticated(userId = "user-001", role = role)
+                          if (sessions != null) {
+                              scope.launch {
+                                  try {
+                                      sessions.signIn(role)
+                                      registration.sync(PushTrigger.SIGN_IN)
+                                  } catch (failure: TranRequestFailure) {
+                                      // Not the user's call to hear about: log it, never toast.
+                                      feedback.log(failure)
+                                  }
+                              }
+                          }
+                      }
+                  }
+                  TranAppDestination.VOTER_DASHBOARD -> {
+                      VotingHomeScreen(
+                          theme = theme,
+                          onThemeChange = { theme = it },
+                          onSignOut = signOut,
+                          api = api,
+                          onDeleteAccount = deleteAccount,
+                          deleting = deleting,
+                          accountFailure = accountFailure,
+                          permissions = permissions,
+                          geocoder = geocoder,
+                          notifications = reminder,
+                      )
+                  }
+                  TranAppDestination.AUDITOR_DASHBOARD -> {
+                      AuditorScreen(
+                          onSignOut = signOut,
+                          onDeleteAccount = deleteAccount,
+                          deleting = deleting,
+                          accountFailure = accountFailure,
+                      )
+                  }
+              }
             }
           }
         }

@@ -21,7 +21,7 @@ import okhttp3.ResponseBody.Companion.toResponseBody
  * thread lost about one resume in fifty (docs/LEARNINGS.md, 2026-10-21).
  */
 object FakeApis {
-    private const val ELIGIBILITY = "/api/vote/eligibility"
+    private const val ELIGIBILITY = "/api/v1/vote/eligibility"
 
     /** Answers every request with an empty 200, at once — the status pill shows "online". */
     fun healthy(answered: AtomicInteger = AtomicInteger()): TranApiClient =
@@ -29,6 +29,27 @@ object FakeApis {
             answered.incrementAndGet()
             ok(chain)
         }
+
+    /**
+     * Answers every request with what [answer] returns for it, at once: `null` is an empty 200.
+     * [Answer] spells a status, body and headers.
+     */
+    fun serving(answer: (okhttp3.Request) -> Answer?): TranApiClient =
+        client(Dispatchers.Unconfined) { chain ->
+            val request = chain.request()
+            val reply = answer(request) ?: return@client ok(chain)
+            Response.Builder()
+                .request(request)
+                .protocol(Protocol.HTTP_1_1)
+                .code(reply.status)
+                .message("stub")
+                .apply { reply.headers.forEach { (name, value) -> header(name, value) } }
+                .body(reply.body.toResponseBody("application/json".toMediaType()))
+                .build()
+        }
+
+    /** A canned answer for [serving]. */
+    class Answer(val status: Int, val body: String = "{}", val headers: Map<String, String> = emptyMap())
 
     /** Every request fails with no answer at all (`network.offline`, a banner). */
     fun refusing(): TranApiClient = client(Dispatchers.Unconfined) { throw IOException("connection refused") }

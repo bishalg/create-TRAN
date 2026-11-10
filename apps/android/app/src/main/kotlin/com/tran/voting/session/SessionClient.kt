@@ -1,9 +1,13 @@
 // Verifies: REQ-SEC-014 REQ-SEC-015 REQ-SEC-016 REQ-SEC-017 REQ-SEC-022 REQ-ACC-006 REQ-PSH-011
+// Verifies: REQ-VER-001 REQ-VER-004 REQ-VER-008
 package com.tran.voting.session
 
+import com.tran.voting.api.ClientStanding
 import com.tran.voting.api.TranApiClient
 import com.tran.voting.api.TranApiConfig
 import com.tran.voting.api.TranRequestFailure
+import com.tran.voting.api.tranClient
+import com.tran.voting.generated.ApiContract
 import com.tran.voting.ui.feedback.TranFeedback
 import com.tran.voting.ui.feedback.tranLogcat
 import java.io.IOException
@@ -37,6 +41,11 @@ class EndedSession(val refreshToken: String?, internal val accessToken: String?)
 /** Who the API says is signed in. */
 data class SessionUser(val userId: String, val role: TranUserRole)
 
+/** A sign-in or refresh answer: what the client keeps of it. Prints no credential (REQ-SEC-014). */
+internal class SessionToken(val user: SessionUser, val accessToken: String, val refreshToken: String) {
+    override fun toString(): String = "SessionToken(redacted)"
+}
+
 /**
  * The native half of the API session (spec 022, ADR-0039): the body transport, the refresh token in
  * the [vault], the access token in this object's memory only (REQ-SEC-017).
@@ -51,12 +60,17 @@ data class SessionUser(val userId: String, val role: TranUserRole)
 class SessionClient(
     private val vault: SessionVault,
     private val baseUrl: String = TranApiConfig.baseUrl,
-    private val http: OkHttpClient = TranApiClient.sharedHttpClient,
+    http: OkHttpClient = TranApiClient.sharedHttpClient,
     /** Where the blocking calls run; tests pass `Unconfined` or keep the default. */
     private val io: CoroutineDispatcher = Dispatchers.IO,
     /** TranFeedback's logger with `logLine` fields only; injected in JVM tests, where `android.util.Log` is unavailable. */
     private val log: (TranLogLevel, String) -> Unit = ::tranLogcat,
+    /** Told what each answer says about the app version (spec 028): the app passes its API client's. */
+    standing: ClientStanding? = null,
 ) {
+    /** [http] behind the client header and the standing (REQ-VER-004). */
+    private val http: OkHttpClient = http.tranClient(standing)
+
     @Volatile
     private var accessToken: String? = null
 
@@ -102,15 +116,15 @@ class SessionClient(
      */
     suspend fun signIn(role: TranUserRole): SessionUser {
         val body = JSONObject().put("role", role.wire).put("transport", "body")
-        val answer = send(post("/api/auth/session", body))
+        val answer = send(post(SESSION_PATH, body))
         answer.failure?.let { throw it }
         return store(answer.json())
     }
 
     /** `GET /api/auth/session`: who the stored session belongs to, refreshing once if needed. */
     suspend fun currentUser(): SessionUser {
-        val answer = authorized { Request.Builder().url(url("/api/auth/session")).get() }
-        return user(answer.json())
+        val answer = authorized { Request.Builder().url(url(SESSION_PATH)).get() }
+        return decodeUser(answer.json())
     }
 
     /**
@@ -135,7 +149,7 @@ class SessionClient(
             return
         }
         val outcome = try {
-            authorized(askWithoutCredential = true) { Request.Builder().url(url("/api/account")).delete() }
+            authorized(askWithoutCredential = true) { Request.Builder().url(url(ACCOUNT_PATH)).delete() }
             endLocally()
             null
         } catch (failure: Throwable) {
@@ -159,7 +173,7 @@ class SessionClient(
     suspend fun revoke(refreshToken: String?) {
         if (refreshToken == null) return
         try {
-            val answer = send(post("/api/auth/sign-out", JSONObject().put("refresh_token", refreshToken)))
+            val answer = send(post(SIGN_OUT_PATH, JSONObject().put("refresh_token", refreshToken)))
             answer.failure?.let { logged(it) }
         } catch (failure: TranRequestFailure) {
             logged(failure)
@@ -237,7 +251,7 @@ class SessionClient(
         val stored = vault.read()
             ?: return RefreshOutcome.Failed(sessionRecovery(TranSessionEvent.RefreshRejected), expired())
         val answer = try {
-            send(post("/api/auth/refresh", JSONObject().put("refresh_token", stored.refreshToken)))
+            send(post(REFRESH_PATH, JSONObject().put("refresh_token", stored.refreshToken)))
         } catch (failure: TranRequestFailure) {
             // No HTTP answer at all.
             val event = sessionRefreshEvent(null) ?: TranSessionEvent.RefreshFailed
@@ -265,24 +279,10 @@ class SessionClient(
 
     /** Stores a sign-in or refresh answer: the vault gets the refresh token, memory the access token. */
     private fun store(json: JSONObject): SessionUser {
-        try {
-            val user = user(json.getJSONObject("user"))
-            val refreshToken = json.getString("refresh_token")
-            val access = json.getString("access_token")
-            vault.write(StoredSession(user.userId, user.role, refreshToken))
-            accessToken = access
-            return user
-        } catch (_: JSONException) {
-            throw TranRequestFailure(TranErrorCode.CLIENT_UNEXPECTED)
-        }
-    }
-
-    /** `{ "user_id", "role" }`; anything else is a contract break, never a sign-out. */
-    private fun user(json: JSONObject): SessionUser {
-        val role = json.optString("role").let(::tranUserRoleFromWire)
-        val userId = json.optString("user_id")
-        if (role == null || userId.isEmpty()) throw TranRequestFailure(TranErrorCode.CLIENT_UNEXPECTED)
-        return SessionUser(userId, role)
+        val token = decodeToken(json)
+        vault.write(StoredSession(token.user.userId, token.user.role, token.refreshToken))
+        accessToken = token.accessToken
+        return token.user
     }
 
     private fun logged(failure: TranRequestFailure): TranRequestFailure {
@@ -294,7 +294,7 @@ class SessionClient(
 
     private fun url(path: String) = baseUrl.trimEnd('/') + path
 
-    private fun devicePath(installationId: String) = "/api/devices/$installationId"
+    private fun devicePath(installationId: String) = "$DEVICES_PATH/$installationId"
 
     private fun post(path: String, body: JSONObject): Request =
         Request.Builder().url(url(path)).post(body.toString().toRequestBody(JSON)).build()
@@ -337,7 +337,39 @@ class SessionClient(
          * `401` ends the session, no answer keeps it. The app passes its vault-backed client instead.
          */
         fun deviceOnly(api: TranApiClient): SessionClient =
-            SessionClient(InMemorySessionVault(), baseUrl = api.baseUrl, http = api.http, io = api.io)
+            SessionClient(InMemorySessionVault(), baseUrl = api.baseUrl, http = api.transport, io = api.io, standing = api.standing)
+
+        private const val SESSION_PATH = ApiContract.basePath + "/auth/session"
+        private const val REFRESH_PATH = ApiContract.basePath + "/auth/refresh"
+        private const val SIGN_OUT_PATH = ApiContract.basePath + "/auth/sign-out"
+        private const val ACCOUNT_PATH = ApiContract.basePath + "/account"
+        private const val DEVICES_PATH = ApiContract.basePath + "/devices"
+
+        /**
+         * A sign-in or refresh answer, read tolerantly (REQ-VER-008): fields it does not know are
+         * ignored; `access_token`, `refresh_token` and `user` must be there with their types, or the
+         * answer is a contract break (`client.unexpected`), never a sign-out.
+         */
+        internal fun decodeToken(json: JSONObject): SessionToken {
+            val user = json.opt("user") as? JSONObject ?: throw unexpected()
+            return SessionToken(
+                user = decodeUser(user),
+                accessToken = json.string("access_token"),
+                refreshToken = json.string("refresh_token"),
+            )
+        }
+
+        /**
+         * `{ "user_id", "role" }` and anything else, ignored. A role this build does not know reads
+         * as the catalogue's fallback (REQ-VER-008); a missing one is a contract break.
+         */
+        internal fun decodeUser(json: JSONObject): SessionUser =
+            SessionUser(userId = json.string("user_id"), role = tranUserRoleFromApi(json.string("role", allowEmpty = true)))
+
+        private fun JSONObject.string(key: String, allowEmpty: Boolean = false): String =
+            (opt(key) as? String)?.takeIf { allowEmpty || it.isNotEmpty() } ?: throw unexpected()
+
+        private fun unexpected() = TranRequestFailure(TranErrorCode.CLIENT_UNEXPECTED)
 
         private const val UNAUTHORIZED = 401
         private val JSON = "application/json".toMediaType()

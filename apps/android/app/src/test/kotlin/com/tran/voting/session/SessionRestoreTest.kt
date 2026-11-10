@@ -86,8 +86,8 @@ class SessionRestoreTest {
     private val expired = """{"success":false,"error":"Session expired","code":"auth.session_expired"}"""
 
     private fun healthyApi(path: String): Pair<Int, String> = when (path) {
-        "/api/auth/refresh" -> 200 to pair
-        "/api/auth/session" -> 201 to pair
+        "/api/v1/auth/refresh" -> 200 to pair
+        "/api/v1/auth/session" -> 201 to pair
         else -> 200 to "{}"
     }
 

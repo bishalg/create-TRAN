@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- REQ-SEC-020 (every supported level, minSdk 33): the session vault is excluded from cloud backup and from device transfer.
-     REQ-PSH-010: so are the push preferences, so two devices never share one installation id. -->
+     REQ-PSH-010: so are the push preferences, so two devices never share one installation id.
+     REQ-VER-010: tran.update.xml (the update prompt's declined version) stays in both: restored, it
+     only keeps a prompt the person already declined from asking again. -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="sharedpref" path="tran_session_vault.xml" />

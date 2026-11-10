@@ -1,0 +1,137 @@
+{
+  "$comment": "What the Android client in this tree sends and reads (spec 028, REQ-VER-003): one entry per request of `TranApiClient` and `SessionClient`, the only two classes that build a request; `reads` is every field the app's decoding requires (`checkHealth`, `confirmEligibility` and the `204` answers read nothing). The recovery probe sends `checkHealth`'s request, sign-out sends `revoke`, and both `unregisterDevice` calls send the same request. Maintained by hand and checked against the client code by apps/android/app/src/test/kotlin/com/tran/voting/contract/ClientManifestTest.kt, so it cannot drift. `pnpm release` copies it to `<version>.json` with `{version}` filled in; apps/api/tests/client_replay_test.rs replays this file and every released one against today's router. Release builds never send `X-Debug-Country`, so it is not listed.",
+  "platform": "android",
+  "version": "{version}",
+  "requests": [
+    {
+      "name": "checkHealth",
+      "method": "GET",
+      "path": "/api/health",
+      "headers": {
+        "X-Tran-Client": "android/{version}"
+      },
+      "status": 200,
+      "reads": {}
+    },
+    {
+      "name": "confirmEligibility",
+      "method": "POST",
+      "path": "/api/v1/vote/eligibility",
+      "headers": {
+        "X-Tran-Client": "android/{version}"
+      },
+      "body": {
+        "age": 20
+      },
+      "status": 200,
+      "reads": {}
+    },
+    {
+      "name": "signIn",
+      "method": "POST",
+      "path": "/api/v1/auth/session",
+      "headers": {
+        "X-Tran-Client": "android/{version}"
+      },
+      "body": {
+        "role": "citizen_voter",
+        "transport": "body"
+      },
+      "status": 201,
+      "reads": {
+        "access_token": "string",
+        "refresh_token": "string",
+        "user.user_id": "string",
+        "user.role": "string"
+      }
+    },
+    {
+      "name": "refresh",
+      "method": "POST",
+      "path": "/api/v1/auth/refresh",
+      "auth": "refresh_token",
+      "headers": {
+        "X-Tran-Client": "android/{version}"
+      },
+      "body": {
+        "refresh_token": "{refresh_token}"
+      },
+      "status": 200,
+      "reads": {
+        "access_token": "string",
+        "refresh_token": "string",
+        "user.user_id": "string",
+        "user.role": "string"
+      }
+    },
+    {
+      "name": "currentUser",
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "auth": "bearer",
+      "headers": {
+        "X-Tran-Client": "android/{version}"
+      },
+      "status": 200,
+      "reads": {
+        "user_id": "string",
+        "role": "string"
+      }
+    },
+    {
+      "name": "revoke",
+      "method": "POST",
+      "path": "/api/v1/auth/sign-out",
+      "auth": "refresh_token",
+      "headers": {
+        "X-Tran-Client": "android/{version}"
+      },
+      "body": {
+        "refresh_token": "{refresh_token}"
+      },
+      "status": 204,
+      "reads": {}
+    },
+    {
+      "name": "deleteAccount",
+      "method": "DELETE",
+      "path": "/api/v1/account",
+      "auth": "bearer",
+      "headers": {
+        "X-Tran-Client": "android/{version}"
+      },
+      "status": 204,
+      "reads": {}
+    },
+    {
+      "name": "registerDevice",
+      "method": "PUT",
+      "path": "/api/v1/devices/{installation_id}",
+      "auth": "bearer",
+      "headers": {
+        "X-Tran-Client": "android/{version}"
+      },
+      "body": {
+        "platform": "android",
+        "push_token": "staged-fcm-token:APA91b-tran-template-never-delivered",
+        "environment": "production",
+        "locale": "en",
+        "app_version": "{version}",
+        "marketing": false
+      },
+      "status": 204,
+      "reads": {}
+    },
+    {
+      "name": "unregisterDevice",
+      "method": "DELETE",
+      "path": "/api/v1/devices/{installation_id}",
+      "auth": "bearer",
+      "headers": {
+        "X-Tran-Client": "android/{version}"
+      },
+      "status": 204,
+      "reads": {}
+    }
+  ]
+}

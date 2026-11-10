@@ -34,6 +34,13 @@ val fcmValues: Map<String, String> = mapOf(
     trimmed
 }
 
+// REQ-VER-011: the store page "Update" opens (spec 028). App configuration, not a delivery value: unset or
+// empty, the placeholder builds everywhere; a fork sets its Play listing.
+val storeUrl: String = System.getenv("TRAN_ANDROID_STORE_URL").orEmpty().trim().ifEmpty { "https://tran.example/android" }.also {
+    // Compiled into a Java string literal: an https address with no quote, backslash or space.
+    require(Regex("https://[^\\s\"\\\\]+").matches(it)) { "TRAN_ANDROID_STORE_URL must be an https:// address" }
+}
+
 fun decodeUploadKeystore(base64: String): File {
     val file = File.createTempFile("tran-upload-", ".jks")
     file.deleteOnExit()
@@ -64,6 +71,7 @@ android {
         buildConfigField("String", "TRAN_FCM_APP_ID", "\"${fcmValues.getValue("TRAN_FCM_APP_ID")}\"")
         buildConfigField("String", "TRAN_FCM_API_KEY", "\"${fcmValues.getValue("TRAN_FCM_API_KEY")}\"")
         buildConfigField("String", "TRAN_FCM_SENDER_ID", "\"${fcmValues.getValue("TRAN_FCM_SENDER_ID")}\"")
+        buildConfigField("String", "TRAN_ANDROID_STORE_URL", "\"$storeUrl\"")
     }
 
     buildFeatures {

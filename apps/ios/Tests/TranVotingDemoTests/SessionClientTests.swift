@@ -38,9 +38,9 @@ final class SessionClientTests: XCTestCase {
     func testSignInUsesTheBodyTransportAndKeepsTheAccessTokenInMemoryOnly() async throws {
         SessionStubProtocol.reset { request in
             switch request.path {
-            case "/api/auth/session" where request.method == "POST":
+            case TranEndpoint.signIn.path() where request.method == "POST":
                 return .status(201, body: SessionWire.pair(access: "access-1", refresh: "refresh-1"))
-            case "/api/auth/session":
+            case TranEndpoint.signIn.path():
                 return request.authorization == "Bearer access-1"
                     ? .status(200, body: #"{"user_id":"voter-001","role":"citizen_voter"}"#)
                     : .status(401, body: SessionWire.expired)
@@ -92,7 +92,7 @@ final class SessionClientTests: XCTestCase {
         try vault.save(SessionWire.stored(refresh: "refresh-0"))
         SessionStubProtocol.reset { request in
             switch request.path {
-            case "/api/auth/refresh":
+            case TranEndpoint.refresh.path():
                 // Slow enough that every other 401 arrives while it is in flight.
                 return request.body["refresh_token"] == "refresh-0"
                     ? .status(200, body: SessionWire.pair(access: "access-1", refresh: "refresh-1"), delay: 0.3)
@@ -105,10 +105,10 @@ final class SessionClientTests: XCTestCase {
         }
         let client = makeClient()
         // Give the client a stale access token, so every call is sent and answers 401.
-        _ = try? await client.authorized(path: "/warm-up")
+        _ = try? await client.authorized(.validateSession)
         SessionStubProtocol.reset { request in
             switch request.path {
-            case "/api/auth/refresh":
+            case TranEndpoint.refresh.path():
                 return request.body["refresh_token"] == "refresh-1"
                     ? .status(200, body: SessionWire.pair(access: "access-2", refresh: "refresh-2"), delay: 0.3)
                     : .status(401, body: SessionWire.expired)
@@ -122,14 +122,14 @@ final class SessionClientTests: XCTestCase {
         let calls = 5
         try await withThrowingTaskGroup(of: Data.self) { group in
             for index in 0..<calls {
-                group.addTask { try await client.authorized(path: "/api/call/\(index)") }
+                group.addTask { try await client.authorized(.registerDevice, installationId: "call-\(index)") }
             }
             for try await _ in group {}
         }
 
-        XCTAssertEqual(SessionStubProtocol.requests(to: "/api/auth/refresh").count, 1, "one refresh")
+        XCTAssertEqual(SessionStubProtocol.requests(to: TranEndpoint.refresh.path()).count, 1, "one refresh")
         for index in 0..<calls {
-            let sent = SessionStubProtocol.requests(to: "/api/call/\(index)")
+            let sent = SessionStubProtocol.requests(to: TranEndpoint.registerDevice.path(installationId: "call-\(index)"))
             XCTAssertEqual(sent.map(\.authorization), ["Bearer access-1", "Bearer access-2"], "call \(index)")
         }
         XCTAssertEqual(vault.load()?.refreshToken, "refresh-2", "the rotated token replaces the spent one")
@@ -139,14 +139,14 @@ final class SessionClientTests: XCTestCase {
     func testARestoredSessionRefreshesBeforeItsFirstCall() async throws {
         try vault.save(SessionWire.stored(refresh: "refresh-0"))
         SessionStubProtocol.reset { request in
-            request.path == "/api/auth/refresh"
+            request.path == TranEndpoint.refresh.path()
                 ? .status(200, body: SessionWire.pair(access: "access-1", refresh: "refresh-1"))
                 : .status(200, body: "{}")
         }
 
-        _ = try await makeClient().authorized(path: "/api/auth/session")
+        _ = try await makeClient().authorized(.validateSession)
 
-        XCTAssertEqual(SessionStubProtocol.requests.map(\.path), ["/api/auth/refresh", "/api/auth/session"])
+        XCTAssertEqual(SessionStubProtocol.requests.map(\.path), [TranEndpoint.refresh.path(), TranEndpoint.signIn.path()])
         XCTAssertEqual(SessionStubProtocol.requests.last?.authorization, "Bearer access-1")
         XCTAssertEqual(SessionStubProtocol.requests.first?.body, ["refresh_token": "refresh-0"])
     }
@@ -154,18 +154,18 @@ final class SessionClientTests: XCTestCase {
     func testA401AfterTheRepeatSignsOut() async throws {
         try vault.save(SessionWire.stored(refresh: "refresh-0"))
         SessionStubProtocol.reset { request in
-            request.path == "/api/auth/refresh"
+            request.path == TranEndpoint.refresh.path()
                 ? .status(200, body: SessionWire.pair(access: "access-1", refresh: "refresh-1"))
                 : .status(401, body: SessionWire.expired)
         }
 
         do {
-            _ = try await makeClient().authorized(path: "/api/auth/session")
+            _ = try await makeClient().authorized(.validateSession)
             XCTFail("expected the session to end")
         } catch {
             XCTAssertEqual(error as? TranRequestFailure, TranSessionClient.expired)
         }
-        XCTAssertEqual(SessionStubProtocol.requests(to: "/api/auth/refresh").count, 1, "refresh once only")
+        XCTAssertEqual(SessionStubProtocol.requests(to: TranEndpoint.refresh.path()).count, 1, "refresh once only")
         XCTAssertNil(vault.load())
         assertNoTokenLogged(["access-1", "refresh-0", "refresh-1"])
     }
@@ -187,7 +187,7 @@ final class SessionClientTests: XCTestCase {
 
             XCTAssertEqual(outcome, keeps ? .kept : .signedOut, "\(reply)")
             XCTAssertEqual(vault.load() != nil, keeps, "\(reply)")
-            XCTAssertEqual(SessionStubProtocol.requests.map(\.path), ["/api/auth/refresh"], "\(reply)")
+            XCTAssertEqual(SessionStubProtocol.requests.map(\.path), [TranEndpoint.refresh.path()], "\(reply)")
         }
         assertNoTokenLogged(["refresh-0"])
     }
@@ -203,7 +203,7 @@ final class SessionClientTests: XCTestCase {
 
     func testSignOutClearsTheDeviceBeforeCallingTheServer() async throws {
         SessionStubProtocol.reset { request in
-            request.path == "/api/auth/session"
+            request.path == TranEndpoint.signIn.path()
                 ? .status(201, body: SessionWire.pair(access: "access-1", refresh: "refresh-1"))
                 : .status(204, body: "")
         }
@@ -212,13 +212,13 @@ final class SessionClientTests: XCTestCase {
         let vault = self.vault!
         let vaultAtSignOut = LockedFlag()
         SessionStubProtocol.reset { request in
-            if request.path == "/api/auth/sign-out" { vaultAtSignOut.set(vault.load() != nil) }
+            if request.path == TranEndpoint.signOut.path() { vaultAtSignOut.set(vault.load() != nil) }
             return .status(204, body: "")
         }
 
         await client.signOut()
 
-        let signOut = try XCTUnwrap(SessionStubProtocol.requests(to: "/api/auth/sign-out").first)
+        let signOut = try XCTUnwrap(SessionStubProtocol.requests(to: TranEndpoint.signOut.path()).first)
         XCTAssertEqual(signOut.body, ["refresh_token": "refresh-1"])
         XCTAssertEqual(vaultAtSignOut.value, false, "the vault was empty when the server was called")
         XCTAssertNil(vault.load())
@@ -235,7 +235,7 @@ final class SessionClientTests: XCTestCase {
         await makeClient().signOut()
 
         XCTAssertNil(vault.load())
-        XCTAssertEqual(SessionStubProtocol.requests.map(\.path), ["/api/auth/sign-out"])
+        XCTAssertEqual(SessionStubProtocol.requests.map(\.path), [TranEndpoint.signOut.path()])
         XCTAssertEqual(log.entries.map(\.code), [.networkOffline], "swallowed here, so logged here")
         assertNoTokenLogged(["refresh-0"])
     }
@@ -249,7 +249,7 @@ final class SessionClientTests: XCTestCase {
     func testARefreshThatLandsAfterSignOutIsDiscarded() async throws {
         try vault.save(SessionWire.stored(refresh: "refresh-0"))
         SessionStubProtocol.reset { request in
-            request.path == "/api/auth/refresh"
+            request.path == TranEndpoint.refresh.path()
                 ? .status(200, body: SessionWire.pair(access: "access-1", refresh: "refresh-1"), delay: 0.3)
                 : .status(204, body: "")
         }
@@ -290,13 +290,13 @@ final class SessionClientTests: XCTestCase {
         let vault = self.vault!
         let vaultAtDeletion = LockedFlag()
         let client = try await signedInClient { request in
-            if request.path == "/api/account" { vaultAtDeletion.set(vault.load() != nil) }
+            if request.path == TranEndpoint.deleteAccount.path() { vaultAtDeletion.set(vault.load() != nil) }
             return .status(204, body: "")
         }
 
         try await client.deleteAccount()
 
-        let deletion = try XCTUnwrap(SessionStubProtocol.requests(to: "/api/account").first)
+        let deletion = try XCTUnwrap(SessionStubProtocol.requests(to: TranEndpoint.deleteAccount.path()).first)
         XCTAssertEqual(deletion.method, "DELETE")
         XCTAssertEqual(deletion.authorization, "Bearer access-1")
         XCTAssertEqual(deletion.body, [:], "no body")
@@ -334,7 +334,7 @@ final class SessionClientTests: XCTestCase {
     func testA401DuringDeletionRefreshesOnceAndRepeats() async throws {
         let client = try await signedInClient { request in
             switch request.path {
-            case "/api/auth/refresh":
+            case TranEndpoint.refresh.path():
                 return .status(200, body: SessionWire.pair(access: "access-2", refresh: "refresh-2"))
             default:
                 return request.authorization == "Bearer access-2"
@@ -345,7 +345,7 @@ final class SessionClientTests: XCTestCase {
 
         try await client.deleteAccount()
 
-        XCTAssertEqual(SessionStubProtocol.requests.map(\.path), ["/api/account", "/api/auth/refresh", "/api/account"])
+        XCTAssertEqual(SessionStubProtocol.requests.map(\.path), [TranEndpoint.deleteAccount.path(), TranEndpoint.refresh.path(), TranEndpoint.deleteAccount.path()])
         XCTAssertEqual(SessionStubProtocol.requests.last?.authorization, "Bearer access-2")
         XCTAssertNil(vault.load())
         assertNoTokenLogged(["access-1", "access-2", "refresh-1", "refresh-2"])
@@ -357,7 +357,7 @@ final class SessionClientTests: XCTestCase {
         let failure = await deletionFailure(client)
 
         XCTAssertEqual(failure, TranSessionClient.expired, "the recovery table signs out")
-        XCTAssertEqual(SessionStubProtocol.requests.map(\.path), ["/api/account", "/api/auth/refresh"])
+        XCTAssertEqual(SessionStubProtocol.requests.map(\.path), [TranEndpoint.deleteAccount.path(), TranEndpoint.refresh.path()])
         XCTAssertNil(vault.load())
     }
 
@@ -371,7 +371,7 @@ final class SessionClientTests: XCTestCase {
 
         XCTAssertEqual(offline?.code, .networkOffline)
         let sent = try XCTUnwrap(SessionStubProtocol.requests.first)
-        XCTAssertEqual([sent.method, sent.path], ["DELETE", "/api/account"])
+        XCTAssertEqual([sent.method, sent.path], ["DELETE", TranEndpoint.deleteAccount.path()])
         XCTAssertNil(sent.authorization)
         XCTAssertEqual(SessionStubProtocol.requests.count, 1)
 
@@ -379,7 +379,7 @@ final class SessionClientTests: XCTestCase {
         let rejected = await deletionFailure(client)
 
         XCTAssertEqual(rejected, TranSessionClient.expired, "the server's 401 goes through the table")
-        XCTAssertEqual(SessionStubProtocol.requests.map(\.path), ["/api/account"], "nothing to refresh with")
+        XCTAssertEqual(SessionStubProtocol.requests.map(\.path), [TranEndpoint.deleteAccount.path()], "nothing to refresh with")
     }
 
     func testConcurrentDeletionsSendOneRequestAndShareItsAnswer() async throws {
@@ -389,14 +389,14 @@ final class SessionClientTests: XCTestCase {
         async let second: Void = client.deleteAccount()
         _ = try await (first, second)
 
-        XCTAssertEqual(SessionStubProtocol.requests(to: "/api/account").count, 1, "one DELETE")
+        XCTAssertEqual(SessionStubProtocol.requests(to: TranEndpoint.deleteAccount.path()).count, 1, "one DELETE")
         XCTAssertNil(vault.load())
 
         // The flight is over: a later call is a new request (and the server's 401 for it).
         SessionStubProtocol.reset { _ in .status(401, body: SessionWire.expired) }
         let later = await deletionFailure(client)
         XCTAssertEqual(later, TranSessionClient.expired)
-        XCTAssertEqual(SessionStubProtocol.requests(to: "/api/account").count, 1)
+        XCTAssertEqual(SessionStubProtocol.requests(to: TranEndpoint.deleteAccount.path()).count, 1)
     }
 
     /// The client logs only what it swallows; what it throws is its handler's to log (REQ-ROB-007).

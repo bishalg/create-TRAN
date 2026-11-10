@@ -39,6 +39,8 @@
 	<string>$(TRAN_APS_ENVIRONMENT)</string>
 	<key>TranPushEnabled</key>
 	<string>$(TRAN_PUSH_ENABLED)</string>
+	<key>TranStoreUrl</key>
+	<string>$(TRAN_IOS_STORE_URL)</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 </dict>

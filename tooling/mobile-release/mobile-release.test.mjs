@@ -416,3 +416,35 @@ describe('scripts and CI', () => {
     assert.deepEqual(checkAll(ROOT), []);
   });
 });
+
+describe('iOS: the store page "Update" opens is build configuration (REQ-VER-011)', () => {
+  it('REQ-VER-011 a build setting with the placeholder default reaches Info.plist', () => {
+    const project = read('apps/ios/project.yml');
+    assert.match(project, /^ {8}TRAN_IOS_STORE_URL: https:\/\/tran\.example\/ios$/m);
+    assert.match(project, /^ {8}TranStoreUrl: \$\(TRAN_IOS_STORE_URL\)$/m);
+    assert.match(
+      read('apps/ios/Support/Info.plist'),
+      /<key>TranStoreUrl<\/key>\s*<string>\$\(TRAN_IOS_STORE_URL\)<\/string>/
+    );
+    assert.match(
+      read('apps/ios/Sources/TranVotingDemo/Api/TranUpdateCenter.swift'),
+      /static let placeholder = URL\(string: "https:\/\/tran\.example\/ios"\)!/
+    );
+  });
+});
+
+describe('Android: the store page "Update" opens is build configuration (REQ-VER-011)', () => {
+  it('REQ-VER-011 an optional variable with the placeholder default reaches BuildConfig', () => {
+    const gradle = read('apps/android/app/build.gradle.kts');
+    const reads = gradleEnvReads(gradle).filter((r) => r.name === 'TRAN_ANDROID_STORE_URL');
+    assert.equal(reads.length, 1, 'build.gradle.kts reads TRAN_ANDROID_STORE_URL once');
+    assert.ok(ANDROID_OPTIONAL_BUILD_VALUES.includes('TRAN_ANDROID_STORE_URL'));
+    assert.match(gradle, /\.ifEmpty \{ "https:\/\/tran\.example\/android" \}/);
+    assert.match(gradle, /buildConfigField\("String", "TRAN_ANDROID_STORE_URL", "\\"\$storeUrl\\""\)/);
+    assert.match(read('.env.example'), /^# .+\nTRAN_ANDROID_STORE_URL=$/m);
+    assert.match(
+      read('apps/android/app/src/main/kotlin/com/tran/voting/update/UpdatePreferences.kt'),
+      /val url: String = BuildConfig\.TRAN_ANDROID_STORE_URL/
+    );
+  });
+});

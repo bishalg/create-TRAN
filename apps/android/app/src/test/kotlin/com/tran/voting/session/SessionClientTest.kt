@@ -60,21 +60,21 @@ class SessionClientTest {
         server = MockWebServer()
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse = when (request.path) {
-                "/api/auth/session" -> if (request.method == "POST") {
+                "/api/v1/auth/session" -> if (request.method == "POST") {
                     pair(ACCESS_1, REFRESH_1, 201)
                 } else {
                     val bearer = request.getHeader("Authorization")?.removePrefix("Bearer ")
                     if (bearer in validAccess) json(200, """{"user_id":"voter-001","role":"citizen_voter"}""") else expired()
                 }
-                "/api/auth/refresh" -> {
+                "/api/v1/auth/refresh" -> {
                     refreshes.incrementAndGet()
                     refreshAnswer()
                 }
-                "/api/auth/sign-out" -> {
+                "/api/v1/auth/sign-out" -> {
                     signOutHook(request)
                     MockResponse().setResponseCode(204)
                 }
-                "/api/account" -> {
+                "/api/v1/account" -> {
                     val bearer = request.getHeader("Authorization")?.removePrefix("Bearer ")
                     if (request.method == "DELETE" && bearer in validAccess) accountAnswer() else expired()
                 }
@@ -132,7 +132,7 @@ class SessionClientTest {
         assertEquals(SessionUser("voter-001", TranUserRole.CITIZEN_VOTER), user)
         val request = server.takeRequest()
         assertEquals("POST", request.method)
-        assertEquals("/api/auth/session", request.path)
+        assertEquals("/api/v1/auth/session", request.path)
         val body = JSONObject(request.body.readUtf8())
         assertEquals("citizen_voter", body.getString("role"))
         assertEquals("body", body.getString("transport"))
@@ -164,7 +164,7 @@ class SessionClientTest {
         client.currentUser()
 
         val calls = requests()
-        assertEquals(listOf("/api/auth/refresh", "/api/auth/session"), calls.map { it.path })
+        assertEquals(listOf("/api/v1/auth/refresh", "/api/v1/auth/session"), calls.map { it.path })
         assertEquals(REFRESH_1, JSONObject(calls[0].body.readUtf8()).getString("refresh_token"))
         assertEquals("Bearer $ACCESS_2", calls[1].getHeader("Authorization"))
         assertEquals(REFRESH_2, vault.read()?.refreshToken)
@@ -181,7 +181,7 @@ class SessionClientTest {
 
         assertEquals(4, users.size)
         assertEquals(1, refreshes.get())
-        val sessionCalls = requests().filter { it.path == "/api/auth/session" && it.method == "GET" }
+        val sessionCalls = requests().filter { it.path == "/api/v1/auth/session" && it.method == "GET" }
         assertEquals(4, sessionCalls.count { it.getHeader("Authorization") == "Bearer $ACCESS_1" })
         assertEquals(4, sessionCalls.count { it.getHeader("Authorization") == "Bearer $ACCESS_2" })
     }
@@ -266,7 +266,7 @@ class SessionClientTest {
         client.signOut()
 
         val call = requests().last()
-        assertEquals("/api/auth/sign-out", call.path)
+        assertEquals("/api/v1/auth/sign-out", call.path)
         assertEquals(REFRESH_1, JSONObject(call.body.readUtf8()).getString("refresh_token"))
         assertNull(vaultAtCall)
         assertFalse(accessAtCall)
@@ -309,7 +309,7 @@ class SessionClientTest {
 
         val call = requests().last()
         assertEquals("DELETE", call.method)
-        assertEquals("/api/account", call.path)
+        assertEquals("/api/v1/account", call.path)
         assertEquals("Bearer $ACCESS_1", call.getHeader("Authorization"))
         assertEquals(0L, call.bodySize)
         assertEquals("the device keeps the session until the server answers", REFRESH_1, vaultAtAnswer?.refreshToken)
@@ -329,7 +329,7 @@ class SessionClientTest {
 
         (1..2).map { async(Dispatchers.IO) { client.deleteAccount() } }.awaitAll()
 
-        assertEquals(1, requests().count { it.path == "/api/account" })
+        assertEquals(1, requests().count { it.path == "/api/v1/account" })
         assertNull(vault.read())
     }
 
@@ -344,7 +344,7 @@ class SessionClientTest {
         accountAnswer = { MockResponse().setResponseCode(204) }
         client.deleteAccount()
 
-        assertEquals(2, requests().count { it.path == "/api/account" })
+        assertEquals(2, requests().count { it.path == "/api/v1/account" })
         assertNull(vault.read())
     }
 
@@ -405,7 +405,7 @@ class SessionClientTest {
 
         client.deleteAccount()
 
-        val deletes = requests().filter { it.path == "/api/account" }
+        val deletes = requests().filter { it.path == "/api/v1/account" }
         assertEquals(listOf("Bearer $ACCESS_1", "Bearer $ACCESS_2"), deletes.map { it.getHeader("Authorization") })
         assertEquals(1, refreshes.get())
         assertNull(vault.read())
@@ -432,7 +432,7 @@ class SessionClientTest {
         val failure = failureOf { client().deleteAccount() }
 
         val call = requests().single()
-        assertEquals("/api/account", call.path)
+        assertEquals("/api/v1/account", call.path)
         assertNull(call.getHeader("Authorization"))
         assertEquals(TranErrorCode.AUTH_SESSION_EXPIRED, failure.code)
 

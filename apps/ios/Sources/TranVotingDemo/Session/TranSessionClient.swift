@@ -1,5 +1,5 @@
 // Verifies: REQ-SEC-014 REQ-SEC-015 REQ-SEC-016 REQ-SEC-017 REQ-SEC-021 REQ-SEC-022 REQ-ACC-006 REQ-ROB-007
-// Verifies: REQ-PSH-009
+// Verifies: REQ-PSH-009 REQ-VER-001 REQ-VER-004 REQ-VER-008
 import Foundation
 import os
 
@@ -13,7 +13,7 @@ import os
 /// client logs only a failure it swallows itself (a `401` it recovers from with a refresh, the
 /// sign-out revoke, a restored session it keeps).
 actor TranSessionClient {
-    /// The outcome of checking a restored session against `GET /api/auth/session`.
+    /// The outcome of checking a restored session against `GET /api/v1/auth/session`.
     enum Validation: Equatable, Sendable {
         /// The server knows the session.
         case valid
@@ -23,8 +23,7 @@ actor TranSessionClient {
         case kept
     }
 
-    private let baseUrl: URL
-    private let urlSession: URLSession
+    private let http: TranHttp
     private let vault: SessionVault
     private let log: @Sendable (TranRequestFailure) -> Void
 
@@ -41,11 +40,12 @@ actor TranSessionClient {
         vault: SessionVault,
         baseUrl: URL = TranApiConfig.baseUrl(),
         session: URLSession = TranApiClient.defaultSession,
-        log: @escaping @Sendable (TranRequestFailure) -> Void = TranFeedback.write
+        log: @escaping @Sendable (TranRequestFailure) -> Void = TranFeedback.write,
+        client: String = TranClientIdentity.current,
+        onStanding: @escaping @Sendable (TranStandingSignal) -> Void = TranUpdateCenter.post
     ) {
         self.vault = vault
-        self.baseUrl = baseUrl
-        self.urlSession = session
+        self.http = TranHttp(baseUrl: baseUrl, session: session, client: client, onStanding: onStanding)
         self.log = log
     }
 
@@ -55,12 +55,12 @@ actor TranSessionClient {
 
     // MARK: - Sign in and out
 
-    /// `POST /api/auth/session` with the body transport; stores the refresh token in the vault and
+    /// `POST /api/v1/auth/session` with the body transport; stores the refresh token in the vault and
     /// keeps the access token in memory. The device session does not wait for this (ADR-0039 7).
     @discardableResult
     func signIn(role: TranUserRole) async throws -> TranStoredSession {
         let body = Self.json(["role": role.wire, "transport": "body"])
-        let data = try await send(request("/api/auth/session", method: "POST", body: body))
+        let data = try await send(http.request(.signIn, body: body))
         return try adopt(data, epoch: epoch)
     }
 
@@ -73,7 +73,7 @@ actor TranSessionClient {
         guard let stored else { return }
         let body = Self.json(["refresh_token": stored.refreshToken])
         do {
-            _ = try await send(request("/api/auth/sign-out", method: "POST", body: body))
+            _ = try await send(http.request(.signOut, body: body))
         } catch {
             log(TranRequestFailure.classify(error))
         }
@@ -81,7 +81,7 @@ actor TranSessionClient {
 
     // MARK: - Delete the account
 
-    /// `DELETE /api/account` (REQ-ACC-006, ADR-0041 decision 4). The opposite order to sign-out:
+    /// `DELETE /api/v1/account` (REQ-ACC-006, ADR-0041 decision 4). The opposite order to sign-out:
     /// the device is cleared only once the server answers `2xx`; any failure leaves the vault and
     /// the access token as they were and is thrown for the normal error feedback. A `401` follows
     /// `sessionRecovery` like any other call (REQ-SEC-015).
@@ -101,7 +101,7 @@ actor TranSessionClient {
             // token). Ask the server anyway, so an unreachable API is a network failure and only
             // the server's `401` reaches the recovery table.
             do {
-                _ = try await send(request("/api/account", method: "DELETE"))
+                _ = try await send(http.request(.deleteAccount))
                 endSession()
                 return
             } catch let failure as TranRequestFailure where failure.status == 401 {
@@ -112,7 +112,7 @@ actor TranSessionClient {
                 throw Self.expired
             }
         }
-        _ = try await authorized(path: "/api/account", method: "DELETE")
+        _ = try await authorized(.deleteAccount)
         endSession()
     }
 
@@ -129,7 +129,7 @@ actor TranSessionClient {
     /// this client logs it; `.signedOut` is the caller's to log, as it presents it.
     func validate() async -> Validation {
         do {
-            _ = try await authorized(path: "/api/auth/session")
+            _ = try await authorized(.validateSession)
             return .valid
         } catch let failure as TranRequestFailure where failure == Self.expired {
             return .signedOut
@@ -141,14 +141,17 @@ actor TranSessionClient {
 
     /// Sends an API call with `Authorization: Bearer`. On `401` it follows `sessionRecovery`:
     /// one shared refresh, then the call repeats once with the new token (REQ-SEC-016).
-    func authorized(path: String, method: String = "GET", body: Data? = nil) async throws -> Data {
+    func authorized(
+        _ endpoint: TranEndpoint, installationId: String? = nil, body: Data? = nil
+    ) async throws -> Data {
         var retried = false
         while true {
             let token = accessToken
             var unauthorized: TranRequestFailure?
             if let token {
                 do {
-                    return try await send(request(path, method: method, body: body, bearer: token))
+                    return try await send(
+                        http.request(endpoint, installationId: installationId, body: body, bearer: token))
                 } catch let failure as TranRequestFailure where failure.status == 401 {
                     // Falls through to the recovery table below.
                     unauthorized = failure
@@ -195,7 +198,7 @@ actor TranSessionClient {
         let body = Self.json(["refresh_token": stored.refreshToken])
         let data: Data
         do {
-            data = try await send(request("/api/auth/refresh", method: "POST", body: body))
+            data = try await send(http.request(.refresh, body: body))
         } catch {
             let failure = TranRequestFailure.classify(error)
             let status = failure.status.map { UInt16(clamping: $0) }
@@ -215,24 +218,42 @@ actor TranSessionClient {
 
     // MARK: - Plumbing
 
-    /// The token-pair answer of sign-in and refresh (`docs/API.md`, body transport).
-    private struct TokenPair: Decodable {
+    /// The token-pair answer of sign-in and refresh (`docs/API.md`, body transport): every field
+    /// the app reads, nothing more, so a newer server's extra fields are ignored (REQ-VER-008).
+    /// `ClientManifestTests` holds the iOS manifest's `reads` to these fields.
+    struct TokenPair: Decodable {
         struct User: Decodable {
             let user_id: String
+            /// Read tolerantly: a role this build does not know is the catalogue's fallback.
             let role: String
+
+            init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                user_id = try container.decode(String.self, forKey: .user_id)
+                role = Self.role(try container.decode(String.self, forKey: .role))
+            }
+
+            private enum CodingKeys: String, CodingKey { case user_id, role }
+
+            /// `decodeWireEnum` over the generated `user_role` table (REQ-VER-008).
+            static func role(_ raw: String) -> String {
+                decodeWireEnum(name: "user_role", raw: raw) ?? ApiContract.WireEnums.UserRole.fallback
+            }
         }
         let access_token: String
-        let refresh_token: String
+        /// Always present on the body transport the app signs in with; a pair without it is not
+        /// adopted, but still decodes, as the cookie transport's answer does.
+        let refresh_token: String?
         let user: User
     }
 
     /// Stores a token pair, unless the session ended while the request was in flight.
     private func adopt(_ data: Data, epoch started: Int) throws -> TranStoredSession {
         guard let pair = try? JSONDecoder().decode(TokenPair.self, from: data),
-            TranUserRole(wire: pair.user.role) != nil
+            let refreshToken = pair.refresh_token, TranUserRole(wire: pair.user.role) != nil
         else { throw TranRequestFailure(code: .clientUnexpected) }
         let stored = TranStoredSession(
-            refreshToken: pair.refresh_token, userId: pair.user.user_id, roleWire: pair.user.role)
+            refreshToken: refreshToken, userId: pair.user.user_id, roleWire: pair.user.role)
         guard started == epoch else { throw Self.expired }
         do {
             try vault.save(stored)
@@ -249,36 +270,8 @@ actor TranSessionClient {
         vault.clear()
     }
 
-    private func request(
-        _ path: String, method: String, body: Data? = nil, bearer: String? = nil
-    ) -> URLRequest {
-        var request = URLRequest(url: baseUrl.appending(path: path))
-        request.httpMethod = method
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        if let body {
-            request.httpBody = body
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        }
-        if let bearer { request.setValue("Bearer \(bearer)", forHTTPHeaderField: "Authorization") }
-        return request
-    }
-
-    /// One request. A failure carries the fixed `LOG_EVENT` fields only, never a header or a
-    /// body, so no token can reach a log or a report (REQ-SEC-014). It is thrown, not logged:
-    /// whoever ends up handling it logs it once.
     private func send(_ request: URLRequest) async throws -> Data {
-        do {
-            let (data, response) = try await urlSession.data(for: request)
-            guard let http = response as? HTTPURLResponse else {
-                throw TranRequestFailure(code: .clientUnexpected)
-            }
-            guard (200..<300).contains(http.statusCode) else {
-                throw TranRequestFailure.rejected(http, body: data)
-            }
-            return data
-        } catch {
-            throw TranRequestFailure.classify(error)
-        }
+        try await http.send(request)
     }
 
     private static func json(_ object: [String: String]) -> Data {

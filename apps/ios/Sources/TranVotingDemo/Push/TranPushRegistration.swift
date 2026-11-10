@@ -3,7 +3,7 @@ import Foundation
 
 /// Keeps this installation's registration with the API right (spec 027, ADR-0044). What to do is
 /// `pushSync`, the Rust table (REQ-PSH-009); this only gathers the state and carries out the answer:
-/// `PUT /api/devices/{installation_id}` through the session client, or clear the record and a
+/// `PUT /api/v1/devices/{installation_id}` through the session client, or clear the record and a
 /// best-effort `DELETE`. It runs at launch, on return to the foreground, when a token arrives and
 /// after sign-in. Every call is in the background: a failure is logged once, through the feedback
 /// layer's writer, and shown nowhere. No token or installation id reaches a log (REQ-PSH-007).
@@ -20,11 +20,10 @@ final class TranPushRegistration {
 
         static var current: App {
             let language = Bundle.main.preferredLocalizations.first ?? "en"
-            let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
             return App(
                 environment: TranPushBuild.current.environment,
                 locale: language.replacingOccurrences(of: "_", with: "-"),
-                version: version ?? "0"
+                version: TranClientIdentity.version()
             )
         }
     }
@@ -139,8 +138,6 @@ final class TranPushRegistration {
         status == .granted || status == .grantedApproximate
     }
 
-    private var path: String { "/api/devices/\(store.installationId)" }
-
     private func register(_ token: String, at nowUnixS: Int64) async {
         let body: [String: Any] = [
             "platform": "ios",
@@ -152,7 +149,7 @@ final class TranPushRegistration {
         ]
         do {
             let data = try JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])
-            _ = try await client.authorized(path: path, method: "PUT", body: data)
+            _ = try await client.authorized(.registerDevice, installationId: store.installationId, body: data)
             store.record(TranLastRegistration(token: token, registeredAtUnixS: nowUnixS))
         } catch {
             log(TranRequestFailure.classify(error))
@@ -161,7 +158,7 @@ final class TranPushRegistration {
 
     private func unregisterOnServer() async {
         do {
-            _ = try await client.authorized(path: path, method: "DELETE")
+            _ = try await client.authorized(.unregisterDevice, installationId: store.installationId)
         } catch {
             log(TranRequestFailure.classify(error))
         }

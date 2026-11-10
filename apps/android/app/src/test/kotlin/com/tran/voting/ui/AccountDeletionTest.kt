@@ -63,10 +63,10 @@ class AccountDeletionTest {
     /** Every request the session client sent, as "METHOD path". */
     private val calls: MutableList<String> = Collections.synchronizedList(mutableListOf())
 
-    /** What `DELETE /api/account` answers. */
+    /** What `DELETE /api/v1/account` answers. */
     private var deletion = 204
 
-    /** What `POST /api/auth/refresh` answers. */
+    /** What `POST /api/v1/auth/refresh` answers. */
     private var refresh = 200
 
     /** When set, the deletion waits for [FakeApis.Hang.release] off the main thread. */
@@ -102,7 +102,7 @@ class AccountDeletionTest {
             val request = chain.request()
             calls.add("${request.method} ${request.url.encodedPath}")
             when (request.url.encodedPath) {
-                "/api/auth/refresh" -> if (refresh != 200) {
+                "/api/v1/auth/refresh" -> if (refresh != 200) {
                     answer(request, refresh, """{"success":false,"error":"Failed"}""")
                 } else answer(
                     request,
@@ -110,7 +110,7 @@ class AccountDeletionTest {
                     """{"access_token":"access-two","token_type":"Bearer","expires_in":900,"refresh_token":"refresh-two",""" +
                         """"user":{"user_id":"voter-001","role":"citizen_voter"}}""",
                 )
-                "/api/account" -> answer(request, deletion.also { hang?.let(::hold) }, if (deletion == 204) "" else """{"success":false,"error":"Failed"}""")
+                "/api/v1/account" -> answer(request, deletion.also { hang?.let(::hold) }, if (deletion == 204) "" else """{"success":false,"error":"Failed"}""")
                 else -> answer(request, 200, """{"user_id":"voter-001","role":"citizen_voter"}""")
             }
         }.build(),
@@ -137,7 +137,7 @@ class AccountDeletionTest {
 
     private fun none(tag: String) = compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isEmpty()
 
-    private fun deletes() = calls.count { it == "DELETE /api/account" }
+    private fun deletes() = calls.count { it == "DELETE /api/v1/account" }
 
     @Test
     fun `REQ-ACC-006 confirming deletes the account and returns to role selection`() {
@@ -256,7 +256,7 @@ class AccountDeletionTest {
             http = OkHttpClient.Builder().addInterceptor { chain ->
                 val request = chain.request()
                 calls.add("${request.method} ${request.url.encodedPath}")
-                if (request.url.encodedPath == "/api/account") throw IOException("connection refused")
+                if (request.url.encodedPath == "/api/v1/account") throw IOException("connection refused")
                 answer(request, 200, "{}")
             }.build(),
             io = Dispatchers.Unconfined,

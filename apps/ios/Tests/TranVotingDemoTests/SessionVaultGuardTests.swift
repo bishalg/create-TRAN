@@ -1,9 +1,9 @@
-// Verifies: REQ-SEC-017 REQ-SEC-019 REQ-PSH-010
+// Verifies: REQ-SEC-017 REQ-SEC-019 REQ-PSH-010 REQ-VER-010
 import XCTest
 
 /// A source guard over the hand-written app code: a token or a session reaches storage only
-/// through the Keychain vault. `UserDefaults` is written in two allowlisted places (a launch flag;
-/// the push store), nothing writes files, and only the vault and the session client handle a token.
+/// through the Keychain vault. `UserDefaults` is written in three allowlisted places (a launch flag;
+/// the push store; the dismissed update prompt), nothing writes files, and only the vault and the session client handle a token.
 final class SessionVaultGuardTests: XCTestCase {
     private static let sources = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
@@ -43,7 +43,9 @@ final class SessionVaultGuardTests: XCTestCase {
     /// keeps the installation id, the token it is bound to and the last registration (spec 027):
     /// none of them is a credential (the id is random and only tells installs apart, a push token
     /// is an address, not a secret), so they belong in ordinary app storage, not the Keychain
-    /// (REQ-PSH-010). No session, refresh or access token may join this list.
+    /// (REQ-PSH-010). The update center keeps the recommended version the prompt was dismissed for,
+    /// a version number and nothing else: a preference, as the web keeps it in Web Storage
+    /// (REQ-VER-010). No session, refresh or access token may join this list.
     private static let allowedWrites: [String: [String]] = [
         "Session/TranSessionLaunch.swift": ["defaults.set(true, forKey: launchedKey)"],
         "Push/TranPushStore.swift": [
@@ -53,9 +55,12 @@ final class SessionVaultGuardTests: XCTestCase {
             "defaults.set(registration.token, forKey: Self.tokenKey)",
             "defaults.set(NSNumber(value: registration.registeredAtUnixS), forKey: Self.registeredAtKey)",
         ],
+        "Api/TranUpdateCenter.swift": [
+            #"defaults.set(offer.recommendedVersion ?? "", forKey: Self.dismissedKey)"#
+        ],
     ]
 
-    func testUserDefaultsIsWrittenOnlyForTheLaunchFlagAndThePushStore() throws {
+    func testUserDefaultsIsWrittenOnlyForTheLaunchFlagThePushStoreAndTheUpdatePrompt() throws {
         let writes = try matches(
             #"(\.set\(|\.setValue\([^)]*forKey:|\.register\(defaults|@AppStorage|@SceneStorage|NSUbiquitousKeyValueStore)"#)
         XCTAssertEqual(files(of: writes), Set(Self.allowedWrites.keys), "UserDefaults writes: \(writes)")
@@ -70,6 +75,19 @@ final class SessionVaultGuardTests: XCTestCase {
         for credential in ["refresh", "TranStoredSession", "SessionVault", "Bearer"] {
             XCTAssertFalse(store.contains(credential), "the push store mentions \(credential)")
         }
+    }
+
+    /// The update center stores a version number only: no session, token or vault passes through it.
+    func testTheUpdatePromptKeepsOnlyAVersion() throws {
+        let center = try String(
+            contentsOf: Self.sources.appendingPathComponent("Api/TranUpdateCenter.swift"), encoding: .utf8)
+        for credential in ["refresh", "token", "Token", "TranStoredSession", "SessionVault", "Bearer"] {
+            XCTAssertFalse(center.contains(credential), "the update center mentions \(credential)")
+        }
+        // One read and one write of the key, both in the update center.
+        let uses = try matches(#"forKey: Self\.dismissedKey"#)
+        XCTAssertEqual(files(of: uses), ["Api/TranUpdateCenter.swift"])
+        XCTAssertEqual(uses.count, 2, "\(uses)")
     }
 
     func testNothingWritesAFile() throws {

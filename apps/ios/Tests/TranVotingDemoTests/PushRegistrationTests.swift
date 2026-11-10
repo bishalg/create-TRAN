@@ -47,11 +47,11 @@ final class PushRegistrationTests: XCTestCase {
     private static func answer(devices status: Int) {
         SessionStubProtocol.reset { request in
             switch request.path {
-            case "/api/auth/refresh":
+            case TranEndpoint.refresh.path():
                 return .status(200, body: SessionWire.pair(access: "access-1", refresh: "refresh-1"))
-            case "/api/auth/sign-out":
+            case TranEndpoint.signOut.path():
                 return .status(204)
-            case let path where path.hasPrefix("/api/devices/"):
+            case let path where path.hasPrefix(ApiContract.basePath + "/devices/"):
                 return .status(status)
             default:
                 return .failure(.unsupportedURL)
@@ -74,7 +74,7 @@ final class PushRegistrationTests: XCTestCase {
     }
 
     private var deviceCalls: [SessionStubProtocol.Recorded] {
-        SessionStubProtocol.requests.filter { $0.path.hasPrefix("/api/devices/") }
+        SessionStubProtocol.requests.filter { $0.path.hasPrefix(ApiContract.basePath + "/devices/") }
     }
 
     private func json(_ request: SessionStubProtocol.Recorded) throws -> [String: AnyHashable] {
@@ -91,7 +91,7 @@ final class PushRegistrationTests: XCTestCase {
         let put = try XCTUnwrap(deviceCalls.first)
         XCTAssertEqual(deviceCalls.count, 1)
         XCTAssertEqual(put.method, "PUT")
-        XCTAssertEqual(put.path, "/api/devices/\(store.installationId)")
+        XCTAssertEqual(put.path, TranEndpoint.registerDevice.path(installationId: store.installationId))
         XCTAssertEqual(put.authorization, "Bearer access-1")
         XCTAssertEqual(try json(put), [
             "platform": "ios", "push_token": Self.tokenA, "environment": "sandbox", "locale": "ne",
@@ -137,7 +137,7 @@ final class PushRegistrationTests: XCTestCase {
         XCTAssertEqual(store.lastRegistration?.token, Self.tokenB)
         // Another token is another install or device: the id is new too (REQ-PSH-010).
         XCTAssertNotEqual(store.installationId, firstId)
-        XCTAssertEqual(deviceCalls[1].path, "/api/devices/\(store.installationId)")
+        XCTAssertEqual(deviceCalls[1].path, TranEndpoint.registerDevice.path(installationId: store.installationId))
         XCTAssertEqual(opened + shown, 0)
 
         push.deliver(.opened)
@@ -155,7 +155,7 @@ final class PushRegistrationTests: XCTestCase {
 
         SessionStubProtocol.reset { request in
             switch request.path {
-            case "/api/auth/session":
+            case TranEndpoint.signIn.path():
                 return .status(201, body: SessionWire.pair(access: "access-2", refresh: "refresh-2"))
             default:
                 return .status(204)
@@ -181,7 +181,7 @@ final class PushRegistrationTests: XCTestCase {
         XCTAssertNil(store.lastRegistration, "the record is cleared")
         let delete = try XCTUnwrap(deviceCalls.last)
         XCTAssertEqual(delete.method, "DELETE")
-        XCTAssertEqual(delete.path, "/api/devices/\(store.installationId)")
+        XCTAssertEqual(delete.path, TranEndpoint.registerDevice.path(installationId: store.installationId))
         XCTAssertEqual(delete.authorization, "Bearer access-1")
         let again = await sync.sync()
         XCTAssertEqual(again, .nothing, "nothing recorded, nothing to do")
@@ -219,8 +219,8 @@ final class PushRegistrationTests: XCTestCase {
 
         XCTAssertNil(store.lastRegistration)
         let paths = SessionStubProtocol.requests.map { "\($0.method) \($0.path)" }
-        let delete = "DELETE /api/devices/\(store.installationId)"
-        XCTAssertEqual(paths.suffix(2), [delete, "POST /api/auth/sign-out"], "DELETE first, then the session ends")
+        let delete = "DELETE \(TranEndpoint.unregisterDevice.path(installationId: store.installationId))"
+        XCTAssertEqual(paths.suffix(2), [delete, "POST \(TranEndpoint.signOut.path())"], "DELETE first, then the session ends")
         XCTAssertEqual(deviceCalls.last?.authorization, "Bearer access-1")
         XCTAssertNil(vault.load())
     }
@@ -311,7 +311,7 @@ final class PushRegistrationTests: XCTestCase {
         await registration().sync()
 
         XCTAssertNotEqual(store.installationId, original)
-        XCTAssertEqual(deviceCalls.map(\.path), ["/api/devices/\(store.installationId)"])
+        XCTAssertEqual(deviceCalls.map(\.path), [TranEndpoint.registerDevice.path(installationId: store.installationId)])
         XCTAssertEqual(store.lastRegistration?.token, Self.tokenA)
     }
 

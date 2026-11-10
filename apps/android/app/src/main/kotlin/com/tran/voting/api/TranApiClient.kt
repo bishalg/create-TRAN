@@ -1,7 +1,8 @@
-// Verifies: REQ-NAT-011 REQ-ERR-004 REQ-ERR-005 REQ-ROB-010
+// Verifies: REQ-NAT-011 REQ-ERR-004 REQ-ERR-005 REQ-ROB-010 REQ-VER-001 REQ-VER-004
 package com.tran.voting.api
 
 import com.tran.voting.BuildConfig
+import com.tran.voting.generated.ApiContract
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.util.concurrent.TimeUnit
@@ -145,27 +146,35 @@ class TranApiClient(
     // Internal: a device-only session's account calls go to the same server the same way (`SessionClient.deviceOnly`).
     internal val baseUrl: String = TranApiConfig.baseUrl,
     private val includeDebugCountry: Boolean = TranApiConfig.includeDebugCountry,
-    internal val http: OkHttpClient = sharedHttpClient,
+    http: OkHttpClient = sharedHttpClient,
     private val retry: TranRetry = TranRetry(),
     /** Where the blocking call runs; a JVM screenshot test passes `Unconfined` to stay on one thread. */
     internal val io: CoroutineDispatcher = Dispatchers.IO,
+    /** What this client's answers say about the app version (spec 028); the coordinator reads it. */
+    val standing: ClientStanding = ClientStanding(),
 ) {
+    /** The transport as given; the session client wraps it the same way. */
+    internal val transport: OkHttpClient = http
+
+    /** [transport] behind the client header and the standing (REQ-VER-004). */
+    private val http: OkHttpClient = http.tranClient(standing)
+
     suspend fun checkHealth() {
         retry.run(idempotent = true) {
-            send(path = "/api/health", method = "GET", body = null, countryCode = null)
+            send(path = ApiContract.healthPath, method = "GET", body = null, countryCode = null)
         }
     }
 
     /** One health request without retries: the recovery probe's question (REQ-ERR-013). */
     suspend fun probeHealth() {
-        send(path = "/api/health", method = "GET", body = null, countryCode = null)
+        send(path = ApiContract.healthPath, method = "GET", body = null, countryCode = null)
     }
 
     /** A pure computation on the server, so it is safe to retry. */
     suspend fun confirmEligibility(age: Int, countryCode: String) {
         retry.run(idempotent = true) {
             send(
-                path = "/api/vote/eligibility",
+                path = ELIGIBILITY_PATH,
                 method = "POST",
                 body = """{"age":$age}""",
                 countryCode = countryCode,
@@ -199,6 +208,7 @@ class TranApiClient(
     companion object {
         private val JSON = "application/json".toMediaType()
         private val COUNTRY_CODE = Regex("^[A-Za-z]{2}$")
+        private const val ELIGIBILITY_PATH = ApiContract.basePath + "/vote/eligibility"
 
         /**
          * Shared so screens never build a connection pool per recomposition; the session client

@@ -44,7 +44,8 @@ struct TranFeedbackHost: ViewModifier {
                     confirmLabel: pending?.confirmLabel ?? "",
                     cancelLabel: pending?.cancelLabel ?? L10n.Common.cancel,
                     destructive: pending?.destructive ?? false,
-                    onConfirm: { pending?.onConfirm() }
+                    onConfirm: { pending?.onConfirm() },
+                    onCancel: { pending?.onCancel() }
                 )
             )
     }

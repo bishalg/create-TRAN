@@ -4,7 +4,7 @@ import XCTest
 /// The coordinator's deletion flow (`TranAccountDeletion`, wired by `NavigationCoordinatorView`) on
 /// a scripted transport. No screen-contract scenario stages a deletion the server confirms (the
 /// native suites run without an API), so this proves the confirmed path end to end: dialog,
-/// `DELETE /api/account`, the vault cleared, Auth Welcome and the success toast.
+/// `DELETE /api/v1/account`, the vault cleared, Auth Welcome and the success toast.
 @MainActor
 final class AccountDeletionTests: XCTestCase {
     private var vault: InMemorySessionVault!
@@ -36,7 +36,7 @@ final class AccountDeletionTests: XCTestCase {
     /// Opens the dialog as the "Delete account" control does, confirms it and waits for the answer.
     private func confirmDeletion(answer reply: SessionStubProtocol.Reply) async throws {
         SessionStubProtocol.reset { request in
-            request.path == "/api/auth/refresh"
+            request.path == TranEndpoint.refresh.path()
                 ? .status(200, body: SessionWire.pair(access: "access-1", refresh: "refresh-1"))
                 : reply
         }
@@ -67,7 +67,7 @@ final class AccountDeletionTests: XCTestCase {
     func testConfirmingDeletesTheAccountAndReturnsToRoleSelection() async throws {
         try await confirmDeletion(answer: .status(204, body: ""))
 
-        XCTAssertEqual(SessionStubProtocol.requests(to: "/api/account").map(\.method), ["DELETE"])
+        XCTAssertEqual(SessionStubProtocol.requests(to: TranEndpoint.deleteAccount.path()).map(\.method), ["DELETE"])
         XCTAssertEqual(session.destination, .authWelcome)
         XCTAssertNil(vault.load())
         XCTAssertEqual(feedback.toast?.messageKey, "auth.accountDeleted")
@@ -125,7 +125,7 @@ final class AccountDeletionTests: XCTestCase {
 
     func testTheControlIsDisabledUntilTheServerAnswersAndUsableAgainAfterAFailure() async throws {
         SessionStubProtocol.reset { request in
-            request.path == "/api/auth/refresh"
+            request.path == TranEndpoint.refresh.path()
                 ? .status(200, body: SessionWire.pair(access: "access-1", refresh: "refresh-1"))
                 : .status(503, body: "{}", delay: 0.3)
         }
@@ -150,7 +150,7 @@ final class AccountDeletionTests: XCTestCase {
 
         await fulfillment(of: [settled], timeout: 5)
         XCTAssertFalse(deletion.inFlight, "usable again after a failure")
-        XCTAssertEqual(SessionStubProtocol.requests(to: "/api/account").count, 1)
+        XCTAssertEqual(SessionStubProtocol.requests(to: TranEndpoint.deleteAccount.path()).count, 1)
         deletion.confirm(client: client, feedback: feedback, onDeleted: {}, onFailed: { _ in })
         XCTAssertNotNil(feedback.confirmation, "the control asks again")
     }

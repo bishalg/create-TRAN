@@ -1,4 +1,4 @@
-// Verifies: REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-010 REQ-ERR-012 REQ-ERR-014 REQ-ACC-005
+// Verifies: REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-010 REQ-ERR-012 REQ-ERR-014 REQ-ACC-005 REQ-VER-010
 package com.tran.voting.ui.feedback
 
 import android.util.Log
@@ -45,10 +45,17 @@ class TranConfirmation(
     /** The contract ids of its buttons: each action's dialog has its own (REQ-ACC-005). */
     val tags: DialogTags = DialogTags.Shared,
     val onConfirm: () -> Unit,
+    /** Runs when the user cancels, after the dialog closes. */
+    val onCancel: () -> Unit = {},
 )
 
-/** Body, confirm label and button ids of an action's dialog; the title is the catalogue's `messageKey`. */
-data class ActionDialogCopy(val body: Int, val confirm: Int, val tags: DialogTags = DialogTags.Shared)
+/** Body, confirm and cancel labels and button ids of an action's dialog; the title is the catalogue's `messageKey`. */
+data class ActionDialogCopy(
+    val body: Int,
+    val confirm: Int,
+    val tags: DialogTags = DialogTags.Shared,
+    val cancel: Int = TranStrings.Common.cancel,
+)
 
 /** The screen contract ids of a dialog's confirm and cancel buttons. */
 data class DialogTags(val confirm: String, val cancel: String) {
@@ -83,8 +90,11 @@ class TranFeedback(
         show(spec.presentation, spec.messageKey, requestId = null)
     }
 
-    /** Runs [perform] once the user agrees — immediately when the catalogue asks for no dialog (REQ-ERR-007). */
-    fun confirm(action: TranUserAction, perform: () -> Unit) {
+    /**
+     * Runs [perform] once the user agrees — immediately when the catalogue asks for no dialog
+     * (REQ-ERR-007). [onCancel] runs when the user declines instead ("Not now", REQ-VER-010).
+     */
+    fun confirm(action: TranUserAction, onCancel: () -> Unit = {}, perform: () -> Unit) {
         val spec = actionSpec(action)
         val presentation = spec.presentation
         val copy = dialogCopy(action)
@@ -96,12 +106,14 @@ class TranFeedback(
             titleRes = messageRes(spec.messageKey),
             bodyRes = copy.body,
             confirmRes = copy.confirm,
+            cancelRes = copy.cancel,
             destructive = presentation.destructive,
             tags = copy.tags,
             onConfirm = {
                 confirmation = null
                 perform()
             },
+            onCancel = onCancel,
         )
     }
 
@@ -114,7 +126,9 @@ class TranFeedback(
     }
 
     fun cancelConfirmation() {
+        val pending = confirmation ?: return
         confirmation = null
+        pending.onCancel()
     }
 
     /**
@@ -209,6 +223,12 @@ class TranFeedback(
                 body = TranStrings.Auth.deleteAccountConfirmBody,
                 confirm = TranStrings.Common.deleteAccount,
                 tags = DialogTags(ScreenContract.Eligibility.deleteAccountConfirm, ScreenContract.Eligibility.deleteAccountCancel),
+            )
+            // A newer version is offered, never forced: "Not now" is remembered (REQ-VER-010).
+            TranUserAction.UPDATE_RECOMMENDED -> ActionDialogCopy(
+                body = TranStrings.Shell.updateRecommendedBody,
+                confirm = TranStrings.Common.update,
+                cancel = TranStrings.Common.notNow,
             )
             // Acknowledgements and the foreground notification (REQ-PSH-013) are toasts: no dialog.
             TranUserAction.SERVER_CHECK_SUCCEEDED, TranUserAction.ACCOUNT_DELETED, TranUserAction.NOTIFICATION_RECEIVED -> null

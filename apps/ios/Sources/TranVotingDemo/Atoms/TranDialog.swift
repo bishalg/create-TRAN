@@ -10,10 +10,11 @@ struct TranDialog: ViewModifier {
     let cancelLabel: String
     let destructive: Bool
     let onConfirm: () -> Void
+    var onCancel: () -> Void = {}
 
     func body(content: Content) -> some View {
         content.alert(title, isPresented: $isPresented) {
-            Button(cancelLabel, role: .cancel) {}
+            Button(cancelLabel, role: .cancel, action: onCancel)
             Button(confirmLabel, role: destructive ? .destructive : nil, action: onConfirm)
         } message: {
             Text(message)

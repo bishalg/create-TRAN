@@ -86,7 +86,7 @@ final class SessionRestoreTests: XCTestCase {
     func testAValidSessionStaysAndShowsNothing() async throws {
         let vault = InMemorySessionVault(SessionWire.stored(refresh: "refresh-0"))
         SessionStubProtocol.reset { request in
-            request.path == "/api/auth/refresh"
+            request.path == TranEndpoint.refresh.path()
                 ? .status(200, body: SessionWire.pair(access: "access-1", refresh: "refresh-1"))
                 : .status(200, body: #"{"user_id":"voter-001","role":"citizen_voter"}"#)
         }
@@ -95,7 +95,7 @@ final class SessionRestoreTests: XCTestCase {
         let outcome = await TranSessionRestore.validate(client(vault), feedback: feedback)
 
         XCTAssertEqual(outcome, .valid)
-        XCTAssertEqual(SessionStubProtocol.requests.map(\.path), ["/api/auth/refresh", "/api/auth/session"])
+        XCTAssertEqual(SessionStubProtocol.requests.map(\.path), [TranEndpoint.refresh.path(), TranEndpoint.signIn.path()])
         XCTAssertEqual(SessionStubProtocol.requests.last?.authorization, "Bearer access-1")
         XCTAssertEqual(vault.load()?.refreshToken, "refresh-1")
         XCTAssertNil(feedback.confirmation)
@@ -151,7 +151,7 @@ final class SessionRestoreTests: XCTestCase {
 
         await TranSessionRestore.validate(client, feedback: feedback)
 
-        XCTAssertEqual(SessionStubProtocol.requests.map(\.path), ["/api/auth/refresh"])
+        XCTAssertEqual(SessionStubProtocol.requests.map(\.path), [TranEndpoint.refresh.path()])
         XCTAssertEqual(events.entries.map(\.code), [.authSessionExpired], "one request failed, one event")
         XCTAssertNotNil(feedback.confirmation, "and the dialog still asks")
     }

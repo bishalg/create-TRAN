@@ -1,10 +1,11 @@
-// Verifies: REQ-ERR-001 REQ-ERR-010 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-009 REQ-ACC-005
+// Verifies: REQ-ERR-001 REQ-ERR-010 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-ERR-009 REQ-ACC-005 REQ-VER-009 REQ-VER-010
 package com.tran.voting.parity
 
 import com.tran.voting.api.TranRequestFailure
 import com.tran.voting.generated.ScreenContract
 import com.tran.voting.generated.TranStrings
 import com.tran.voting.generated.feedbackMessageRes
+import com.tran.voting.ui.feedback.DialogTags
 import com.tran.voting.ui.feedback.TranFeedback
 import java.io.File
 import org.json.JSONObject
@@ -23,6 +24,7 @@ import uniffi.tran_uniffi.TranUserAction
 import uniffi.tran_uniffi.TranVerdictSource
 import uniffi.tran_uniffi.actionSpec
 import uniffi.tran_uniffi.errorCatalogue
+import uniffi.tran_uniffi.errorCodeForHttpStatus
 import uniffi.tran_uniffi.loadingPolicy
 import uniffi.tran_uniffi.toastDurationMs
 import uniffi.tran_uniffi.verdictSourceSpec
@@ -71,6 +73,20 @@ class FeedbackParityTest {
             assertEquals(code, row.getString("logLevel"), spec.logLevel.name.lowercase())
             assertEquals(code, row.getJSONObject("presentation").asMap(), spec.presentation.json())
             assertEquals(code, row.getString("messageKey"), spec.messageKey)
+            assertNotNull("${spec.messageKey} has no Android string", feedbackMessageRes[spec.messageKey])
+        }
+    }
+
+    @Test
+    fun everyActionMatchesTheFixtureAndHasAResource() {
+        val rows = fixture().getJSONArray("actions")
+        val actions = TranUserAction.entries.map(::actionSpec)
+        assertEquals(rows.length(), actions.size)
+        for (index in 0 until rows.length()) {
+            val row = rows.getJSONObject(index)
+            val spec = actions.single { it.wireName == row.getString("action") }
+            assertEquals(spec.wireName, row.getJSONObject("presentation").asMap(), spec.presentation.json())
+            assertEquals(spec.wireName, row.getString("messageKey"), spec.messageKey)
             assertNotNull("${spec.messageKey} has no Android string", feedbackMessageRes[spec.messageKey])
         }
     }
@@ -195,6 +211,46 @@ class FeedbackParityTest {
 
         feedback.cancelConfirmation()
         assertFalse(deleted)
+    }
+
+    @Test
+    fun aRecommendedUpdateAsksWithUpdateAndNotNowAndRemembersTheCancel() {
+        // Verifies: REQ-VER-010
+        val feedback = quietFeedback()
+        var updated = false
+        var declined = false
+        feedback.confirm(TranUserAction.UPDATE_RECOMMENDED, onCancel = { declined = true }) { updated = true }
+        val pending = feedback.confirmation!!
+        assertEquals(TranStrings.Shell.updateRecommended, pending.titleRes)
+        assertEquals(TranStrings.Shell.updateRecommendedBody, pending.bodyRes)
+        assertEquals(TranStrings.Common.update, pending.confirmRes)
+        assertEquals(TranStrings.Common.notNow, pending.cancelRes)
+        assertFalse(pending.destructive)
+        assertEquals(DialogTags.Shared, pending.tags)
+
+        feedback.cancelConfirmation()
+        assertNull(feedback.confirmation)
+        assertTrue(declined)
+        assertFalse(updated)
+
+        declined = false
+        feedback.confirm(TranUserAction.UPDATE_RECOMMENDED, onCancel = { declined = true }) { updated = true }
+        feedback.confirmation!!.onConfirm()
+        assertTrue(updated)
+        assertFalse("confirming is not a cancel", declined)
+    }
+
+    @Test
+    fun anUnsupportedVersionIsTheBlockingScreenNotAToastOrDialog() {
+        // Verifies: REQ-VER-009
+        val feedback = quietFeedback()
+        val failure = TranRequestFailure(errorCodeForHttpStatus(426u.toUShort()), status = 426)
+        assertEquals(TranErrorCode.CLIENT_UPGRADE_REQUIRED, failure.code)
+        assertFalse(failure.spec.retryable)
+        assertEquals(TranPresentation.Screen, feedback.report(failure))
+        assertNull(feedback.toast)
+        assertNull(feedback.confirmation)
+        assertEquals(TranStrings.Errors.updateRequired, TranFeedback.messageRes(failure.spec.messageKey))
     }
 
     @Test

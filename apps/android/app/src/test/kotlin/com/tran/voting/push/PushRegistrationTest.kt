@@ -75,13 +75,13 @@ class PushRegistrationTest {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 requests += request
                 return when {
-                    request.path == "/api/auth/session" && request.method == "POST" -> MockResponse().setResponseCode(201)
+                    request.path == "/api/v1/auth/session" && request.method == "POST" -> MockResponse().setResponseCode(201)
                         .setBody(
                             """{"user":{"user_id":"voter-001","role":"citizen_voter"},""" +
                                 """"access_token":"$ACCESS","refresh_token":"$REFRESH"}""",
                         )
-                    request.path == "/api/auth/sign-out" -> MockResponse().setResponseCode(204)
-                    request.path!!.startsWith("/api/devices/") ->
+                    request.path == "/api/v1/auth/sign-out" -> MockResponse().setResponseCode(204)
+                    request.path!!.startsWith("/api/v1/devices/") ->
                         if (request.getHeader("Authorization") == "Bearer $ACCESS") deviceAnswer() else MockResponse().setResponseCode(401)
                     else -> MockResponse().setResponseCode(404)
                 }
@@ -109,7 +109,7 @@ class PushRegistrationTest {
 
     private fun signedIn() = runBlocking { sessions.signIn(TranUserRole.CITIZEN_VOTER) }.also { requests.clear() }
 
-    private fun devices() = requests.filter { it.path!!.startsWith("/api/devices/") }
+    private fun devices() = requests.filter { it.path!!.startsWith("/api/v1/devices/") }
 
     private fun assertNothingSecretLogged() {
         assertTrue("something was logged", logged.isNotEmpty())
@@ -127,7 +127,7 @@ class PushRegistrationTest {
         assertEquals(TranPushAction.REGISTER, registration(gateway).sync(PushTrigger.LAUNCH))
         val put = devices().single()
         assertEquals("PUT", put.method)
-        assertEquals("/api/devices/$INSTALLATION", put.path)
+        assertEquals("/api/v1/devices/$INSTALLATION", put.path)
         assertEquals("Bearer $ACCESS", put.getHeader("Authorization"))
         val body = JSONObject(put.body.readUtf8())
         assertEquals(
@@ -193,7 +193,7 @@ class PushRegistrationTest {
         assertEquals(TranPushAction.UNREGISTER, push.sync(PushTrigger.FOREGROUND))
         val delete = devices().last()
         assertEquals("DELETE", delete.method)
-        assertEquals("/api/devices/$INSTALLATION", delete.path)
+        assertEquals("/api/v1/devices/$INSTALLATION", delete.path)
         assertNull(store.lastRegistration)
         assertEquals(TranPushAction.NOTHING, push.sync(PushTrigger.FOREGROUND))
         assertEquals(2, devices().size)
@@ -253,7 +253,7 @@ class PushRegistrationTest {
         assertFalse(sessions.hasSession)
         push.unregisterAfterSignOut(ended)
         sessions.revoke(ended.refreshToken)
-        assertEquals(listOf("DELETE /api/devices/$INSTALLATION", "POST /api/auth/sign-out"), requests.map { "${it.method} ${it.path}" })
+        assertEquals(listOf("DELETE /api/v1/devices/$INSTALLATION", "POST /api/v1/auth/sign-out"), requests.map { "${it.method} ${it.path}" })
         assertEquals("Bearer $ACCESS", requests.first().getHeader("Authorization"))
         assertEquals("EndedSession(redacted)", "$ended")
         assertNothingSecretLogged()

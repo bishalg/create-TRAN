@@ -3,7 +3,7 @@
 // Verifies: REQ-A11Y-003 REQ-A11Y-007 REQ-ERR-006 REQ-ERR-007 REQ-LOAD-003 REQ-LOAD-005 REQ-NAT-001 REQ-NAT-002
 // Verifies: REQ-NAT-003 REQ-NAT-004 REQ-NAT-007 REQ-NAT-011 REQ-NAT-013 REQ-NAV-001 REQ-NAV-002 REQ-NAV-003
 // Verifies: REQ-NAV-004 REQ-NAV-005 REQ-WEB-001 REQ-WEB-002 REQ-WEB-004 REQ-WEB-014
-// Verifies: REQ-PRV-003 REQ-PRV-004 REQ-PRV-007 REQ-PSH-008
+// Verifies: REQ-PRV-003 REQ-PRV-004 REQ-PRV-007 REQ-PSH-008 REQ-VER-009
 import XCTest
 
 /// The iOS interpreter of the screen contract (ADR-0038): one test per scenario of `screens.json`,
@@ -46,6 +46,8 @@ final class ScreenContractUITests: XCTestCase {
     // Launch preset from the givens.
     private var session = "citizen_voter"
     private var apiUnreachable = false
+    /// Every product route answers `426 client.upgrade_required` from launch; health still answers.
+    private var upgradeRequired = false
     private var locale = "en"
     private var theme: String?
     private var largestText = false
@@ -114,6 +116,7 @@ final class ScreenContractUITests: XCTestCase {
         case "session": session = step.value ?? session
         case "api_reachable": apiUnreachable = false
         case "api_unreachable": apiUnreachable = true
+        case "upgrade_required": upgradeRequired = true
         case "locale": locale = step.value ?? locale
         case "theme": theme = step.value
         case "largest_text_scale": largestText = true
@@ -139,6 +142,8 @@ final class ScreenContractUITests: XCTestCase {
         if !permissions.isEmpty { app.launchArguments += ["-TranPermission", permissions.joined(separator: ",")] }
         // The refused port fails at once; the debug ATS exception still allows loopback.
         if apiUnreachable { app.launchArguments += ["-TranApiBaseUrl", "http://127.0.0.1:1"] }
+        // The debug transport stub answers as an API that no longer serves this version (`TranApiStub`).
+        if upgradeRequired { app.launchArguments += ["-TranApiStub", "upgrade_required"] }
         app.launchArguments += ["-AppleLanguages", "(\(locale))", "-AppleLocale", locale]
         if let theme { app.launchArguments += ["-TranTheme", theme] }
         if largestText {

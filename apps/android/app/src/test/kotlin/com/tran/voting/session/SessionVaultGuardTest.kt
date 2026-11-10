@@ -1,4 +1,4 @@
-// Verifies: REQ-SEC-017 REQ-SEC-020 REQ-PRV-006 REQ-PSH-010
+// Verifies: REQ-SEC-017 REQ-SEC-020 REQ-PRV-006 REQ-PSH-010 REQ-VER-010
 package com.tran.voting.session
 
 import java.io.File
@@ -31,6 +31,14 @@ class SessionVaultGuardTest {
      */
     private val pushFile = "src/main/kotlin/com/tran/voting/push/PushPreferences.kt"
 
+    /**
+     * The update prompt's answer (spec 028): the recommended version the person last declined, so the
+     * prompt asks once per version (REQ-VER-010). A preference, never a credential, so plain
+     * preferences; it may be backed up and restored, which only keeps a declined prompt quiet.
+     * [theUpdatePreferencesStoreOnlyTheDismissedVersion] keeps it to that.
+     */
+    private val updateFile = "src/main/kotlin/com/tran/voting/update/UpdatePreferences.kt"
+
     /** Hand-written main sources (generated bindings and tokens are exempt). */
     private val sources: Map<String, String> =
         listOf("src/main/kotlin", "src/debug/kotlin", "src/release/kotlin")
@@ -51,7 +59,7 @@ class SessionVaultGuardTest {
     fun onlyTheKeystoreVaultTouchesStorage() {
         assertTrue("the guard sees the sources", sources.size > 5)
         val writers = sources.filterValues { storage.containsMatchIn(it) }.keys
-        assertEquals(setOf(vaultFile, gatewayFile, pushFile), writers)
+        assertEquals(setOf(vaultFile, gatewayFile, pushFile, updateFile), writers)
     }
 
     @Test
@@ -66,6 +74,19 @@ class SessionVaultGuardTest {
         assertTrue(push.contains("newInstallationId()"))
         assertTrue(push.contains("Context.MODE_PRIVATE"))
         assertFalse("no session reaches it", Regex("""StoredSession|\bSessionVault\b|refreshToken|accessToken""").containsMatchIn(push))
+    }
+
+    @Test
+    fun theUpdatePreferencesStoreOnlyTheDismissedVersion() {
+        val update = sources.getValue(updateFile)
+        val puts = Regex("""\bput\w*\((\w+),\s*([\w.]+)\)""").findAll(update).map { it.groupValues[1] to it.groupValues[2] }.toSet()
+        assertEquals(setOf("KEY_DISMISSED_VERSION" to "value"), puts)
+        assertEquals("nothing else is put", 1, Regex("""\bput\w*\(""").findAll(update).count())
+        assertTrue(update.contains("Context.MODE_PRIVATE"))
+        assertFalse("no session reaches it", Regex("""StoredSession|\bSessionVault\b|refreshToken|accessToken""").containsMatchIn(update))
+        // Backed up on purpose: unlike the vault and the push preferences, it is not excluded.
+        val rules = File(app, "src/main/res/xml/data_extraction_rules.xml").readText()
+        assertFalse(rules.contains("path=\"tran.update.xml\""))
     }
 
     @Test

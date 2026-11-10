@@ -5,6 +5,7 @@ import SwiftUI
 /// Verifies: REQ-NAV-001 REQ-NAV-002 REQ-NAV-003 REQ-NAV-004 REQ-NAV-005 REQ-SEC-021 REQ-SEC-023
 /// Verifies: REQ-ACC-004 REQ-ACC-005 REQ-ACC-006
 /// Verifies: REQ-PSH-009 REQ-PSH-011 REQ-PSH-013
+/// Verifies: REQ-VER-009 REQ-VER-010
 struct NavigationCoordinatorView: View {
     @State private var session: AuthSession
     @State private var isBootstrapping: Bool
@@ -24,6 +25,11 @@ struct NavigationCoordinatorView: View {
     /// This installation's push registration, kept right by `pushSync` (spec 027).
     @State private var push: TranPushRegistration
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// What the API said about this version: the blocking screen or the prompt (spec 028).
+    @State private var updates = TranUpdateCenter.shared
+    /// The prompt already on screen, so one offer opens one dialog.
+    @State private var presentedOffer: UUID?
+    @Environment(\.openURL) private var openURL
 
     private var palette: TranPalette { TranBrandTokens.palette(for: theme) }
 
@@ -57,6 +63,62 @@ struct NavigationCoordinatorView: View {
     }
 
     var body: some View {
+        Group {
+            // The catalogue's `screen` for `client.upgrade_required`: it replaces every screen,
+            // toast and dialog, and leaves the session as it is (REQ-VER-009).
+            if updates.required {
+                UpdateRequiredView()
+            } else {
+                screens.modifier(TranFeedbackHost(feedback: feedback))
+            }
+        }
+        // The app switcher shows no user data (REQ-SEC-023).
+        .overlay {
+            if TranPrivacyCover.covers(
+                sceneIsActive: scenePhase == .active,
+                destination: isBootstrapping ? .splash : session.destination)
+            {
+                PrivacyCoverView()
+            }
+        }
+        // A recommended update asks once per version (REQ-VER-010), when no other dialog is open.
+        .onChange(of: updates.offer) { _, _ in offerUpdate() }
+        .onChange(of: feedback.confirmation == nil) { _, _ in offerUpdate() }
+        // An expired session asks first; "Sign in again" ends it (REQ-ERR-010).
+        .onAppear {
+            feedback.onErrorConfirmed(.authSessionExpired) {
+                withAnimation(TranMotion.animation(reduceMotion: reduceMotion)) {
+                    session = .unauthenticated
+                }
+                endSession()
+            }
+        }
+        // Launch, background half: a dead credential opens the dialog above (REQ-SEC-021).
+        .task {
+            guard validatesRestoredSession else { return }
+            await TranSessionRestore.validate(sessionClient, feedback: feedback)
+        }
+        // Push (spec 027): sync at launch and whenever the system delivers a token; a tap opens
+        // what the navigation director says, and a foreground notification is a toast.
+        .task {
+            await push.start(
+                onOpened: openedFromNotification,
+                onForeground: { TranNotificationHandling.arrivedInForeground(feedback) })
+        }
+        // Back in the foreground: the permission may have changed in Settings (REQ-PSH-009).
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await push.sync() } }
+        }
+        .environment(feedback)
+        .environment(deletion)
+        // Atoms read the registry palette from the environment; appearance follows the palette's
+        // own metadata (token data, not a theme-name check).
+        .environment(\.tranPalette, palette)
+        .preferredColorScheme(palette.colorScheme)
+    }
+
+    /// Splash, Auth Welcome or the role's dashboard.
+    @ViewBuilder private var screens: some View {
         Group {
             if isBootstrapping {
                 // Screen 0: Launch / Splash Screen (Navigation Director boots)
@@ -108,47 +170,24 @@ struct NavigationCoordinatorView: View {
                 }
             }
         }
-        .modifier(TranFeedbackHost(feedback: feedback))
-        // The app switcher shows no user data (REQ-SEC-023).
-        .overlay {
-            if TranPrivacyCover.covers(
-                sceneIsActive: scenePhase == .active,
-                destination: isBootstrapping ? .splash : session.destination)
-            {
-                PrivacyCoverView()
-            }
-        }
-        // An expired session asks first; "Sign in again" ends it (REQ-ERR-010).
-        .onAppear {
-            feedback.onErrorConfirmed(.authSessionExpired) {
-                withAnimation(TranMotion.animation(reduceMotion: reduceMotion)) {
-                    session = .unauthenticated
-                }
-                endSession()
-            }
-        }
-        // Launch, background half: a dead credential opens the dialog above (REQ-SEC-021).
-        .task {
-            guard validatesRestoredSession else { return }
-            await TranSessionRestore.validate(sessionClient, feedback: feedback)
-        }
-        // Push (spec 027): sync at launch and whenever the system delivers a token; a tap opens
-        // what the navigation director says, and a foreground notification is a toast.
-        .task {
-            await push.start(
-                onOpened: openedFromNotification,
-                onForeground: { TranNotificationHandling.arrivedInForeground(feedback) })
-        }
-        // Back in the foreground: the permission may have changed in Settings (REQ-PSH-009).
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active { Task { await push.sync() } }
-        }
-        .environment(feedback)
-        .environment(deletion)
-        // Atoms read the registry palette from the environment; appearance follows the palette's
-        // own metadata (token data, not a theme-name check).
-        .environment(\.tranPalette, palette)
-        .preferredColorScheme(palette.colorScheme)
+    }
+
+    /// "Update" opens the store page; "Not now" is remembered for that version (REQ-VER-010).
+    private func offerUpdate() {
+        guard let offer = updates.offer, offer.id != presentedOffer, feedback.confirmation == nil,
+            !updates.required
+        else { return }
+        presentedOffer = offer.id
+        let updates = updates
+        let openURL = openURL
+        feedback.confirm(
+            .updateRecommended,
+            perform: {
+                updates.accept(offer)
+                openURL(TranStoreLink.url())
+            },
+            onCancel: { updates.dismiss(offer) }
+        )
     }
 
     /// Destructive, so the catalogue asks first (REQ-ERR-007).

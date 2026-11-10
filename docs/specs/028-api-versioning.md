@@ -20,7 +20,7 @@ Vocabulary used below:
 
 ## The server
 
-### REQ-VER-001 [planned] Product routes live under a versioned path
+### REQ-VER-001 [verified] Product routes live under a versioned path
 
 Every product route MUST be served under `/api/v1/…`. The health routes stay unversioned (`/api/health…`), because
 infrastructure, not an app release, calls them. The base path MUST be one Rust constant, generated to TypeScript,
@@ -53,7 +53,7 @@ checked against that platform's client code by a test so it cannot drift; `pnpm 
 recorded. A test MUST replay every kept request against the current router and require the response shape that
 client was built to read. A client version is dropped from the replay only when it is below the minimum.
 **Verified by:** `apps/api/tests/client_replay_test.rs`, `packages/core-ts/tests/client-manifest.test.ts` (web),
-`tooling/release/release.test.mjs`.
+`ClientManifestTest.kt` (Android), `tooling/release/release.test.mjs`.
 
 ### REQ-VER-004 [verified] Every client says who it is
 
@@ -94,7 +94,7 @@ it (known from REQ-VER-003).
 
 ## The clients
 
-### REQ-VER-008 [planned] Clients read tolerantly
+### REQ-VER-008 [verified] Clients read tolerantly
 
 Every client MUST ignore response fields it does not know, and MUST map an enum value it does not know to the fallback
 the Rust catalogue declares for that enum (`WIRE_ENUMS` in `compat.rs`: `user_role` reads as `citizen_voter`,
@@ -102,7 +102,7 @@ the Rust catalogue declares for that enum (`WIRE_ENUMS` in `compat.rs`: `user_ro
 `fixtures/compat.json` holds "responses from the future" for every route; each platform MUST decode all of them.
 **Verified by:** `packages/api/tests/compat.test.ts`, `CompatTests.swift`, `CompatTest.kt`.
 
-### REQ-VER-009 [planned] An unsupported client shows a blocking update screen
+### REQ-VER-009 [verified] An unsupported client shows a blocking update screen
 
 `client.upgrade_required` MUST have the `screen` presentation in the catalogue: a full-screen "Update required"
 with one action that opens the platform's store page (a reload on the web), declared in the screen contract (state
@@ -110,7 +110,7 @@ with one action that opens the platform's store page (a reload on the web), decl
 screen, cannot be dismissed, and MUST NOT sign the user out or clear the vault.
 **Verified by:** the platform feedback tests; scenario "An unsupported version is asked to update".
 
-### REQ-VER-010 [planned] A recommended update is offered once per version
+### REQ-VER-010 [verified] A recommended update is offered once per version
 
 `update_prompt(state)` MUST be one Rust decision, pinned by the fixture: on `X-Tran-Update: recommended`, show a
 dismissible prompt (the catalogue's `update_recommended` action: "Update", "Not now") unless one was already dismissed
@@ -118,7 +118,7 @@ for this recommended version. Dismissing MUST NOT be remembered across recommend
 is a preference, never a credential (the web keeps it in Web Storage).
 **Verified by:** the fixture on every platform; the platform feedback tests.
 
-### REQ-VER-011 [planned] The store address is configuration with placeholders
+### REQ-VER-011 [verified] The store address is configuration with placeholders
 
 The store page each platform opens MUST come from the app's build configuration, with a placeholder default
 (`https://tran.example/…`), listed in `.env.example` (REQ-MOB-004).

@@ -6,7 +6,7 @@ import XCTest
 /// so concurrent calls really overlap.
 final class SessionStubProtocol: URLProtocol {
     enum Reply {
-        case status(Int, body: String = "{}", delay: TimeInterval = 0)
+        case status(Int, body: String = "{}", delay: TimeInterval = 0, headers: [String: String] = [:])
         case failure(URLError.Code)
     }
 
@@ -14,6 +14,8 @@ final class SessionStubProtocol: URLProtocol {
         let method: String
         let path: String
         let authorization: String?
+        /// `X-Tran-Client` (REQ-VER-004).
+        let client: String?
         let body: [String: String]
         /// The body as sent, for one whose values are not all strings.
         let raw: Data
@@ -50,6 +52,7 @@ final class SessionStubProtocol: URLProtocol {
             method: request.httpMethod ?? "GET",
             path: request.url?.path ?? "",
             authorization: request.value(forHTTPHeaderField: "Authorization"),
+            client: request.value(forHTTPHeaderField: ApiContract.clientHeader),
             body: body ?? [:],
             raw: raw
         )
@@ -60,11 +63,11 @@ final class SessionStubProtocol: URLProtocol {
         switch handler?(entry) ?? .failure(.unsupportedURL) {
         case let .failure(code):
             client?.urlProtocol(self, didFailWithError: URLError(code))
-        case let .status(status, body, delay):
+        case let .status(status, body, delay, headers):
             // Answered later without blocking the loading thread, so other requests go on.
             let response = HTTPURLResponse(
                 url: request.url!, statusCode: status, httpVersion: nil,
-                headerFields: ["Content-Type": "application/json"])!
+                headerFields: headers.merging(["Content-Type": "application/json"]) { $1 })!
             let answer = { [self] in
                 client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
                 client?.urlProtocol(self, didLoad: Data(body.utf8))
@@ -135,5 +138,34 @@ extension URLRequest {
             data.append(buffer, count: read)
         }
         return data
+    }
+}
+
+/// Collects what the clients say about this version (`TranHttp.onStanding`).
+final class SignalLog: @unchecked Sendable {
+    private let lock = NSLock()
+    private var signals: [TranStandingSignal] = []
+
+    var entries: [TranStandingSignal] { lock.withLock { signals } }
+
+    var record: @Sendable (TranStandingSignal) -> Void {
+        { [self] signal in lock.withLock { signals.append(signal) } }
+    }
+}
+
+/// The repository root, for the shared fixtures (`fixtures/…`).
+enum RepoFixtures {
+    static let root = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        .deletingLastPathComponent().deletingLastPathComponent()
+
+    static func json(_ path: String) throws -> Any {
+        try JSONSerialization.jsonObject(with: Data(contentsOf: root.appendingPathComponent(path)))
+    }
+
+    /// The product version `pnpm release` owns (root `package.json`).
+    static func treeVersion() throws -> String {
+        let package = try XCTUnwrap(json("package.json") as? [String: Any])
+        return try XCTUnwrap(package["version"] as? String)
     }
 }

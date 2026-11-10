@@ -77,7 +77,7 @@ final class TranApiClientTests: XCTestCase {
         try await makeClient().checkHealth()
 
         let request = try lastRequest()
-        XCTAssertEqual(request.url?.absoluteString, "http://127.0.0.1:3001/api/health")
+        XCTAssertEqual(request.url?.absoluteString, "http://127.0.0.1:3001" + ApiContract.healthPath)
         XCTAssertEqual(request.httpMethod, "GET")
         XCTAssertNil(request.bodyData)
     }
@@ -87,7 +87,7 @@ final class TranApiClientTests: XCTestCase {
         try await makeClient().confirmEligibility(age: 20, countryCode: "NP")
 
         let request = try lastRequest()
-        XCTAssertEqual(request.url?.absoluteString, "http://127.0.0.1:3001/api/vote/eligibility")
+        XCTAssertEqual(request.url?.absoluteString, "http://127.0.0.1:3001" + TranEndpoint.confirmEligibility.path())
         XCTAssertEqual(request.httpMethod, "POST")
         XCTAssertEqual(request.value(forHTTPHeaderField: "Content-Type"), "application/json")
         let body = try XCTUnwrap(request.bodyData)
