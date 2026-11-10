@@ -17,6 +17,9 @@ uniffi::setup_scaffolding!("tran_uniffi");
 mod feedback;
 pub use feedback::*;
 
+mod permissions;
+pub use permissions::*;
+
 mod session;
 pub use session::*;
 

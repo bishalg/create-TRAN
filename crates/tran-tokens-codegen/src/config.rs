@@ -23,6 +23,10 @@ pub struct CodegenConfig {
     pub web_generated_dir: String,
     /// iOS SwiftUI generated tokens and String Catalogs.
     pub ios_generated_dir: String,
+    /// iOS `InfoPlist.xcstrings`: the system prompts' purpose strings in every locale, from the
+    /// permission catalogue (REQ-PRV-005). Keep it in the app target's sources, where Xcode reads
+    /// a catalog of that name as the `Info.plist` localization.
+    pub ios_info_plist_strings_path: String,
     /// Android Compose / Kotlin generated sources.
     pub android_kotlin_generated_dir: String,
     /// Android `res/` root for per-locale `strings_*.xml`.
@@ -60,6 +64,8 @@ impl CodegenConfig {
             core_generated_dir: "packages/core-ts/src/generated".into(),
             web_generated_dir: "apps/web/src/styles/generated".into(),
             ios_generated_dir: "apps/ios/Sources/TranVotingDemo/Generated".into(),
+            ios_info_plist_strings_path:
+                "apps/ios/Sources/TranVotingDemo/Generated/InfoPlist.xcstrings".into(),
             android_kotlin_generated_dir:
                 "apps/android/app/src/main/kotlin/com/tran/voting/generated".into(),
             android_res_dir: "apps/android/app/src/main/res".into(),
@@ -96,6 +102,7 @@ impl CodegenConfig {
             core_generated_dir: workspace_root.join(&self.core_generated_dir),
             web_generated_dir: workspace_root.join(&self.web_generated_dir),
             ios_generated_dir: workspace_root.join(&self.ios_generated_dir),
+            ios_info_plist_strings_path: workspace_root.join(&self.ios_info_plist_strings_path),
             android_kotlin_generated_dir: workspace_root.join(&self.android_kotlin_generated_dir),
             android_res_dir: workspace_root.join(&self.android_res_dir),
             android_kotlin_package: self.android_kotlin_package.clone(),
@@ -120,6 +127,7 @@ pub struct CodegenPaths {
     pub core_generated_dir: PathBuf,
     pub web_generated_dir: PathBuf,
     pub ios_generated_dir: PathBuf,
+    pub ios_info_plist_strings_path: PathBuf,
     pub android_kotlin_generated_dir: PathBuf,
     pub android_res_dir: PathBuf,
     pub android_kotlin_package: String,
@@ -165,6 +173,7 @@ mod tests {
   "core_generated_dir": "packages/core-ts/src/generated",
   "web_generated_dir": "apps/web/src/styles/generated",
   "ios_generated_dir": "apps/ios/Sources/Renamed/Generated",
+  "ios_info_plist_strings_path": "apps/ios/Sources/Renamed/Generated/InfoPlist.xcstrings",
   "android_kotlin_generated_dir": "apps/android/app/src/main/kotlin/com/example/generated",
   "android_res_dir": "apps/android/app/src/main/res",
   "android_kotlin_package": "com.example.generated",

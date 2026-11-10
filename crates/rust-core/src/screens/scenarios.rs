@@ -5,6 +5,8 @@
 //! `type` replaces a field's content. Ids are the catalogue's; a journey may cross screens (sign out
 //! ends on role selection), so the steps may name any screen's elements.
 
+use crate::permissions::{PermissionId, PermissionStatus};
+
 use super::model::{
     Arg, Given, Scenario, SessionKind,
     Then::{self, Count, Exists, Missing, TextIs},
@@ -285,6 +287,52 @@ pub const ELIGIBILITY: &[Scenario] = &[
             Exists("check-button"),
             Exists("delete-account-button"),
             Missing("voter-branch-button"),
+        ],
+    ),
+    // Decision (REQ-PRV-003, REQ-PRV-007): native only, because the web has no location control.
+    // Neither scenario reaches a system prompt: "Not now" never asks, and a permanent refusal
+    // offers Settings. The verdict proves `country-field` kept the typed country.
+    Scenario::new(
+        "Using my location explains first and Not now changes nothing",
+        &["REQ-PRV-003", "REQ-PRV-007"],
+        &[VOTER],
+        &[
+            age!("20"),
+            country!("NP"),
+            Tap("use-location-button"),
+            Tap("location-priming-dismiss"),
+            CHECK,
+        ],
+        &[
+            Missing("location-priming-continue"),
+            Missing("location-priming-dismiss"),
+            Missing("location-settings-note"),
+            verdict!(MEETS, "20", "18", "NP"),
+        ],
+    ),
+    Scenario::new(
+        "Using my location without permission keeps the chosen country",
+        &["REQ-PRV-004", "REQ-PRV-007"],
+        &[
+            VOTER,
+            Given::Permission {
+                id: PermissionId::LocationApproximate,
+                status: PermissionStatus::DeniedPermanently,
+            },
+        ],
+        &[
+            age!("20"),
+            country!("NP"),
+            Tap("use-location-button"),
+            CHECK,
+        ],
+        &[
+            Exists("location-settings-note"),
+            Exists("location-open-settings"),
+            Missing("location-priming-continue"),
+            Missing("validation-message"),
+            Missing("toast"),
+            verdict!(MEETS, "20", "18", "NP"),
         ],
     ),
     theme!("The light theme is selectable", "light"),

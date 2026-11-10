@@ -4,6 +4,7 @@
  */
 
 import type { TranStringKey } from './keys.js';
+import type { PermissionId, PermissionStatus } from './rules.js';
 
 export type ScreenId =
   | 'splash'
@@ -28,6 +29,11 @@ export type ElementId =
   | 'role-badge'
   | 'age-field'
   | 'country-field'
+  | 'use-location-button'
+  | 'location-priming-continue'
+  | 'location-priming-dismiss'
+  | 'location-settings-note'
+  | 'location-open-settings'
   | 'check-button'
   | 'offline-result'
   | 'validation-message'
@@ -72,7 +78,7 @@ export interface ExpectedMessage {
   readonly args: readonly MessageArg[];
 }
 
-/** The closed verb set (ADR-0038): session, api_reachable, api_unreachable, locale, theme, largest_text_scale, reduced_motion. */
+/** The closed verb set (ADR-0038): session, api_reachable, api_unreachable, locale, theme, largest_text_scale, reduced_motion, permission. */
 export type Given =
   | { readonly session: SessionKind }
   | 'api_reachable'
@@ -80,7 +86,8 @@ export type Given =
   | { readonly locale: string }
   | { readonly theme: string }
   | 'largest_text_scale'
-  | 'reduced_motion';
+  | 'reduced_motion'
+  | { readonly permission: { readonly id: PermissionId; readonly status: PermissionStatus } };
 
 /** tap, type, select, press_key, go_offline, go_online. `type` replaces the field's content. */
 export type When =
@@ -367,6 +374,69 @@ export const SCREENS: readonly Screen[] = [
         "presence": "always",
         "platforms": [
           "web",
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "id": "use-location-button",
+        "kind": "button",
+        "label": "eligibility.location.use",
+        "touch": "control",
+        "presence": "always",
+        "platforms": [
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "id": "location-priming-continue",
+        "kind": "button",
+        "label": "common.continueAction",
+        "touch": "control",
+        "presence": {
+          "when": "location_priming"
+        },
+        "platforms": [
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "id": "location-priming-dismiss",
+        "kind": "button",
+        "label": "common.notNow",
+        "touch": "control",
+        "presence": {
+          "when": "location_priming"
+        },
+        "platforms": [
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "id": "location-settings-note",
+        "kind": "text",
+        "label": "eligibility.location.settingsNote",
+        "touch": "none",
+        "presence": {
+          "when": "location_settings_offered"
+        },
+        "platforms": [
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "id": "location-open-settings",
+        "kind": "button",
+        "label": "common.openSettings",
+        "touch": "control",
+        "presence": {
+          "when": "location_settings_offered"
+        },
+        "platforms": [
           "ios",
           "android"
         ]
@@ -1206,6 +1276,149 @@ export const SCREENS: readonly Screen[] = [
         "within_ms": 4300
       },
       {
+        "name": "Using my location explains first and Not now changes nothing",
+        "verifies": [
+          "REQ-PRV-003",
+          "REQ-PRV-007"
+        ],
+        "given": [
+          {
+            "session": "citizen_voter"
+          }
+        ],
+        "when": [
+          {
+            "type": {
+              "id": "age-field",
+              "text": "20"
+            }
+          },
+          {
+            "type": {
+              "id": "country-field",
+              "text": "NP"
+            }
+          },
+          {
+            "tap": "use-location-button"
+          },
+          {
+            "tap": "location-priming-dismiss"
+          },
+          {
+            "tap": "check-button"
+          }
+        ],
+        "then": [
+          {
+            "missing": "location-priming-continue"
+          },
+          {
+            "missing": "location-priming-dismiss"
+          },
+          {
+            "missing": "location-settings-note"
+          },
+          {
+            "text_is": {
+              "id": "offline-result",
+              "key": "eligibility.result.reasonMeets",
+              "args": [
+                {
+                  "name": "age",
+                  "value": "20"
+                },
+                {
+                  "name": "minimumAge",
+                  "value": "18"
+                },
+                {
+                  "name": "country",
+                  "value": "NP"
+                }
+              ]
+            }
+          }
+        ],
+        "within_ms": 4300
+      },
+      {
+        "name": "Using my location without permission keeps the chosen country",
+        "verifies": [
+          "REQ-PRV-004",
+          "REQ-PRV-007"
+        ],
+        "given": [
+          {
+            "session": "citizen_voter"
+          },
+          {
+            "permission": {
+              "id": "location_approximate",
+              "status": "denied_permanently"
+            }
+          }
+        ],
+        "when": [
+          {
+            "type": {
+              "id": "age-field",
+              "text": "20"
+            }
+          },
+          {
+            "type": {
+              "id": "country-field",
+              "text": "NP"
+            }
+          },
+          {
+            "tap": "use-location-button"
+          },
+          {
+            "tap": "check-button"
+          }
+        ],
+        "then": [
+          {
+            "exists": "location-settings-note"
+          },
+          {
+            "exists": "location-open-settings"
+          },
+          {
+            "missing": "location-priming-continue"
+          },
+          {
+            "missing": "validation-message"
+          },
+          {
+            "missing": "toast"
+          },
+          {
+            "text_is": {
+              "id": "offline-result",
+              "key": "eligibility.result.reasonMeets",
+              "args": [
+                {
+                  "name": "age",
+                  "value": "20"
+                },
+                {
+                  "name": "minimumAge",
+                  "value": "18"
+                },
+                {
+                  "name": "country",
+                  "value": "NP"
+                }
+              ]
+            }
+          }
+        ],
+        "within_ms": 4300
+      },
+      {
         "name": "The light theme is selectable",
         "verifies": [
           "REQ-NAT-007",
@@ -1554,6 +1767,11 @@ export const ScreenIds = {
     roleBadge: 'role-badge',
     ageField: 'age-field',
     countryField: 'country-field',
+    useLocationButton: 'use-location-button',
+    locationPrimingContinue: 'location-priming-continue',
+    locationPrimingDismiss: 'location-priming-dismiss',
+    locationSettingsNote: 'location-settings-note',
+    locationOpenSettings: 'location-open-settings',
     checkButton: 'check-button',
     offlineResult: 'offline-result',
     validationMessage: 'validation-message',

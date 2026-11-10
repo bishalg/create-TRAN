@@ -57,7 +57,7 @@ the generated JSON MUST fail if any key named like one appears. Presentation sta
 ### REQ-SCR-004 [verified] Acceptance criteria are scenario data with a closed verb set
 
 Scenarios MUST live beside their screen in `screens.rs` (`screens/scenarios.rs`). _Given_ MUST be drawn from: stored session, API reachable or
-unreachable, locale, theme, largest text scale, reduced motion. _When_ MUST be drawn from: `tap`, `type`, `select`,
+unreachable, locale, theme, largest text scale, reduced motion, a permission's status (native only, REQ-PRV-004). _When_ MUST be drawn from: `tap`, `type`, `select`,
 `press_key`, `go_offline`, `go_online`. _Then_ MUST be drawn from: `exists`, `missing`, `text_is` (a locale key with
 arguments, resolved per locale), `has_focus`, `announced` (the live region's text), `count`. Every scenario MUST cite
 at least one requirement id and MUST carry `within_ms`, defaulting to the indicator delay plus `SERVER_DEADLINE_MS`
@@ -133,7 +133,9 @@ the contract and fail when a required element is absent, carries another role or
 label resolve to, is below its touch minimum, or when an interactive element is present that the contract does not
 declare. The checker MUST report every difference in one run.
 An element one platform offers alone MUST say so in the catalogue (`Element::only`, with the reason beside it: the
-web's skip link, language picker and check-mode switch), and a state no scenario reaches yet MUST be listed in
+web's skip link, language picker and check-mode switch), and a scenario runs only on the platforms that offer every element it names and can stage every given
+(`scenario_platforms`; `screens.json` lists them per scenario, and the web's Gherkin leaves the others out: the native
+location scenarios, REQ-PRV-007), and a state no scenario reaches yet MUST be listed in
 `UNREACHED_STATES` with the reason (the toast); the checker reports such a state instead of failing "never observed",
 and a Rust test fails once a scenario reaches it. An element that carries changing content (a text, a live region)
 is named by its label and reads its content after it ("Result", then the verdict).

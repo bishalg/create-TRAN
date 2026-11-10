@@ -40,7 +40,15 @@ pub mod state {
     pub const DELETE_ACCOUNT_CONFIRM: &str = "delete_account_confirm";
     /// The last check was refused because an input did not parse (REQ-WEB-002, REQ-NAT-002).
     pub const VALIDATION_FAILED: &str = "validation_failed";
+    /// The app explains location before the system prompt (REQ-PRV-003).
+    pub const LOCATION_PRIMING: &str = "location_priming";
+    /// Location was refused for good; the control says once where to change it (REQ-PRV-004).
+    pub const LOCATION_SETTINGS_OFFERED: &str = "location_settings_offered";
 }
+
+/// iOS and Android: the platforms that ask the system for a permission. The web has no location
+/// control, because the API resolves the country from the request (REQ-API-005, REQ-PRV-007).
+const NATIVE: &[Platform] = &[Platform::Ios, Platform::Android];
 
 /// States no scenario reaches yet. `pnpm screens:check` lists them instead of failing "never
 /// observed"; `crates/rust-core/src/screens/tests.rs` fails once a scenario expects one, so the
@@ -241,6 +249,52 @@ pub const DELETE_ACCOUNT_CANCEL: Element = element(
     Presence::When(state::DELETE_ACCOUNT_CONFIRM),
 );
 
+/// Fills `country-field` from one approximate fix, after priming (REQ-PRV-003, REQ-PRV-006).
+/// Native only: see [`NATIVE`].
+pub const USE_LOCATION_BUTTON: Element = element(
+    "use-location-button",
+    Kind::Button,
+    "eligibility.location.use",
+    Touch::Control,
+    Presence::Always,
+)
+.only(NATIVE);
+/// Priming's "Continue": only this shows the system prompt.
+pub const LOCATION_PRIMING_CONTINUE: Element = element(
+    "location-priming-continue",
+    Kind::Button,
+    "common.continueAction",
+    Touch::Control,
+    Presence::When(state::LOCATION_PRIMING),
+)
+.only(NATIVE);
+/// Priming's "Not now": closes it; no system prompt, not a refusal.
+pub const LOCATION_PRIMING_DISMISS: Element = element(
+    "location-priming-dismiss",
+    Kind::Button,
+    "common.notNow",
+    Touch::Control,
+    Presence::When(state::LOCATION_PRIMING),
+)
+.only(NATIVE);
+/// The one inline note after a permanent refusal: not an error, not a banner.
+pub const LOCATION_SETTINGS_NOTE: Element = element(
+    "location-settings-note",
+    Kind::Text,
+    "eligibility.location.settingsNote",
+    Touch::None,
+    Presence::When(state::LOCATION_SETTINGS_OFFERED),
+)
+.only(NATIVE);
+pub const LOCATION_OPEN_SETTINGS: Element = element(
+    "location-open-settings",
+    Kind::Button,
+    "common.openSettings",
+    Touch::Control,
+    Presence::When(state::LOCATION_SETTINGS_OFFERED),
+)
+.only(NATIVE);
+
 /// Every screen, in navigation order. Codegen and the guards follow this order.
 pub const SCREENS: [Screen; 4] = [
     Screen {
@@ -272,6 +326,11 @@ pub const SCREENS: [Screen; 4] = [
             ROLE_BADGE,
             AGE_FIELD,
             COUNTRY_FIELD,
+            USE_LOCATION_BUTTON,
+            LOCATION_PRIMING_CONTINUE,
+            LOCATION_PRIMING_DISMISS,
+            LOCATION_SETTINGS_NOTE,
+            LOCATION_OPEN_SETTINGS,
             CHECK_BUTTON,
             OFFLINE_RESULT,
             VALIDATION_MESSAGE,

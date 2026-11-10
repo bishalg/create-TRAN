@@ -1,5 +1,6 @@
 package com.tran.voting.ui
 
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -68,7 +69,7 @@ object ConformanceManifest {
             // TalkBack reads the description when there is one, else the text; a field's text is its value.
             val name = description.ifEmpty { text }
             val value = editable ?: if (description.isNotEmpty()) text else ""
-            val bounds = node.touchBoundsInRoot
+            val bounds = touchFrame(node, interactive, density)
             val element = JSONObject()
                 .put("role", role(node))
                 .put("name", name)
@@ -91,6 +92,27 @@ object ConformanceManifest {
         }
         node.children.forEach { collect(it, id ?: within, density, elements) }
     }
+
+    /**
+     * The node's touch bounds, as XCUITest and Chromium report a frame: a node scrolled partly or
+     * wholly out of the viewport keeps its size. `touchBoundsInRoot` is clipped by the scroll
+     * container, so a control straddling the screen's edge would read as too small (or 0×0) although
+     * it is not; for such a node the frame is rebuilt from its position and size, with the padding
+     * Compose adds to reach the minimum touch target. A node that is not clipped is recorded as is.
+     */
+    private fun touchFrame(node: SemanticsNode, interactive: Boolean, density: Float): Rect {
+        val clipped = node.touchBoundsInRoot
+        val position = node.positionInRoot
+        val minimum = if (interactive) MINIMUM_TOUCH_DP * density else 0f
+        val padX = ((minimum - node.size.width) / 2).coerceAtLeast(0f)
+        val padY = ((minimum - node.size.height) / 2).coerceAtLeast(0f)
+        val unclipped = Rect(position.x - padX, position.y - padY, position.x + node.size.width + padX, position.y + node.size.height + padY)
+        val whole = clipped.width + 1f >= unclipped.width && clipped.height + 1f >= unclipped.height
+        return if (whole) clipped else unclipped
+    }
+
+    /** Compose's default `ViewConfiguration.minimumTouchTargetSize`. */
+    private const val MINIMUM_TOUCH_DP = 48f
 
     /** The node's `Role` when it declares one, else what its semantics make it. */
     private fun role(node: SemanticsNode): String {

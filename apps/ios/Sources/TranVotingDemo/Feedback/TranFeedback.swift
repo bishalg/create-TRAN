@@ -73,18 +73,19 @@ final class TranFeedback {
     }
 
     /// Logs the failure and shows it when it is a toast or a dialog. Returns the presentation so
-    /// the screen can render inline and banner states, which it owns (REQ-ERR-006).
+    /// the screen can render inline and banner states, which it owns (REQ-ERR-006). Whoever
+    /// handles a failure reports (or `log`s) it exactly once; the code that threw it, such as the
+    /// session client, never logs it too (REQ-ROB-007).
     @discardableResult
     func report(_ failure: TranRequestFailure) -> TranPresentation {
         log(failure)
         return present(failure)
     }
 
-    /// `report` without the log event, for a failure whose `request failed` event is already
-    /// written: the session client logs every request it sends, so its callers present only.
-    /// One event per failure (REQ-ROB-007).
+    /// Shows the failure without logging it; only `report` calls it, so no failure is shown
+    /// without its one event.
     @discardableResult
-    func present(_ failure: TranRequestFailure) -> TranPresentation {
+    private func present(_ failure: TranRequestFailure) -> TranPresentation {
         let spec = failure.spec
         show(spec.presentation, messageKey: spec.messageKey, requestId: failure.requestId)
         if case let .dialog(destructive) = spec.presentation, let copy = Self.errorDialogCopy(failure.code) {
@@ -117,7 +118,8 @@ final class TranFeedback {
     /// Where `log` writes; a test swaps it to count the events (REQ-ROB-007).
     @ObservationIgnored var writer: @Sendable (TranRequestFailure) -> Void = TranFeedback.write
 
-    /// `log` for code off the main actor, such as the session client (REQ-SEC-014).
+    /// `log` for code off the main actor: the session client, for a failure it swallows
+    /// (REQ-SEC-014).
     @Sendable
     nonisolated static func write(_ failure: TranRequestFailure) {
         let message = logLine(failure)

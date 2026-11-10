@@ -11,6 +11,11 @@
     <string name="eligibility_country_placeholder">Two letters</string>
     <string name="eligibility_country_server_hint">Sent to the server as the X-Debug-Country header (development only).</string>
     <string name="eligibility_form_label">Eligibility check</string>
+    <string name="eligibility_location_priming_body">TRAN can read your approximate location once to find your country, so it picks the right voting age. Your location is not kept or sent anywhere. This is optional: you can type the country yourself.</string>
+    <string name="eligibility_location_priming_title">Fill in your country from your location?</string>
+    <string name="eligibility_location_purpose">TRAN uses your approximate location once to find your country and pick the right voting age. It is optional; you can type the country instead.</string>
+    <string name="eligibility_location_settings_note">Location is off for TRAN. Type your country, or turn location on in Settings.</string>
+    <string name="eligibility_location_use">Use my location</string>
     <string name="eligibility_mode_device">On this device</string>
     <string name="eligibility_mode_device_hint">Instant, works offline</string>
     <string name="eligibility_mode_legend">Where should the check run?</string>

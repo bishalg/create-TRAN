@@ -20,14 +20,14 @@ shown without a project's own accounts or content; the row says what to do).
 
 ## Privacy and permissions
 
-| Rule                                                                                            | Guideline  | Status  | Where                                     |
-| :---------------------------------------------------------------------------------------------- | :--------- | :------ | :---------------------------------------- |
-| Ask for a permission in context, with a purpose string that says why; the app works when denied | 5.1.1(ii)  | planned | Permissions phase                         |
-| Ask only for data the feature needs; personal questions (gender, birth date) are optional       | 5.1.1(iii) | planned | Permissions phase                         |
-| No tracking without the App Tracking Transparency prompt; the template does not track           | 5.1.2(i)   | planned | Permissions phase (a guard, not a prompt) |
-| A privacy manifest declares required-reason APIs and collected data                             | 5.1.1      | done    | [spec 025](./specs/025-mobile-release.md) |
-| A privacy policy link in the app and in the store listing                                       | 5.1.1(i)   | fork    | Add the project's policy URL              |
-| Credentials are stored in the Keychain / Keystore, never in plain storage                       | 5.1.1      | done    | [spec 022](./specs/022-security.md)       |
+| Rule                                                                                            | Guideline  | Status | Where                                              |
+| :---------------------------------------------------------------------------------------------- | :--------- | :----- | :------------------------------------------------- |
+| Ask for a permission in context, with a purpose string that says why; the app works when denied | 5.1.1(ii)  | done   | [spec 026](./specs/026-permissions-and-privacy.md) |
+| Ask only for data the feature needs; personal questions (gender, birth date) are optional       | 5.1.1(iii) | done   | [spec 026](./specs/026-permissions-and-privacy.md) |
+| No tracking without the App Tracking Transparency prompt; the template does not track           | 5.1.2(i)   | done   | [spec 026](./specs/026-permissions-and-privacy.md) |
+| A privacy manifest declares required-reason APIs and collected data                             | 5.1.1      | done   | [spec 025](./specs/025-mobile-release.md)          |
+| A privacy policy link in the app and in the store listing                                       | 5.1.1(i)   | fork   | Add the project's policy URL                       |
+| Credentials are stored in the Keychain / Keystore, never in plain storage                       | 5.1.1      | done   | [spec 022](./specs/022-security.md)                |
 
 ## Notifications
 

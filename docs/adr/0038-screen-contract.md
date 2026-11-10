@@ -60,6 +60,14 @@ and one test, even when the pixels are not.
   observed" on every platform. When the closed verb set cannot reach it (the toast follows a server answer, and the
   web's device check never asks the server), the state is listed with its reason in `UNREACHED_STATES`, as
   `KNOWN_GAPS` lists ids a platform lacks; a test fails once a scenario reaches it, so the entry goes.
+- **A scenario follows its elements.** A scenario runs on the platforms that offer every element it names and can
+  stage every given (`scenario_platforms`). The location scenarios of spec 026 name native-only elements, so the web's
+  Gherkin leaves them out and `screens.json` lists `["ios", "android"]` for them.
+- **One given was added for permissions (spec 026, ADR-0043):** `permission`, the status a permission reports
+  (`Given the permission "location_approximate" is "denied_permanently"`; in `screens.json`
+  `{ "verb": "permission", "permission": "location_approximate", "value": "denied_permanently" }`). It is native only:
+  each interpreter stages it through a debug-only launch preset that sets the app's fake permission gateway, so no
+  scenario ever reaches a system prompt. Without the given, the fake gateway reports `not_determined`.
 - **Platform-owned controls are an allowlist in the checker,** each with its reason: today only the iOS keyboard and
   a navigation bar back button.
 

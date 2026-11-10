@@ -5,18 +5,10 @@
 use super::*;
 use crate::feedback::{LOADING_POLICY, SERVER_DEADLINE_MS};
 use crate::navigation::AppDestination;
+use crate::permissions::{PermissionId, PermissionStatus};
+use crate::test_support::{locales, spec_requirement_ids};
 use crate::{can_vote_by_age, tokens_json_snapshot, voting_age_for_country};
 use std::collections::{BTreeMap, BTreeSet};
-use std::fs;
-use std::path::{Path, PathBuf};
-
-fn workspace_root() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
-        .ancestors()
-        .nth(2)
-        .unwrap()
-        .to_path_buf()
-}
 
 fn is_kebab_case(id: &str) -> bool {
     !id.is_empty()
@@ -44,40 +36,6 @@ fn camel_case(snake: &str) -> String {
 
 fn all_scenarios() -> impl Iterator<Item = &'static Scenario> {
     SCREENS.iter().flat_map(|screen| screen.scenarios)
-}
-
-/// `locales/<locale>/<module>.json`, flattened to `module.key` → value, per locale.
-fn locales() -> BTreeMap<String, BTreeMap<String, String>> {
-    fn flatten(value: &serde_json::Value, prefix: &str, out: &mut BTreeMap<String, String>) {
-        match value {
-            serde_json::Value::Object(entries) => {
-                for (key, child) in entries {
-                    flatten(child, &format!("{prefix}.{key}"), out);
-                }
-            }
-            other => {
-                out.insert(prefix.to_string(), other.as_str().unwrap().to_string());
-            }
-        }
-    }
-    let mut out = BTreeMap::new();
-    let folders = fs::read_dir(workspace_root().join("locales"))
-        .unwrap()
-        .map(|entry| entry.unwrap().path())
-        .filter(|path| path.is_dir());
-    for locale in folders {
-        let mut keys = BTreeMap::new();
-        for module in fs::read_dir(&locale).unwrap() {
-            let module = module.unwrap().path();
-            let name = module.file_stem().unwrap().to_string_lossy().into_owned();
-            let json: serde_json::Value =
-                serde_json::from_str(&fs::read_to_string(&module).unwrap()).unwrap();
-            flatten(&json, &name, &mut keys);
-        }
-        let name = locale.file_name().unwrap().to_string_lossy().into_owned();
-        out.insert(name, keys);
-    }
-    out
 }
 
 /// `{name}` placeholders of a locale string, in order of first appearance: the order of the
@@ -215,19 +173,7 @@ fn every_expected_message_resolves_with_its_arguments() {
 // Verifies: REQ-SCR-004
 #[test]
 fn every_citation_names_a_spec_requirement() {
-    // The spec files `pnpm spec:check` reads: `docs/specs/NNN-*.md`.
-    let known: BTreeSet<String> = fs::read_dir(workspace_root().join("docs/specs"))
-        .unwrap()
-        .map(|entry| fs::read_to_string(entry.unwrap().path()).unwrap())
-        .flat_map(|text| {
-            text.lines()
-                .filter_map(|line| line.strip_prefix("### "))
-                .filter_map(|rest| rest.split_whitespace().next())
-                .filter(|id| id.starts_with("REQ-"))
-                .map(str::to_string)
-                .collect::<Vec<_>>()
-        })
-        .collect();
+    let known = spec_requirement_ids();
     for scenario in all_scenarios() {
         assert!(
             !scenario.verifies.is_empty(),
@@ -301,6 +247,10 @@ fn the_verb_set_is_closed() {
         Given::Theme("sepia"),
         Given::LargestTextScale,
         Given::ReducedMotion,
+        Given::Permission {
+            id: PermissionId::LocationApproximate,
+            status: PermissionStatus::Denied,
+        },
     ];
     let when = [
         When::Tap("a"),
@@ -341,7 +291,8 @@ fn the_verb_set_is_closed() {
             "locale",
             "theme",
             "largest_text_scale",
-            "reduced_motion"
+            "reduced_motion",
+            "permission"
         ]
     );
     assert_eq!(
@@ -655,4 +606,80 @@ fn unreached_states_are_real_and_still_unreached() {
             }
         }
     }
+}
+
+// Verifies: REQ-SCR-008 REQ-PRV-007 — a scenario runs where every element it names is offered and
+// every given can be staged, so the web never renders the native-only location scenarios.
+#[test]
+fn scenarios_run_only_where_their_elements_and_givens_are() {
+    let mut native_only = Vec::new();
+    for scenario in all_scenarios() {
+        let platforms = scenario_platforms(scenario);
+        assert!(!platforms.is_empty(), "\"{}\" runs nowhere", scenario.name);
+        assert!(
+            platforms.contains(&Platform::Ios) && platforms.contains(&Platform::Android),
+            "\"{}\" must run on both native platforms",
+            scenario.name
+        );
+        if !platforms.contains(&Platform::Web) {
+            native_only.push(scenario.name);
+        }
+    }
+    assert_eq!(
+        native_only,
+        [
+            "Using my location explains first and Not now changes nothing",
+            "Using my location without permission keeps the chosen country"
+        ]
+    );
+    let staged = Scenario::new(
+        "n",
+        &["REQ-PRV-004"],
+        &[Given::Permission {
+            id: PermissionId::LocationApproximate,
+            status: PermissionStatus::Restricted,
+        }],
+        &[],
+        &[Then::Exists("check-button")],
+    );
+    assert_eq!(
+        scenario_platforms(&staged),
+        [Platform::Ios, Platform::Android]
+    );
+    assert_eq!(Given::ApiReachable.platforms(), Platform::ALL);
+}
+
+// Verifies: REQ-PRV-003 REQ-PRV-007 — the location control and its states exist only natively,
+// and its priming and settings states are reached by a scenario.
+#[test]
+fn the_location_control_is_native_and_its_states_are_reached() {
+    let eligibility = SCREENS
+        .iter()
+        .find(|screen| screen.id == "eligibility")
+        .unwrap();
+    for id in [
+        "use-location-button",
+        "location-priming-continue",
+        "location-priming-dismiss",
+        "location-settings-note",
+        "location-open-settings",
+    ] {
+        let element = eligibility.elements.iter().find(|e| e.id == id).unwrap();
+        assert_eq!(
+            element.platforms,
+            [Platform::Ios, Platform::Android],
+            "{id}"
+        );
+    }
+    let tapped: BTreeSet<&str> = all_scenarios()
+        .flat_map(|s| s.when)
+        .filter_map(|step| step.element())
+        .collect();
+    let expected: BTreeSet<&str> = all_scenarios()
+        .flat_map(|s| s.then)
+        .filter(|then| matches!(then, Then::Exists(_)))
+        .map(|then| then.element())
+        .collect();
+    assert!(tapped.contains("location-priming-dismiss"));
+    assert!(expected.contains("location-settings-note"));
 }

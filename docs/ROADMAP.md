@@ -84,11 +84,12 @@ and one short playbook in `docs/` (what the topic is, why it matters, the rules 
        [playbook](./MOBILE_RELEASE.md)): one `Fastfile` per platform with the same lanes (`test`, `beta`,
        `release`), signing kept out of the repo, store credentials only in CI secrets, versions still from
        `pnpm release` (ADR-0034).
-4. [ ] **Permissions and privacy prompts** ([spec 026](./specs/026-permissions-and-privacy.md), ADR-0043,
+4. [x] **Permissions and privacy prompts** ([spec 026](./specs/026-permissions-and-privacy.md), ADR-0043,
        [playbook](./PERMISSIONS.md)): ask in context with a purpose string, work when denied, optional personal
        questions (gender, birth date), no tracking without App Tracking Transparency (a guard: the template does not
        track).
-5. [ ] **Push notifications and device registration**: optional push, the device token registered to the signed-in
+5. [ ] **Push notifications and device registration** ([spec 027](./specs/027-push-and-devices.md), ADR-0044,
+       [playbook](./PUSH.md)): optional push, the device token registered to the signed-in
        user on the API, replaced when it changes, removed on sign-out and account deletion.
 6. [ ] **Sign-in providers**: a provider seam with Google and Sign in with Apple, the rule that Apple is offered
        whenever a third-party provider is (guideline 4.8) as a check, the system Apple button and Google's branded

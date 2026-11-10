@@ -130,6 +130,8 @@ const KNOWN_GAPS: { platform: Platform; id: string; reason: string }[] = [
     id: 'splash-progress',
     reason: 'the Android coordinator resolves the session synchronously, no splash screen',
   },
+  // Spec 026: the shared core declares the location control first; the iOS and Android packages
+  // add it with their permission gateways and remove these entries (REQ-PRV-007).
 ];
 
 /** The native scenario interpreters (ADR-0038): they run every scenario of `screens.json`. */

@@ -944,6 +944,333 @@ public func FfiConverterTypeTranLoadingPolicy_lower(_ value: TranLoadingPolicy) 
 
 
 /**
+ * One catalogue entry: copy as locale keys, and what each platform declares for it.
+ */
+public struct TranPermission: Equatable, Hashable {
+    /**
+     * Which permission.
+     */
+    public var id: TranPermissionId
+    /**
+     * Snake-case name of the feature it serves (`country_from_location`).
+     */
+    public var feature: String
+    /**
+     * Screen-contract element id of the only control that may ask (`ScreenContract`).
+     */
+    public var control: String
+    /**
+     * Locale key of the priming title.
+     */
+    public var primingTitleKey: String
+    /**
+     * Locale key of the priming body.
+     */
+    public var primingBodyKey: String
+    /**
+     * Locale key of the purpose string the system prompt shows.
+     */
+    public var purposeKey: String
+    /**
+     * Locale key of the inline note after a permanent refusal.
+     */
+    public var settingsNoteKey: String
+    /**
+     * What the feature does without it.
+     */
+    public var fallback: TranPermissionFallback
+    /**
+     * `uses-permission` names the Android manifest declares for it.
+     */
+    public var androidPermissions: [String]
+    /**
+     * Usage-description keys the iOS `Info.plist` declares for it.
+     */
+    public var iosUsageDescriptions: [String]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Which permission.
+         */id: TranPermissionId, 
+        /**
+         * Snake-case name of the feature it serves (`country_from_location`).
+         */feature: String, 
+        /**
+         * Screen-contract element id of the only control that may ask (`ScreenContract`).
+         */control: String, 
+        /**
+         * Locale key of the priming title.
+         */primingTitleKey: String, 
+        /**
+         * Locale key of the priming body.
+         */primingBodyKey: String, 
+        /**
+         * Locale key of the purpose string the system prompt shows.
+         */purposeKey: String, 
+        /**
+         * Locale key of the inline note after a permanent refusal.
+         */settingsNoteKey: String, 
+        /**
+         * What the feature does without it.
+         */fallback: TranPermissionFallback, 
+        /**
+         * `uses-permission` names the Android manifest declares for it.
+         */androidPermissions: [String], 
+        /**
+         * Usage-description keys the iOS `Info.plist` declares for it.
+         */iosUsageDescriptions: [String]) {
+        self.id = id
+        self.feature = feature
+        self.control = control
+        self.primingTitleKey = primingTitleKey
+        self.primingBodyKey = primingBodyKey
+        self.purposeKey = purposeKey
+        self.settingsNoteKey = settingsNoteKey
+        self.fallback = fallback
+        self.androidPermissions = androidPermissions
+        self.iosUsageDescriptions = iosUsageDescriptions
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranPermission: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranPermission: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranPermission {
+        return
+            try TranPermission(
+                id: FfiConverterTypeTranPermissionId.read(from: &buf), 
+                feature: FfiConverterString.read(from: &buf), 
+                control: FfiConverterString.read(from: &buf), 
+                primingTitleKey: FfiConverterString.read(from: &buf), 
+                primingBodyKey: FfiConverterString.read(from: &buf), 
+                purposeKey: FfiConverterString.read(from: &buf), 
+                settingsNoteKey: FfiConverterString.read(from: &buf), 
+                fallback: FfiConverterTypeTranPermissionFallback.read(from: &buf), 
+                androidPermissions: FfiConverterSequenceString.read(from: &buf), 
+                iosUsageDescriptions: FfiConverterSequenceString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranPermission, into buf: inout [UInt8]) {
+        FfiConverterTypeTranPermissionId.write(value.id, into: &buf)
+        FfiConverterString.write(value.feature, into: &buf)
+        FfiConverterString.write(value.control, into: &buf)
+        FfiConverterString.write(value.primingTitleKey, into: &buf)
+        FfiConverterString.write(value.primingBodyKey, into: &buf)
+        FfiConverterString.write(value.purposeKey, into: &buf)
+        FfiConverterString.write(value.settingsNoteKey, into: &buf)
+        FfiConverterTypeTranPermissionFallback.write(value.fallback, into: &buf)
+        FfiConverterSequenceString.write(value.androidPermissions, into: &buf)
+        FfiConverterSequenceString.write(value.iosUsageDescriptions, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPermission_lift(_ buf: RustBuffer) throws -> TranPermission {
+    return try FfiConverterTypeTranPermission.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPermission_lower(_ value: TranPermission) -> RustBuffer {
+    return FfiConverterTypeTranPermission.lower(value)
+}
+
+
+/**
+ * One answer a personal question offers.
+ */
+public struct TranPersonalAnswer: Equatable, Hashable {
+    /**
+     * Stable snake-case id the app stores.
+     */
+    public var id: String
+    /**
+     * What the answer means.
+     */
+    public var kind: TranAnswerKind
+    /**
+     * Locale key of its label.
+     */
+    public var labelKey: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Stable snake-case id the app stores.
+         */id: String, 
+        /**
+         * What the answer means.
+         */kind: TranAnswerKind, 
+        /**
+         * Locale key of its label.
+         */labelKey: String) {
+        self.id = id
+        self.kind = kind
+        self.labelKey = labelKey
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranPersonalAnswer: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranPersonalAnswer: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranPersonalAnswer {
+        return
+            try TranPersonalAnswer(
+                id: FfiConverterString.read(from: &buf), 
+                kind: FfiConverterTypeTranAnswerKind.read(from: &buf), 
+                labelKey: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranPersonalAnswer, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.id, into: &buf)
+        FfiConverterTypeTranAnswerKind.write(value.kind, into: &buf)
+        FfiConverterString.write(value.labelKey, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPersonalAnswer_lift(_ buf: RustBuffer) throws -> TranPersonalAnswer {
+    return try FfiConverterTypeTranPersonalAnswer.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPersonalAnswer_lower(_ value: TranPersonalAnswer) -> RustBuffer {
+    return FfiConverterTypeTranPersonalAnswer.lower(value)
+}
+
+
+/**
+ * One optional question about the person (REQ-PRV-008).
+ */
+public struct TranPersonalQuestion: Equatable, Hashable {
+    /**
+     * Stable snake-case id (`gender`).
+     */
+    public var id: String
+    /**
+     * Snake-case name of the feature that needs the answer.
+     */
+    public var feature: String
+    /**
+     * Locale key of the question's label.
+     */
+    public var labelKey: String
+    /**
+     * The answers, in display order; always including "Prefer not to say".
+     */
+    public var answers: [TranPersonalAnswer]
+    /**
+     * The requirement id that makes an answer necessary; `None` when it can be skipped.
+     */
+    public var requiredBy: String?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Stable snake-case id (`gender`).
+         */id: String, 
+        /**
+         * Snake-case name of the feature that needs the answer.
+         */feature: String, 
+        /**
+         * Locale key of the question's label.
+         */labelKey: String, 
+        /**
+         * The answers, in display order; always including "Prefer not to say".
+         */answers: [TranPersonalAnswer], 
+        /**
+         * The requirement id that makes an answer necessary; `None` when it can be skipped.
+         */requiredBy: String?) {
+        self.id = id
+        self.feature = feature
+        self.labelKey = labelKey
+        self.answers = answers
+        self.requiredBy = requiredBy
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranPersonalQuestion: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranPersonalQuestion: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranPersonalQuestion {
+        return
+            try TranPersonalQuestion(
+                id: FfiConverterString.read(from: &buf), 
+                feature: FfiConverterString.read(from: &buf), 
+                labelKey: FfiConverterString.read(from: &buf), 
+                answers: FfiConverterSequenceTypeTranPersonalAnswer.read(from: &buf), 
+                requiredBy: FfiConverterOptionString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranPersonalQuestion, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.id, into: &buf)
+        FfiConverterString.write(value.feature, into: &buf)
+        FfiConverterString.write(value.labelKey, into: &buf)
+        FfiConverterSequenceTypeTranPersonalAnswer.write(value.answers, into: &buf)
+        FfiConverterOptionString.write(value.requiredBy, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPersonalQuestion_lift(_ buf: RustBuffer) throws -> TranPersonalQuestion {
+    return try FfiConverterTypeTranPersonalQuestion.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPersonalQuestion_lower(_ value: TranPersonalQuestion) -> RustBuffer {
+    return FfiConverterTypeTranPersonalQuestion.lower(value)
+}
+
+
+/**
  * How a connectivity banner recovers by itself (REQ-ERR-013).
  */
 public struct TranRecoveryPolicy: Equatable, Hashable {
@@ -1487,6 +1814,91 @@ public func FfiConverterTypeVoteEligibilityOfflineResult_lower(_ value: VoteElig
 
 
 /**
+ * What an answer to a personal question means.
+ */
+
+public enum TranAnswerKind: Equatable, Hashable {
+    
+    /**
+     * One of the listed choices.
+     */
+    case choice
+    /**
+     * The person describes it in their own words.
+     */
+    case selfDescribed
+    /**
+     * The person declines; store it as no answer.
+     */
+    case preferNotToSay
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranAnswerKind: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranAnswerKind: FfiConverterRustBuffer {
+    typealias SwiftType = TranAnswerKind
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranAnswerKind {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .choice
+        
+        case 2: return .selfDescribed
+        
+        case 3: return .preferNotToSay
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranAnswerKind, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .choice:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .selfDescribed:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .preferNotToSay:
+            writeInt(&buf, Int32(3))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranAnswerKind_lift(_ buf: RustBuffer) throws -> TranAnswerKind {
+    return try FfiConverterTypeTranAnswerKind.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranAnswerKind_lower(_ value: TranAnswerKind) -> RustBuffer {
+    return FfiConverterTypeTranAnswerKind.lower(value)
+}
+
+
+
+/**
  * The screen the navigation director routes to.
  */
 
@@ -2007,6 +2419,346 @@ public func FfiConverterTypeTranLogLevel_lift(_ buf: RustBuffer) throws -> TranL
 #endif
 public func FfiConverterTypeTranLogLevel_lower(_ value: TranLogLevel) -> RustBuffer {
     return FfiConverterTypeTranLogLevel.lower(value)
+}
+
+
+
+/**
+ * What the feature does without the permission; never an error.
+ */
+
+public enum TranPermissionFallback: Equatable, Hashable {
+    
+    /**
+     * The value stays entered by hand (the country stays hand-picked).
+     */
+    case keepManualEntry
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranPermissionFallback: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranPermissionFallback: FfiConverterRustBuffer {
+    typealias SwiftType = TranPermissionFallback
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranPermissionFallback {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .keepManualEntry
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranPermissionFallback, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .keepManualEntry:
+            writeInt(&buf, Int32(1))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPermissionFallback_lift(_ buf: RustBuffer) throws -> TranPermissionFallback {
+    return try FfiConverterTypeTranPermissionFallback.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPermissionFallback_lower(_ value: TranPermissionFallback) -> RustBuffer {
+    return FfiConverterTypeTranPermissionFallback.lower(value)
+}
+
+
+
+/**
+ * A permission the apps may ask for.
+ */
+
+public enum TranPermissionId: Equatable, Hashable {
+    
+    /**
+     * Approximate location while in use, read once to fill the country (REQ-PRV-006).
+     */
+    case locationApproximate
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranPermissionId: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranPermissionId: FfiConverterRustBuffer {
+    typealias SwiftType = TranPermissionId
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranPermissionId {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .locationApproximate
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranPermissionId, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .locationApproximate:
+            writeInt(&buf, Int32(1))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPermissionId_lift(_ buf: RustBuffer) throws -> TranPermissionId {
+    return try FfiConverterTypeTranPermissionId.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPermissionId_lower(_ value: TranPermissionId) -> RustBuffer {
+    return FfiConverterTypeTranPermissionId.lower(value)
+}
+
+
+
+/**
+ * What the platform reports for a permission, mapped by the app's gateway.
+ */
+
+public enum TranPermissionStatus: Equatable, Hashable {
+    
+    /**
+     * The system prompt has not been shown.
+     */
+    case notDetermined
+    /**
+     * Granted as asked.
+     */
+    case granted
+    /**
+     * Granted with reduced accuracy (iOS approximate, Android coarse).
+     */
+    case grantedApproximate
+    /**
+     * Refused, but the system can still ask again (Android before the second refusal).
+     */
+    case denied
+    /**
+     * Refused for good: only Settings can change it.
+     */
+    case deniedPermanently
+    /**
+     * The person cannot grant it (parental controls, device management).
+     */
+    case restricted
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranPermissionStatus: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranPermissionStatus: FfiConverterRustBuffer {
+    typealias SwiftType = TranPermissionStatus
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranPermissionStatus {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .notDetermined
+        
+        case 2: return .granted
+        
+        case 3: return .grantedApproximate
+        
+        case 4: return .denied
+        
+        case 5: return .deniedPermanently
+        
+        case 6: return .restricted
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranPermissionStatus, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .notDetermined:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .granted:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .grantedApproximate:
+            writeInt(&buf, Int32(3))
+        
+        
+        case .denied:
+            writeInt(&buf, Int32(4))
+        
+        
+        case .deniedPermanently:
+            writeInt(&buf, Int32(5))
+        
+        
+        case .restricted:
+            writeInt(&buf, Int32(6))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPermissionStatus_lift(_ buf: RustBuffer) throws -> TranPermissionStatus {
+    return try FfiConverterTypeTranPermissionStatus.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPermissionStatus_lower(_ value: TranPermissionStatus) -> RustBuffer {
+    return FfiConverterTypeTranPermissionStatus.lower(value)
+}
+
+
+
+/**
+ * What the app does next after a tap on the control.
+ */
+
+public enum TranPermissionStep: Equatable, Hashable {
+    
+    /**
+     * Show the app's own explanation with "Continue" and "Not now".
+     */
+    case showPriming
+    /**
+     * Show the system prompt (only after "Continue").
+     */
+    case requestSystem
+    /**
+     * Go on with the feature.
+     */
+    case useFeature
+    /**
+     * Show the inline Settings note once; never ask again.
+     */
+    case offerSettings
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranPermissionStep: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranPermissionStep: FfiConverterRustBuffer {
+    typealias SwiftType = TranPermissionStep
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranPermissionStep {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .showPriming
+        
+        case 2: return .requestSystem
+        
+        case 3: return .useFeature
+        
+        case 4: return .offerSettings
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranPermissionStep, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .showPriming:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .requestSystem:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .useFeature:
+            writeInt(&buf, Int32(3))
+        
+        
+        case .offerSettings:
+            writeInt(&buf, Int32(4))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPermissionStep_lift(_ buf: RustBuffer) throws -> TranPermissionStep {
+    return try FfiConverterTypeTranPermissionStep.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPermissionStep_lower(_ value: TranPermissionStep) -> RustBuffer {
+    return FfiConverterTypeTranPermissionStep.lower(value)
 }
 
 
@@ -3106,6 +3858,31 @@ fileprivate struct FfiConverterOptionTypeTranUserRole: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterSequenceString: FfiConverterRustBuffer {
+    typealias SwiftType = [String]
+
+    public static func write(_ value: [String], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterString.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [String] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [String]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterString.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterSequenceTypeTranCountryVotingAge: FfiConverterRustBuffer {
     typealias SwiftType = [TranCountryVotingAge]
 
@@ -3148,6 +3925,81 @@ fileprivate struct FfiConverterSequenceTypeTranErrorSpec: FfiConverterRustBuffer
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeTranErrorSpec.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeTranPermission: FfiConverterRustBuffer {
+    typealias SwiftType = [TranPermission]
+
+    public static func write(_ value: [TranPermission], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeTranPermission.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [TranPermission] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [TranPermission]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeTranPermission.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeTranPersonalAnswer: FfiConverterRustBuffer {
+    typealias SwiftType = [TranPersonalAnswer]
+
+    public static func write(_ value: [TranPersonalAnswer], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeTranPersonalAnswer.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [TranPersonalAnswer] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [TranPersonalAnswer]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeTranPersonalAnswer.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeTranPersonalQuestion: FfiConverterRustBuffer {
+    typealias SwiftType = [TranPersonalQuestion]
+
+    public static func write(_ value: [TranPersonalQuestion], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeTranPersonalQuestion.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [TranPersonalQuestion] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [TranPersonalQuestion]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeTranPersonalQuestion.read(from: &buf))
         }
         return seq
     }
@@ -3530,6 +4382,79 @@ public func verdictSourceSpec(source: TranVerdictSource) -> TranVerdictSourceSpe
 })
 }
 /**
+ * Every permission the apps may ask for (REQ-PRV-001).
+ *
+ * # Returns
+ *
+ * The catalogue from `rust-core`, in a stable order; pinned by the `permissions` section of
+ * `fixtures/permissions.json`.
+ */
+public func permissionCatalogue() -> [TranPermission]  {
+    return try!  FfiConverterSequenceTypeTranPermission.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_permission_catalogue(uniffiCallStatus
+    )
+})
+}
+/**
+ * One permission's catalogue entry.
+ *
+ * # Arguments
+ *
+ * * `id` — the permission.
+ *
+ * # Returns
+ *
+ * Its copy keys, fallback and declarations.
+ */
+public func permissionEntry(id: TranPermissionId) -> TranPermission  {
+    return try!  FfiConverterTypeTranPermission_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_permission_entry(
+        FfiConverterTypeTranPermissionId_lower(id),uniffiCallStatus
+    )
+})
+}
+/**
+ * What to do after a tap on the control that needs a permission (REQ-PRV-002).
+ *
+ * # Arguments
+ *
+ * * `status` — what the platform reports now, mapped by the gateway.
+ * * `primed` — whether the person has just chosen "Continue" on the priming.
+ *
+ * # Returns
+ *
+ * [`TranPermissionStep::ShowPriming`] before a first ask (or again after a refusal Android can
+ * still ask about), [`TranPermissionStep::RequestSystem`] only after priming,
+ * [`TranPermissionStep::UseFeature`] when granted, and [`TranPermissionStep::OfferSettings`]
+ * after a permanent refusal or a restriction.
+ */
+public func permissionStep(status: TranPermissionStatus, primed: Bool) -> TranPermissionStep  {
+    return try!  FfiConverterTypeTranPermissionStep_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_permission_step(
+        FfiConverterTypeTranPermissionStatus_lower(status),
+        FfiConverterBool.lower(primed),uniffiCallStatus
+    )
+})
+}
+/**
+ * Every personal question the apps may ask (REQ-PRV-008).
+ *
+ * # Returns
+ *
+ * The catalogue from `rust-core`; every question offers "Prefer not to say" and is skippable
+ * unless `required_by` names a requirement.
+ */
+public func personalQuestions() -> [TranPersonalQuestion]  {
+    return try!  FfiConverterSequenceTypeTranPersonalQuestion.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_personal_questions(uniffiCallStatus
+    )
+})
+}
+/**
  * The session policy from `rust-core`.
  *
  * # Returns
@@ -3671,6 +4596,18 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_verdict_source_spec() != 18040) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_permission_catalogue() != 24544) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_permission_entry() != 9383) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_permission_step() != 29155) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_personal_questions() != 36547) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_session_policy() != 15140) {

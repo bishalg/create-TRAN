@@ -33,6 +33,11 @@ import com.tran.voting.generated.TranSpace
 import com.tran.voting.generated.TranStrings
 import com.tran.voting.generated.TranTheme
 import com.tran.voting.generated.labelRes
+import com.tran.voting.permissions.CountryGeocoder
+import com.tran.voting.permissions.LocationCountry
+import com.tran.voting.permissions.NoCountryGeocoder
+import com.tran.voting.permissions.PermissionGateway
+import com.tran.voting.permissions.StagedPermissionGateway
 import com.tran.voting.ui.atoms.TranBanner
 import com.tran.voting.ui.atoms.TranButton
 import com.tran.voting.ui.atoms.TranButtonSize
@@ -69,6 +74,10 @@ fun VotingHomeScreen(
     deleting: Boolean = false,
     // The last failed deletion: a banner failure is this screen's to show (REQ-ACC-006, REQ-ERR-006).
     accountFailure: TranRequestFailure? = null,
+    // "Use my location" (spec 026). The default never reaches the system: only the app passes the
+    // real gateway, so no test can raise a system dialog.
+    permissions: PermissionGateway = remember { StagedPermissionGateway() },
+    geocoder: CountryGeocoder = NoCountryGeocoder,
 ) {
     var ageText by remember { mutableStateOf("20") }
     var countryCode by remember { mutableStateOf("NP") }
@@ -89,6 +98,7 @@ fun VotingHomeScreen(
     // The source caption belongs to a verdict; an input error has none.
     var hasVerdict by remember { mutableStateOf(false) }
     val reduceMotion = rememberReduceMotion()
+    val location = remember(permissions, geocoder) { LocationCountry(permissions, geocoder) }
 
     fun record(failure: TranRequestFailure?) {
         apiStatus = failure?.let(::tranApiStatusFrom) ?: TranApiStatus.ONLINE
@@ -184,6 +194,8 @@ fun VotingHomeScreen(
                     modifier = Modifier.weight(1f).testTag(ScreenContract.Eligibility.countryField),
                 )
             }
+            // Fills the country it finds; without one, the typed country stays (REQ-PRV-004).
+            UseLocationControl(location, onCountry = { countryCode = it })
             TranButton(
                 label = stringResource(TranStrings.Eligibility.checkOffline),
                 onClick = {

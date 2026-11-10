@@ -4,6 +4,7 @@
 
 use crate::feedback::{LOADING_POLICY, SERVER_DEADLINE_MS};
 use crate::navigation::AppDestination;
+use crate::permissions::{PermissionId, PermissionStatus};
 use serde::{Serialize, Serializer};
 
 /// One destination's user-facing surface (REQ-SCR-001).
@@ -155,6 +156,12 @@ pub enum Given {
     Theme(&'static str),
     LargestTextScale,
     ReducedMotion,
+    /// The platform reports `status` for permission `id` (REQ-PRV-004). Native only: the
+    /// interpreters stage it through the app's fake permission gateway, never a system prompt.
+    Permission {
+        id: PermissionId,
+        status: PermissionStatus,
+    },
 }
 
 /// What the person does. A closed set (ADR-0038).
@@ -204,7 +211,7 @@ pub enum Then {
 }
 
 impl Given {
-    pub const VERBS: [&'static str; 7] = [
+    pub const VERBS: [&'static str; 8] = [
         "session",
         "api_reachable",
         "api_unreachable",
@@ -212,6 +219,7 @@ impl Given {
         "theme",
         "largest_text_scale",
         "reduced_motion",
+        "permission",
     ];
 
     pub fn verb(self) -> &'static str {
@@ -223,6 +231,16 @@ impl Given {
             Self::Theme(_) => Self::VERBS[4],
             Self::LargestTextScale => Self::VERBS[5],
             Self::ReducedMotion => Self::VERBS[6],
+            Self::Permission { .. } => Self::VERBS[7],
+        }
+    }
+
+    /// The platforms that can stage the given: a permission status only natively, because the
+    /// web asks for no permission (REQ-PRV-007).
+    pub fn platforms(self) -> &'static [Platform] {
+        match self {
+            Self::Permission { .. } => &[Platform::Ios, Platform::Android],
+            _ => &Platform::ALL,
         }
     }
 }

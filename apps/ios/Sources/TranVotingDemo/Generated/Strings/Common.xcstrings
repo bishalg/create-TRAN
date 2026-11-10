@@ -67,6 +67,28 @@
         }
       }
     },
+    "common.continueAction": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जारी रखें"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जारी राख्नुहोस्"
+          }
+        }
+      }
+    },
     "common.deleteAccount": {
       "localizations": {
         "en": {
@@ -107,6 +129,116 @@
           "stringUnit": {
             "state": "translated",
             "value": "बन्द गर्नुहोस्"
+          }
+        }
+      }
+    },
+    "common.gender.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gender"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "लिंग"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "लिङ्ग"
+          }
+        }
+      }
+    },
+    "common.gender.man": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Man"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पुरुष"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पुरुष"
+          }
+        }
+      }
+    },
+    "common.gender.nonBinary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non-binary"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नॉन-बाइनरी"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "गैर-बाइनरी"
+          }
+        }
+      }
+    },
+    "common.gender.selfDescribed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prefer to self-describe"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "खुद बताना चाहते हैं"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आफैँ वर्णन गर्छु"
+          }
+        }
+      }
+    },
+    "common.gender.woman": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Woman"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "महिला"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "महिला"
           }
         }
       }
@@ -173,6 +305,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "सूचनाहरू"
+          }
+        }
+      }
+    },
+    "common.openSettings": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सेटिंग्स खोलें"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सेटिङ खोल्नुहोस्"
+          }
+        }
+      }
+    },
+    "common.preferNotToSay": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prefer not to say"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नहीं बताना चाहते"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "भन्न चाहन्नँ"
           }
         }
       }

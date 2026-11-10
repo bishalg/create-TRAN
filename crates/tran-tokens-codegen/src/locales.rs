@@ -4,6 +4,8 @@
 use crate::files::{list_dir, read_file};
 use crate::names::{android_resource_name, full_key, member_name};
 use rust_core::feedback::{ErrorCode, UserAction, VerdictSource, LOADING_POLICY};
+use rust_core::permissions::PERMISSIONS;
+use rust_core::personal_questions::PERSONAL_QUESTIONS;
 use rust_core::screens::SCREENS;
 use rust_core::tokens::TokensJsonSnapshot;
 use std::collections::{BTreeMap, BTreeSet};
@@ -243,6 +245,17 @@ pub fn verify_no_duplicate_values(base: &Dictionary) -> Result<(), String> {
 
 /// Android resource names and Swift/Kotlin member names must be unique after key folding.
 pub fn verify_generated_names(base: &Dictionary) -> Result<(), String> {
+    for (module, keys) in &base.modules {
+        for relative in keys.keys() {
+            let member = member_name(relative);
+            if RESERVED_MEMBERS.contains(&member.as_str()) {
+                return Err(format!(
+                    "`{}` would generate the member `{member}`, a Swift or Kotlin keyword; rename the key",
+                    full_key(module, relative)
+                ));
+            }
+        }
+    }
     let mut resources: BTreeMap<String, String> = BTreeMap::new();
     for (module, keys) in &base.modules {
         let mut members: BTreeMap<String, String> = BTreeMap::new();
@@ -264,6 +277,68 @@ pub fn verify_generated_names(base: &Dictionary) -> Result<(), String> {
     }
     Ok(())
 }
+
+/// Swift and Kotlin keywords a generated `L10n` / `TranStrings` member cannot be named.
+const RESERVED_MEMBERS: &[&str] = &[
+    "Any",
+    "Self",
+    "as",
+    "associatedtype",
+    "break",
+    "case",
+    "catch",
+    "class",
+    "continue",
+    "default",
+    "defer",
+    "deinit",
+    "do",
+    "else",
+    "enum",
+    "extension",
+    "fallthrough",
+    "false",
+    "fileprivate",
+    "for",
+    "fun",
+    "func",
+    "guard",
+    "if",
+    "import",
+    "in",
+    "init",
+    "inout",
+    "interface",
+    "internal",
+    "is",
+    "let",
+    "nil",
+    "null",
+    "object",
+    "operator",
+    "package",
+    "private",
+    "protocol",
+    "public",
+    "repeat",
+    "return",
+    "self",
+    "static",
+    "struct",
+    "super",
+    "switch",
+    "this",
+    "throw",
+    "throws",
+    "true",
+    "try",
+    "typealias",
+    "val",
+    "var",
+    "when",
+    "where",
+    "while",
+];
 
 /// Every registry theme needs a `shell.theme.<mode>` label key so the pickers can localize.
 pub fn verify_theme_labels(base: &Dictionary, snapshot: &TokensJsonSnapshot) -> Result<(), String> {
@@ -344,6 +419,33 @@ pub fn screen_message_keys(base: &Dictionary) -> Result<BTreeSet<String>, String
     match missing {
         Some(key) => Err(format!(
             "screen contract names `{key}`, missing from locales/"
+        )),
+        None => Ok(keys),
+    }
+}
+
+/// The value of a full key (`eligibility.location.purpose`) in one locale.
+pub fn lookup<'a>(dictionary: &'a Dictionary, key: &str) -> Option<&'a String> {
+    let (module, relative) = key.split_once('.')?;
+    dictionary.modules.get(module)?.get(relative)
+}
+
+/// Every locale key the permission and personal-question catalogues name (spec 026). A key missing
+/// from `locales/` stops the run, as a missing screen-contract key does (REQ-PRV-001, REQ-PRV-008).
+pub fn privacy_message_keys(base: &Dictionary) -> Result<BTreeSet<String>, String> {
+    let keys: BTreeSet<String> = PERMISSIONS
+        .iter()
+        .flat_map(|permission| permission.locale_keys())
+        .chain(
+            PERSONAL_QUESTIONS
+                .iter()
+                .flat_map(|question| question.locale_keys()),
+        )
+        .map(str::to_string)
+        .collect();
+    match keys.iter().find(|key| lookup(base, key).is_none()) {
+        Some(key) => Err(format!(
+            "the privacy catalogues name `{key}`, missing from locales/"
         )),
         None => Ok(keys),
     }
@@ -547,6 +649,15 @@ mod tests {
     }
 
     #[test]
+    fn lookup_reads_a_full_key_and_nothing_else() {
+        let base = dictionary(&[("a", &[("b.c", "1")])]);
+        assert_eq!(lookup(&base, "a.b.c").map(String::as_str), Some("1"));
+        assert_eq!(lookup(&base, "a"), None);
+        assert_eq!(lookup(&base, "z.b.c"), None);
+        assert_eq!(lookup(&base, "a.b"), None);
+    }
+
+    #[test]
     fn generated_names_must_not_collide() {
         // `a.bC` and `a_b.c` both fold to the resource `a_b_c`.
         let resource = dictionary(&[("a", &[("bC", "1")]), ("a_b", &[("c", "2")])]);
@@ -560,6 +671,12 @@ mod tests {
             "{err}"
         );
         assert!(verify_generated_names(&real_base()).is_ok());
+        // `common.continue` would be `L10n.Common.continue` and `TranStrings.Common.continue`.
+        let keyword = dictionary(&[("common", &[("continue", "Continue")])]);
+        assert_eq!(
+            verify_generated_names(&keyword).unwrap_err(),
+            "`common.continue` would generate the member `continue`, a Swift or Kotlin keyword; rename the key"
+        );
     }
 
     #[test]

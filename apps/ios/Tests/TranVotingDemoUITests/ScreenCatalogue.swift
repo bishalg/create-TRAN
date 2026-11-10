@@ -84,10 +84,12 @@ struct ContractStep: Decodable {
     let key: String?
     let args: [ContractArg]?
     let n: Int?
+    /// The permission a `permission` given stages (`location_approximate`); `value` is its status.
+    let permission: String?
 
     /// How a failure names the step: the verb and its operands, as the Gherkin quotes them.
     var title: String {
-        [verb, id, text, option, key, value, n.map(String.init)]
+        [verb, id, text, option, key, permission, value, n.map(String.init)]
             .compactMap { $0 }
             .joined(separator: " ")
     }

@@ -83,7 +83,7 @@ final class SessionClientTests: XCTestCase {
             XCTFail("unexpected \(error)")
         }
         XCTAssertNil(vault.load())
-        XCTAssertEqual(log.entries.map(\.code), [.networkOffline])
+        XCTAssertTrue(log.entries.isEmpty, "thrown, so its handler logs it, not the client (REQ-ROB-007)")
     }
 
     // MARK: - Refresh (REQ-SEC-016)
@@ -236,6 +236,7 @@ final class SessionClientTests: XCTestCase {
 
         XCTAssertNil(vault.load())
         XCTAssertEqual(SessionStubProtocol.requests.map(\.path), ["/api/auth/sign-out"])
+        XCTAssertEqual(log.entries.map(\.code), [.networkOffline], "swallowed here, so logged here")
         assertNoTokenLogged(["refresh-0"])
     }
 
@@ -398,19 +399,31 @@ final class SessionClientTests: XCTestCase {
         XCTAssertEqual(SessionStubProtocol.requests(to: "/api/account").count, 1)
     }
 
+    /// The client logs only what it swallows; what it throws is its handler's to log (REQ-ROB-007).
     func testEveryFailedRequestIsLoggedOnce() async throws {
         let client = try await signedInClient { _ in .status(401, body: SessionWire.expired) }
 
         let failure = await deletionFailure(client)
 
         XCTAssertEqual(failure, TranSessionClient.expired)
-        // The DELETE's 401 and the refresh's 401: two requests, two events, nothing more.
-        XCTAssertEqual(log.entries.map(\.status), [401, 401])
+        // Two failed requests, two events: the DELETE's 401, which the client recovered from with
+        // a refresh, here; the refresh's 401 ends the session and is thrown, so the handler logs
+        // that one (`AccountDeletionTests`).
+        XCTAssertEqual(log.entries.map(\.status), [401])
 
-        // No credential at all: no request is sent, and the table's answer is the one event.
+        // No credential at all: no request is sent, and the table's answer goes to the caller.
         log = FailureLog()
-        _ = await makeClient().validate()
-        XCTAssertEqual(log.entries, [TranSessionClient.expired])
+        let outcome = await makeClient().validate()
+        XCTAssertEqual(outcome, .signedOut)
+        XCTAssertTrue(log.entries.isEmpty, "the caller presents it, so the caller logs it")
+
+        // A restored session that is kept: the failure is shown nowhere, so the client logs it.
+        log = FailureLog()
+        try vault.save(SessionWire.stored(refresh: "refresh-0"))
+        SessionStubProtocol.reset { _ in .status(503, body: "{}") }
+        let kept = await makeClient().validate()
+        XCTAssertEqual(kept, .kept)
+        XCTAssertEqual(log.entries.map(\.code), [.serverUnavailable])
     }
 }
 

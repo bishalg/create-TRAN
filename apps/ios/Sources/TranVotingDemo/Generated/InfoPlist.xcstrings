@@ -1,0 +1,30 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "NSLocationWhenInUseUsageDescription": {
+      "comment": "Purpose string of `location_approximate` (`eligibility.location.purpose`).",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRAN uses your approximate location once to find your country and pick the right voting age. It is optional; you can type the country instead."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRAN आपका देश पता करने और सही मतदान आयु चुनने के लिए आपके अनुमानित स्थान का एक बार उपयोग करता है। यह वैकल्पिक है; आप देश खुद लिख सकते हैं।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRAN ले तपाईंको देश पत्ता लगाउन र सही मतदान उमेर छान्न तपाईंको अनुमानित स्थान एक पटक प्रयोग गर्छ। यो ऐच्छिक हो; तपाईं देश आफैँ लेख्न सक्नुहुन्छ।"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

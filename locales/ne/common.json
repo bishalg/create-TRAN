@@ -13,5 +13,15 @@
   "notifications": "सूचनाहरू",
   "notNow": "अहिले होइन",
   "reload": "फेरि लोड गर्नुहोस्",
-  "loading": "लोड हुँदैछ"
+  "loading": "लोड हुँदैछ",
+  "continueAction": "जारी राख्नुहोस्",
+  "openSettings": "सेटिङ खोल्नुहोस्",
+  "preferNotToSay": "भन्न चाहन्नँ",
+  "gender": {
+    "label": "लिङ्ग",
+    "woman": "महिला",
+    "man": "पुरुष",
+    "nonBinary": "गैर-बाइनरी",
+    "selfDescribed": "आफैँ वर्णन गर्छु"
+  }
 }

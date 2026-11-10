@@ -1,4 +1,4 @@
-// Verifies: REQ-NAT-013 REQ-ACC-004
+// Verifies: REQ-NAT-013 REQ-ACC-004 REQ-PRV-007
 package com.tran.voting.ui
 
 import androidx.compose.runtime.Composable
@@ -11,6 +11,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
@@ -20,6 +22,7 @@ import com.tran.voting.generated.ScreenContract
 import com.tran.voting.generated.TranTheme
 import com.tran.voting.generated.labelRes
 import com.tran.voting.parity.VoteEligibilityParityTest
+import com.tran.voting.permissions.StagedPermissionGateway
 import com.tran.voting.testing.FakeApis
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -31,6 +34,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import uniffi.tran_uniffi.TranPermissionStatus
 
 /**
  * The narrowest phone the app supports (320 × 640 dp, also the default CI emulator): every control
@@ -115,6 +119,29 @@ class NarrowScreenTest {
     fun `REQ-ACC-004 both account controls fit a 320 dp screen at the default text scale`() {
         compose.setContent { AuditorScreen(onSignOut = {}, onDeleteAccount = {}) }
         assertAccountControls(ScreenContract.Auditor.signOutButton, ScreenContract.Auditor.deleteAccountButton)
+    }
+
+    /** "Use my location", its Settings note and "Open Settings", whole and on screen (spec 026). */
+    @Test
+    fun `REQ-PRV-007 the location control and its Settings note fit at the largest text scale`() {
+        largestText {
+            NavigationCoordinator(
+                api = FakeApis.healthy(),
+                permissions = StagedPermissionGateway(TranPermissionStatus.DENIED_PERMANENTLY),
+            )
+        }
+        val button = ScreenContract.Eligibility.useLocationButton
+        compose.waitUntil(5_000) { compose.onAllNodes(hasTestTag(button)).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag(button).performScrollTo()
+        assertWhollyOnScreen(compose.onNodeWithTag(button), "use my location")
+        compose.onNodeWithTag(button).performClick()
+        val settings = ScreenContract.Eligibility.locationOpenSettings
+        compose.waitUntil(5_000) { compose.onAllNodes(hasTestTag(settings)).fetchSemanticsNodes().isNotEmpty() }
+        val note = compose.onNodeWithTag(ScreenContract.Eligibility.locationSettingsNote).performScrollTo()
+        val noteBounds = note.getUnclippedBoundsInRoot()
+        val screen = compose.onRoot().getUnclippedBoundsInRoot()
+        assertTrue("the note ends at ${noteBounds.right}, past the ${screen.right} screen", noteBounds.right <= screen.right)
+        assertWhollyOnScreen(compose.onNodeWithTag(settings).performScrollTo(), "open settings")
     }
 
     companion object {

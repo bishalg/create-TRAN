@@ -722,6 +722,14 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_verdict_source_spec(
     ): Int
+    external fun uniffi_tran_uniffi_checksum_func_permission_catalogue(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_permission_entry(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_permission_step(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_personal_questions(
+    ): Int
     external fun uniffi_tran_uniffi_checksum_func_session_policy(
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_session_recovery(
@@ -790,6 +798,14 @@ internal object UniffiLib {
     external fun uniffi_tran_uniffi_fn_func_toast_policy(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_verdict_source_spec(`source`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_permission_catalogue(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_permission_entry(`id`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_permission_step(`status`: RustBuffer.ByValue,`primed`: Byte,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_personal_questions(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_session_policy(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -986,6 +1002,18 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_tran_uniffi_checksum_func_verdict_source_spec() and 0xFFFF) != 18040) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_permission_catalogue() and 0xFFFF) != 24544) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_permission_entry() and 0xFFFF) != 9383) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_permission_step() and 0xFFFF) != 29155) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_personal_questions() and 0xFFFF) != 36547) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_tran_uniffi_checksum_func_session_policy() and 0xFFFF) != 15140) {
@@ -1513,6 +1541,243 @@ public object FfiConverterTypeTranLoadingPolicy: FfiConverterRustBuffer<TranLoad
 
 
 /**
+ * One catalogue entry: copy as locale keys, and what each platform declares for it.
+ */
+data class TranPermission (
+    /**
+     * Which permission.
+     */
+    var `id`: TranPermissionId
+    , 
+    /**
+     * Snake-case name of the feature it serves (`country_from_location`).
+     */
+    var `feature`: kotlin.String
+    , 
+    /**
+     * Screen-contract element id of the only control that may ask (`ScreenContract`).
+     */
+    var `control`: kotlin.String
+    , 
+    /**
+     * Locale key of the priming title.
+     */
+    var `primingTitleKey`: kotlin.String
+    , 
+    /**
+     * Locale key of the priming body.
+     */
+    var `primingBodyKey`: kotlin.String
+    , 
+    /**
+     * Locale key of the purpose string the system prompt shows.
+     */
+    var `purposeKey`: kotlin.String
+    , 
+    /**
+     * Locale key of the inline note after a permanent refusal.
+     */
+    var `settingsNoteKey`: kotlin.String
+    , 
+    /**
+     * What the feature does without it.
+     */
+    var `fallback`: TranPermissionFallback
+    , 
+    /**
+     * `uses-permission` names the Android manifest declares for it.
+     */
+    var `androidPermissions`: List<kotlin.String>
+    , 
+    /**
+     * Usage-description keys the iOS `Info.plist` declares for it.
+     */
+    var `iosUsageDescriptions`: List<kotlin.String>
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranPermission: FfiConverterRustBuffer<TranPermission> {
+    override fun read(buf: ByteBuffer): TranPermission {
+        return TranPermission(
+            FfiConverterTypeTranPermissionId.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterTypeTranPermissionFallback.read(buf),
+            FfiConverterSequenceString.read(buf),
+            FfiConverterSequenceString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranPermission) = (
+            FfiConverterTypeTranPermissionId.allocationSize(value.`id`) +
+            FfiConverterString.allocationSize(value.`feature`) +
+            FfiConverterString.allocationSize(value.`control`) +
+            FfiConverterString.allocationSize(value.`primingTitleKey`) +
+            FfiConverterString.allocationSize(value.`primingBodyKey`) +
+            FfiConverterString.allocationSize(value.`purposeKey`) +
+            FfiConverterString.allocationSize(value.`settingsNoteKey`) +
+            FfiConverterTypeTranPermissionFallback.allocationSize(value.`fallback`) +
+            FfiConverterSequenceString.allocationSize(value.`androidPermissions`) +
+            FfiConverterSequenceString.allocationSize(value.`iosUsageDescriptions`)
+    )
+
+    override fun write(value: TranPermission, buf: ByteBuffer) {
+            FfiConverterTypeTranPermissionId.write(value.`id`, buf)
+            FfiConverterString.write(value.`feature`, buf)
+            FfiConverterString.write(value.`control`, buf)
+            FfiConverterString.write(value.`primingTitleKey`, buf)
+            FfiConverterString.write(value.`primingBodyKey`, buf)
+            FfiConverterString.write(value.`purposeKey`, buf)
+            FfiConverterString.write(value.`settingsNoteKey`, buf)
+            FfiConverterTypeTranPermissionFallback.write(value.`fallback`, buf)
+            FfiConverterSequenceString.write(value.`androidPermissions`, buf)
+            FfiConverterSequenceString.write(value.`iosUsageDescriptions`, buf)
+    }
+}
+
+
+
+/**
+ * One answer a personal question offers.
+ */
+data class TranPersonalAnswer (
+    /**
+     * Stable snake-case id the app stores.
+     */
+    var `id`: kotlin.String
+    , 
+    /**
+     * What the answer means.
+     */
+    var `kind`: TranAnswerKind
+    , 
+    /**
+     * Locale key of its label.
+     */
+    var `labelKey`: kotlin.String
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranPersonalAnswer: FfiConverterRustBuffer<TranPersonalAnswer> {
+    override fun read(buf: ByteBuffer): TranPersonalAnswer {
+        return TranPersonalAnswer(
+            FfiConverterString.read(buf),
+            FfiConverterTypeTranAnswerKind.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranPersonalAnswer) = (
+            FfiConverterString.allocationSize(value.`id`) +
+            FfiConverterTypeTranAnswerKind.allocationSize(value.`kind`) +
+            FfiConverterString.allocationSize(value.`labelKey`)
+    )
+
+    override fun write(value: TranPersonalAnswer, buf: ByteBuffer) {
+            FfiConverterString.write(value.`id`, buf)
+            FfiConverterTypeTranAnswerKind.write(value.`kind`, buf)
+            FfiConverterString.write(value.`labelKey`, buf)
+    }
+}
+
+
+
+/**
+ * One optional question about the person (REQ-PRV-008).
+ */
+data class TranPersonalQuestion (
+    /**
+     * Stable snake-case id (`gender`).
+     */
+    var `id`: kotlin.String
+    , 
+    /**
+     * Snake-case name of the feature that needs the answer.
+     */
+    var `feature`: kotlin.String
+    , 
+    /**
+     * Locale key of the question's label.
+     */
+    var `labelKey`: kotlin.String
+    , 
+    /**
+     * The answers, in display order; always including "Prefer not to say".
+     */
+    var `answers`: List<TranPersonalAnswer>
+    , 
+    /**
+     * The requirement id that makes an answer necessary; `None` when it can be skipped.
+     */
+    var `requiredBy`: kotlin.String?
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranPersonalQuestion: FfiConverterRustBuffer<TranPersonalQuestion> {
+    override fun read(buf: ByteBuffer): TranPersonalQuestion {
+        return TranPersonalQuestion(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterSequenceTypeTranPersonalAnswer.read(buf),
+            FfiConverterOptionalString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranPersonalQuestion) = (
+            FfiConverterString.allocationSize(value.`id`) +
+            FfiConverterString.allocationSize(value.`feature`) +
+            FfiConverterString.allocationSize(value.`labelKey`) +
+            FfiConverterSequenceTypeTranPersonalAnswer.allocationSize(value.`answers`) +
+            FfiConverterOptionalString.allocationSize(value.`requiredBy`)
+    )
+
+    override fun write(value: TranPersonalQuestion, buf: ByteBuffer) {
+            FfiConverterString.write(value.`id`, buf)
+            FfiConverterString.write(value.`feature`, buf)
+            FfiConverterString.write(value.`labelKey`, buf)
+            FfiConverterSequenceTypeTranPersonalAnswer.write(value.`answers`, buf)
+            FfiConverterOptionalString.write(value.`requiredBy`, buf)
+    }
+}
+
+
+
+/**
  * How a connectivity banner recovers by itself (REQ-ERR-013).
  */
 data class TranRecoveryPolicy (
@@ -1890,6 +2155,53 @@ public object FfiConverterTypeVoteEligibilityOfflineResult: FfiConverterRustBuff
 
 
 /**
+ * What an answer to a personal question means.
+ */
+
+enum class TranAnswerKind {
+    
+    /**
+     * One of the listed choices.
+     */
+    CHOICE,
+    /**
+     * The person describes it in their own words.
+     */
+    SELF_DESCRIBED,
+    /**
+     * The person declines; store it as no answer.
+     */
+    PREFER_NOT_TO_SAY;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranAnswerKind: FfiConverterRustBuffer<TranAnswerKind> {
+    override fun read(buf: ByteBuffer) = try {
+        TranAnswerKind.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TranAnswerKind) = 4UL
+
+    override fun write(value: TranAnswerKind, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
  * The screen the navigation director routes to.
  */
 
@@ -2146,6 +2458,194 @@ public object FfiConverterTypeTranLogLevel: FfiConverterRustBuffer<TranLogLevel>
     override fun allocationSize(value: TranLogLevel) = 4UL
 
     override fun write(value: TranLogLevel, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
+ * What the feature does without the permission; never an error.
+ */
+
+enum class TranPermissionFallback {
+    
+    /**
+     * The value stays entered by hand (the country stays hand-picked).
+     */
+    KEEP_MANUAL_ENTRY;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranPermissionFallback: FfiConverterRustBuffer<TranPermissionFallback> {
+    override fun read(buf: ByteBuffer) = try {
+        TranPermissionFallback.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TranPermissionFallback) = 4UL
+
+    override fun write(value: TranPermissionFallback, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
+ * A permission the apps may ask for.
+ */
+
+enum class TranPermissionId {
+    
+    /**
+     * Approximate location while in use, read once to fill the country (REQ-PRV-006).
+     */
+    LOCATION_APPROXIMATE;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranPermissionId: FfiConverterRustBuffer<TranPermissionId> {
+    override fun read(buf: ByteBuffer) = try {
+        TranPermissionId.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TranPermissionId) = 4UL
+
+    override fun write(value: TranPermissionId, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
+ * What the platform reports for a permission, mapped by the app's gateway.
+ */
+
+enum class TranPermissionStatus {
+    
+    /**
+     * The system prompt has not been shown.
+     */
+    NOT_DETERMINED,
+    /**
+     * Granted as asked.
+     */
+    GRANTED,
+    /**
+     * Granted with reduced accuracy (iOS approximate, Android coarse).
+     */
+    GRANTED_APPROXIMATE,
+    /**
+     * Refused, but the system can still ask again (Android before the second refusal).
+     */
+    DENIED,
+    /**
+     * Refused for good: only Settings can change it.
+     */
+    DENIED_PERMANENTLY,
+    /**
+     * The person cannot grant it (parental controls, device management).
+     */
+    RESTRICTED;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranPermissionStatus: FfiConverterRustBuffer<TranPermissionStatus> {
+    override fun read(buf: ByteBuffer) = try {
+        TranPermissionStatus.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TranPermissionStatus) = 4UL
+
+    override fun write(value: TranPermissionStatus, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
+ * What the app does next after a tap on the control.
+ */
+
+enum class TranPermissionStep {
+    
+    /**
+     * Show the app's own explanation with "Continue" and "Not now".
+     */
+    SHOW_PRIMING,
+    /**
+     * Show the system prompt (only after "Continue").
+     */
+    REQUEST_SYSTEM,
+    /**
+     * Go on with the feature.
+     */
+    USE_FEATURE,
+    /**
+     * Show the inline Settings note once; never ask again.
+     */
+    OFFER_SETTINGS;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranPermissionStep: FfiConverterRustBuffer<TranPermissionStep> {
+    override fun read(buf: ByteBuffer) = try {
+        TranPermissionStep.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TranPermissionStep) = 4UL
+
+    override fun write(value: TranPermissionStep, buf: ByteBuffer) {
         buf.putInt(value.ordinal + 1)
     }
 }
@@ -3153,6 +3653,34 @@ public object FfiConverterOptionalTypeTranUserRole: FfiConverterRustBuffer<TranU
 /**
  * @suppress
  */
+public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.String>> {
+    override fun read(buf: ByteBuffer): List<kotlin.String> {
+        val len = buf.getInt()
+        return List<kotlin.String>(len) {
+            FfiConverterString.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<kotlin.String>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterString.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<kotlin.String>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterString.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterSequenceTypeTranCountryVotingAge: FfiConverterRustBuffer<List<TranCountryVotingAge>> {
     override fun read(buf: ByteBuffer): List<TranCountryVotingAge> {
         val len = buf.getInt()
@@ -3199,6 +3727,90 @@ public object FfiConverterSequenceTypeTranErrorSpec: FfiConverterRustBuffer<List
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeTranErrorSpec.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeTranPermission: FfiConverterRustBuffer<List<TranPermission>> {
+    override fun read(buf: ByteBuffer): List<TranPermission> {
+        val len = buf.getInt()
+        return List<TranPermission>(len) {
+            FfiConverterTypeTranPermission.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<TranPermission>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeTranPermission.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<TranPermission>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeTranPermission.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeTranPersonalAnswer: FfiConverterRustBuffer<List<TranPersonalAnswer>> {
+    override fun read(buf: ByteBuffer): List<TranPersonalAnswer> {
+        val len = buf.getInt()
+        return List<TranPersonalAnswer>(len) {
+            FfiConverterTypeTranPersonalAnswer.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<TranPersonalAnswer>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeTranPersonalAnswer.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<TranPersonalAnswer>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeTranPersonalAnswer.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeTranPersonalQuestion: FfiConverterRustBuffer<List<TranPersonalQuestion>> {
+    override fun read(buf: ByteBuffer): List<TranPersonalQuestion> {
+        val len = buf.getInt()
+        return List<TranPersonalQuestion>(len) {
+            FfiConverterTypeTranPersonalQuestion.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<TranPersonalQuestion>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeTranPersonalQuestion.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<TranPersonalQuestion>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeTranPersonalQuestion.write(it, buf)
         }
     }
 }
@@ -3651,6 +4263,91 @@ public object FfiConverterSequenceTypeTranToastKey: FfiConverterRustBuffer<List<
     
         
         FfiConverterTypeTranVerdictSource.lower(`source`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Every permission the apps may ask for (REQ-PRV-001).
+         *
+         * # Returns
+         *
+         * The catalogue from `rust-core`, in a stable order; pinned by the `permissions` section of
+         * `fixtures/permissions.json`.
+         */ fun `permissionCatalogue`(): List<TranPermission> {
+            return FfiConverterSequenceTypeTranPermission.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_permission_catalogue(
+    
+        _status)
+}
+    )
+    }
+    
+
+        /**
+         * One permission's catalogue entry.
+         *
+         * # Arguments
+         *
+         * * `id` — the permission.
+         *
+         * # Returns
+         *
+         * Its copy keys, fallback and declarations.
+         */ fun `permissionEntry`(`id`: TranPermissionId): TranPermission {
+            return FfiConverterTypeTranPermission.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_permission_entry(
+    
+        
+        FfiConverterTypeTranPermissionId.lower(`id`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * What to do after a tap on the control that needs a permission (REQ-PRV-002).
+         *
+         * # Arguments
+         *
+         * * `status` — what the platform reports now, mapped by the gateway.
+         * * `primed` — whether the person has just chosen "Continue" on the priming.
+         *
+         * # Returns
+         *
+         * [`TranPermissionStep::ShowPriming`] before a first ask (or again after a refusal Android can
+         * still ask about), [`TranPermissionStep::RequestSystem`] only after priming,
+         * [`TranPermissionStep::UseFeature`] when granted, and [`TranPermissionStep::OfferSettings`]
+         * after a permanent refusal or a restriction.
+         */ fun `permissionStep`(`status`: TranPermissionStatus, `primed`: kotlin.Boolean): TranPermissionStep {
+            return FfiConverterTypeTranPermissionStep.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_permission_step(
+    
+        
+        FfiConverterTypeTranPermissionStatus.lower(`status`),
+        FfiConverterBoolean.lower(`primed`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Every personal question the apps may ask (REQ-PRV-008).
+         *
+         * # Returns
+         *
+         * The catalogue from `rust-core`; every question offers "Prefer not to say" and is skippable
+         * unless `required_by` names a requirement.
+         */ fun `personalQuestions`(): List<TranPersonalQuestion> {
+            return FfiConverterSequenceTypeTranPersonalQuestion.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_personal_questions(
+    
+        _status)
 }
     )
     }

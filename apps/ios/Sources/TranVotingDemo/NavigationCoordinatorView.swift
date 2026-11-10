@@ -79,9 +79,16 @@ struct NavigationCoordinatorView: View {
                             session = .authenticated(role: selectedRole)
                         }
                         // Signed in on the device at once; the API session follows when the
-                        // API answers. A failure is logged by the client and changes nothing here.
+                        // API answers. A failure changes nothing here, so it is only logged,
+                        // once, by this handler (REQ-ROB-007).
                         let client = sessionClient
-                        Task { try? await client.signIn(role: selectedRole) }
+                        Task {
+                            do {
+                                try await client.signIn(role: selectedRole)
+                            } catch {
+                                feedback.log(TranRequestFailure.classify(error))
+                            }
+                        }
                     }
                 case .voterDashboard:
                     VotingHomeView(theme: $theme, onSignOut: signOut, onDeleteAccount: deleteAccount)

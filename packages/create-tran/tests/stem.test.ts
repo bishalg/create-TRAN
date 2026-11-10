@@ -64,6 +64,19 @@ describe('stem rewrite', () => {
     expect(out).toBe('apps/android/app/src/main/kotlin/com/acme/voting/generated');
   });
 
+  // Verifies: REQ-MOB-004 — Gradle and fastlane keep reading one variable with one placeholder.
+  it('rewrites the application id variable and its placeholder together', () => {
+    const gradle =
+      'applicationId = System.getenv("TRAN_ANDROID_APPLICATION_ID") ?: "com.tran.voting"';
+    const appfile = 'package_name(ENV.fetch("TRAN_ANDROID_APPLICATION_ID", "com.tran.voting"))';
+    expect(applyStemRewrite(gradle, 'acme')).toBe(
+      'applicationId = System.getenv("ACME_ANDROID_APPLICATION_ID") ?: "com.acme.voting"'
+    );
+    expect(applyStemRewrite(appfile, 'acme')).toBe(
+      'package_name(ENV.fetch("ACME_ANDROID_APPLICATION_ID", "com.acme.voting"))'
+    );
+  });
+
   it('is a no-op for the default stem', () => {
     const sample = '@tran/core and TranEngine';
     expect(applyStemRewrite(sample, 'tran')).toBe(sample);

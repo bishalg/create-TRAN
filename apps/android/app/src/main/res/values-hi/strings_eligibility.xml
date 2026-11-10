@@ -11,6 +11,11 @@
     <string name="eligibility_country_placeholder">दो अक्षर</string>
     <string name="eligibility_country_server_hint">सर्वर को X-Debug-Country हेडर के रूप में भेजा जाता है (केवल विकास के लिए)।</string>
     <string name="eligibility_form_label">पात्रता जाँच</string>
+    <string name="eligibility_location_priming_body">TRAN सही मतदान आयु चुनने के लिए आपका अनुमानित स्थान एक बार पढ़कर आपका देश पता करता है। आपका स्थान न रखा जाता है, न कहीं भेजा जाता है। यह वैकल्पिक है: आप देश खुद भी लिख सकते हैं।</string>
+    <string name="eligibility_location_priming_title">अपने स्थान से देश भरें?</string>
+    <string name="eligibility_location_purpose">TRAN आपका देश पता करने और सही मतदान आयु चुनने के लिए आपके अनुमानित स्थान का एक बार उपयोग करता है। यह वैकल्पिक है; आप देश खुद लिख सकते हैं।</string>
+    <string name="eligibility_location_settings_note">TRAN के लिए स्थान बंद है। अपना देश लिखें, या सेटिंग्स में स्थान चालू करें।</string>
+    <string name="eligibility_location_use">मेरा स्थान इस्तेमाल करें</string>
     <string name="eligibility_mode_device">इसी डिवाइस पर</string>
     <string name="eligibility_mode_device_hint">तुरंत, ऑफ़लाइन भी चलता है</string>
     <string name="eligibility_mode_legend">जाँच कहाँ चलानी है?</string>

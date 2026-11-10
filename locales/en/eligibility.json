@@ -22,6 +22,13 @@
     "hint": "Two letters, like US, NP or BR.",
     "serverHint": "Sent to the server as the X-Debug-Country header (development only)."
   },
+  "location": {
+    "use": "Use my location",
+    "primingTitle": "Fill in your country from your location?",
+    "primingBody": "TRAN can read your approximate location once to find your country, so it picks the right voting age. Your location is not kept or sent anywhere. This is optional: you can type the country yourself.",
+    "purpose": "TRAN uses your approximate location once to find your country and pick the right voting age. It is optional; you can type the country instead.",
+    "settingsNote": "Location is off for TRAN. Type your country, or turn location on in Settings."
+  },
   "submit": "Check eligibility",
   "submitting": "Checking…",
   "checkOffline": "Check offline",

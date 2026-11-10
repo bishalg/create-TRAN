@@ -35,7 +35,9 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.tran.voting"
+        // REQ-MOB-004: the same variable and placeholder default as fastlane/Appfile, so a fork that
+        // sets only the variable builds and uploads one id; the scaffolder rewrites the placeholder.
+        applicationId = System.getenv("TRAN_ANDROID_APPLICATION_ID") ?: "com.tran.voting"
         minSdk = 26
         targetSdk = 36
         versionCode = 1000

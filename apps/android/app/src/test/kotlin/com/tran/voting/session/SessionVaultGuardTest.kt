@@ -1,4 +1,4 @@
-// Verifies: REQ-SEC-017 REQ-SEC-020
+// Verifies: REQ-SEC-017 REQ-SEC-020 REQ-PRV-006
 package com.tran.voting.session
 
 import java.io.File
@@ -15,6 +15,13 @@ class SessionVaultGuardTest {
     private val repoRoot = File(System.getenv("REPO_ROOT") ?: error("REPO_ROOT not set (Gradle test task should provide it)"))
     private val app = File(repoRoot, "apps/android/app")
     private val vaultFile = "src/main/kotlin/com/tran/voting/session/KeystoreSessionVault.kt"
+
+    /**
+     * The one other writer: the permission gateway remembers whether it has asked (spec 026), which
+     * Android needs to tell "never asked" from "refused for good". Not a credential, so plain
+     * preferences; [thePermissionGatewayStoresOnlyWhetherItAsked] keeps it to that.
+     */
+    private val gatewayFile = "src/main/kotlin/com/tran/voting/permissions/SystemPermissionGateway.kt"
 
     /** Hand-written main sources (generated bindings and tokens are exempt). */
     private val sources: Map<String, String> =
@@ -36,7 +43,16 @@ class SessionVaultGuardTest {
     fun onlyTheKeystoreVaultTouchesStorage() {
         assertTrue("the guard sees the sources", sources.size > 5)
         val writers = sources.filterValues { storage.containsMatchIn(it) }.keys
-        assertEquals(setOf(vaultFile), writers)
+        assertEquals(setOf(vaultFile, gatewayFile), writers)
+    }
+
+    @Test
+    fun thePermissionGatewayStoresOnlyWhetherItAsked() {
+        val gateway = sources.getValue(gatewayFile)
+        val puts = Regex("""\.put\w*\(""").findAll(gateway).map { it.value }.toList()
+        assertEquals(listOf(".putBoolean("), puts)
+        assertTrue(gateway.contains("putBoolean(askedKey(id), true)"))
+        assertTrue(gateway.contains("Context.MODE_PRIVATE"))
     }
 
     @Test

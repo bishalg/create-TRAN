@@ -58,6 +58,7 @@ data class ScreenCatalogue(val screens: List<ContractScreen>) {
         private fun step(json: JSONObject) = ContractStep(
             verb = json.getString("verb"),
             value = json.text("value"),
+            permission = json.text("permission"),
             id = json.text("id"),
             text = json.text("text"),
             option = json.text("option"),
@@ -84,6 +85,8 @@ data class ContractScenario(
 data class ContractStep(
     val verb: String,
     val value: String?,
+    // The `permission` given's catalogue id (`location_approximate`); `value` is its status.
+    val permission: String?,
     val id: String?,
     val text: String?,
     val option: String?,
@@ -92,7 +95,7 @@ data class ContractStep(
     val n: Int?,
 ) {
     /** How a failure names the step: the verb and its operands, as the Gherkin quotes them. */
-    val title: String get() = listOfNotNull(verb, id, text, option, key, value, n?.toString()).joinToString(" ")
+    val title: String get() = listOfNotNull(verb, permission, id, text, option, key, value, n?.toString()).joinToString(" ")
 }
 
 /**

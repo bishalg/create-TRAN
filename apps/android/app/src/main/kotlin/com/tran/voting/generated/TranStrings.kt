@@ -80,15 +80,31 @@ object TranStrings {
         @StringRes
         val cancel: Int = R.string.common_cancel // common.cancel
         @StringRes
+        val continueAction: Int = R.string.common_continue_action // common.continueAction
+        @StringRes
         val deleteAccount: Int = R.string.common_delete_account // common.deleteAccount
         @StringRes
         val dismiss: Int = R.string.common_dismiss // common.dismiss
+        @StringRes
+        val genderLabel: Int = R.string.common_gender_label // common.gender.label
+        @StringRes
+        val genderMan: Int = R.string.common_gender_man // common.gender.man
+        @StringRes
+        val genderNonBinary: Int = R.string.common_gender_non_binary // common.gender.nonBinary
+        @StringRes
+        val genderSelfDescribed: Int = R.string.common_gender_self_described // common.gender.selfDescribed
+        @StringRes
+        val genderWoman: Int = R.string.common_gender_woman // common.gender.woman
         @StringRes
         val loading: Int = R.string.common_loading // common.loading
         @StringRes
         val notNow: Int = R.string.common_not_now // common.notNow
         @StringRes
         val notifications: Int = R.string.common_notifications // common.notifications
+        @StringRes
+        val openSettings: Int = R.string.common_open_settings // common.openSettings
+        @StringRes
+        val preferNotToSay: Int = R.string.common_prefer_not_to_say // common.preferNotToSay
         @StringRes
         val reload: Int = R.string.common_reload // common.reload
         @StringRes
@@ -122,6 +138,16 @@ object TranStrings {
         val countryServerHint: Int = R.string.eligibility_country_server_hint // eligibility.country.serverHint
         @StringRes
         val formLabel: Int = R.string.eligibility_form_label // eligibility.form.label
+        @StringRes
+        val locationPrimingBody: Int = R.string.eligibility_location_priming_body // eligibility.location.primingBody
+        @StringRes
+        val locationPrimingTitle: Int = R.string.eligibility_location_priming_title // eligibility.location.primingTitle
+        @StringRes
+        val locationPurpose: Int = R.string.eligibility_location_purpose // eligibility.location.purpose
+        @StringRes
+        val locationSettingsNote: Int = R.string.eligibility_location_settings_note // eligibility.location.settingsNote
+        @StringRes
+        val locationUse: Int = R.string.eligibility_location_use // eligibility.location.use
         @StringRes
         val modeDevice: Int = R.string.eligibility_mode_device // eligibility.mode.device
         @StringRes

@@ -19,6 +19,7 @@ pub mod generate;
 pub mod kotlin;
 pub mod locales;
 pub mod names;
+pub mod privacy_ts;
 pub mod release_notes;
 pub mod rules_ts;
 pub mod scale;

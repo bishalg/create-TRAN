@@ -3,6 +3,7 @@
 // Verifies: REQ-A11Y-003 REQ-A11Y-007 REQ-ERR-006 REQ-ERR-007 REQ-LOAD-003 REQ-LOAD-005 REQ-NAT-001 REQ-NAT-002
 // Verifies: REQ-NAT-003 REQ-NAT-004 REQ-NAT-007 REQ-NAT-011 REQ-NAT-013 REQ-NAV-001 REQ-NAV-002 REQ-NAV-003
 // Verifies: REQ-NAV-004 REQ-NAV-005 REQ-WEB-001 REQ-WEB-002 REQ-WEB-004 REQ-WEB-014
+// Verifies: REQ-PRV-003 REQ-PRV-004 REQ-PRV-007
 import XCTest
 
 /// The iOS interpreter of the screen contract (ADR-0038): one test per scenario of `screens.json`,
@@ -48,6 +49,8 @@ final class ScreenContractUITests: XCTestCase {
     private var locale = "en"
     private var theme: String?
     private var largestText = false
+    /// `permission=status` pairs the `permission` given stages in the app's fake gateway.
+    private var permissions: [String] = []
 
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -114,6 +117,12 @@ final class ScreenContractUITests: XCTestCase {
         case "locale": locale = step.value ?? locale
         case "theme": theme = step.value
         case "largest_text_scale": largestText = true
+        case "permission":
+            guard let permission = step.permission, let status = step.value else {
+                XCTFail("\(scenario.name) › \(step.title): a permission given names a permission and a status")
+                return
+            }
+            permissions.append("\(permission)=\(status)")
         default: XCTFail("\(scenario.name) › \(step.title): unknown given")
         }
     }
@@ -125,6 +134,9 @@ final class ScreenContractUITests: XCTestCase {
         launched = true
         app = XCUIApplication()
         app.launchArguments += ["-TranSession", session]
+        // The debug app always uses its fake permission gateway under a preset, so no real system
+        // prompt appears; this stages the statuses the scenario names (`TranPermissionLaunch`).
+        if !permissions.isEmpty { app.launchArguments += ["-TranPermission", permissions.joined(separator: ",")] }
         // The refused port fails at once; the debug ATS exception still allows loopback.
         if apiUnreachable { app.launchArguments += ["-TranApiBaseUrl", "http://127.0.0.1:1"] }
         app.launchArguments += ["-AppleLanguages", "(\(locale))", "-AppleLocale", locale]

@@ -22,6 +22,14 @@ import com.tran.voting.api.TranRequestFailure
 import com.tran.voting.generated.TranBrandTokens
 import com.tran.voting.generated.TranTheme
 import com.tran.voting.generated.tranColorScheme
+import com.tran.voting.permissions.CountryGeocoder
+import com.tran.voting.permissions.EXTRA_PERMISSION
+import com.tran.voting.permissions.NoCountryGeocoder
+import com.tran.voting.permissions.PermissionGateway
+import com.tran.voting.permissions.StagedPermissionGateway
+import com.tran.voting.permissions.SystemCountryGeocoder
+import com.tran.voting.permissions.SystemPermissionGateway
+import com.tran.voting.permissions.permissionGatewayFor
 import com.tran.voting.ui.AuditorScreen
 import com.tran.voting.ui.AuthSession
 import com.tran.voting.ui.AuthWelcomeScreen
@@ -61,10 +69,19 @@ class MainActivity : ComponentActivity() {
         // REQ-SEC-023: a debug screenshot run may switch the shield off; a release build ignores the flag.
         val shieldOffRequested = intent?.getBooleanExtra(EXTRA_DISABLE_PRIVACY_SHIELD, false) == true
         val shield = ActivityPrivacyShieldTarget(this)
+        // Spec 026: a debug build may stage a permission's status (`--es tran.permission
+        // location_approximate=denied_permanently`); a release build always asks the system. The
+        // system gateway registers its result launcher here, before the activity starts.
+        val permissions = permissionGatewayFor(BuildConfig.DEBUG, intent?.getStringExtra(EXTRA_PERMISSION)) {
+            SystemPermissionGateway(this)
+        }
+        val geocoder = SystemCountryGeocoder(this)
         setContent {
             NavigationCoordinator(
                 initialSession = initialSession,
                 sessions = sessions,
+                permissions = permissions,
+                geocoder = geocoder,
                 onSignedInChange = { signedIn ->
                     val sdk = Build.VERSION.SDK_INT
                     applyPrivacyMeasure(shield, privacyMeasure(signedIn, sdk, BuildConfig.DEBUG, shieldOffRequested), sdk)
@@ -91,6 +108,10 @@ fun NavigationCoordinator(
     sessions: SessionClient? = null,
     // Whether a signed-in screen is on display, for the recents privacy shield (REQ-SEC-023).
     onSignedInChange: (Boolean) -> Unit = {},
+    // "Use my location" (spec 026). Tests and the screen contract's interpreter stage it; only the
+    // activity passes the system's, so no test can raise a system dialog.
+    permissions: PermissionGateway = remember { StagedPermissionGateway() },
+    geocoder: CountryGeocoder = NoCountryGeocoder,
 ) {
     var session by remember { mutableStateOf(initialSession) }
     val scope = rememberCoroutineScope()
@@ -198,6 +219,8 @@ fun NavigationCoordinator(
                         onDeleteAccount = deleteAccount,
                         deleting = deleting,
                         accountFailure = accountFailure,
+                        permissions = permissions,
+                        geocoder = geocoder,
                     )
                 }
                 TranAppDestination.AUDITOR_DASHBOARD -> {

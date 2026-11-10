@@ -8,9 +8,13 @@ pub mod error;
 pub mod feedback;
 pub mod models;
 pub mod navigation;
+pub mod permissions;
+pub mod personal_questions;
 pub mod screens;
 pub mod services;
 pub mod session;
+#[cfg(test)]
+mod test_support;
 pub mod tokens;
 pub mod validation;
 pub mod voting;

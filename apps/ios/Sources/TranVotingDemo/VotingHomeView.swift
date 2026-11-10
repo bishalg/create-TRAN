@@ -18,6 +18,8 @@ struct VotingHomeView: View {
     @State private var hasVerdict = false
     /// Re-asks the server while the banner is up (REQ-ERR-013).
     @State private var recovery = RecoveryProbe()
+    /// "Use my location", asked only on a tap and after the priming (spec 026).
+    @State private var location = TranLocationPermission(gateway: TranPermissionLaunch.shared)
     @Environment(TranFeedback.self) private var feedback
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -57,6 +59,7 @@ struct VotingHomeView: View {
                                 identifier: ScreenContract.Eligibility.countryField,
                                 autocapitalization: .characters
                             )
+                            UseLocationControl(location: location, countryCode: $countryCode)
                         }
 
                         TranButton(label: L10n.Eligibility.checkOffline, fullWidth: true) {

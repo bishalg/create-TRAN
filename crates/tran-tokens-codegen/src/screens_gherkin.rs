@@ -13,6 +13,7 @@
 //! | `theme`              | `Given the theme is "dark"`                                   |
 //! | `largest_text_scale` | `Given the largest text scale`                                |
 //! | `reduced_motion`     | `Given reduced motion`                                        |
+//! | `permission`         | `Given the permission "location_approximate" is "denied_permanently"` |
 //! | `tap`                | `When I tap "check-button"`                                   |
 //! | `type`               | `When I type "20" into "age-field"`                           |
 //! | `select`             | `When I select "dark" in "theme-picker"`                      |
@@ -27,9 +28,12 @@
 //! | `count`              | `Then "sign-out-button" count is 1`                           |
 //!
 //! `with …` is left out when a message has no arguments. Second and later lines of a group start
-//! with `And`.
+//! with `And`. The feature holds only the scenarios the web runs (`scenario_platforms`): one about
+//! a native-only element (the location control, REQ-PRV-007) is in `screens.json` alone.
 
-use rust_core::screens::{Arg, Given, Screen, SessionKind, Then, When};
+use rust_core::screens::{
+    scenario_platforms, Arg, Given, Platform, Screen, SessionKind, Then, When,
+};
 use std::collections::BTreeSet;
 
 /// `"value"`, with `\` and `"` escaped so a value can never end the quote early.
@@ -56,6 +60,11 @@ pub fn given_phrase(given: Given) -> String {
         Given::Theme(theme) => format!("the theme is {}", quote(theme)),
         Given::LargestTextScale => "the largest text scale".into(),
         Given::ReducedMotion => "reduced motion".into(),
+        Given::Permission { id, status } => format!(
+            "the permission {} is {}",
+            quote(id.as_str()),
+            quote(status.as_str())
+        ),
     }
 }
 
@@ -106,8 +115,12 @@ fn steps(out: &mut String, keyword: &str, lines: impl IntoIterator<Item = String
 }
 
 pub fn render_screen_feature(screen: &Screen) -> String {
-    let cited: BTreeSet<&str> = screen
+    let on_web: Vec<_> = screen
         .scenarios
+        .iter()
+        .filter(|scenario| scenario_platforms(scenario).contains(&Platform::Web))
+        .collect();
+    let cited: BTreeSet<&str> = on_web
         .iter()
         .flat_map(|scenario| scenario.verifies.iter().copied())
         .collect();
@@ -119,7 +132,7 @@ Feature: {}\n",
         cited.into_iter().collect::<Vec<_>>().join(" "),
         screen.intent,
     );
-    for scenario in screen.scenarios {
+    for scenario in on_web {
         let tags: Vec<String> = scenario
             .verifies
             .iter()
@@ -152,6 +165,7 @@ Feature: {}\n",
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rust_core::permissions::{PermissionId, PermissionStatus};
     use rust_core::screens::{Scenario, SCREENS};
 
     #[test]
@@ -188,6 +202,10 @@ mod tests {
             Given::Theme("dark"),
             Given::LargestTextScale,
             Given::ReducedMotion,
+            Given::Permission {
+                id: PermissionId::LocationApproximate,
+                status: PermissionStatus::DeniedPermanently,
+            },
         ]
         .map(given_phrase)
         .to_vec();
@@ -200,6 +218,7 @@ mod tests {
                 "the theme is \"dark\"",
                 "the largest text scale",
                 "reduced motion",
+                "the permission \"location_approximate\" is \"denied_permanently\"",
             ]
         );
         let when: Vec<String> = [
@@ -286,8 +305,8 @@ mod tests {
             "Two steps of each kind",
             &["REQ-NAV-003", "REQ-NAV-002"],
             &[Given::ApiUnreachable, Given::ReducedMotion],
-            &[When::Tap("a"), When::GoOffline],
-            &[Then::Exists("a"), Then::Missing("b")],
+            &[When::Tap("check-button"), When::GoOffline],
+            &[Then::Exists("check-button"), Then::Missing("toast")],
         )];
         let screen = Screen {
             scenarios: SCENARIOS,
@@ -303,22 +322,35 @@ mod tests {
             "  Scenario: Two steps of each kind",
             "    Given the API is unreachable",
             "    And reduced motion",
-            "    When I tap \"a\"",
+            "    When I tap \"check-button\"",
             "    And I go offline",
-            "    Then \"a\" exists",
-            "    And \"b\" is missing",
+            "    Then \"check-button\" exists",
+            "    And \"toast\" is missing",
             "",
         ];
         assert_eq!(render_screen_feature(&screen), expected.join("\n"));
     }
 
+    // Verifies: REQ-SCR-005 REQ-PRV-007 — every scenario the web runs, and none it cannot.
     #[test]
-    fn every_screen_renders_every_scenario() {
+    fn every_screen_renders_every_web_scenario() {
+        let mut left_out = Vec::new();
         for screen in &SCREENS {
             let feature = render_screen_feature(screen);
             for scenario in screen.scenarios {
-                assert!(feature.contains(&format!("  Scenario: {}\n", scenario.name)));
+                let rendered = feature.contains(&format!("  Scenario: {}\n", scenario.name));
+                let on_web = scenario_platforms(scenario).contains(&Platform::Web);
+                assert_eq!(rendered, on_web, "{}", scenario.name);
+                if !on_web {
+                    left_out.push(scenario.name);
+                }
             }
         }
+        assert_eq!(left_out.len(), 2, "{left_out:?}");
+        assert!(!SCREENS
+            .iter()
+            .map(render_screen_feature)
+            .any(|feature| feature.contains("use-location-button")
+                || feature.contains("the permission ")));
     }
 }

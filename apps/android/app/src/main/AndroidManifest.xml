@@ -4,6 +4,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Hear when the network returns, so the offline banner can recover at once (REQ-ERR-013). -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- REQ-PRV-006: "Use my location" reads one approximate fix, while in use, to fill the country.
+         Coarse only: never fine or background location (spec 026, ADR-0043). -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- REQ-SEC-020: the session vault never leaves the device. No backup at all, and on API 31+, where
          device-to-device transfer ignores allowBackup, explicit rules exclude the vault too; restored
          ciphertext would be useless anyway, since its Keystore key is not backed up. -->

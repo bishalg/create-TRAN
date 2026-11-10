@@ -29,6 +29,10 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSLocationDefaultAccuracyReduced</key>
+	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>TRAN uses your approximate location once to find your country and pick the right voting age. It is optional; you can type the country instead.</string>
 	<key>TranApiBaseUrl</key>
 	<string>$(TRAN_API_BASE_URL)</string>
 	<key>UILaunchScreen</key>

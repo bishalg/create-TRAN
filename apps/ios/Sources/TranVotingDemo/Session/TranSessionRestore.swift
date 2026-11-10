@@ -11,8 +11,9 @@ enum TranSessionRestore {
         _ client: TranSessionClient, feedback: TranFeedback
     ) async -> TranSessionClient.Validation {
         let outcome = await client.validate()
-        // The client logged the request that failed; present only, so it is one event (REQ-ROB-007).
-        if outcome == .signedOut { feedback.present(TranSessionClient.expired) }
+        // The client logs what it keeps quietly; a sign-out is this caller's to log and present:
+        // one event (REQ-ROB-007).
+        if outcome == .signedOut { feedback.report(TranSessionClient.expired) }
         return outcome
     }
 }

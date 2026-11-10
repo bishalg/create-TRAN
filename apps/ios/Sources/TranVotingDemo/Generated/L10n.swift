@@ -49,11 +49,19 @@ enum L10n {
         static var appName: String { String(localized: "common.appName", table: "Common") }
         static var brand: String { String(localized: "common.brand", table: "Common") }
         static var cancel: String { String(localized: "common.cancel", table: "Common") }
+        static var continueAction: String { String(localized: "common.continueAction", table: "Common") }
         static var deleteAccount: String { String(localized: "common.deleteAccount", table: "Common") }
         static var dismiss: String { String(localized: "common.dismiss", table: "Common") }
+        static var genderLabel: String { String(localized: "common.gender.label", table: "Common") }
+        static var genderMan: String { String(localized: "common.gender.man", table: "Common") }
+        static var genderNonBinary: String { String(localized: "common.gender.nonBinary", table: "Common") }
+        static var genderSelfDescribed: String { String(localized: "common.gender.selfDescribed", table: "Common") }
+        static var genderWoman: String { String(localized: "common.gender.woman", table: "Common") }
         static var loading: String { String(localized: "common.loading", table: "Common") }
         static var notNow: String { String(localized: "common.notNow", table: "Common") }
         static var notifications: String { String(localized: "common.notifications", table: "Common") }
+        static var openSettings: String { String(localized: "common.openSettings", table: "Common") }
+        static var preferNotToSay: String { String(localized: "common.preferNotToSay", table: "Common") }
         static var reload: String { String(localized: "common.reload", table: "Common") }
         static var roleCitizenVoter: String { String(localized: "common.role.citizenVoter", table: "Common") }
         static var roleElectionAuditor: String { String(localized: "common.role.electionAuditor", table: "Common") }
@@ -72,6 +80,11 @@ enum L10n {
         static var countryPlaceholder: String { String(localized: "eligibility.country.placeholder", table: "Eligibility") }
         static var countryServerHint: String { String(localized: "eligibility.country.serverHint", table: "Eligibility") }
         static var formLabel: String { String(localized: "eligibility.form.label", table: "Eligibility") }
+        static var locationPrimingBody: String { String(localized: "eligibility.location.primingBody", table: "Eligibility") }
+        static var locationPrimingTitle: String { String(localized: "eligibility.location.primingTitle", table: "Eligibility") }
+        static var locationPurpose: String { String(localized: "eligibility.location.purpose", table: "Eligibility") }
+        static var locationSettingsNote: String { String(localized: "eligibility.location.settingsNote", table: "Eligibility") }
+        static var locationUse: String { String(localized: "eligibility.location.use", table: "Eligibility") }
         static var modeDevice: String { String(localized: "eligibility.mode.device", table: "Eligibility") }
         static var modeDeviceHint: String { String(localized: "eligibility.mode.deviceHint", table: "Eligibility") }
         static var modeLegend: String { String(localized: "eligibility.mode.legend", table: "Eligibility") }

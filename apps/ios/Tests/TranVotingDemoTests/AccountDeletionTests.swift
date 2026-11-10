@@ -102,7 +102,7 @@ final class AccountDeletionTests: XCTestCase {
 
         XCTAssertNil(vault.load(), "the recovery table ended the session")
         XCTAssertEqual(failures, [TranSessionClient.expired])
-        XCTAssertEqual(events.entries.map(\.status), [401], "the DELETE's 401, once; the dialog adds none")
+        XCTAssertEqual(events.entries, [TranSessionClient.expired], "the DELETE's 401, once, reported by its handler")
         XCTAssertEqual(
             feedback.confirmation?.title, TranFeedback.message(errorSpec(code: .authSessionExpired).messageKey))
     }

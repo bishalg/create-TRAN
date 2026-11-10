@@ -6,8 +6,8 @@ use crate::files::read_file;
 use crate::files::GeneratedFile;
 use crate::kotlin::{render_kotlin_strings, render_kotlin_tokens};
 use crate::locales::{
-    feedback_message_keys, load_locales, screen_message_keys, verify_generated_names,
-    verify_no_duplicate_values, verify_theme_labels,
+    feedback_message_keys, load_locales, privacy_message_keys, screen_message_keys,
+    verify_generated_names, verify_no_duplicate_values, verify_theme_labels,
 };
 use crate::names::pascal_case;
 use crate::release_notes::current_release;
@@ -17,8 +17,8 @@ use crate::screens_json::render_screens_json;
 use crate::screens_native::{render_screen_contract_kotlin, render_screen_contract_swift};
 use crate::store_listing::{app_locales, render_store_metadata, StoreListingConfig};
 use crate::strings::{
-    android_resource_dir, render_android_module_strings, render_translations_json, render_ts_keys,
-    render_xcstrings,
+    android_resource_dir, render_android_module_strings, render_info_plist_xcstrings,
+    render_translations_json, render_ts_keys, render_xcstrings,
 };
 use crate::swift::{render_l10n_swift, render_swift_tokens};
 use crate::theme_css::render_theme_css;
@@ -50,6 +50,7 @@ pub fn generate_from(
     verify_theme_labels(base, snapshot)?;
     let feedback_keys = feedback_message_keys(base)?;
     screen_message_keys(base)?;
+    privacy_message_keys(base)?;
 
     let core = &paths.core_generated_dir;
     let ios = &paths.ios_generated_dir;
@@ -80,6 +81,10 @@ pub fn generate_from(
         file(
             ios.join("L10n.swift"),
             render_l10n_swift(base, snapshot, &feedback_keys),
+        ),
+        file(
+            paths.ios_info_plist_strings_path.clone(),
+            render_info_plist_xcstrings(&locales),
         ),
         file(
             ios.join("ScreenContract.swift"),
@@ -277,6 +282,29 @@ mod tests {
         }
         let err = generate(&CodegenConfig::sample_defaults().resolve(dir.path())).unwrap_err();
         assert!(err.contains("screen contract names `screen."), "{err}");
+    }
+
+    // Verifies: REQ-PRV-001 REQ-PRV-008 — a privacy catalogue key missing from locales/ stops the run.
+    #[test]
+    fn a_privacy_key_missing_from_locales_fails_the_run() {
+        let dir = tempfile::tempdir().unwrap();
+        let locales = dir.path().join("locales");
+        copy_tree(&workspace_root().join("locales"), &locales);
+        let modules = fs::read_dir(&locales)
+            .unwrap()
+            .map(|locale| locale.unwrap().path().join("common.json"))
+            .filter(|module| module.exists());
+        for module in modules {
+            let mut json: serde_json::Value =
+                serde_json::from_str(&fs::read_to_string(&module).unwrap()).unwrap();
+            json.as_object_mut().unwrap().remove("preferNotToSay");
+            fs::write(&module, json.to_string()).unwrap();
+        }
+        let err = generate(&CodegenConfig::sample_defaults().resolve(dir.path())).unwrap_err();
+        assert_eq!(
+            err,
+            "the privacy catalogues name `common.preferNotToSay`, missing from locales/"
+        );
     }
 
     // Verifies: REQ-MOB-011 — the store listing is part of the run: its inputs must exist, and a

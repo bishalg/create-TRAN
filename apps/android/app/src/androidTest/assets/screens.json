@@ -56,6 +56,11 @@
             "REQ-NAV-002"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -133,6 +138,11 @@
             "REQ-NAV-002"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -157,6 +167,11 @@
             "REQ-NAV-003"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -186,6 +201,11 @@
             "REQ-NAV-004"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -272,6 +292,65 @@
           "presence": "always",
           "platforms": [
             "web",
+            "ios",
+            "android"
+          ]
+        },
+        {
+          "id": "use-location-button",
+          "kind": "button",
+          "label": "eligibility.location.use",
+          "touch": "control",
+          "presence": "always",
+          "platforms": [
+            "ios",
+            "android"
+          ]
+        },
+        {
+          "id": "location-priming-continue",
+          "kind": "button",
+          "label": "common.continueAction",
+          "touch": "control",
+          "presence": "when",
+          "state": "location_priming",
+          "platforms": [
+            "ios",
+            "android"
+          ]
+        },
+        {
+          "id": "location-priming-dismiss",
+          "kind": "button",
+          "label": "common.notNow",
+          "touch": "control",
+          "presence": "when",
+          "state": "location_priming",
+          "platforms": [
+            "ios",
+            "android"
+          ]
+        },
+        {
+          "id": "location-settings-note",
+          "kind": "text",
+          "label": "eligibility.location.settingsNote",
+          "touch": "none",
+          "presence": "when",
+          "state": "location_settings_offered",
+          "platforms": [
+            "ios",
+            "android"
+          ]
+        },
+        {
+          "id": "location-open-settings",
+          "kind": "button",
+          "label": "common.openSettings",
+          "touch": "control",
+          "presence": "when",
+          "state": "location_settings_offered",
+          "platforms": [
             "ios",
             "android"
           ]
@@ -481,6 +560,11 @@
             "REQ-WEB-001"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -533,6 +617,11 @@
             "REQ-WEB-001"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -585,6 +674,11 @@
             "REQ-WEB-001"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -637,6 +731,11 @@
             "REQ-WEB-001"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -689,6 +788,11 @@
             "REQ-WEB-001"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -740,6 +844,11 @@
             "REQ-WEB-002"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -785,6 +894,11 @@
             "REQ-LOAD-005"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -857,6 +971,11 @@
             "REQ-NAT-003"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -909,6 +1028,11 @@
             "REQ-A11Y-007"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -970,6 +1094,11 @@
             "REQ-ERR-007"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -1009,6 +1138,11 @@
             "REQ-NAV-005"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -1043,6 +1177,11 @@
             "REQ-ACC-005"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -1082,6 +1221,11 @@
             "REQ-ERR-006"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -1125,12 +1269,176 @@
           ]
         },
         {
+          "name": "Using my location explains first and Not now changes nothing",
+          "verifies": [
+            "REQ-PRV-003",
+            "REQ-PRV-007"
+          ],
+          "within_ms": 4300,
+          "platforms": [
+            "ios",
+            "android"
+          ],
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            }
+          ],
+          "when": [
+            {
+              "verb": "type",
+              "id": "age-field",
+              "text": "20"
+            },
+            {
+              "verb": "type",
+              "id": "country-field",
+              "text": "NP"
+            },
+            {
+              "verb": "tap",
+              "id": "use-location-button"
+            },
+            {
+              "verb": "tap",
+              "id": "location-priming-dismiss"
+            },
+            {
+              "verb": "tap",
+              "id": "check-button"
+            }
+          ],
+          "then": [
+            {
+              "verb": "missing",
+              "id": "location-priming-continue"
+            },
+            {
+              "verb": "missing",
+              "id": "location-priming-dismiss"
+            },
+            {
+              "verb": "missing",
+              "id": "location-settings-note"
+            },
+            {
+              "verb": "text_is",
+              "id": "offline-result",
+              "key": "eligibility.result.reasonMeets",
+              "args": [
+                {
+                  "name": "age",
+                  "value": "20"
+                },
+                {
+                  "name": "minimumAge",
+                  "value": "18"
+                },
+                {
+                  "name": "country",
+                  "value": "NP"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Using my location without permission keeps the chosen country",
+          "verifies": [
+            "REQ-PRV-004",
+            "REQ-PRV-007"
+          ],
+          "within_ms": 4300,
+          "platforms": [
+            "ios",
+            "android"
+          ],
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            },
+            {
+              "verb": "permission",
+              "value": "denied_permanently",
+              "permission": "location_approximate"
+            }
+          ],
+          "when": [
+            {
+              "verb": "type",
+              "id": "age-field",
+              "text": "20"
+            },
+            {
+              "verb": "type",
+              "id": "country-field",
+              "text": "NP"
+            },
+            {
+              "verb": "tap",
+              "id": "use-location-button"
+            },
+            {
+              "verb": "tap",
+              "id": "check-button"
+            }
+          ],
+          "then": [
+            {
+              "verb": "exists",
+              "id": "location-settings-note"
+            },
+            {
+              "verb": "exists",
+              "id": "location-open-settings"
+            },
+            {
+              "verb": "missing",
+              "id": "location-priming-continue"
+            },
+            {
+              "verb": "missing",
+              "id": "validation-message"
+            },
+            {
+              "verb": "missing",
+              "id": "toast"
+            },
+            {
+              "verb": "text_is",
+              "id": "offline-result",
+              "key": "eligibility.result.reasonMeets",
+              "args": [
+                {
+                  "name": "age",
+                  "value": "20"
+                },
+                {
+                  "name": "minimumAge",
+                  "value": "18"
+                },
+                {
+                  "name": "country",
+                  "value": "NP"
+                }
+              ]
+            }
+          ]
+        },
+        {
           "name": "The light theme is selectable",
           "verifies": [
             "REQ-NAT-007",
             "REQ-WEB-014"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -1162,6 +1470,11 @@
             "REQ-WEB-014"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -1193,6 +1506,11 @@
             "REQ-WEB-014"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -1224,6 +1542,11 @@
             "REQ-WEB-014"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -1372,6 +1695,11 @@
             "REQ-ERR-007"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",
@@ -1406,6 +1734,11 @@
             "REQ-ACC-005"
           ],
           "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
           "given": [
             {
               "verb": "session",

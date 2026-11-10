@@ -3,6 +3,9 @@
  * Run `pnpm tokens:sync` after changing a rule in Rust.
  */
 
+import type { TranStringKey } from './keys.js';
+import type { ElementId } from './screens.js';
+
 export const DEFAULT_VOTING_AGE = 18;
 
 export const MAX_AGE = 150;
@@ -36,3 +39,107 @@ export const SESSION_POLICY = {
   refreshTtlSeconds: 2592000,
   tokenBytes: 32,
 } as const;
+
+/** A permission the apps may ask for (REQ-PRV-001). */
+export type PermissionId = 'location_approximate';
+
+/** What the platform reports for a permission (REQ-PRV-002). */
+export type PermissionStatus = 'not_determined' | 'granted' | 'granted_approximate' | 'denied' | 'denied_permanently' | 'restricted';
+
+/** What the app does next after a tap on the control that needs the permission. */
+export type PermissionStep = 'show_priming' | 'request_system' | 'use_feature' | 'offer_settings';
+
+/** What the feature does without the permission; never an error (REQ-PRV-004). */
+export type PermissionFallback = 'keep_manual_entry';
+
+export const PERMISSION_STATUSES: readonly PermissionStatus[] = ['not_determined', 'granted', 'granted_approximate', 'denied', 'denied_permanently', 'restricted'];
+
+export interface PermissionEntry {
+  readonly id: PermissionId;
+  readonly feature: string;
+  /** The only control that may ask (REQ-PRV-003). */
+  readonly control: ElementId;
+  readonly primingTitle: TranStringKey;
+  readonly primingBody: TranStringKey;
+  /** The system prompt's purpose string. */
+  readonly purpose: TranStringKey;
+  readonly settingsNote: TranStringKey;
+  readonly fallback: PermissionFallback;
+  readonly androidPermissions: readonly string[];
+  readonly iosUsageDescriptions: readonly string[];
+}
+
+/** Every permission the apps may ask for (REQ-PRV-001). */
+export const PERMISSIONS: readonly PermissionEntry[] = [
+  {
+    "androidPermissions": [
+      "android.permission.ACCESS_COARSE_LOCATION"
+    ],
+    "control": "use-location-button",
+    "fallback": "keep_manual_entry",
+    "feature": "country_from_location",
+    "id": "location_approximate",
+    "iosUsageDescriptions": [
+      "NSLocationWhenInUseUsageDescription"
+    ],
+    "primingBody": "eligibility.location.primingBody",
+    "primingTitle": "eligibility.location.primingTitle",
+    "purpose": "eligibility.location.purpose",
+    "settingsNote": "eligibility.location.settingsNote"
+  }
+];
+
+/** What an answer to a personal question means (REQ-PRV-008). */
+export type AnswerKind = 'choice' | 'self_described' | 'prefer_not_to_say';
+
+export interface PersonalAnswer {
+  readonly id: string;
+  readonly kind: AnswerKind;
+  readonly label: TranStringKey;
+}
+
+export interface PersonalQuestion {
+  readonly id: string;
+  readonly feature: string;
+  readonly label: TranStringKey;
+  readonly answers: readonly PersonalAnswer[];
+  /** The requirement that makes an answer necessary; `null` means skippable. */
+  readonly required: string | null;
+}
+
+/** Every personal question the apps may ask: optional, with "Prefer not to say" (REQ-PRV-008). */
+export const PERSONAL_QUESTIONS: readonly PersonalQuestion[] = [
+  {
+    "answers": [
+      {
+        "id": "woman",
+        "kind": "choice",
+        "label": "common.gender.woman"
+      },
+      {
+        "id": "man",
+        "kind": "choice",
+        "label": "common.gender.man"
+      },
+      {
+        "id": "non_binary",
+        "kind": "choice",
+        "label": "common.gender.nonBinary"
+      },
+      {
+        "id": "self_described",
+        "kind": "self_described",
+        "label": "common.gender.selfDescribed"
+      },
+      {
+        "id": "prefer_not_to_say",
+        "kind": "prefer_not_to_say",
+        "label": "common.preferNotToSay"
+      }
+    ],
+    "feature": "profile",
+    "id": "gender",
+    "label": "common.gender.label",
+    "required": null
+  }
+];

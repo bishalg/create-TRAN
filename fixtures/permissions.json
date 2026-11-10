@@ -1,0 +1,126 @@
+{
+  "$comment": "Permission catalogue, the next-step table and the personal-question catalogue (spec 026, REQ-PRV-001, REQ-PRV-002, REQ-PRV-008, ADR-0043) shared by Rust (crates/rust-core/tests/permission_fixtures.rs), UniFFI (crates/tran-uniffi/tests/permission_fixtures.rs), TypeScript (packages/core-ts/tests/permissions.test.ts), iOS and Android parity tests. `permissions`: every permission the apps may ask for, its copy as locale keys and what each platform declares for it. `steps`: every (status, primed) pair and what the app does next after a tap on the control; `primed` means the person has just chosen Continue on the priming. `personalQuestions`: optional questions about the person; `required: null` means skippable.",
+  "permissions": [
+    {
+      "id": "location_approximate",
+      "feature": "country_from_location",
+      "control": "use-location-button",
+      "primingTitle": "eligibility.location.primingTitle",
+      "primingBody": "eligibility.location.primingBody",
+      "purpose": "eligibility.location.purpose",
+      "settingsNote": "eligibility.location.settingsNote",
+      "fallback": "keep_manual_entry",
+      "androidPermissions": ["android.permission.ACCESS_COARSE_LOCATION"],
+      "iosUsageDescriptions": ["NSLocationWhenInUseUsageDescription"]
+    }
+  ],
+  "steps": [
+    {
+      "name": "never asked: explain first",
+      "status": "not_determined",
+      "primed": false,
+      "step": "show_priming"
+    },
+    {
+      "name": "never asked, after Continue: show the system prompt",
+      "status": "not_determined",
+      "primed": true,
+      "step": "request_system"
+    },
+    {
+      "name": "granted: go on",
+      "status": "granted",
+      "primed": false,
+      "step": "use_feature"
+    },
+    {
+      "name": "granted after priming: go on",
+      "status": "granted",
+      "primed": true,
+      "step": "use_feature"
+    },
+    {
+      "name": "granted approximately: go on",
+      "status": "granted_approximate",
+      "primed": false,
+      "step": "use_feature"
+    },
+    {
+      "name": "granted approximately after priming: go on",
+      "status": "granted_approximate",
+      "primed": true,
+      "step": "use_feature"
+    },
+    {
+      "name": "refused, the system can still ask (Android): explain again",
+      "status": "denied",
+      "primed": false,
+      "step": "show_priming"
+    },
+    {
+      "name": "refused, the system can still ask, after Continue: ask again",
+      "status": "denied",
+      "primed": true,
+      "step": "request_system"
+    },
+    {
+      "name": "refused for good: say where to change it",
+      "status": "denied_permanently",
+      "primed": false,
+      "step": "offer_settings"
+    },
+    {
+      "name": "refused for good, even after priming: never nag",
+      "status": "denied_permanently",
+      "primed": true,
+      "step": "offer_settings"
+    },
+    {
+      "name": "restricted: say where to change it",
+      "status": "restricted",
+      "primed": false,
+      "step": "offer_settings"
+    },
+    {
+      "name": "restricted, even after priming: never nag",
+      "status": "restricted",
+      "primed": true,
+      "step": "offer_settings"
+    }
+  ],
+  "personalQuestions": [
+    {
+      "id": "gender",
+      "feature": "profile",
+      "label": "common.gender.label",
+      "required": null,
+      "answers": [
+        {
+          "id": "woman",
+          "kind": "choice",
+          "label": "common.gender.woman"
+        },
+        {
+          "id": "man",
+          "kind": "choice",
+          "label": "common.gender.man"
+        },
+        {
+          "id": "non_binary",
+          "kind": "choice",
+          "label": "common.gender.nonBinary"
+        },
+        {
+          "id": "self_described",
+          "kind": "self_described",
+          "label": "common.gender.selfDescribed"
+        },
+        {
+          "id": "prefer_not_to_say",
+          "kind": "prefer_not_to_say",
+          "label": "common.preferNotToSay"
+        }
+      ]
+    }
+  ]
+}

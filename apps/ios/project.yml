@@ -44,6 +44,12 @@ targets:
         # that adds its own or a third-party cryptography (end-to-end messages, a VPN, a crypto
         # library) must answer Apple's export questions and change this to true.
         ITSAppUsesNonExemptEncryption: false
+        # "Use my location" (spec 026, REQ-PRV-005, REQ-PRV-006): while in use only, reduced accuracy
+        # by default, and never temporary full accuracy. The English text equals the catalogue's
+        # `eligibility.location.purpose`; every locale's comes from the generated
+        # Sources/TranVotingDemo/Generated/InfoPlist.xcstrings (`pnpm tokens:sync`).
+        NSLocationWhenInUseUsageDescription: 'TRAN uses your approximate location once to find your country and pick the right voting age. It is optional; you can type the country instead.'
+        NSLocationDefaultAccuracyReduced: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tran.voting
@@ -80,6 +86,7 @@ targets:
       - Sources/TranVotingDemo/AuthSession.swift
       - Sources/TranVotingDemo/Feedback/TranFeedback.swift
       - Sources/TranVotingDemo/Feedback/TranReporting.swift
+      - Sources/TranVotingDemo/Permissions
     dependencies:
       - target: TranVotingDemo
     settings:

@@ -137,7 +137,8 @@ final class SessionRestoreTests: XCTestCase {
         XCTAssertTrue(signedInAgain, "the dialog's confirm runs the app's sign-in-again handler")
     }
 
-    /// The client logs the `401` it received; the dialog it leads to adds no second event.
+    /// The client throws the dead credential without logging it; the restore reports it with
+    /// its dialog: one event.
     func testADeadCredentialIsLoggedOnce() async {
         let events = FailureLog()
         let vault = InMemorySessionVault(SessionWire.stored())

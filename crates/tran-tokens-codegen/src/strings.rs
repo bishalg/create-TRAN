@@ -1,8 +1,9 @@
 //! Localized copy for every platform: `strings.json` + `keys.ts` (web), String Catalogs (iOS),
 //! `strings_<module>.xml` (Android).
 
-use crate::locales::{positional_template, Locales, ModuleKeys, BASE_LOCALE};
+use crate::locales::{lookup, positional_template, Locales, ModuleKeys, BASE_LOCALE};
 use crate::names::{android_resource_name, full_key};
+use rust_core::permissions::PERMISSIONS;
 
 /// One iOS String Catalog per module; `{name}` placeholders become positional `%n$@` templates.
 ///
@@ -23,6 +24,44 @@ pub fn render_xcstrings(dictionaries: &Locales, module: &str) -> String {
             );
         }
         strings.insert(full, serde_json::json!({ "localizations": localizations }));
+    }
+    let catalog = serde_json::json!({
+        "sourceLanguage": BASE_LOCALE,
+        "strings": strings,
+        "version": "1.0",
+    });
+    let mut json = serde_json::to_string_pretty(&catalog).expect("a JSON value always serializes");
+    json.push('\n');
+    json
+}
+
+/// `InfoPlist.xcstrings`: every usage-description key of the permission catalogue, valued with its
+/// purpose string in every locale, so the system prompt speaks the app's language (REQ-PRV-005).
+/// Xcode reads a catalog of this name in the app target as the `Info.plist` localization; the
+/// `Info.plist` value itself is the English text, which the declarations guard checks.
+///
+/// `dictionaries` come from `load_locales`, and `privacy_message_keys` has checked every purpose key.
+pub fn render_info_plist_xcstrings(dictionaries: &Locales) -> String {
+    let mut strings = serde_json::Map::new();
+    for permission in PERMISSIONS {
+        for key in permission.ios_usage_descriptions {
+            let mut localizations = serde_json::Map::new();
+            for dictionary in dictionaries {
+                let value = lookup(dictionary, permission.purpose).map_or("", String::as_str);
+                localizations.insert(
+                    dictionary.locale.clone(),
+                    serde_json::json!({ "stringUnit": { "state": "translated", "value": value } }),
+                );
+            }
+            strings.insert(
+                (*key).to_string(),
+                serde_json::json!({
+                    "comment": format!("Purpose string of `{}` (`{}`).", permission.id.as_str(), permission.purpose),
+                    "extractionState": "manual",
+                    "localizations": localizations,
+                }),
+            );
+        }
     }
     let catalog = serde_json::json!({
         "sourceLanguage": BASE_LOCALE,
@@ -159,6 +198,29 @@ pub fn android_escape(value: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // Verifies: REQ-PRV-005 — the purpose string reaches the system prompt in every locale.
+    #[test]
+    fn info_plist_strings_carry_each_purpose_in_every_locale() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .ancestors()
+            .nth(2)
+            .unwrap()
+            .join("locales");
+        let locales = crate::locales::load_locales(&root).unwrap();
+        let catalog: serde_json::Value =
+            serde_json::from_str(&render_info_plist_xcstrings(&locales)).unwrap();
+        let entry = &catalog["strings"]["NSLocationWhenInUseUsageDescription"];
+        assert_eq!(catalog["sourceLanguage"], "en");
+        for dictionary in &locales {
+            let value = &entry["localizations"][&dictionary.locale]["stringUnit"]["value"];
+            assert_eq!(
+                value.as_str().unwrap(),
+                lookup(dictionary, "eligibility.location.purpose").unwrap()
+            );
+        }
+        assert_eq!(catalog["strings"].as_object().unwrap().len(), 1);
+    }
 
     #[test]
     fn android_escaping_covers_aapt_specials() {

@@ -187,6 +187,22 @@ describe('identifiers and credentials come from the environment (REQ-MOB-004)', 
       ]);
     });
 
+  it('REQ-MOB-004 Gradle builds the application id fastlane uploads: one variable, one default', () => {
+    const name = DEFAULTED.android[0];
+    const gradle = gradleEnvReads(read('apps/android/app/build.gradle.kts')).filter(
+      (r) => r.name === name
+    );
+    const fastlane = rubyEnvReads(appfile('android')).filter((r) => r.name === name);
+    assert.equal(gradle.length, 1, `build.gradle.kts reads ${name} once`);
+    assert.equal(fastlane.length, 1, `Appfile reads ${name} once`);
+    assert.equal(gradle[0].fallback, '"com.tran.voting"');
+    assert.equal(gradle[0].fallback, fastlane[0].fallback);
+    assert.match(
+      read('apps/android/app/build.gradle.kts'),
+      new RegExp(`^\\s*applicationId = System\\.getenv\\("${name}"\\)`, 'm')
+    );
+  });
+
   it('REQ-MOB-004 every variable is in .env.example with an empty value and a comment', () => {
     const example = read('.env.example');
     for (const name of [...Object.values(REQUIRED), ...Object.values(DEFAULTED)].flat())

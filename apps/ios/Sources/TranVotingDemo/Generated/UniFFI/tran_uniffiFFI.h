@@ -369,6 +369,28 @@ RustBuffer uniffi_tran_uniffi_fn_func_toast_policy(RustCallStatus *_Nonnull out_
 RustBuffer uniffi_tran_uniffi_fn_func_verdict_source_spec(RustBuffer source, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_PERMISSION_CATALOGUE
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_PERMISSION_CATALOGUE
+RustBuffer uniffi_tran_uniffi_fn_func_permission_catalogue(RustCallStatus *_Nonnull out_status
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_PERMISSION_ENTRY
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_PERMISSION_ENTRY
+RustBuffer uniffi_tran_uniffi_fn_func_permission_entry(RustBuffer id, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_PERMISSION_STEP
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_PERMISSION_STEP
+RustBuffer uniffi_tran_uniffi_fn_func_permission_step(RustBuffer status, int8_t primed, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_PERSONAL_QUESTIONS
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_PERSONAL_QUESTIONS
+RustBuffer uniffi_tran_uniffi_fn_func_personal_questions(RustCallStatus *_Nonnull out_status
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_SESSION_POLICY
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_SESSION_POLICY
 RustBuffer uniffi_tran_uniffi_fn_func_session_policy(RustCallStatus *_Nonnull out_status
@@ -786,6 +808,30 @@ uint16_t uniffi_tran_uniffi_checksum_func_toast_policy(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_VERDICT_SOURCE_SPEC
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_VERDICT_SOURCE_SPEC
 uint16_t uniffi_tran_uniffi_checksum_func_verdict_source_spec(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_PERMISSION_CATALOGUE
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_PERMISSION_CATALOGUE
+uint16_t uniffi_tran_uniffi_checksum_func_permission_catalogue(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_PERMISSION_ENTRY
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_PERMISSION_ENTRY
+uint16_t uniffi_tran_uniffi_checksum_func_permission_entry(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_PERMISSION_STEP
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_PERMISSION_STEP
+uint16_t uniffi_tran_uniffi_checksum_func_permission_step(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_PERSONAL_QUESTIONS
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_PERSONAL_QUESTIONS
+uint16_t uniffi_tran_uniffi_checksum_func_personal_questions(void
     
 );
 #endif

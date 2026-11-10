@@ -3,6 +3,7 @@
 // Verifies: REQ-NAT-003 REQ-NAT-004 REQ-NAT-007 REQ-NAT-011 REQ-NAT-013 REQ-NAV-001 REQ-NAV-002 REQ-NAV-003
 // Verifies: REQ-NAV-004 REQ-NAV-005 REQ-WEB-001 REQ-WEB-002 REQ-WEB-004 REQ-WEB-014
 // Verifies: REQ-ACC-004 REQ-ACC-005 REQ-ACC-006
+// Verifies: REQ-PRV-003 REQ-PRV-004 REQ-PRV-007
 package com.tran.voting.ui
 
 import android.content.res.Configuration
@@ -22,6 +23,8 @@ import com.tran.voting.NavigationCoordinator
 import com.tran.voting.api.TranApiClient
 import com.tran.voting.generated.ScreenContract
 import com.tran.voting.generated.TranTheme
+import com.tran.voting.permissions.StagedPermissionGateway
+import com.tran.voting.permissions.stagedPermission
 import com.tran.voting.ui.atoms.optionTag
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -72,6 +75,8 @@ class ScreenContractTest(private val name: String) {
     private var localeTag = "en"
     private var theme = TranTheme.DARK
     private var largestText = false
+    // No system dialog can appear: without a `permission` given the gateway is staged at "never asked".
+    private var permissions = StagedPermissionGateway()
     private var launched = false
     private var checkedReach = false
 
@@ -120,6 +125,10 @@ class ScreenContractTest(private val name: String) {
             "theme" -> theme = TranTheme.entries.firstOrNull { it.id == step.value }
                 ?: throw AssertionError("${driver.place(step)}: unknown theme")
             "largest_text_scale" -> largestText = true
+            // The debug launch extra's spelling, `location_approximate=denied_permanently` (spec 026).
+            "permission" -> permissions = stagedPermission("${step.permission}=${step.value}")
+                ?.let { (_, status) -> StagedPermissionGateway(status) }
+                ?: throw AssertionError("${driver.place(step)}: unknown permission or status")
             else -> fail("${driver.place(step)}: unknown given")
         }
     }
@@ -143,7 +152,7 @@ class ScreenContractTest(private val name: String) {
                 LocalConfiguration provides configuration,
                 LocalDensity provides Density(density.density, fontScale ?: density.fontScale),
             ) {
-                NavigationCoordinator(initialTheme = theme, api = api, initialSession = session)
+                NavigationCoordinator(initialTheme = theme, api = api, initialSession = session, permissions = permissions)
             }
         }
         record("given")

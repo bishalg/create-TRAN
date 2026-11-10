@@ -10,6 +10,7 @@ import {
   LOADING_POLICY,
   VERDICT_SOURCES,
 } from '../src/generated/feedback.js';
+import { PERMISSIONS, PERSONAL_QUESTIONS } from '../src/generated/rules.js';
 import { SCREENS } from '../src/generated/screens.js';
 
 const root = path.resolve(fileURLToPath(import.meta.url), '../../../../');
@@ -221,6 +222,22 @@ function usedKeys(): Set<string> {
   for (const screen of SCREENS) {
     used.add(screen.intent);
     for (const element of screen.elements) used.add(element.label);
+  }
+
+  // The privacy catalogues name their copy: priming, purpose strings and the Settings note, and
+  // each personal question's label and answers (spec 026, REQ-PRV-001, REQ-PRV-008).
+  for (const permission of PERMISSIONS) {
+    for (const key of [
+      permission.primingTitle,
+      permission.primingBody,
+      permission.purpose,
+      permission.settingsNote,
+    ])
+      used.add(key);
+  }
+  for (const question of PERSONAL_QUESTIONS) {
+    used.add(question.label);
+    for (const answer of question.answers) used.add(answer.label);
   }
 
   // Store listing copy is consumed by the codegen: a key counts when its English text, addresses

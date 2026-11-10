@@ -18,6 +18,7 @@
 //!                    "platforms": ["web", "ios", "android"] }],
 //!     "scenarios": [{
 //!       "name": "…", "verifies": ["REQ-NAT-011"], "within_ms": 4300,
+//!       "platforms": ["web", "ios", "android"],
 //!       "given": [{ "verb": "session", "value": "citizen_voter" }, { "verb": "api_unreachable" }],
 //!       "when":  [{ "verb": "type", "id": "age-field", "text": "20" }, { "verb": "tap", "id": "check-button" }],
 //!       "then":  [{ "verb": "text_is", "id": "offline-result", "key": "…",
@@ -29,19 +30,22 @@
 //! }
 //! ```
 //!
-//! Step fields: `value` (session, locale and theme givens), `id` (every step on an element),
+//! Step fields: `value` (session, locale and theme givens, and the status of a `permission`
+//! given), `permission` (the permission id of a `permission` given, which the app's fake gateway
+//! reports as `value`), `id` (every step on an element),
 //! `text` (`type`), `option` (`select`), `key` (`press_key`, and the locale key of `text_is` and
 //! `announced`), `args` (`text_is`, `announced`, possibly empty, in the order the placeholders first
 //! appear in the English template, so a native interpreter passes them positionally to the
 //! generated `%1$@` / `%1$s` resource; `rust-core` tests that order), `n` (`count`). `presence` is
 //! `always` or `when` with `state`; `platforms` lists where the element is offered, and a native
-//! interpreter skips the others. `unreached_states` are the states no scenario reaches yet. `platform_minimums` is `PLATFORM_MINIMUMS` for the
+//! interpreter skips the others. A scenario's `platforms` lists where it runs (every element it
+//! names offered, every given stageable); an interpreter skips a scenario that does not name it. `unreached_states` are the states no scenario reaches yet. `platform_minimums` is `PLATFORM_MINIMUMS` for the
 //! conformance checker, which has no other generated source it can read without a compiler; the
 //! native tests keep reading theirs from the generated `ScreenContract.Minimums`.
 
 use crate::screens_gherkin::session_name;
 use rust_core::screens::{
-    Arg, Element, Given, Platform, PlatformMinimum, Presence, Scenario, Screen,
+    scenario_platforms, Arg, Element, Given, Platform, PlatformMinimum, Presence, Scenario, Screen,
     ScreensJsonSnapshot, Then, UnreachedState, When,
 };
 use serde::Serialize;
@@ -80,6 +84,7 @@ struct ScenarioJson {
     name: &'static str,
     verifies: &'static [&'static str],
     within_ms: u64,
+    platforms: Vec<Platform>,
     given: Vec<Step>,
     when: Vec<Step>,
     then: Vec<Step>,
@@ -91,6 +96,8 @@ pub struct Step {
     pub verb: &'static str,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub value: Option<&'static str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub permission: Option<&'static str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<&'static str>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -106,13 +113,22 @@ pub struct Step {
 }
 
 pub fn given_step(given: Given) -> Step {
+    if let Given::Permission { id, status } = given {
+        return Step {
+            verb: given.verb(),
+            permission: Some(id.as_str()),
+            value: Some(status.as_str()),
+            ..Step::default()
+        };
+    }
     let value = match given {
         Given::Session(kind) => Some(session_name(kind)),
         Given::Locale(value) | Given::Theme(value) => Some(value),
         Given::ApiReachable
         | Given::ApiUnreachable
         | Given::LargestTextScale
-        | Given::ReducedMotion => None,
+        | Given::ReducedMotion
+        | Given::Permission { .. } => None,
     };
     Step {
         verb: given.verb(),
@@ -182,6 +198,7 @@ fn scenario_json(scenario: &Scenario) -> ScenarioJson {
         name: scenario.name,
         verifies: scenario.verifies,
         within_ms: scenario.within_ms,
+        platforms: scenario_platforms(scenario),
         given: scenario.given.iter().map(|g| given_step(*g)).collect(),
         when: scenario.when.iter().map(|w| when_step(*w)).collect(),
         then: scenario.then.iter().map(|t| then_step(*t)).collect(),
@@ -211,6 +228,7 @@ pub fn render_screens_json(snapshot: &ScreensJsonSnapshot) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rust_core::permissions::{PermissionId, PermissionStatus};
     use rust_core::screens::SessionKind;
     use rust_core::screens_json_snapshot;
     use serde_json::{json, Value};
@@ -230,6 +248,10 @@ mod tests {
             Given::Theme("dark"),
             Given::LargestTextScale,
             Given::ReducedMotion,
+            Given::Permission {
+                id: PermissionId::LocationApproximate,
+                status: PermissionStatus::DeniedPermanently,
+            },
         ]
         .map(|g| value(given_step(g)))
         .to_vec();
@@ -243,6 +265,7 @@ mod tests {
                 json!({"verb": "theme", "value": "dark"}),
                 json!({"verb": "largest_text_scale"}),
                 json!({"verb": "reduced_motion"}),
+                json!({"verb": "permission", "permission": "location_approximate", "value": "denied_permanently"}),
             ]
         );
         let when: Vec<Value> = [
@@ -361,5 +384,22 @@ mod tests {
             .unwrap();
         assert_eq!(skip["platforms"], json!(["web"]));
         assert!(screens[2]["elements"][0].get("state").is_none());
+        let platforms = |name: &str| {
+            screens[2]["scenarios"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|s| s["name"] == name)
+                .unwrap()["platforms"]
+                .clone()
+        };
+        assert_eq!(
+            platforms("An adult in Nepal is eligible"),
+            json!(["web", "ios", "android"])
+        );
+        assert_eq!(
+            platforms("Using my location without permission keeps the chosen country"),
+            json!(["ios", "android"])
+        );
     }
 }

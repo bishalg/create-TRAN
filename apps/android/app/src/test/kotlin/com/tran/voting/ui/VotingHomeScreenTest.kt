@@ -38,7 +38,9 @@ import uniffi.tran_uniffi.loadingPolicy
  * acknowledged only after the policy delay.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35])
+// The smallest supported phone (320 × 640 dp). Robolectric's default 470 dp height is shorter than
+// any of them; there the toast sat over the check button once "Use my location" joined the screen.
+@Config(sdk = [35], qualifiers = "w320dp-h640dp")
 class VotingHomeScreenTest {
     @get:Rule
     val compose = createComposeRule()

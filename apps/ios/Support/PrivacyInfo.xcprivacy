@@ -15,7 +15,10 @@
     any file it inspects is inside the app container.
   No tracking, no tracking domains, no collected data: the app has no analytics, ads or third-party
   SDK; the age and country it sends are used to answer that one request, and the sample's accounts
-  are shared demo roles (spec 022), not people. A fork that stores personal data, or signs real
+  are shared demo roles (spec 022), not people. "Use my location" (spec 026) collects no location:
+  one approximate reading becomes a country code on the device and is dropped; neither the reading
+  nor its coordinates reach the API, a log or storage. The country it fills is the same field the
+  person can type, sent as before. A fork that stores personal data, or signs real
   people in, declares those data types in NSPrivacyCollectedDataTypes and in App Store Connect.
 -->
 <plist version="1.0">

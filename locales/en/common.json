@@ -13,5 +13,15 @@
   "notifications": "Notifications",
   "notNow": "Not now",
   "reload": "Reload",
-  "loading": "Loading"
+  "loading": "Loading",
+  "continueAction": "Continue",
+  "openSettings": "Open Settings",
+  "preferNotToSay": "Prefer not to say",
+  "gender": {
+    "label": "Gender",
+    "woman": "Woman",
+    "man": "Man",
+    "nonBinary": "Non-binary",
+    "selfDescribed": "Prefer to self-describe"
+  }
 }

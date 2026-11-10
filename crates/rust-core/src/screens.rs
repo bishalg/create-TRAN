@@ -36,6 +36,32 @@ pub fn unique_elements() -> Vec<Element> {
     out
 }
 
+/// The platforms that run `scenario` (REQ-SCR-008): those that offer every element it names and
+/// can stage every given. A scenario about a native-only control is never rendered for the web.
+pub fn scenario_platforms(scenario: &Scenario) -> Vec<Platform> {
+    let elements = unique_elements();
+    let named: Vec<&str> = scenario
+        .when
+        .iter()
+        .filter_map(|step| step.element())
+        .chain(scenario.then.iter().map(|then| then.element()))
+        .collect();
+    Platform::ALL
+        .into_iter()
+        .filter(|platform| {
+            scenario
+                .given
+                .iter()
+                .all(|given| given.platforms().contains(platform))
+                && named.iter().all(|id| {
+                    elements
+                        .iter()
+                        .any(|element| element.id == *id && element.is_on(*platform))
+                })
+        })
+        .collect()
+}
+
 /// The minimums of one platform.
 pub fn platform_minimum(platform: Platform) -> PlatformMinimum {
     match platform {

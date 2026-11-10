@@ -36,8 +36,8 @@ final class TranAccountDeletion {
         }
     }
 
-    /// Deletes on the server, then follows its answer. The client has already logged a failed
-    /// request, so the failure is presented without a second `request failed` event (REQ-ROB-007).
+    /// Deletes on the server, then follows its answer. The client throws a failure without logging
+    /// it, so this handler reports it: one `request failed` event (REQ-ROB-007).
     private func run(
         client: TranSessionClient,
         feedback: TranFeedback,
@@ -52,7 +52,7 @@ final class TranAccountDeletion {
         } catch {
             // `401` has already been through the recovery table: its dialog asks to sign in again.
             let failure = TranRequestFailure.classify(error)
-            feedback.present(failure)
+            feedback.report(failure)
             onFailed(failure)
         }
     }

@@ -38,6 +38,8 @@ This is a **template**: keep the sample tiny, exemplary and fully tested.
 - Permissions ([docs/PERMISSIONS.md](docs/PERMISSIONS.md), spec 026): a permission is a catalogue entry in
   `crates/rust-core`, asked only from the control that needs it, after priming, through the platform gateway; refusal
   is a fallback, never an error; personal questions are optional; no tracking code.
+- Push ([docs/PUSH.md](docs/PUSH.md), spec 027): a registration is bound to a session and removed by the server when
+  the session ends; one token, one user; a payload carries no personal data; never log a token or an installation id.
 - Hand-written code and test files stay at or under 800 lines (`pnpm tooling:test`): split by responsibility, not
   by line count. Generated files are exempt; docs have no hard limit but are split by topic.
 - Commits are Conventional Commits (`feat(scope): …`, `fix!: …`; the `commit-msg` hook checks). One version for every

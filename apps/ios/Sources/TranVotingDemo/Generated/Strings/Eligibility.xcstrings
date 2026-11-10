@@ -221,6 +221,116 @@
         }
       }
     },
+    "eligibility.location.primingBody": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRAN can read your approximate location once to find your country, so it picks the right voting age. Your location is not kept or sent anywhere. This is optional: you can type the country yourself."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRAN सही मतदान आयु चुनने के लिए आपका अनुमानित स्थान एक बार पढ़कर आपका देश पता करता है। आपका स्थान न रखा जाता है, न कहीं भेजा जाता है। यह वैकल्पिक है: आप देश खुद भी लिख सकते हैं।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सही मतदान उमेर छान्न TRAN ले तपाईंको अनुमानित स्थान एक पटक पढेर तपाईंको देश पत्ता लगाउँछ। तपाईंको स्थान राखिँदैन, कतै पठाइँदैन। यो ऐच्छिक हो: तपाईं देश आफैँ लेख्न सक्नुहुन्छ।"
+          }
+        }
+      }
+    },
+    "eligibility.location.primingTitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fill in your country from your location?"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अपने स्थान से देश भरें?"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "तपाईंको स्थानबाट देश भर्ने?"
+          }
+        }
+      }
+    },
+    "eligibility.location.purpose": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRAN uses your approximate location once to find your country and pick the right voting age. It is optional; you can type the country instead."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRAN आपका देश पता करने और सही मतदान आयु चुनने के लिए आपके अनुमानित स्थान का एक बार उपयोग करता है। यह वैकल्पिक है; आप देश खुद लिख सकते हैं।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRAN ले तपाईंको देश पत्ता लगाउन र सही मतदान उमेर छान्न तपाईंको अनुमानित स्थान एक पटक प्रयोग गर्छ। यो ऐच्छिक हो; तपाईं देश आफैँ लेख्न सक्नुहुन्छ।"
+          }
+        }
+      }
+    },
+    "eligibility.location.settingsNote": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Location is off for TRAN. Type your country, or turn location on in Settings."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRAN के लिए स्थान बंद है। अपना देश लिखें, या सेटिंग्स में स्थान चालू करें।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRAN का लागि स्थान बन्द छ। आफ्नो देश लेख्नुहोस्, वा सेटिङमा स्थान खोल्नुहोस्।"
+          }
+        }
+      }
+    },
+    "eligibility.location.use": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use my location"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मेरा स्थान इस्तेमाल करें"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मेरो स्थान प्रयोग गर्नुहोस्"
+          }
+        }
+      }
+    },
     "eligibility.mode.device": {
       "localizations": {
         "en": {

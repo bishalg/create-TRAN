@@ -29,13 +29,13 @@ tap the feature → permission_step(status, primed)
 
 ## Where it lives
 
-| Part                             | Place                                                               |
-| :------------------------------- | :------------------------------------------------------------------ |
-| Catalogue and `permission_step`  | `crates/rust-core/src/permissions.rs`, `fixtures/permissions.json`  |
-| Priming copy and purpose strings | `locales/` (generated to `InfoPlist` strings and Android resources) |
-| The only code that asks the OS   | the permission gateway on each platform                             |
-| Personal-question catalogue      | `crates/rust-core/src/personal_questions.rs`                        |
-| Guards                           | `permission-declarations.test.ts`, `no-tracking-guard.test.ts`      |
+| Part                             | Place                                                                                 |
+| :------------------------------- | :------------------------------------------------------------------------------------ |
+| Catalogue and `permission_step`  | `crates/rust-core/src/permissions.rs`, `fixtures/permissions.json`                    |
+| Priming copy and purpose strings | `locales/` (generated to `Generated/InfoPlist.xcstrings` and Android resources)       |
+| The only code that asks the OS   | `Permissions/SystemPermissionGateway.swift`, `permissions/SystemPermissionGateway.kt` |
+| Personal-question catalogue      | `crates/rust-core/src/personal_questions.rs`                                          |
+| Guards                           | `permission-declarations.test.ts`, `no-tracking-guard.test.ts`                        |
 
 ## Adding a permission
 
