@@ -8,7 +8,8 @@ check before review. Builds on [017](017-release.md) (one version, releases from
 
 Vocabulary used below:
 
-- A **lane** is a named fastlane workflow. Both platforms have the same four: `doctor`, `test`, `beta`, `release`.
+- A **lane** is a named fastlane workflow. Both platforms have the same five: `doctor`, `test`, `metadata`, `beta`,
+  `release`.
 - An **identifier** names the app to a store or to Apple: bundle id, application id, Apple team id, App Store Connect
   app id. It is public but belongs to one project, so the template ships only placeholders.
 - A **signing credential** proves who built the app: the App Store Connect API key, the Android upload keystore and
@@ -24,7 +25,7 @@ does not.
 ### REQ-MOB-002 [planned] Both platforms have the same lanes
 
 `apps/ios/fastlane/Fastfile` and `apps/android/fastlane/Fastfile` MUST each define exactly the lanes `doctor`, `test`,
-`beta` and `release`, each with a description. Root scripts `pnpm ios:lane <lane>` and `pnpm android:lane <lane>` MUST
+`metadata`, `beta` and `release`, each with a description. Root scripts `pnpm ios:lane <lane>` and `pnpm android:lane <lane>` MUST
 run them.
 **Verified by:** `mobile-release.test.mjs` (parses both files and the scripts).
 
@@ -85,3 +86,13 @@ required-reason APIs the app calls (`UserDefaults`), and MUST set `ITSAppUsesNon
 `Info.plist`. A source guard MUST fail when the app calls a required-reason API category the manifest does not
 declare. Android MUST target the API level Google Play currently requires for updates.
 **Verified by:** `packages/core-ts/tests/store-readiness.test.ts`.
+
+### REQ-MOB-011 [planned] Store listing text comes from the repo
+
+Each platform MUST keep its store listing text (name, subtitle or short description, description, keywords, release
+notes, support and privacy-policy addresses) under `fastlane/metadata`, for every locale the app ships, generated from
+the locale dictionaries by `pnpm tokens:sync` so the listing and the app never disagree. A `metadata` lane MUST upload
+it (`deliver` on iOS, `supply` on Android) without uploading a binary. A check MUST fail when a locale is missing, a
+field exceeds its store limit, or the release notes do not match the current version's changelog section. The
+account-deletion address (REQ-ACC-007) and the privacy-policy address MUST be fields of that metadata.
+**Verified by:** `mobile-release.test.mjs` (limits, locales, changelog match); the upload by the first real run.

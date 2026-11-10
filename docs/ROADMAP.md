@@ -90,11 +90,15 @@ and one short playbook in `docs/` (what the topic is, why it matters, the rules 
 5. [ ] **Push notifications and device registration**: optional push, the device token registered to the signed-in
        user on the API, replaced when it changes, removed on sign-out and account deletion.
 6. [ ] **Sign-in providers**: a provider seam with Google and Sign in with Apple, the rule that Apple is offered
-       whenever a third-party provider is (guideline 4.8) as a check, and provider tokens revoked on deletion.
-7. [ ] **In-app purchases**: StoreKit 2 and Play Billing behind one seam, server-verified entitlements, restore
-       purchases, terms shown before purchase.
-8. [ ] **Onboarding**: a short first-run flow that can be skipped and never asks for an account or a permission before
-       the feature that needs it.
+       whenever a third-party provider is (guideline 4.8) as a check, the system Apple button and Google's branded
+       button used as their guidelines require, identity tokens verified on the API, cancellation and provider errors
+       through the error catalogue, and provider tokens revoked on deletion.
+7. [ ] **In-app purchases**: StoreKit 2 and Play Billing behind one seam; a paywall that shows the localized price,
+       the billing period, the renewal and cancellation terms and links to terms and privacy before the purchase
+       button; restore purchases; entitlements verified and synced on the API; pending, cancelled, failed, refunded
+       and already-owned outcomes each with a catalogue presentation.
+8. [ ] **Onboarding**: a short first-run flow that can be skipped, leads into sign-in, and never asks for an account or
+       a permission before the feature that needs it.
 9. [ ] **Observability** ([spec 023](./specs/023-observability.md), ADR-0040, [runbook](./OBSERVABILITY.md)): trace
        context, log schema, RED metrics, readiness and graceful shutdown.
 10. [ ] **API versioning and compatibility**: a versioned base path, additive-change rules checked against contract

@@ -11,7 +11,7 @@ template's real team id) are expensive. Rules: [spec 025](./specs/025-mobile-rel
    default. They are listed, empty, in `.env.example`.
 2. **Never commit signing material.** `.p8`, `.p12`, `.mobileprovision`, `.jks`, `.keystore`, service-account JSON.
    `pnpm secrets:check` fails on them.
-3. **Same lanes on both platforms:** `doctor`, `test`, `beta`, `release`.
+3. **Same lanes on both platforms:** `doctor`, `test`, `metadata`, `beta`, `release`.
 4. **Lanes do not bump versions.** Use `pnpm release` (ADR-0034); lanes run `pnpm release:check` first.
 5. **Build once, promote.** `beta` builds and uploads; `release` promotes that build and never rebuilds.
 6. **CI authenticates with keys, not people.** An App Store Connect API key and a Play service account; never an
@@ -54,8 +54,8 @@ The first real `beta` run is the fork's acceptance test: this template cannot up
 ## When to change the defaults
 
 - Use **`match`** instead of cloud-managed signing when several teams or CI systems must share the same certificates.
-- Add **`deliver` / `supply` metadata** when store text and screenshots should come from the repo; the locale
-  dictionaries and the screenshot suites are the sources.
+- Add **store screenshots** to the `metadata` lane when they should come from the repo; the screenshot suites are the
+  source.
 
 ## Review checklist for a change
 

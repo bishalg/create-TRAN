@@ -15,8 +15,8 @@ contradicts, and a real team id left in a template that every fork inherits.
 
 1. **fastlane, pinned.** It is the de facto tool on both platforms and gives iOS and Android the same vocabulary. It
    comes in through a root `Gemfile.lock` and Dependabot, like every other ecosystem (ADR-0033).
-2. **Four lanes with the same names on both platforms:** `doctor` (what is missing), `test`, `beta` (build and upload
-   to testers), `release` (promote the tested build). A person or an agent who knows one platform knows the other.
+2. **Five lanes with the same names on both platforms:** `doctor` (what is missing), `test`, `metadata` (store listing
+   text), `beta` (build and upload to testers), `release` (promote the tested build). A person or an agent who knows one platform knows the other.
 3. **Lanes are thin.** `test` runs the command the repo already has. Lanes do not bump versions: the version and build
    number come from `pnpm release` (ADR-0034), and `release:check` runs first.
 4. **Build once, promote.** `release` never rebuilds. What reaches users is the binary testers ran.
@@ -41,6 +41,7 @@ contradicts, and a real team id left in a template that every fork inherits.
   upload is tested here (lane structure, the missing-variable check, the unsigned builds). The first real `beta` run is
   the fork's acceptance test, and the playbook lists what to prepare for it.
 - Ruby becomes a build-time dependency for releases only. Development, tests and CI gates do not need it.
-- Store listing text and screenshots (`deliver`, `supply` metadata) are not automated yet. The screenshot suites and
-  the locale dictionaries are the obvious sources when a fork wants that.
+- Store listing text is generated from the locale dictionaries into `fastlane/metadata` and uploaded by a `metadata`
+  lane, so the listing cannot drift from the app. Store screenshots are not automated yet; the screenshot suites are
+  the obvious source when a fork wants that.
 - A fork that prefers `match`, or Xcode Cloud, replaces the body of two lanes and keeps the names.
