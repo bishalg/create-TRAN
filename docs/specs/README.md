@@ -58,6 +58,7 @@ ID that no spec defines.
 | [022 Security](./022-security.md)                             | Secrets, sessions, token storage, sensitive data                 | `REQ-SEC`             |
 | [023 Observability](./023-observability.md)                   | Trace context, log schema, RED metrics, readiness, shutdown      | `REQ-OBS`             |
 | [024 Account deletion](./024-account-deletion.md)             | In-app and web deletion, erasure, session revocation             | `REQ-ACC`             |
+| [025 Mobile release](./025-mobile-release.md)                 | fastlane lanes, signing, identifiers, store readiness            | `REQ-MOB`             |
 
 ## Template
 

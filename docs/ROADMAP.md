@@ -79,7 +79,8 @@ and one short playbook in `docs/` (what the topic is, why it matters, the rules 
        [playbook](./ACCOUNT_DELETION.md)): delete the account from inside the app (App Store guideline 5.1.1(v)) and from a public
        web page (Google Play's account-deletion policy), confirmed first, with every session revoked, the device
        vault cleared and the server data erased or scheduled for erasure.
-3. [ ] **Mobile release automation (fastlane)**: one `Fastfile` per platform with the same lanes (`test`, `beta`,
+3. [ ] **Mobile release automation (fastlane)** ([spec 025](./specs/025-mobile-release.md), ADR-0042,
+       [playbook](./MOBILE_RELEASE.md)): one `Fastfile` per platform with the same lanes (`test`, `beta`,
        `release`), signing kept out of the repo, store credentials only in CI secrets, versions still from
        `pnpm release` (ADR-0034).
 4. [ ] **Observability** ([spec 023](./specs/023-observability.md), ADR-0040, [runbook](./OBSERVABILITY.md)): trace

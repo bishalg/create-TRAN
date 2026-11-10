@@ -27,6 +27,9 @@ This is a **template**: keep the sample tiny, exemplary and fully tested.
   variable goes in `.env.example`; never log a header, a token or a body (`pnpm secrets:check`).
 - Accounts ([docs/ACCOUNT_DELETION.md](docs/ACCOUNT_DELETION.md), spec 024): deletion is in the app and on a public
   page, has its own confirmation, and clears the device only after the server answers `204`.
+- Mobile releases ([docs/MOBILE_RELEASE.md](docs/MOBILE_RELEASE.md), spec 025): identifiers and signing credentials
+  come only from the environment (placeholders in the repo, listed in `.env.example`); lanes never bump a version and
+  `release` never rebuilds; a new iOS required-reason API goes in `PrivacyInfo.xcprivacy`.
 - Hand-written code and test files stay at or under 800 lines (`pnpm tooling:test`): split by responsibility, not
   by line count. Generated files are exempt; docs have no hard limit but are split by topic.
 - Commits are Conventional Commits (`feat(scope): …`, `fix!: …`; the `commit-msg` hook checks). One version for every
