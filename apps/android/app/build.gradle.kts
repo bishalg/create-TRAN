@@ -134,7 +134,7 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
     implementation("net.java.dev.jna:jna:5.19.1@aar")
-    implementation("com.squareup.okhttp3:okhttp:5.5.0")
+    implementation("com.squareup.okhttp3:okhttp:5.5.1")
     // Push (spec 027): FCM, the one third-party SDK the app allows (ADR-0044 decision 9), used only by
     // push/SystemPushGateway.kt and initialised from the build values above. Pinned; Dependabot's gradle
     // entry keeps it current.
@@ -143,22 +143,22 @@ dependencies {
         // Play services (under FCM) still pulls fragment 1.1.0, whose result handling breaks the
         // permission launcher (lint InvalidFragmentVersionForActivityResult). The app has no fragments;
         // this only lifts the transitive version.
-        implementation("androidx.fragment:fragment:1.8.9") {
+        implementation("androidx.fragment:fragment:1.9.1") {
             because("registerForActivityResult needs fragment 1.3.0 or later on the classpath")
         }
     }
     testImplementation("junit:junit:4.13.2")
     testImplementation("net.java.dev.jna:jna:5.19.1")
     testImplementation("org.json:json:20240303")
-    testImplementation("com.squareup.okhttp3:mockwebserver:5.5.0")
+    testImplementation("com.squareup.okhttp3:mockwebserver:5.5.1")
     // Virtual time for ServerConfirmation; the version the Compose BOM already resolves.
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
     // Screenshots (ADR-0031): Google's Robolectric renders Compose on the JVM; Roborazzi compares.
     testImplementation(composeBom)
     testImplementation("androidx.compose.ui:ui-test-junit4")
     testImplementation("org.robolectric:robolectric:4.17")
-    testImplementation("io.github.takahirom.roborazzi:roborazzi:1.76.0")
-    testImplementation("io.github.takahirom.roborazzi:roborazzi-compose:1.76.0")
+    testImplementation("io.github.takahirom.roborazzi:roborazzi:1.77.0")
+    testImplementation("io.github.takahirom.roborazzi:roborazzi-compose:1.77.0")
     androidTestImplementation(composeBom)
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     androidTestImplementation("androidx.test:runner:1.6.2")
