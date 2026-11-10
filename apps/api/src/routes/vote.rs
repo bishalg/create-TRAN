@@ -50,7 +50,7 @@ pub async fn eligibility_handler(
     let Json(payload) = payload?;
     let forwarded = headers.get("x-forwarded-for").and_then(|v| v.to_str().ok());
     let direct = headers.get("x-real-ip").and_then(|v| v.to_str().ok());
-    let client_ip = extract_client_ip(forwarded, direct);
+    let client_ip = extract_client_ip(forwarded, direct, None, &state.edge.trusted_proxies);
 
     let debug_country = headers
         .get("x-debug-country")

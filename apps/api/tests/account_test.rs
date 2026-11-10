@@ -82,7 +82,10 @@ impl Api {
         let clock = Arc::new(ManualClock::starting_at(start));
         let state = AppState {
             sessions: Sessions::sql(Database::in_memory(), clock.clone()),
-            ..AppState::from_config(&AppConfig::from_lookup(|_| None))
+            ..AppState::from_config(&AppConfig::from_lookup(|key| match key {
+                "RATE_LIMIT_AUTH" => Some("1000/1000".to_string()),
+                _ => None,
+            }))
         };
         Self {
             state,

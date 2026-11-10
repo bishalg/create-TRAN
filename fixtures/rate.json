@@ -1,0 +1,70 @@
+{
+  "$comment": "Rate limiting test cases and canonical policy (spec 031, REQ-RL-001, REQ-RL-002)",
+  "policy": {
+    "auth": {
+      "sustainedPerMinute": 10,
+      "burst": 5
+    },
+    "write": {
+      "sustainedPerMinute": 60,
+      "burst": 20
+    },
+    "read": {
+      "sustainedPerMinute": 300,
+      "burst": 60
+    },
+    "maxKeys": 10000,
+    "maxInFlight": 100
+  },
+  "cases": [
+    {
+      "name": "full bucket allows a burst up to the burst limit",
+      "class": "auth",
+      "takes": [
+        { "atMs": 0, "allowed": true, "retryAfter": null },
+        { "atMs": 0, "allowed": true, "retryAfter": null },
+        { "atMs": 0, "allowed": true, "retryAfter": null },
+        { "atMs": 0, "allowed": true, "retryAfter": null },
+        { "atMs": 0, "allowed": true, "retryAfter": null },
+        { "atMs": 0, "allowed": false, "retryAfter": 6 }
+      ]
+    },
+    {
+      "name": "steady drip allows one request per refill period",
+      "class": "auth",
+      "takes": [
+        { "atMs": 0, "allowed": true, "retryAfter": null },
+        { "atMs": 0, "allowed": true, "retryAfter": null },
+        { "atMs": 0, "allowed": true, "retryAfter": null },
+        { "atMs": 0, "allowed": true, "retryAfter": null },
+        { "atMs": 0, "allowed": true, "retryAfter": null },
+        { "atMs": 0, "allowed": false, "retryAfter": 6 },
+        { "atMs": 3000, "allowed": false, "retryAfter": 3 },
+        { "atMs": 6000, "allowed": true, "retryAfter": null },
+        { "atMs": 6000, "allowed": false, "retryAfter": 6 }
+      ]
+    },
+    {
+      "name": "long idle gap caps tokens at the burst limit and does not overflow",
+      "class": "write",
+      "takes": [
+        { "atMs": 0, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null }
+      ]
+    },
+    {
+      "name": "clock going backwards is treated as no time passing",
+      "class": "auth",
+      "takes": [
+        { "atMs": 10000, "allowed": true, "retryAfter": null },
+        { "atMs": 10000, "allowed": true, "retryAfter": null },
+        { "atMs": 10000, "allowed": true, "retryAfter": null },
+        { "atMs": 10000, "allowed": true, "retryAfter": null },
+        { "atMs": 10000, "allowed": true, "retryAfter": null },
+        { "atMs": 10000, "allowed": false, "retryAfter": 6 },
+        { "atMs": 5000, "allowed": false, "retryAfter": 6 },
+        { "atMs": 16000, "allowed": true, "retryAfter": null }
+      ]
+    }
+  ]
+}

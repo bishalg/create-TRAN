@@ -9,6 +9,7 @@ pub mod error;
 pub mod geo;
 pub mod middleware;
 pub mod push;
+pub mod rate_limit_store;
 pub mod routes;
 pub mod secret;
 pub mod session_store;
@@ -21,8 +22,8 @@ use axum::extract::DefaultBodyLimit;
 use axum::Router;
 use config::AppConfig;
 use middleware::{
-    auth_origin, client_standing, create_cors_layer, deadline, deprecation, panic_response,
-    request_id, security_headers,
+    auth_origin, client_standing, create_cors_layer, deadline, deprecation, load_shed,
+    panic_response, rate_limit, request_id, security_headers, LoadShedState, RateLimitState,
 };
 use routes::create_router;
 use routes::table::{Route, ROUTES};
@@ -50,7 +51,10 @@ impl Default for Limits {
     }
 }
 
-pub fn build_app(state: AppState) -> Router {
+pub fn build_app(mut state: AppState) -> Router {
+    state.edge.rate_limit_store = state.rate_limit_store.clone();
+    state.edge.sessions = state.sessions.clone();
+    state.edge.in_flight = state.in_flight.clone();
     let edge = state.edge.clone();
     with_layers(create_router(state), Limits::default(), &edge)
 }
@@ -71,6 +75,18 @@ pub fn with_layers_and_routes(
     edge: &EdgePolicy,
     routes: &'static [Route],
 ) -> Router {
+    let load_shed_state = LoadShedState {
+        in_flight: edge.in_flight.clone(),
+        max_in_flight: edge.rate_policy.max_in_flight,
+    };
+    let rate_limit_state = RateLimitState {
+        store: edge.rate_limit_store.clone(),
+        rate_policy: edge.rate_policy,
+        trusted_proxies: edge.trusted_proxies.clone(),
+        sessions: edge.sessions.clone(),
+        clock: edge.sessions.clock().clone(),
+    };
+
     router
         .layer(DefaultBodyLimit::max(limits.max_body_bytes))
         .layer(axum::middleware::from_fn_with_state(
@@ -86,6 +102,14 @@ pub fn with_layers_and_routes(
         .layer(axum::middleware::from_fn_with_state(
             edge.client_thresholds.clone(),
             client_standing,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            rate_limit_state,
+            rate_limit,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            load_shed_state,
+            load_shed,
         ))
         .layer(axum::middleware::from_fn(request_id))
         .layer(create_cors_layer(&edge.allowed_origins))
@@ -116,10 +140,15 @@ pub async fn run_server(config: AppConfig) -> std::io::Result<()> {
     let addr = config.socket_addr();
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     tracing::info!(%addr, "Server listening");
+    let state_from_cfg = AppState::from_config(&config);
     let state = AppState {
-        sessions,
+        sessions: sessions.clone(),
         push_providers: std::sync::Arc::new(providers),
-        ..AppState::from_config(&config)
+        edge: EdgePolicy {
+            sessions,
+            ..state_from_cfg.edge.clone()
+        },
+        ..state_from_cfg
     };
     serve(listener, build_app(state)).await
 }
@@ -129,5 +158,8 @@ pub fn serve(
     listener: tokio::net::TcpListener,
     app: Router,
 ) -> impl std::future::Future<Output = std::io::Result<()>> {
-    std::future::IntoFuture::into_future(axum::serve(listener, app))
+    std::future::IntoFuture::into_future(axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    ))
 }

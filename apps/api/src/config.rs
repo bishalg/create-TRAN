@@ -1,7 +1,10 @@
 use std::env;
 
+use rust_core::rate::{ClassPolicy, RatePolicy};
+
 use crate::client_versions::ClientVersionSettings;
 use crate::db::Location;
+use crate::geo::Cidr;
 use crate::push::providers::PushSettings;
 use crate::secret::Secret;
 
@@ -37,6 +40,16 @@ pub struct AppConfig {
     pub database_url: Option<Secret>,
     /// `MIGRATE_ON_START`, as read (REQ-DB-003).
     pub migrate_on_start: Option<String>,
+    /// `TRUSTED_PROXIES`, as read (REQ-RL-003).
+    pub trusted_proxies: Option<String>,
+    /// `RATE_LIMIT_AUTH`, as read (REQ-RL-001).
+    pub rate_limit_auth: Option<String>,
+    /// `RATE_LIMIT_WRITE`, as read (REQ-RL-001).
+    pub rate_limit_write: Option<String>,
+    /// `RATE_LIMIT_READ`, as read (REQ-RL-001).
+    pub rate_limit_read: Option<String>,
+    /// `RATE_MAX_IN_FLIGHT`, as read (REQ-RL-007).
+    pub rate_max_in_flight: Option<usize>,
 }
 
 impl AppConfig {
@@ -68,6 +81,11 @@ impl AppConfig {
                 .filter(|url| !url.trim().is_empty())
                 .map(Secret::new),
             migrate_on_start: lookup("MIGRATE_ON_START"),
+            trusted_proxies: lookup("TRUSTED_PROXIES"),
+            rate_limit_auth: lookup("RATE_LIMIT_AUTH"),
+            rate_limit_write: lookup("RATE_LIMIT_WRITE"),
+            rate_limit_read: lookup("RATE_LIMIT_READ"),
+            rate_max_in_flight: lookup("RATE_MAX_IN_FLIGHT").and_then(|s| s.trim().parse().ok()),
         }
     }
 
@@ -85,6 +103,51 @@ impl AppConfig {
             Some("false") => Ok(false),
             Some(_) => Err("MIGRATE_ON_START must be true or false".to_string()),
         }
+    }
+
+    /// Trusted proxies for client IP extraction (REQ-RL-003): `TRUSTED_PROXIES`.
+    pub fn trusted_proxies(&self) -> Result<Vec<Cidr>, String> {
+        let Some(raw) = self.trusted_proxies.as_deref().map(str::trim) else {
+            return Ok(Vec::new());
+        };
+        if raw.is_empty() {
+            return Ok(Vec::new());
+        }
+        raw.split(',')
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .map(|s| Cidr::parse(s).map_err(|e| format!("TRUSTED_PROXIES: {e}")))
+            .collect()
+    }
+
+    /// Rate limiting policy, with overrides from `RATE_LIMIT_<CLASS>` (REQ-RL-001).
+    pub fn rate_policy(&self) -> Result<RatePolicy, String> {
+        let mut policy = rust_core::rate::RATE_POLICY;
+        if let Some(auth) = parse_class_policy(
+            self.rate_limit_auth.as_deref(),
+            policy.auth,
+            "RATE_LIMIT_AUTH",
+        )? {
+            policy.auth = auth;
+        }
+        if let Some(write) = parse_class_policy(
+            self.rate_limit_write.as_deref(),
+            policy.write,
+            "RATE_LIMIT_WRITE",
+        )? {
+            policy.write = write;
+        }
+        if let Some(read) = parse_class_policy(
+            self.rate_limit_read.as_deref(),
+            policy.read,
+            "RATE_LIMIT_READ",
+        )? {
+            policy.read = read;
+        }
+        if let Some(max) = self.rate_max_in_flight {
+            policy.max_in_flight = max;
+        }
+        Ok(policy)
     }
 
     /// `development` and `test`: a developer's machine or CI, not a deployment.
@@ -139,6 +202,33 @@ impl AppConfig {
     pub fn socket_addr(&self) -> String {
         format!("{}:{}", self.host, self.port)
     }
+}
+
+fn parse_class_policy(
+    raw: Option<&str>,
+    fallback: ClassPolicy,
+    var_name: &str,
+) -> Result<Option<ClassPolicy>, String> {
+    let Some(raw) = raw.map(str::trim) else {
+        return Ok(None);
+    };
+    if raw.is_empty() {
+        return Ok(None);
+    }
+    let (sustained_str, burst_str) = match raw.split_once('/') {
+        Some((s, b)) => (s.trim(), Some(b.trim())),
+        None => (raw, None),
+    };
+    let sustained = sustained_str
+        .parse::<u32>()
+        .map_err(|_| format!("{var_name} must specify a positive integer for sustained rate"))?;
+    let burst = if let Some(b) = burst_str {
+        b.parse::<u32>()
+            .map_err(|_| format!("{var_name} must specify a positive integer for burst"))?
+    } else {
+        fallback.burst
+    };
+    Ok(Some(ClassPolicy::new(sustained, burst)))
 }
 
 #[cfg(test)]
@@ -280,5 +370,76 @@ mod tests {
     #[test]
     fn from_env_produces_a_usable_address() {
         assert!(AppConfig::from_env().socket_addr().contains(':'));
+    }
+
+    // Verifies: REQ-RL-003
+    #[test]
+    fn trusted_proxies_parses_comma_separated_cidrs_or_empty() {
+        assert_eq!(config_from(&[]).trusted_proxies().unwrap(), Vec::new());
+        assert_eq!(
+            config_from(&[("TRUSTED_PROXIES", " ")])
+                .trusted_proxies()
+                .unwrap(),
+            Vec::new()
+        );
+        let parsed = config_from(&[("TRUSTED_PROXIES", "127.0.0.1/32, 10.0.0.0/8")])
+            .trusted_proxies()
+            .unwrap();
+        assert_eq!(parsed.len(), 2);
+        assert!(parsed[0].contains(&"127.0.0.1".parse().unwrap()));
+        assert!(parsed[1].contains(&"10.2.3.4".parse().unwrap()));
+
+        assert!(config_from(&[("TRUSTED_PROXIES", "invalid-cidr")])
+            .trusted_proxies()
+            .is_err());
+    }
+
+    // Verifies: REQ-RL-001
+    #[test]
+    fn rate_policy_reads_defaults_and_overrides() {
+        let defaults = config_from(&[]).rate_policy().unwrap();
+        assert_eq!(defaults.auth.sustained_per_minute, 10);
+        assert_eq!(defaults.auth.burst, 5);
+
+        let overridden = config_from(&[
+            ("RATE_LIMIT_AUTH", "20/10"),
+            ("RATE_LIMIT_WRITE", "80"),
+            ("RATE_LIMIT_READ", "400/100"),
+        ])
+        .rate_policy()
+        .unwrap();
+
+        assert_eq!(overridden.auth.sustained_per_minute, 20);
+        assert_eq!(overridden.auth.burst, 10);
+        assert_eq!(overridden.write.sustained_per_minute, 80);
+        assert_eq!(overridden.write.burst, 20); // Fallback burst
+        assert_eq!(overridden.read.sustained_per_minute, 400);
+        assert_eq!(overridden.read.burst, 100);
+
+        assert_eq!(
+            config_from(&[("RATE_LIMIT_AUTH", "   ")])
+                .rate_policy()
+                .unwrap()
+                .auth
+                .sustained_per_minute,
+            10
+        );
+        assert!(config_from(&[("RATE_LIMIT_AUTH", "bad")])
+            .rate_policy()
+            .is_err());
+        assert!(config_from(&[("RATE_LIMIT_AUTH", "20/bad")])
+            .rate_policy()
+            .is_err());
+        assert!(config_from(&[("RATE_LIMIT_WRITE", "bad")])
+            .rate_policy()
+            .is_err());
+        assert!(config_from(&[("RATE_LIMIT_READ", "bad")])
+            .rate_policy()
+            .is_err());
+
+        let with_max = config_from(&[("RATE_MAX_IN_FLIGHT", "50")])
+            .rate_policy()
+            .unwrap();
+        assert_eq!(with_max.max_in_flight, 50);
     }
 }

@@ -175,16 +175,36 @@ async fn eligibility_without_headers_defaults_to_loopback_us() {
 }
 
 #[tokio::test]
-async fn eligibility_uses_first_hop_of_x_forwarded_for() {
+async fn eligibility_resolves_client_ip_through_trusted_proxies() {
+    let state = AppState::from_config(&AppConfig::from_lookup(|key| match key {
+        "TRUSTED_PROXIES" => Some("127.0.0.1/32, 8.8.8.8/32".to_string()),
+        _ => None,
+    }));
+    let reply = send_to(
+        state,
+        eligibility(
+            r#"{"age": 21}"#,
+            &[("x-forwarded-for", "192.168.1.9, 8.8.8.8")],
+        ),
+    )
+    .await;
+
+    assert_eq!(reply.json["client_ip"], "192.168.1.9");
+    assert_eq!(reply.json["country_code"], "IN");
+    assert_eq!(reply.json["country_source"], "private-range-stub");
+}
+
+#[tokio::test]
+async fn eligibility_ignores_x_forwarded_for_when_peer_is_not_trusted() {
     let reply = send(eligibility(
         r#"{"age": 21}"#,
         &[("x-forwarded-for", "192.168.1.9, 8.8.8.8")],
     ))
     .await;
 
-    assert_eq!(reply.json["client_ip"], "192.168.1.9");
-    assert_eq!(reply.json["country_code"], "IN");
-    assert_eq!(reply.json["country_source"], "private-range-stub");
+    assert_eq!(reply.json["client_ip"], "127.0.0.1");
+    assert_eq!(reply.json["country_code"], "US");
+    assert_eq!(reply.json["country_source"], "loopback-default");
 }
 
 #[tokio::test]

@@ -18,6 +18,7 @@ use axum::http::{Method, Request, StatusCode};
 use axum::routing::get;
 use axum::Router;
 use http_body_util::BodyExt;
+use rust_core::rate::RouteClass;
 use serde_json::Value;
 use support::Captured;
 use tokio::sync::Mutex;
@@ -371,6 +372,7 @@ static DEPRECATED_TABLE: [Route; 2] = [
     Route {
         verb: Verb::Get,
         path: "/old",
+        class: RouteClass::Read,
         deprecated: Some(Sunset {
             deprecated_at: 1_798_675_200,
             sunset_at: 1_814_400_000,
@@ -380,6 +382,7 @@ static DEPRECATED_TABLE: [Route; 2] = [
     Route {
         verb: Verb::Get,
         path: "/new",
+        class: RouteClass::Read,
         deprecated: None,
         handler: || get(|| async { "new" }),
     },

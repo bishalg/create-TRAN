@@ -92,6 +92,29 @@ describe('withRetry (REQ-ERR-005)', () => {
     expect(noSleep.mock.calls).toEqual([[1000]]);
   });
 
+  // Verifies: REQ-RL-009
+  it('rate.limited / server.rate_limited presents catalogue message and does not auto-retry user actions', async () => {
+    const err = classifyError(
+      new TranApiError('slow', 429, { code: 'server.rate_limited', retryAfter: '2' })
+    );
+    expect(err.code).toBe('server.rate_limited');
+    expect(err.spec.messageKey).toBe('errors.rateLimited');
+    expect(err.retryAfterMs).toBe(2000);
+
+    // User-initiated action (idempotent: false) is never automatically retried
+    const userAction = vi
+      .fn()
+      .mockRejectedValue(
+        new TranApiError('slow', 429, { code: 'server.rate_limited', retryAfter: '2' })
+      );
+    await expect(
+      withRetry(userAction, { idempotent: false, sleep: noSleep })
+    ).rejects.toMatchObject({
+      code: 'server.rate_limited',
+    });
+    expect(userAction).toHaveBeenCalledTimes(1);
+  });
+
   it('gives up after maxAttempts and throws the classified error', async () => {
     const call = vi.fn().mockRejectedValue(offline());
     const err = await withRetry(call, { idempotent: true, sleep: noSleep }).catch((e) => e);

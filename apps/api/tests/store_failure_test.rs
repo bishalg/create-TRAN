@@ -62,7 +62,10 @@ impl Api {
                 file.open_with(&IMPATIENT),
                 Arc::new(ManualClock::starting_at(start)),
             ),
-            ..AppState::from_config(&AppConfig::from_lookup(|_| None))
+            ..AppState::from_config(&AppConfig::from_lookup(|key| match key {
+                "RATE_LIMIT_AUTH" => Some("1000/1000".to_string()),
+                _ => None,
+            }))
         };
         Self {
             file,

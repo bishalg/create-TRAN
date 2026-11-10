@@ -38,7 +38,14 @@ export default defineConfig({
       command: 'cargo run -p api',
       cwd: '..',
       url: `${API_URL}/api/health`,
-      env: { HOST: '127.0.0.1', PORT: '3001', APP_ENV: 'test' },
+      env: {
+        HOST: '127.0.0.1',
+        PORT: '3001',
+        APP_ENV: 'test',
+        RATE_LIMIT_AUTH: '6000/1000',
+        RATE_LIMIT_WRITE: '6000/1000',
+        RATE_LIMIT_READ: '6000/1000',
+      },
       // Never reuse: a dev server or another project's server would be measured instead.
       reuseExistingServer: false,
       timeout: 180_000,

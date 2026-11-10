@@ -180,7 +180,10 @@ async fn parallel_refresh_requests_answer_one_new_pair() {
         let clock = Arc::new(ManualClock::starting_at(now()));
         let state = AppState {
             sessions: Sessions::sql(Database::in_memory(), clock),
-            ..AppState::from_config(&AppConfig::from_lookup(|_| None))
+            ..AppState::from_config(&AppConfig::from_lookup(|key| match key {
+                "RATE_LIMIT_AUTH" => Some("1000/1000".to_string()),
+                _ => None,
+            }))
         };
         let app = build_app(state);
         let signed_in = call(

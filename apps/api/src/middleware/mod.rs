@@ -3,7 +3,9 @@ pub mod client;
 pub mod cors;
 pub mod deadline;
 pub mod deprecation;
+pub mod load_shed;
 pub mod panic;
+pub mod rate_limit;
 pub mod request_id;
 pub mod security_headers;
 
@@ -12,6 +14,8 @@ pub use client::client_standing;
 pub use cors::create_cors_layer;
 pub use deadline::deadline;
 pub use deprecation::deprecation;
+pub use load_shed::{load_shed, LoadShedState};
 pub use panic::{install_panic_hook, panic_response};
+pub use rate_limit::{rate_limit, RateLimitState};
 pub use request_id::request_id;
 pub use security_headers::security_headers;

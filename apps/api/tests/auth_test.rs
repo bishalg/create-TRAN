@@ -61,7 +61,10 @@ struct Api {
 
 impl Api {
     fn new() -> Self {
-        Self::with_config(AppConfig::from_lookup(|_| None))
+        Self::with_config(AppConfig::from_lookup(|key| match key {
+            "RATE_LIMIT_AUTH" => Some("1000/1000".to_string()),
+            _ => None,
+        }))
     }
 
     fn with_config(config: AppConfig) -> Self {
@@ -75,8 +78,10 @@ impl Api {
     }
 
     fn in_production() -> Self {
-        Self::with_config(AppConfig::from_lookup(|key| {
-            (key == "APP_ENV").then(|| "production".to_string())
+        Self::with_config(AppConfig::from_lookup(|key| match key {
+            "APP_ENV" => Some("production".to_string()),
+            "RATE_LIMIT_AUTH" => Some("1000/1000".to_string()),
+            _ => None,
         }))
     }
 

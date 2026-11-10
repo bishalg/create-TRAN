@@ -9,6 +9,7 @@ use axum::http::Method;
 use axum::routing::{delete, get, post, put, MethodRouter};
 use chrono::DateTime;
 use rust_core::compat::API_BASE_PATH;
+use rust_core::rate::RouteClass;
 
 use super::{account, auth, devices, tran, vote};
 use crate::state::AppState;
@@ -68,6 +69,8 @@ pub struct Route {
     pub verb: Verb,
     /// The template below [`API_BASE_PATH`] (`/vote/countries/{code}`).
     pub path: &'static str,
+    /// Rate limiting class (REQ-RL-001).
+    pub class: RouteClass,
     /// `Some` once the route is deprecated; it then needs a sunset date.
     pub deprecated: Option<Sunset>,
     /// The handler, with the verb's method router.
@@ -81,10 +84,16 @@ impl std::fmt::Debug for Route {
 }
 
 impl Route {
-    const fn new(verb: Verb, path: &'static str, handler: fn() -> MethodRouter<AppState>) -> Self {
+    pub const fn new(
+        verb: Verb,
+        path: &'static str,
+        class: RouteClass,
+        handler: fn() -> MethodRouter<AppState>,
+    ) -> Self {
         Self {
             verb,
             path,
+            class,
             deprecated: None,
             handler,
         }
@@ -115,27 +124,48 @@ impl Route {
 /// Every product route, in documentation order. No route is deprecated in the sample; mark one
 /// with `deprecated: Some(Sunset { .. })` and the layer announces it (REQ-VER-007).
 pub static ROUTES: [Route; 11] = [
-    Route::new(Verb::Get, "/tran/info", || get(tran::stack_info_handler)),
-    Route::new(Verb::Get, "/vote/countries", || {
+    Route::new(Verb::Get, "/tran/info", RouteClass::Read, || {
+        get(tran::stack_info_handler)
+    }),
+    Route::new(Verb::Get, "/vote/countries", RouteClass::Read, || {
         get(vote::list_countries_handler)
     }),
-    Route::new(Verb::Get, "/vote/countries/{code}", || {
-        get(vote::get_country_handler)
-    }),
-    Route::new(Verb::Post, "/vote/eligibility", || {
+    Route::new(
+        Verb::Get,
+        "/vote/countries/{code}",
+        RouteClass::Read,
+        || get(vote::get_country_handler),
+    ),
+    Route::new(Verb::Post, "/vote/eligibility", RouteClass::Read, || {
         post(vote::eligibility_handler)
     }),
-    Route::new(Verb::Post, "/auth/session", || post(auth::sign_in)),
-    Route::new(Verb::Get, "/auth/session", || get(auth::current_session)),
-    Route::new(Verb::Post, "/auth/refresh", || post(auth::refresh)),
-    Route::new(Verb::Post, "/auth/sign-out", || post(auth::sign_out)),
-    Route::new(Verb::Delete, "/account", || delete(account::delete_account)),
-    Route::new(Verb::Put, "/devices/{installation_id}", || {
-        put(devices::register)
+    Route::new(Verb::Post, "/auth/session", RouteClass::Auth, || {
+        post(auth::sign_in)
     }),
-    Route::new(Verb::Delete, "/devices/{installation_id}", || {
-        delete(devices::unregister)
+    Route::new(Verb::Get, "/auth/session", RouteClass::Read, || {
+        get(auth::current_session)
     }),
+    Route::new(Verb::Post, "/auth/refresh", RouteClass::Auth, || {
+        post(auth::refresh)
+    }),
+    Route::new(Verb::Post, "/auth/sign-out", RouteClass::Auth, || {
+        post(auth::sign_out)
+    }),
+    Route::new(Verb::Delete, "/account", RouteClass::Auth, || {
+        delete(account::delete_account)
+    }),
+    Route::new(
+        Verb::Put,
+        "/devices/{installation_id}",
+        RouteClass::Write,
+        || put(devices::register),
+    ),
+    Route::new(
+        Verb::Delete,
+        "/devices/{installation_id}",
+        RouteClass::Write,
+        || delete(devices::unregister),
+    ),
 ];
 
 /// The route of `table` that answers `method` on `path`, if any.
@@ -143,6 +173,17 @@ pub fn find<'a>(table: &'a [Route], method: &Method, path: &str) -> Option<&'a R
     table
         .iter()
         .find(|route| route.verb.matches(method) && route.fits(path))
+}
+
+/// Returns the rate-limiting class for a given request path and method (REQ-RL-001).
+/// Health routes are exempt.
+pub fn route_class(path: &str, method: &Method) -> RouteClass {
+    if path.starts_with("/api/health") {
+        return RouteClass::Exempt;
+    }
+    find(&ROUTES, method, path)
+        .map(|route| route.class)
+        .unwrap_or(RouteClass::Read)
 }
 
 /// `path` as it may be logged: a product route's template, so an id in the path (an installation
@@ -183,10 +224,34 @@ mod tests {
     // The table is built at compile time; this runs the constructor once (docs/LEARNINGS.md).
     #[test]
     fn the_constructor_starts_undeprecated() {
-        let route = Route::new(Verb::Put, "/x/{id}", || put(devices::register));
+        let route = Route::new(Verb::Put, "/x/{id}", RouteClass::Write, || {
+            put(devices::register)
+        });
         assert_eq!(route.deprecated, None);
+        assert_eq!(route.class, RouteClass::Write);
         assert_eq!(route.template(), "/api/v1/x/{id}");
         let _router: MethodRouter<AppState> = (route.handler)();
+    }
+
+    // Verifies: REQ-RL-001
+    #[test]
+    fn every_route_has_a_class() {
+        for route in &ROUTES {
+            assert_ne!(route.class, RouteClass::Exempt);
+        }
+        assert_eq!(route_class("/api/health", &Method::GET), RouteClass::Exempt);
+        assert_eq!(
+            route_class("/api/v1/auth/session", &Method::POST),
+            RouteClass::Auth
+        );
+        assert_eq!(
+            route_class("/api/v1/auth/session", &Method::GET),
+            RouteClass::Read
+        );
+        assert_eq!(
+            route_class("/api/v1/unknown", &Method::GET),
+            RouteClass::Read
+        );
     }
 
     #[test]

@@ -273,8 +273,16 @@ async function target(page: Page, r: Run, stepTitle: string, id: string): Promis
 }
 
 When(step(`I tap ${Q}`), async ({ page, $testInfo, $step }, id: string) => {
-  await (await target(page, current($testInfo), $step.title, unquote(id))).click();
-  await current($testInfo).manifest.record(page, $step.title);
+  const r = current($testInfo);
+  const targetId = unquote(id);
+  await (await target(page, r, $step.title, targetId)).click();
+  if (r.upgradeRequired && targetId === ScreenIds.eligibility.deleteAccountConfirm) {
+    await byId(page, ScreenIds.eligibility.updateButton).waitFor({
+      state: 'visible',
+      timeout: r.scenario.within_ms,
+    });
+  }
+  await r.manifest.record(page, $step.title);
 });
 
 When(

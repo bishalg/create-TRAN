@@ -49,6 +49,40 @@ export const DEVICE_POLICY = {
 /** What an app does after `push_sync` (REQ-PSH-009). */
 export type PushAction = 'register' | 'unregister' | 'nothing';
 
+/** A route's rate-limiting class (REQ-RL-001). */
+export type RouteClass = 'auth' | 'write' | 'read' | 'exempt';
+
+export interface ClassPolicy {
+  readonly sustainedPerMinute: number;
+  readonly burst: number;
+}
+
+export interface RatePolicy {
+  readonly auth: ClassPolicy;
+  readonly write: ClassPolicy;
+  readonly read: ClassPolicy;
+  readonly maxKeys: number;
+  readonly maxInFlight: number;
+}
+
+/** Rate limiting policy defaults (REQ-RL-001). */
+export const RATE_POLICY: RatePolicy = {
+  auth: {
+    sustainedPerMinute: 10,
+    burst: 5,
+  },
+  write: {
+    sustainedPerMinute: 60,
+    burst: 20,
+  },
+  read: {
+    sustainedPerMinute: 300,
+    burst: 60,
+  },
+  maxKeys: 10000,
+  maxInFlight: 100,
+} as const;
+
 /** A permission the apps may ask for (REQ-PRV-001). */
 export type PermissionId = 'location_approximate' | 'notifications';
 
