@@ -68,18 +68,32 @@ Platform-native iOS (`apps/ios`) and Android (`apps/android`) are the real **N**
 
 ## 6. Production-readiness topics, one at a time
 
-Each topic is documented first (spec, ADR, a playbook), then built and tested on every platform before the next starts.
+Each topic is one phase: documented first, then built and tested on every platform before the next starts. The
+documents are written for the next reader, human or AI, who will add code here: a spec (what must hold), an ADR (why),
+and one short playbook in `docs/` (what the topic is, why it matters, the rules to follow), plus a one-line rule in
+`AGENTS.md`. Keep them short: only what changes how code is written.
 
-- [ ] **Security** ([spec 022](./specs/022-security.md), ADR-0039): secrets, rotating sessions, Keychain and Keystore
-      storage, sensitive data.
-- [ ] **Observability** ([spec 023](./specs/023-observability.md), ADR-0040): trace context, log schema, RED metrics,
-      readiness and graceful shutdown.
-- [ ] **API versioning and compatibility**: a versioned base path, additive-change rules checked against contract
-      snapshots (REQ-API-011), deprecation headers, and a minimum supported client version that old apps obey.
-- [ ] **Persistence and migrations**: a durable `SessionStore`, forward-only schema migrations run and verified at
-      start-up, and versioned client-side stored records.
-- [ ] Candidates after that: rate limiting and abuse protection, feature flags and remote configuration, container
-      image and deploy pipeline.
+1. [ ] **Security** ([spec 022](./specs/022-security.md), ADR-0039, [playbook](./SECURITY.md)): secrets, rotating
+       sessions, Keychain and Keystore storage, sensitive data.
+2. [ ] **Account deletion** ([spec 024](./specs/024-account-deletion.md), ADR-0041,
+       [playbook](./ACCOUNT_DELETION.md)): delete the account from inside the app (App Store guideline 5.1.1(v)) and from a public
+       web page (Google Play's account-deletion policy), confirmed first, with every session revoked, the device
+       vault cleared and the server data erased or scheduled for erasure.
+3. [ ] **Mobile release automation (fastlane)**: one `Fastfile` per platform with the same lanes (`test`, `beta`,
+       `release`), signing kept out of the repo, store credentials only in CI secrets, versions still from
+       `pnpm release` (ADR-0034).
+4. [ ] **Observability** ([spec 023](./specs/023-observability.md), ADR-0040, [runbook](./OBSERVABILITY.md)): trace
+       context, log schema, RED metrics, readiness and graceful shutdown.
+5. [ ] **API versioning and compatibility**: a versioned base path, additive-change rules checked against contract
+       snapshots (REQ-API-011), deprecation headers, and a minimum supported client version that old apps obey.
+6. [ ] **Persistence and migrations**: a durable `SessionStore`, forward-only schema migrations run and verified at
+       start-up, and versioned client-side stored records.
+7. [ ] **Rate limiting and abuse protection**: limits per client and per route as policy data, `429` with
+       `Retry-After` (the clients already honour it), tighter limits on the auth routes.
+8. [ ] **Feature flags and remote configuration**: typed flags with safe defaults, evaluated in one place, a kill
+       switch, and stale flags removed by a check.
+9. [ ] **Container image and deploy pipeline**: a small reproducible image, configuration by environment, health-gated
+       rollout and rollback, and release artefacts built once and promoted.
 
 ---
 

@@ -25,6 +25,8 @@ This is a **template**: keep the sample tiny, exemplary and fully tested.
 - Security ([docs/SECURITY.md](docs/SECURITY.md), spec 022): a client binary has no secrets; a credential is stored
   only through the platform `SessionVault` (never Web Storage, `UserDefaults` or plain preferences); a new environment
   variable goes in `.env.example`; never log a header, a token or a body (`pnpm secrets:check`).
+- Accounts ([docs/ACCOUNT_DELETION.md](docs/ACCOUNT_DELETION.md), spec 024): deletion is in the app and on a public
+  page, has its own confirmation, and clears the device only after the server answers `204`.
 - Hand-written code and test files stay at or under 800 lines (`pnpm tooling:test`): split by responsibility, not
   by line count. Generated files are exempt; docs have no hard limit but are split by topic.
 - Commits are Conventional Commits (`feat(scope): …`, `fix!: …`; the `commit-msg` hook checks). One version for every
