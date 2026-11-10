@@ -45,7 +45,9 @@ ignored (not rejected) and the country resolved from the IP.
 
 Allowed origins MUST come from `CORS_ALLOWED_ORIGINS` (comma-separated). When unset, only the local development
 origins are allowed and only when `APP_ENV` is `development` or `test`; in other environments no origin is allowed.
-Preflight MUST permit `content-type`, `accept` and `x-debug-country`.
+An allowed origin MUST be echoed exactly, never as `*`, with `Access-Control-Allow-Credentials: true` so the session
+cookie of REQ-SEC-007 can travel. Preflight MUST permit `content-type`, `accept`, `authorization`, `x-debug-country`
+and `x-request-id`.
 **Verified by:** `api_test.rs` (preflight tests), `config.rs` unit tests.
 
 ### REQ-API-008 [verified] Configuration from the environment

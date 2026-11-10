@@ -22,6 +22,9 @@ This is a **template**: keep the sample tiny, exemplary and fully tested.
 - Dependencies: fix an advisory by the smallest bump; if upstream has not bumped, add a ranged override
   (`name@<fixed`) in `pnpm-workspace.yaml`, never a bare name. Every GitHub Action stays pinned to a commit SHA with a
   version comment (`pnpm supply:check`, ADR-0033).
+- Security ([docs/SECURITY.md](docs/SECURITY.md), spec 022): a client binary has no secrets; a credential is stored
+  only through the platform `SessionVault` (never Web Storage, `UserDefaults` or plain preferences); a new environment
+  variable goes in `.env.example`; never log a header, a token or a body (`pnpm secrets:check`).
 - Hand-written code and test files stay at or under 800 lines (`pnpm tooling:test`): split by responsibility, not
   by line count. Generated files are exempt; docs have no hard limit but are split by topic.
 - Commits are Conventional Commits (`feat(scope): …`, `fix!: …`; the `commit-msg` hook checks). One version for every
