@@ -136,25 +136,25 @@ async function assertReachable(page: Page, r: Run, stepTitle: string) {
   }
 }
 
-/** Sign-out always asks first (REQ-ERR-007). */
-async function signOut(page: Page) {
-  await byId(page, ScreenIds.eligibility.signOutButton).click();
-  await byId(page, ScreenIds.eligibility.dialogConfirm).click();
-}
+/** The branch a person taps on Auth Welcome to reach each stored session. */
+const BRANCH: Partial<Record<SessionKind, string>> = {
+  citizen_voter: ScreenIds.authWelcome.voterBranchButton,
+  election_auditor: ScreenIds.authWelcome.auditorBranchButton,
+};
 
 /**
  * Opens the app in the scenario's given state. Runs before the first `When` or `Then`, so the
- * givens can be in any order. The web keeps no session: it opens as a Citizen Voter, and the other
- * sessions are reached the way a person would.
+ * givens can be in any order. A fresh browser holds no session cookie, so the web boots to Auth
+ * Welcome (REQ-SEC-021), and a signed-in session is reached the way a person would: by choosing
+ * the role, which works with the API unreachable too (ADR-0039).
  */
 async function launch(page: Page, r: Run) {
   if (r.launched) return;
   r.launched = true;
   if (r.largestText) await applyLargestText(page);
   await page.goto('/');
-  if (r.session !== 'citizen_voter') await signOut(page);
-  if (r.session === 'election_auditor')
-    await byId(page, ScreenIds.authWelcome.auditorBranchButton).click();
+  const branch = BRANCH[r.session];
+  if (branch) await byId(page, branch).click();
   if (r.locale !== 'en') {
     await page
       .getByRole('group', { name: t('shell.language.label', 'en') })

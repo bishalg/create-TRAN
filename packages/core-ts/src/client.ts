@@ -1,14 +1,17 @@
 import {
   checkVoteEligibility,
   readApiError,
+  SessionClient,
   TranApiError,
   type VoteEligibilityInput,
   type VoteEligibilityOutput,
 } from '@tran/api';
 import { RETRY_POLICY } from './generated/feedback.js';
+import { refreshEvent, sessionRecovery } from './session.js';
 import type { TranHealthReport, TranStackInfo } from './types.js';
 
-export { TranApiError };
+export { SessionClient, TranApiError };
+export type { RefreshOutcome, SessionUser } from '@tran/api';
 
 /** Per-call options. */
 export interface TranCallOptions {
@@ -21,6 +24,54 @@ export interface TranApiClientOptions {
   timeoutMs?: number;
   fetchFn?: typeof fetch;
   headers?: Record<string, string>;
+}
+
+/**
+ * `fetchFn` with a deadline, so only failures of `fetch` itself leave it as transport errors
+ * (REQ-ERR-004, REQ-ROB-002): the deadline → `TimeoutError` (`network.timeout`), the caller's
+ * signal → `AbortError` (`request.cancelled`), anything else → `NetworkError`
+ * (`network.offline`). A `TypeError` from our own code is therefore never "offline".
+ */
+export function timedFetch(fetchFn: typeof fetch, timeoutMs: number): typeof fetch {
+  return async (url, init) => {
+    const controller = new AbortController();
+    const caller = init?.signal ?? undefined;
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, timeoutMs);
+    const cancel = () => controller.abort();
+    if (caller?.aborted) cancel();
+    caller?.addEventListener('abort', cancel);
+    return fetchFn(url, { ...init, signal: controller.signal })
+      .catch((err: unknown) => {
+        if (timedOut) {
+          throw new DOMException(`No response within ${timeoutMs} ms`, 'TimeoutError');
+        }
+        if (caller?.aborted) throw new DOMException('Cancelled by the caller', 'AbortError');
+        throw new DOMException(err instanceof Error ? err.message : 'fetch failed', 'NetworkError');
+      })
+      .finally(() => {
+        clearTimeout(timer);
+        caller?.removeEventListener('abort', cancel);
+      });
+  };
+}
+
+/**
+ * The web's session client (spec 022): the recovery table of REQ-SEC-015 and the same deadline
+ * and error classes as every other call. Create one per app, so there is one refresh in flight.
+ */
+export function createSessionClient(options: Omit<TranApiClientOptions, 'headers'> = {}) {
+  return new SessionClient({
+    baseUrl: options.baseUrl,
+    fetchFn: timedFetch(
+      options.fetchFn ?? globalThis.fetch.bind(globalThis),
+      options.timeoutMs ?? RETRY_POLICY.requestTimeoutMs
+    ),
+    rules: { sessionRecovery, refreshEvent },
+  });
 }
 
 export class TranApiClient {
@@ -36,6 +87,7 @@ export class TranApiClient {
     this.timeoutMs = options.timeoutMs ?? RETRY_POLICY.requestTimeoutMs;
     this.fetchFn = options.fetchFn ?? globalThis.fetch.bind(globalThis);
     this.headers = options.headers ?? {};
+    this.fetchWithTimeout = timedFetch(this.fetchFn, this.timeoutMs);
   }
 
   /** New client with the same settings plus extra headers; the original is left untouched. */
@@ -46,39 +98,8 @@ export class TranApiClient {
     });
   }
 
-  /**
-   * Every call goes through here, and only failures of `fetch` itself leave it as transport
-   * errors (REQ-ERR-004, REQ-ROB-002): our deadline → `TimeoutError` (`network.timeout`), the
-   * caller's signal → `AbortError` (`request.cancelled`), anything else → `NetworkError`
-   * (`network.offline`). A `TypeError` from our own code is therefore never "offline".
-   */
-  private readonly fetchWithTimeout = async (
-    url: RequestInfo | URL,
-    init?: RequestInit
-  ): Promise<Response> => {
-    const controller = new AbortController();
-    const caller = init?.signal ?? undefined;
-    let timedOut = false;
-    const timer = setTimeout(() => {
-      timedOut = true;
-      controller.abort();
-    }, this.timeoutMs);
-    const cancel = () => controller.abort();
-    if (caller?.aborted) cancel();
-    caller?.addEventListener('abort', cancel);
-    return this.fetchFn(url, { ...init, signal: controller.signal })
-      .catch((err: unknown) => {
-        if (timedOut) {
-          throw new DOMException(`No response within ${this.timeoutMs} ms`, 'TimeoutError');
-        }
-        if (caller?.aborted) throw new DOMException('Cancelled by the caller', 'AbortError');
-        throw new DOMException(err instanceof Error ? err.message : 'fetch failed', 'NetworkError');
-      })
-      .finally(() => {
-        clearTimeout(timer);
-        caller?.removeEventListener('abort', cancel);
-      });
-  };
+  /** Every call goes through here (see `timedFetch`). */
+  private readonly fetchWithTimeout: typeof fetch;
 
   private async request<T>(path: string, { signal }: TranCallOptions): Promise<T> {
     const response = await this.fetchWithTimeout(`${this.baseUrl}${path}`, {
@@ -87,6 +108,8 @@ export class TranApiClient {
         Accept: 'application/json',
         ...this.headers,
       },
+      // Only `/api/auth/*` may carry the session cookie (REQ-SEC-018).
+      credentials: 'omit',
       signal,
     });
     if (!response.ok) throw await readApiError(response);

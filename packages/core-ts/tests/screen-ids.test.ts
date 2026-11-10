@@ -123,7 +123,7 @@ const KNOWN_GAPS: { platform: Platform; id: string; reason: string }[] = [
   {
     platform: 'web',
     id: 'splash-progress',
-    reason: 'the web shell resolves the session synchronously and renders no splash screen',
+    reason: 'the web boot (one refresh call, REQ-SEC-021) renders no splash element',
   },
   {
     platform: 'android',

@@ -1,4 +1,4 @@
-// Verifies: REQ-PERF-008
+// Verifies: REQ-PERF-008 REQ-SEC-024
 /**
  * Release builds start and work — the builds users get, not the debug ones every other suite
  * runs. `pnpm smoke` builds them first. A check whose tool or device is missing is reported as
@@ -9,6 +9,7 @@ import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ScreenIds } from '@tran/core';
 import { expect, test } from '@playwright/test';
 
 const ROOT = path.resolve(fileURLToPath(import.meta.url), '../../..');
@@ -33,20 +34,60 @@ const has = (command: string) => {
 };
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** The boot refresh of a first visit answers 401 (no cookie yet); Chrome logs that response. */
+const firstVisitRefresh = (text: string, url: string) =>
+  url.endsWith('/api/auth/refresh') && text.includes('401');
+
 test('web: the production build loads cleanly and answers a server check', async ({ page }) => {
   const errors: string[] = [];
   page.on('console', (message) => {
-    if (message.type() === 'error') errors.push(message.text());
+    if (message.type() !== 'error') return;
+    if (firstVisitRefresh(message.text(), message.location().url)) return;
+    errors.push(message.text());
   });
   page.on('pageerror', (error) => errors.push(error.message));
+  // Any CSP violation fails the run (REQ-SEC-024), whether or not the browser also logs it.
+  const violations: string[] = [];
+  await page.exposeFunction('reportCspViolation', (violation: string) =>
+    violations.push(violation)
+  );
+  await page.addInitScript(() =>
+    document.addEventListener('securitypolicyviolation', (event) =>
+      (window as unknown as { reportCspViolation: (v: string) => void }).reportCspViolation(
+        `${event.effectiveDirective} ${event.blockedURI}`
+      )
+    )
+  );
 
   await page.goto('/');
+  const csp = await page
+    .locator('meta[http-equiv="Content-Security-Policy"]')
+    .getAttribute('content');
+  expect(csp).toMatch(/^default-src 'self'; script-src 'self' 'sha256-[A-Za-z0-9+/=]+';/);
+  expect(csp).toContain("connect-src 'self' http://127.0.0.1:3001");
+
+  // No session cookie yet: role selection; choosing a role establishes the API session.
+  const signedIn = page.waitForResponse(
+    (r) => r.url().endsWith('/api/auth/session') && r.request().method() === 'POST'
+  );
+  await page.getByTestId(ScreenIds.authWelcome.voterBranchButton).click();
+  expect((await signedIn).status()).toBe(201);
   await expect(page.getByText('API online')).toBeVisible();
   await page.getByRole('radio', { name: /Ask the server/ }).check();
   await page.getByLabel('Your age').fill('20');
   await page.getByLabel('Country code').fill('NP');
   await page.getByRole('button', { name: 'Check eligibility' }).click();
   await expect(page.getByText('Age 20 meets the minimum voting age of 18 in NP.')).toBeVisible();
+
+  // A reload restores the session from the HttpOnly cookie (REQ-SEC-021), never from storage.
+  await page.reload();
+  await expect(page.getByTestId(ScreenIds.eligibility.roleBadge)).toContainText('Citizen Voter');
+  expect(await page.evaluate(() => document.cookie)).toBe('');
+  expect(
+    await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }))
+  ).not.toMatch(/token/i);
+
+  expect(violations).toEqual([]);
   expect(errors).toEqual([]);
 });
 

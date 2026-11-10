@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from './zod.js';
 
 /** The Axum error envelope (REQ-ERR-002). `code`/`retryable`/`request_id` are optional so bodies from
  * older servers and proxies still parse; clients then classify by HTTP status (REQ-ERR-004). */

@@ -5,8 +5,20 @@ import { ScreenIds } from '@tran/core';
 
 const { Given, When, Then } = createBdd();
 
+/**
+ * A fresh browser has no session cookie, so the app boots to role selection. Choosing Citizen Voter
+ * establishes the API session; a reload then restores it from the HttpOnly cookie (REQ-SEC-021),
+ * so every scenario starts on a freshly loaded voter dashboard.
+ */
 Given('I open the voting eligibility app', async ({ page }) => {
   await page.goto('/');
+  const signedIn = page.waitForResponse(
+    (r) => r.url().endsWith('/api/auth/session') && r.request().method() === 'POST'
+  );
+  await page.getByTestId(ScreenIds.authWelcome.voterBranchButton).click();
+  expect((await signedIn).status()).toBe(201);
+  await page.reload();
+  await expect(page.getByTestId(ScreenIds.eligibility.roleBadge)).toContainText('Citizen Voter');
   await expect(page.getByRole('heading', { level: 1, name: 'Voting Eligibility' })).toBeVisible();
   // Wait for the startup health check so later steps are deterministic.
   await expect(page.getByText(/API (online|offline)/)).toBeVisible();

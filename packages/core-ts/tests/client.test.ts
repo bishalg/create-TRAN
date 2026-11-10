@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { TranApiClient, TranApiError } from '../src/client.js';
+import { createSessionClient, TranApiClient, TranApiError } from '../src/client.js';
 import { classifyError } from '../src/feedback.js';
 
 const validEligibility = {
@@ -196,5 +196,52 @@ describe('TranApiClient defaults', () => {
     await new TranApiClient().getHealth();
     vi.unstubAllGlobals();
     expect(fetchFn.mock.calls[0][0]).toBe('http://localhost:3001/api/health');
+  });
+});
+
+// Verifies: REQ-SEC-018 (only `/api/auth/*` carries credentials)
+describe('credentials', () => {
+  it('omits credentials on every TranApiClient call', async () => {
+    const fetchFn = vi.fn().mockResolvedValue(jsonResponse(validEligibility));
+    const client = clientWith(fetchFn);
+    await client.getHealth();
+    await client.checkVoteEligibility({ age: 21 });
+    for (const [, init] of fetchFn.mock.calls) expect(init.credentials).toBe('omit');
+  });
+});
+
+describe('createSessionClient', () => {
+  it('uses the recovery table and the request deadline', async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchFn = vi.fn(
+        (_url: string, init: RequestInit) =>
+          new Promise((_, reject) =>
+            init.signal!.addEventListener('abort', () => reject(new Error('aborted')))
+          )
+      );
+      const session = createSessionClient({
+        baseUrl: 'http://api.test',
+        fetchFn: fetchFn as unknown as typeof fetch,
+        timeoutMs: 50,
+      });
+      const refreshing = session.refresh();
+      await vi.advanceTimersByTimeAsync(50);
+      const outcome = await refreshing;
+      // A refresh with no answer keeps the session (REQ-SEC-015): `refresh_failed` → `keep`.
+      expect(outcome).toMatchObject({ kind: 'kept' });
+      expect((outcome as { error: DOMException }).error.name).toBe('TimeoutError');
+      expect(classifyError((outcome as { error: unknown }).error).code).toBe('network.timeout');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('defaults to the global fetch', async () => {
+    const fetchFn = vi.fn().mockResolvedValue({ ok: true, status: 204, json: async () => null });
+    vi.stubGlobal('fetch', fetchFn);
+    await expect(createSessionClient().signOut()).resolves.toBeNull();
+    vi.unstubAllGlobals();
+    expect(fetchFn.mock.calls[0][0]).toBe('http://localhost:3001/api/auth/sign-out');
   });
 });

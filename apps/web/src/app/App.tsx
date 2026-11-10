@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import {
   ScreenIds,
   t,
@@ -10,6 +10,7 @@ import {
 import { EligibilityPage } from '../features/eligibility/EligibilityPage.js';
 import { AuthWelcomePage } from '../features/auth/AuthWelcomePage.js';
 import { AuditorPage } from '../features/auditor/AuditorPage.js';
+import { useSession } from '../shared/api/useSession.js';
 import { type UseTranApiOptions, useTranApi } from '../shared/api/useTranApi.js';
 import { CrashBoundary } from '../shared/feedback/CrashBoundary.js';
 import { FeedbackProvider, useFeedback } from '../shared/feedback/FeedbackProvider.js';
@@ -20,6 +21,7 @@ import { type ApiState, StatusFooter } from './StatusFooter.js';
 import { usePreferences } from './usePreferences.js';
 
 export interface AppProps {
+  /** Starts on this session instead of restoring one from the API (tests and previews). */
   initialSession?: AuthSession;
   /** Tests inject an instant `sleep` so retries do not wait for real backoff. */
   retry?: UseTranApiOptions['retry'];
@@ -55,37 +57,18 @@ function Shell({
       ? 'offline'
       : 'online';
 
-  const [session, setSession] = useState<AuthSession>(
-    initialSession ?? {
-      status: 'authenticated',
-      userId: 'voter-001',
-      role: 'citizen_voter',
-    }
-  );
+  const { session, signIn, signOut } = useSession({ feedback, initialSession });
 
-  const destination: AppDestination = resolveDestination(session);
-  const currentRole: UserRole | null = session.status === 'authenticated' ? session.role : null;
-
-  const handleSelectRole = (role: UserRole) => {
-    setSession({
-      status: 'authenticated',
-      userId: role === 'citizen_voter' ? 'voter-001' : 'auditor-001',
-      role,
-    });
-  };
+  // Until the boot refresh answers, the Splash: nothing to choose yet (REQ-NAV-001, REQ-SEC-021).
+  const destination: AppDestination = session ? resolveDestination(session) : 'splash';
+  const currentRole: UserRole | null = session?.status === 'authenticated' ? session.role : null;
 
   // An expired session asks first; "Sign in again" ends it (REQ-ERR-010).
-  useEffect(
-    () =>
-      feedback.onErrorConfirmed('auth.session_expired', () =>
-        setSession({ status: 'unauthenticated' })
-      ),
-    [feedback]
-  );
+  useEffect(() => feedback.onErrorConfirmed('auth.session_expired', signOut), [feedback, signOut]);
 
   // Destructive: the catalogue makes this a confirmation dialog (REQ-ERR-007).
   const handleSignOut = async () => {
-    if (await feedback.confirm('sign_out')) setSession({ status: 'unauthenticated' });
+    if (await feedback.confirm('sign_out')) signOut();
   };
 
   return (
@@ -111,7 +94,7 @@ function Shell({
         </section>
 
         {destination === 'auth_welcome' && (
-          <AuthWelcomePage locale={locale} onSelectRole={handleSelectRole} />
+          <AuthWelcomePage locale={locale} onSelectRole={signIn} />
         )}
 
         {destination === 'voter_dashboard' && (

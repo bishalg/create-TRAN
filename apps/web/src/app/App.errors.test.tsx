@@ -3,7 +3,7 @@
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createFakeApi, envelope } from '../../tests/helpers/fakeApi.js';
+import { createFakeApi, envelope, VOTER_SESSION } from '../../tests/helpers/fakeApi.js';
 import { App, type AppProps } from './App.js';
 
 const explode = vi.hoisted(() => ({ auditor: false }));
@@ -33,7 +33,7 @@ async function renderApp(eligibility?: { status: number; code: string }) {
   });
   vi.stubGlobal('fetch', api.fetchFn);
   const user = userEvent.setup();
-  render(<App retry={instant} />);
+  render(<App retry={instant} initialSession={VOTER_SESSION} />);
   await screen.findByText(/API (online|offline)/);
   return { api, user };
 }

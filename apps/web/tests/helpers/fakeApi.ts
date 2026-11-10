@@ -54,16 +54,56 @@ export function envelope(status: number, code: string, retryable = false) {
 export interface FakeApiOptions {
   /** When true every request rejects like a dead server (TypeError: Failed to fetch). */
   down?: boolean;
+  /** The browser still holds a refresh cookie for this role from an earlier visit. */
+  cookie?: 'citizen_voter' | 'election_auditor';
 }
+
+const USER_IDS = { citizen_voter: 'voter-001', election_auditor: 'auditor-001' } as const;
 
 /**
  * In-memory stand-in for the Axum API. Eligibility answers come from the shared rules, so the
  * fake can never disagree with the offline mirror. Inspect `fetchFn.mock.calls` for traffic.
  */
 export function createFakeApi(options: FakeApiOptions = {}) {
+  // The auth routes of spec 022 on the cookie transport: the cookie is the role it was issued for.
+  let cookie = options.cookie ?? null;
+  let accessToken: string | null = null;
+  let issuedCount = 0;
+  const issue = (role: keyof typeof USER_IDS, status: number) => {
+    cookie = role;
+    accessToken = `access-token-${++issuedCount}`;
+    return json(
+      {
+        access_token: accessToken,
+        token_type: 'Bearer',
+        expires_in: 900,
+        user: { user_id: USER_IDS[role], role },
+      },
+      status
+    );
+  };
+
   const fetchFn = vi.fn(async (url: string, init?: RequestInit) => {
     if (options.down) throw new TypeError('Failed to fetch');
     const path = new URL(url).pathname;
+    const bearer = ((init?.headers ?? {}) as Record<string, string>).Authorization;
+
+    if (path === '/api/auth/session' && init?.method === 'POST') {
+      return issue(JSON.parse(String(init.body)).role, 201);
+    }
+    if (path === '/api/auth/session') {
+      return cookie && bearer === `Bearer ${accessToken}`
+        ? json({ user_id: USER_IDS[cookie], role: cookie })
+        : envelope(401, 'auth.session_expired');
+    }
+    if (path === '/api/auth/refresh') {
+      return cookie ? issue(cookie, 200) : envelope(401, 'auth.session_expired');
+    }
+    if (path === '/api/auth/sign-out') {
+      cookie = null;
+      accessToken = null;
+      return json(null, 204);
+    }
 
     if (path === '/api/health') return json(healthReport);
     if (path === '/api/tran/info') return json(stackInfo);
@@ -96,3 +136,10 @@ export function createFakeApi(options: FakeApiOptions = {}) {
 
   return { fetchFn, callsTo };
 }
+
+/** The voter session the dashboard tests start on, without a boot refresh. */
+export const VOTER_SESSION = {
+  status: 'authenticated',
+  userId: 'voter-001',
+  role: 'citizen_voter',
+} as const;

@@ -14,6 +14,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ScreenIds } from '@tran/core';
 import { chromium, expect, test } from '@playwright/test';
 import lighthouse, { desktopConfig } from 'lighthouse';
 
@@ -82,7 +83,8 @@ test('web performance medians', async ({ baseURL }) => {
       const context = await browser.newContext();
       const page = await context.newPage();
       await page.goto(baseURL!, { waitUntil: 'load' });
-      await expect(page.getByText(/API (online|offline)/)).toBeVisible();
+      // A fresh browser has no session: boot settles on role selection (REQ-SEC-021).
+      await expect(page.getByTestId(ScreenIds.authWelcome.voterBranchButton)).toBeVisible();
       const nav = await page.evaluate(() => {
         const [entry] = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
         return {

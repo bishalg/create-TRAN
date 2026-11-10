@@ -15,6 +15,7 @@ import {
   withRetry,
 } from '@tran/core';
 import type { Feedback } from '../feedback/FeedbackProvider.js';
+import { DEFAULT_API_URL, resolveApiBaseUrl } from './apiUrl.js';
 
 export interface UseTranApiState {
   health: TranHealthReport | null;
@@ -41,12 +42,7 @@ export interface UseTranApiOptions {
   retry?: Pick<RetryOptions, 'sleep' | 'random'>;
 }
 
-export const DEFAULT_API_URL = 'http://127.0.0.1:3001';
-
-/** Pure so it can be unit-tested; the hook passes `import.meta.env`. */
-export function resolveApiBaseUrl(env: { VITE_TRAN_API_URL?: string } = {}): string {
-  return env.VITE_TRAN_API_URL ? env.VITE_TRAN_API_URL : DEFAULT_API_URL;
-}
+export { DEFAULT_API_URL, resolveApiBaseUrl };
 
 const defaultApiBase = resolveApiBaseUrl(import.meta.env);
 

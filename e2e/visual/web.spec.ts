@@ -6,11 +6,13 @@
 import { ScreenIds, TRAN_LOCALES, themeNames } from '@tran/core';
 import { expect, test, type Page } from '@playwright/test';
 
-/** The production build, in `theme`, with the startup health check settled. */
+/** The production build, in `theme`, on the voter dashboard with the startup health check settled. */
 async function open(page: Page, theme: string) {
   await page.addInitScript((mode) => localStorage.setItem('tran.theme', mode), theme);
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+  // A fresh browser has no session cookie: the app boots to role selection (REQ-SEC-021).
+  await page.getByTestId(ScreenIds.authWelcome.voterBranchButton).click();
   await expect(page.getByText(/API (online|offline)/)).toBeVisible();
 }
 

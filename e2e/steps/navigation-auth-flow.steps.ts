@@ -4,19 +4,9 @@ import { ScreenIds } from '@tran/core';
 
 const { Given, When, Then } = createBdd();
 
-/** Sign-out is destructive, so it always goes through the confirmation dialog (REQ-ERR-007). */
-async function signOut(page: import('@playwright/test').Page) {
-  await page.getByTestId(ScreenIds.eligibility.signOutButton).click();
-  await page
-    .getByRole('dialog', { name: 'Sign out?' })
-    .getByRole('button', { name: 'Sign out' })
-    .click();
-}
-
-// The app opens signed in as a Citizen Voter, so reaching role selection is always one sign-out.
+// A fresh browser has no session cookie, so the app boots to role selection (REQ-SEC-021).
 Given('I launch the application', async ({ page }) => {
   await page.goto('/');
-  await signOut(page);
   await expect(
     page.getByRole('heading', { level: 2, name: 'Welcome to TRAN Voting' })
   ).toBeVisible();

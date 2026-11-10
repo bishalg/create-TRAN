@@ -91,6 +91,8 @@ export async function checkVoteEligibility(
       ...(options.headers ?? {}),
     },
     body: JSON.stringify(parsed),
+    // Only `/api/auth/*` may carry the session cookie (REQ-SEC-018).
+    credentials: 'omit',
     signal: options.signal,
   });
 

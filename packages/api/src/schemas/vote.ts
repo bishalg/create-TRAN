@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from './zod.js';
 
 export const VoteEligibilityInputSchema = z.object({
   age: z.number().int().min(0).max(150),

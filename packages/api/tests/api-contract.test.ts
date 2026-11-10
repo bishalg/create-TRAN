@@ -139,3 +139,12 @@ describe('@tran/api client edge cases', () => {
     expect(err.retryAfter).toBeUndefined();
   });
 });
+
+// Verifies: REQ-SEC-024 — the built app's CSP has no 'unsafe-eval', so zod must not compile parsers.
+describe('zod without eval', () => {
+  it('runs every schema jitless', async () => {
+    const { z } = await import('../src/schemas/zod.js');
+    expect(z.config().jitless).toBe(true);
+    expect(VoteEligibilityOutputSchema.safeParse({}).success).toBe(false);
+  });
+});

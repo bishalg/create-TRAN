@@ -3,7 +3,7 @@ import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ScreenIds } from '@tran/core';
 import { describe, expect, it, vi } from 'vitest';
-import { createFakeApi, envelope, REQUEST_ID } from '../../tests/helpers/fakeApi.js';
+import { createFakeApi, envelope, REQUEST_ID, VOTER_SESSION } from '../../tests/helpers/fakeApi.js';
 import { App, type AppProps } from './App.js';
 
 const instant: AppProps['retry'] = { sleep: async () => {}, random: () => 0 };
@@ -24,7 +24,7 @@ async function renderApp(opts: Parameters<typeof createFakeApi>[0] = {}, props: 
   const api = createFakeApi(opts);
   vi.stubGlobal('fetch', api.fetchFn);
   const user = userEvent.setup();
-  render(<App retry={instant} {...props} />);
+  render(<App retry={instant} initialSession={VOTER_SESSION} {...props} />);
   // Startup settles as "API online" or "API offline".
   await screen.findByText(/API (online|offline)/);
   return { api, user };
@@ -75,7 +75,7 @@ describe('App: shell', () => {
 
   it('shows "Checking API…" until the first response arrives', () => {
     vi.stubGlobal('fetch', createFakeApi().fetchFn);
-    render(<App />);
+    render(<App initialSession={VOTER_SESSION} />);
     expect(screen.getByText('Checking API…')).toBeVisible();
   });
 

@@ -9,6 +9,15 @@ when you learned something that is not obvious from the code, the specs or the A
 - Format, checked by `pnpm agents:check`: a `## YYYY-MM-DD - Title` heading, then a `**Learning:**` and an
   `**Action:**` line. Newest first. Delete an entry when the code makes it obsolete.
 
+## 2026-11-10 - A caught `new Function` still breaks a strict CSP
+
+**Learning:** Zod 4 compiles object parsers with `new Function` and probes whether it may, inside a `try`. Under the
+built web app's CSP (no `'unsafe-eval'`, REQ-SEC-024) the throw is swallowed, but Chrome still fires a
+`securitypolicyviolation`, so `pnpm smoke` failed with `script-src eval` although the app worked. The dev server
+carries no CSP, so no other suite sees it.
+**Action:** Import `z` from `packages/api/src/schemas/zod.ts`, which sets `jitless` before any schema exists. Before
+adding a browser dependency, run `pnpm smoke`; fix a violation at its source, never by widening the policy.
+
 ## 2026-11-10 - A labelled text reads its content as its value, not its label
 
 **Learning:** `pnpm screens:check` requires content that changes (the verdict, the API status, the role badge) to be
