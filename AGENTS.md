@@ -30,6 +30,8 @@ This is a **template**: keep the sample tiny, exemplary and fully tested.
 - Mobile releases ([docs/MOBILE_RELEASE.md](docs/MOBILE_RELEASE.md), spec 025): identifiers and signing credentials
   come only from the environment (placeholders in the repo, listed in `.env.example`); lanes never bump a version and
   `release` never rebuilds; a new iOS required-reason API goes in `PrivacyInfo.xcprivacy`.
+- Store rules ([docs/APP_REVIEW.md](docs/APP_REVIEW.md)): before adding a permission, a sign-in provider, a purchase
+  or a personal question, find its row there; add the row if it is missing.
 - Hand-written code and test files stay at or under 800 lines (`pnpm tooling:test`): split by responsibility, not
   by line count. Generated files are exempt; docs have no hard limit but are split by topic.
 - Commits are Conventional Commits (`feat(scope): …`, `fix!: …`; the `commit-msg` hook checks). One version for every

@@ -68,7 +68,8 @@ Platform-native iOS (`apps/ios`) and Android (`apps/android`) are the real **N**
 
 ## 6. Production-readiness topics, one at a time
 
-Each topic is one phase: documented first, then built and tested on every platform before the next starts. The
+Phases 2 to 8 follow the store rules in [APP_REVIEW.md](./APP_REVIEW.md); phases 9 to 14 are backend
+operations. Each topic is one phase: documented first, then built and tested on every platform before the next starts. The
 documents are written for the next reader, human or AI, who will add code here: a spec (what must hold), an ADR (why),
 and one short playbook in `docs/` (what the topic is, why it matters, the rules to follow), plus a one-line rule in
 `AGENTS.md`. Keep them short: only what changes how code is written.
@@ -83,18 +84,29 @@ and one short playbook in `docs/` (what the topic is, why it matters, the rules 
        [playbook](./MOBILE_RELEASE.md)): one `Fastfile` per platform with the same lanes (`test`, `beta`,
        `release`), signing kept out of the repo, store credentials only in CI secrets, versions still from
        `pnpm release` (ADR-0034).
-4. [ ] **Observability** ([spec 023](./specs/023-observability.md), ADR-0040, [runbook](./OBSERVABILITY.md)): trace
+4. [ ] **Permissions and privacy prompts**: ask in context with a purpose string, work when denied, optional personal
+       questions (gender, birth date), no tracking without App Tracking Transparency (a guard: the template does not
+       track).
+5. [ ] **Push notifications and device registration**: optional push, the device token registered to the signed-in
+       user on the API, replaced when it changes, removed on sign-out and account deletion.
+6. [ ] **Sign-in providers**: a provider seam with Google and Sign in with Apple, the rule that Apple is offered
+       whenever a third-party provider is (guideline 4.8) as a check, and provider tokens revoked on deletion.
+7. [ ] **In-app purchases**: StoreKit 2 and Play Billing behind one seam, server-verified entitlements, restore
+       purchases, terms shown before purchase.
+8. [ ] **Onboarding**: a short first-run flow that can be skipped and never asks for an account or a permission before
+       the feature that needs it.
+9. [ ] **Observability** ([spec 023](./specs/023-observability.md), ADR-0040, [runbook](./OBSERVABILITY.md)): trace
        context, log schema, RED metrics, readiness and graceful shutdown.
-5. [ ] **API versioning and compatibility**: a versioned base path, additive-change rules checked against contract
-       snapshots (REQ-API-011), deprecation headers, and a minimum supported client version that old apps obey.
-6. [ ] **Persistence and migrations**: a durable `SessionStore`, forward-only schema migrations run and verified at
-       start-up, and versioned client-side stored records.
-7. [ ] **Rate limiting and abuse protection**: limits per client and per route as policy data, `429` with
-       `Retry-After` (the clients already honour it), tighter limits on the auth routes.
-8. [ ] **Feature flags and remote configuration**: typed flags with safe defaults, evaluated in one place, a kill
-       switch, and stale flags removed by a check.
-9. [ ] **Container image and deploy pipeline**: a small reproducible image, configuration by environment, health-gated
-       rollout and rollback, and release artefacts built once and promoted.
+10. [ ] **API versioning and compatibility**: a versioned base path, additive-change rules checked against contract
+        snapshots (REQ-API-011), deprecation headers, and a minimum supported client version that old apps obey.
+11. [ ] **Persistence and migrations**: a durable `SessionStore`, forward-only schema migrations run and verified at
+        start-up, and versioned client-side stored records.
+12. [ ] **Rate limiting and abuse protection**: limits per client and per route as policy data, `429` with
+        `Retry-After` (the clients already honour it), tighter limits on the auth routes.
+13. [ ] **Feature flags and remote configuration**: typed flags with safe defaults, evaluated in one place, a kill
+        switch, and stale flags removed by a check.
+14. [ ] **Container image and deploy pipeline**: a small reproducible image, configuration by environment, health-gated
+        rollout and rollback, and release artefacts built once and promoted.
 
 ---
 
