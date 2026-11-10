@@ -33,36 +33,39 @@ ID that no spec defines.
 
 ## Index
 
-| Spec                                                            | Area                                                                     | Prefix                |
-| :-------------------------------------------------------------- | :----------------------------------------------------------------------- | :-------------------- |
-| [001 Eligibility rules](./001-eligibility-rules.md)             | Rust core, TypeScript and native mirrors                                 | `REQ-RULE`            |
-| [002 HTTP API](./002-http-api.md)                               | Axum service, contract, security defaults                                | `REQ-API`             |
-| [003 Web app](./003-web-app.md)                                 | Behaviour, theming, i18n, accessibility                                  | `REQ-WEB`, `REQ-A11Y` |
-| [004 SSR and SEO](./004-ssr-seo.md)                             | TanStack Start, metadata, social cards                                   | `REQ-SEO`             |
-| [005 Native apps](./005-native-apps.md)                         | SwiftUI and Compose parity and accessibility                             | `REQ-NAT`             |
-| [006 Navigation & Auth Flow](./006-navigation-auth-flow.md)     | Navigation Director, splash boot & branching                             | `REQ-NAV`             |
-| [007 Git Quality Hooks](./007-git-quality-hooks.md)             | Pre-commit lint/typecheck & pre-push testing                             | `REQ-HOOK`            |
-| [008 Localization](./008-localization.md)                       | Dictionaries, modules and fallback                                       | `REQ-I18N`            |
-| [009 Native tests in CI](./009-native-tests-in-ci.md)           | Nightly iOS/Android suites, flake policy                                 | `REQ-CI`              |
-| [010 Native FFI surface](./010-ffi-surface.md)                  | UniFFI docs, typed errors, native extensions                             | `REQ-FFI`             |
-| [011 Error handling and feedback](./011-error-feedback.md)      | Error codes, envelope, retry, toast/banner/dialog                        | `REQ-ERR`             |
-| [012 Failure modes](./012-failure-modes.md)                     | Hostile input, panics, cancellation, log contract                        | `REQ-ROB`             |
-| [013 Code generation](./013-codegen.md)                         | Token/i18n codegen, drift, pruning; scaffolder                           | `REQ-GEN`             |
-| [014 Visual and performance](./014-visual-and-performance.md)   | Screenshots, perf and size budgets, reports                              | `REQ-PERF`            |
-| [015 Agents](./015-agents.md)                                   | Scheduled agent tasks, runner, guard, learnings                          | `REQ-AGT`             |
-| [016 Supply chain](./016-supply-chain.md)                       | Audits in CI, pinned actions, Dependabot, SECURITY.md                    | `REQ-SUP`             |
-| [017 Release](./017-release.md)                                 | One version, conventional commits, changelog, tagged releases            | `REQ-REL`             |
-| [018 Loading and offline](./018-loading-and-offline.md)         | Delayed indicators, kept verdicts, cancellation, device fallback         | `REQ-LOAD`            |
-| [020 Issue-driven agents](./020-issue-driven-agents.md)         | Issue intake, quality gate, triage labels, plan and approval             | `REQ-ISS`             |
-| [021 Screen contract](./021-screen-contract.md)                 | Declared screens, elements, scenarios, conformance oracle                | `REQ-SCR`             |
-| [022 Security](./022-security.md)                               | Secrets, sessions, token storage, sensitive data                         | `REQ-SEC`             |
-| [023 Observability](./023-observability.md)                     | Trace context, log schema, RED metrics, readiness, shutdown              | `REQ-OBS`             |
-| [024 Account deletion](./024-account-deletion.md)               | In-app and web deletion, erasure, session revocation                     | `REQ-ACC`             |
-| [025 Mobile release](./025-mobile-release.md)                   | fastlane lanes, signing, identifiers, store readiness                    | `REQ-MOB`             |
-| [026 Permissions and privacy](./026-permissions-and-privacy.md) | Priming, refusal, least data, personal questions, no tracking            | `REQ-PRV`             |
-| [027 Push and devices](./027-push-and-devices.md)               | Device registry, token lifecycle, payload rules, notification permission | `REQ-PSH`             |
-| [028 API versioning](./028-api-versioning.md)                   | Versioned path, additive changes, client replay, minimum version         | `REQ-VER`             |
-| [029 Remote config](./029-remote-config.md)                     | Flags, evaluation, caching, ship dark, kill switch                       | `REQ-CFG`             |
+| Spec                                                                  | Area                                                                     | Prefix                |
+| :-------------------------------------------------------------------- | :----------------------------------------------------------------------- | :-------------------- |
+| [001 Eligibility rules](./001-eligibility-rules.md)                   | Rust core, TypeScript and native mirrors                                 | `REQ-RULE`            |
+| [002 HTTP API](./002-http-api.md)                                     | Axum service, contract, security defaults                                | `REQ-API`             |
+| [003 Web app](./003-web-app.md)                                       | Behaviour, theming, i18n, accessibility                                  | `REQ-WEB`, `REQ-A11Y` |
+| [004 SSR and SEO](./004-ssr-seo.md)                                   | TanStack Start, metadata, social cards                                   | `REQ-SEO`             |
+| [005 Native apps](./005-native-apps.md)                               | SwiftUI and Compose parity and accessibility                             | `REQ-NAT`             |
+| [006 Navigation & Auth Flow](./006-navigation-auth-flow.md)           | Navigation Director, splash boot & branching                             | `REQ-NAV`             |
+| [007 Git Quality Hooks](./007-git-quality-hooks.md)                   | Pre-commit lint/typecheck & pre-push testing                             | `REQ-HOOK`            |
+| [008 Localization](./008-localization.md)                             | Dictionaries, modules and fallback                                       | `REQ-I18N`            |
+| [009 Native tests in CI](./009-native-tests-in-ci.md)                 | Nightly iOS/Android suites, flake policy                                 | `REQ-CI`              |
+| [010 Native FFI surface](./010-ffi-surface.md)                        | UniFFI docs, typed errors, native extensions                             | `REQ-FFI`             |
+| [011 Error handling and feedback](./011-error-feedback.md)            | Error codes, envelope, retry, toast/banner/dialog                        | `REQ-ERR`             |
+| [012 Failure modes](./012-failure-modes.md)                           | Hostile input, panics, cancellation, log contract                        | `REQ-ROB`             |
+| [013 Code generation](./013-codegen.md)                               | Token/i18n codegen, drift, pruning; scaffolder                           | `REQ-GEN`             |
+| [014 Visual and performance](./014-visual-and-performance.md)         | Screenshots, perf and size budgets, reports                              | `REQ-PERF`            |
+| [015 Agents](./015-agents.md)                                         | Scheduled agent tasks, runner, guard, learnings                          | `REQ-AGT`             |
+| [016 Supply chain](./016-supply-chain.md)                             | Audits in CI, pinned actions, Dependabot, SECURITY.md                    | `REQ-SUP`             |
+| [017 Release](./017-release.md)                                       | One version, conventional commits, changelog, tagged releases            | `REQ-REL`             |
+| [018 Loading and offline](./018-loading-and-offline.md)               | Delayed indicators, kept verdicts, cancellation, device fallback         | `REQ-LOAD`            |
+| [020 Issue-driven agents](./020-issue-driven-agents.md)               | Issue intake, quality gate, triage labels, plan and approval             | `REQ-ISS`             |
+| [021 Screen contract](./021-screen-contract.md)                       | Declared screens, elements, scenarios, conformance oracle                | `REQ-SCR`             |
+| [022 Security](./022-security.md)                                     | Secrets, sessions, token storage, sensitive data                         | `REQ-SEC`             |
+| [023 Observability](./023-observability.md)                           | Trace context, log schema, RED metrics, readiness, shutdown              | `REQ-OBS`             |
+| [024 Account deletion](./024-account-deletion.md)                     | In-app and web deletion, erasure, session revocation                     | `REQ-ACC`             |
+| [025 Mobile release](./025-mobile-release.md)                         | fastlane lanes, signing, identifiers, store readiness                    | `REQ-MOB`             |
+| [026 Permissions and privacy](./026-permissions-and-privacy.md)       | Priming, refusal, least data, personal questions, no tracking            | `REQ-PRV`             |
+| [027 Push and devices](./027-push-and-devices.md)                     | Device registry, token lifecycle, payload rules, notification permission | `REQ-PSH`             |
+| [028 API versioning](./028-api-versioning.md)                         | Versioned path, additive changes, client replay, minimum version         | `REQ-VER`             |
+| [029 Remote config](./029-remote-config.md)                           | Flags, evaluation, caching, ship dark, kill switch                       | `REQ-CFG`             |
+| [030 Persistence and migrations](./030-persistence-and-migrations.md) | SQL stores, forward-only migrations, stored-record versions              | `REQ-DB`              |
+| [031 Rate limiting](./031-rate-limiting.md)                           | Classes, token bucket, trusted proxies, load shedding                    | `REQ-RL`              |
+| [032 Deploy pipeline](./032-deploy-pipeline.md)                       | Image, promote by digest, deploy order, rollback, web headers            | `REQ-DEP`             |
 
 ## Template
 

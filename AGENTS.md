@@ -49,6 +49,12 @@ This is a **template**: keep the sample tiny, exemplary and fully tested.
   breaking change is a new version path; clients ignore unknown fields and fall back on unknown enum values.
 - Flags ([docs/REMOTE_CONFIG.md](docs/REMOTE_CONFIG.md), spec 029): declare a flag in `crates/rust-core` with a safe
   default and an expiry; a new feature ships with its flag off; never wait for config; a flag is not a lock.
+- Database ([docs/PERSISTENCE.md](docs/PERSISTENCE.md), spec 030): one SQL store implementation, no fakes of it;
+  migrations are forward-only and never edited once shipped; expand, then contract; migrate, then serve.
+- Limits ([docs/RATE_LIMITING.md](docs/RATE_LIMITING.md), spec 031): every route names its class in the route table;
+  the key is the user or a trusted-proxy address, never a raw header; `429` always carries `Retry-After`.
+- Deploy ([docs/DEPLOY.md](docs/DEPLOY.md), spec 032): build the image once and promote it by digest; nothing
+  environment-specific in the image; check config, migrate, start, wait for ready, then drain the old.
 - Hand-written code and test files stay at or under 800 lines (`pnpm tooling:test`): split by responsibility, not
   by line count. Generated files are exempt; docs have no hard limit but are split by topic.
 - Commits are Conventional Commits (`feat(scope): …`, `fix!: …`; the `commit-msg` hook checks). One version for every

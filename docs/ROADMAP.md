@@ -68,8 +68,9 @@ Platform-native iOS (`apps/ios`) and Android (`apps/android`) are the real **N**
 
 ## 6. Production-readiness topics, one at a time
 
-Phases 2 to 5 and 8 to 10 follow the store rules in [APP_REVIEW.md](./APP_REVIEW.md); phases 6 and 7 let different
-app versions live side by side; phases 11 to 14 are backend operations. Each topic is one phase: documented first, then built and tested on every platform before the next starts. The
+Phases 2 to 5 and 12 to 14 follow the store rules in [APP_REVIEW.md](./APP_REVIEW.md); phases 6 and 7 let different
+app versions live side by side; phases 8 to 11 are backend operations, built before sign-in and purchases because
+those need durable accounts, limits and a deploy path. Each topic is one phase: documented first, then built and tested on every platform before the next starts. The
 documents are written for the next reader, human or AI, who will add code here: a spec (what must hold), an ADR (why),
 and one short playbook in `docs/` (what the topic is, why it matters, the rules to follow), plus a one-line rule in
 `AGENTS.md`. Keep them short: only what changes how code is written.
@@ -97,24 +98,28 @@ and one short playbook in `docs/` (what the topic is, why it matters, the rules 
 7. [ ] **Feature flags and remote configuration** ([spec 029](./specs/029-remote-config.md), ADR-0048,
        [playbook](./REMOTE_CONFIG.md)): typed flags with safe defaults, evaluated in one place, a kill
        switch, and stale flags removed by a check.
-8. [ ] **Sign-in providers**: a provider seam with Google and Sign in with Apple, the rule that Apple is offered
-       whenever a third-party provider is (guideline 4.8) as a check, the system Apple button and Google's branded
-       button used as their guidelines require, identity tokens verified on the API, cancellation and provider errors
-       through the error catalogue, and provider tokens revoked on deletion.
-9. [ ] **In-app purchases**: StoreKit 2 and Play Billing behind one seam; a paywall that shows the localized price,
-       the billing period, the renewal and cancellation terms and links to terms and privacy before the purchase
-       button; restore purchases; entitlements verified and synced on the API; pending, cancelled, failed, refunded
-       and already-owned outcomes each with a catalogue presentation.
-10. [ ] **Onboarding**: a short first-run flow that can be skipped, leads into sign-in, and never asks for an account or
-        a permission before the feature that needs it.
-11. [ ] **Observability** ([spec 023](./specs/023-observability.md), ADR-0040, [runbook](./OBSERVABILITY.md)): trace
+8. [ ] **Persistence and migrations** ([spec 030](./specs/030-persistence-and-migrations.md), ADR-0049,
+       [playbook](./PERSISTENCE.md)): a durable `SessionStore`, forward-only schema migrations run and verified at
+       start-up, and versioned client-side stored records.
+9. [ ] **Rate limiting and abuse protection** ([spec 031](./specs/031-rate-limiting.md), ADR-0050,
+       [playbook](./RATE_LIMITING.md)): limits per client and per route as policy data, `429` with
+       `Retry-After` (the clients already honour it), tighter limits on the auth routes.
+10. [ ] **Observability** ([spec 023](./specs/023-observability.md), ADR-0040, [runbook](./OBSERVABILITY.md)): trace
         context, log schema, RED metrics, readiness and graceful shutdown.
-12. [ ] **Persistence and migrations**: a durable `SessionStore`, forward-only schema migrations run and verified at
-        start-up, and versioned client-side stored records.
-13. [ ] **Rate limiting and abuse protection**: limits per client and per route as policy data, `429` with
-        `Retry-After` (the clients already honour it), tighter limits on the auth routes.
-14. [ ] **Container image and deploy pipeline**: a small reproducible image, configuration by environment, health-gated
+11. [ ] **Container image and deploy pipeline** ([spec 032](./specs/032-deploy-pipeline.md), ADR-0051,
+        [playbook](./DEPLOY.md)): a small reproducible image, configuration by environment, health-gated
         rollout and rollback, and release artefacts built once and promoted.
+
+12. [ ] **Sign-in providers**: a provider seam with Google and Sign in with Apple, the rule that Apple is offered
+        whenever a third-party provider is (guideline 4.8) as a check, the system Apple button and Google's branded
+        button used as their guidelines require, identity tokens verified on the API, cancellation and provider errors
+        through the error catalogue, and provider tokens revoked on deletion.
+13. [ ] **In-app purchases**: StoreKit 2 and Play Billing behind one seam; a paywall that shows the localized price,
+        the billing period, the renewal and cancellation terms and links to terms and privacy before the purchase
+        button; restore purchases; entitlements verified and synced on the API; pending, cancelled, failed, refunded
+        and already-owned outcomes each with a catalogue presentation.
+14. [ ] **Onboarding**: a short first-run flow that can be skipped, leads into sign-in, and never asks for an account or
+        a permission before the feature that needs it.
 
 ---
 
