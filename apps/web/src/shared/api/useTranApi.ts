@@ -7,6 +7,7 @@ import {
   startRecovery,
   type Presentation,
   type RetryOptions,
+  type StandingSignal,
   TranApiClient,
   type TranHealthReport,
   type TranRequestError,
@@ -16,6 +17,7 @@ import {
 } from '@tran/core';
 import type { Feedback } from '../feedback/FeedbackProvider.js';
 import { DEFAULT_API_URL, resolveApiBaseUrl } from './apiUrl.js';
+import { WEB_CLIENT } from './clientIdentity.js';
 
 export interface UseTranApiState {
   health: TranHealthReport | null;
@@ -40,6 +42,8 @@ export interface UseTranApiOptions {
   baseUrl?: string;
   /** Inject `sleep`/`random` so tests do not wait for real backoff. */
   retry?: Pick<RetryOptions, 'sleep' | 'random'>;
+  /** Told when an answer blocks or nudges this version (REQ-VER-005, REQ-VER-006). */
+  onStanding?: (signal: StandingSignal) => void;
 }
 
 export { DEFAULT_API_URL, resolveApiBaseUrl };
@@ -73,12 +77,20 @@ type Slot = 'status' | 'check';
 
 type Outcome<T> = { ok: true; value: T } | { ok: false; error: unknown };
 
-export function useTranApi({ feedback, client: injected, baseUrl, retry }: UseTranApiOptions) {
+export function useTranApi({
+  feedback,
+  client: injected,
+  baseUrl,
+  retry,
+  onStanding,
+}: UseTranApiOptions) {
   // Memoised: a client created per render would change `fetchStatus` every render and
   // re-trigger the effect below forever.
   const client = useMemo(
-    () => injected ?? new TranApiClient({ baseUrl: baseUrl ?? defaultApiBase }),
-    [injected, baseUrl]
+    () =>
+      injected ??
+      new TranApiClient({ baseUrl: baseUrl ?? defaultApiBase, client: WEB_CLIENT, onStanding }),
+    [injected, baseUrl, onStanding]
   );
   const sleep = retry?.sleep;
   const random = retry?.random;

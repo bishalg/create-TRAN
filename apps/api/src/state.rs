@@ -4,6 +4,7 @@ use std::time::Instant;
 use rust_core::TranEngine;
 
 use crate::account::{AccountEraser, SessionsOnly};
+use crate::client_versions::ClientThresholds;
 use crate::config::{AppConfig, LOCAL_DEV_ORIGINS};
 use crate::push::providers::PushProviders;
 use crate::push::Push;
@@ -16,6 +17,8 @@ pub struct EdgePolicy {
     pub allowed_origins: Arc<[String]>,
     /// `Secure` cookies and HSTS (REQ-SEC-007, REQ-SEC-013).
     pub requires_https: bool,
+    /// The minimum and recommended app version per platform (REQ-VER-005, REQ-VER-006).
+    pub client_thresholds: Arc<ClientThresholds>,
 }
 
 #[derive(Clone)]
@@ -26,7 +29,7 @@ pub struct AppState {
     pub allow_debug_headers: bool,
     pub edge: EdgePolicy,
     pub sessions: Sessions,
-    /// What `DELETE /api/account` erases (REQ-ACC-001); a fork puts its own tables here.
+    /// What `DELETE /api/v1/account` erases (REQ-ACC-001); a fork puts its own tables here.
     pub eraser: Arc<dyn AccountEraser>,
     /// The real push senders that are configured; none by default (ADR-0046).
     pub push_providers: Arc<PushProviders>,
@@ -43,6 +46,7 @@ impl AppState {
             edge: EdgePolicy {
                 allowed_origins: LOCAL_DEV_ORIGINS.map(str::to_owned).into(),
                 requires_https: false,
+                client_thresholds: Arc::default(),
             },
             sessions: Sessions::in_memory(),
             eraser: Arc::new(SessionsOnly),
@@ -50,12 +54,17 @@ impl AppState {
         }
     }
 
+    /// A malformed client version threshold counts as none here: [`crate::run_server`] refuses
+    /// to start on one before it builds the state.
     pub fn from_config(config: &AppConfig) -> Self {
         Self {
             allow_debug_headers: config.allows_debug_headers(),
             edge: EdgePolicy {
                 allowed_origins: config.allowed_origins().into(),
                 requires_https: config.requires_https(),
+                client_thresholds: Arc::new(
+                    ClientThresholds::from_settings(&config.client_versions).unwrap_or_default(),
+                ),
             },
             ..Self::new()
         }

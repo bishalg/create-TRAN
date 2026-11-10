@@ -90,7 +90,7 @@ async function signedInAndQuiet(options: FakeApiOptions, fail: Parameters<typeof
   const booted = boot(options, fail);
   await screen.findByTestId(ScreenIds.eligibility.roleBadge);
   await settled();
-  await waitFor(() => expect(booted.api.callsTo('/api/auth/session')).toHaveLength(1));
+  await waitFor(() => expect(booted.api.callsTo('/api/v1/auth/session')).toHaveLength(1));
   resetCounts();
   return booted;
 }
@@ -105,7 +105,7 @@ describe('one event per failure (REQ-ROB-007)', () => {
     const { user } = await signedInAndQuiet(
       { cookie: 'citizen_voter' },
       {
-        path: '/api/account',
+        path: '/api/v1/account',
         with: async () => envelope(500, 'server.internal', true),
       }
     );
@@ -118,7 +118,7 @@ describe('one event per failure (REQ-ROB-007)', () => {
   it('(a) a deletion that cannot reach the server: one info event, no report', async () => {
     const { user } = await signedInAndQuiet(
       { cookie: 'citizen_voter' },
-      { path: '/api/account', with: offline }
+      { path: '/api/v1/account', with: offline }
     );
     await confirmDeletion(user);
     await screen.findByTestId(ScreenIds.eligibility.offlineNotice);
@@ -130,14 +130,14 @@ describe('one event per failure (REQ-ROB-007)', () => {
     const { api, user } = boot(
       {},
       {
-        path: '/api/auth/session',
+        path: '/api/v1/auth/session',
         method: 'POST',
         with: async () => envelope(500, 'server.internal'),
       }
     );
     await user.click(await screen.findByTestId(ScreenIds.authWelcome.voterBranchButton));
     await settled();
-    await waitFor(() => expect(api.callsTo('/api/auth/session')).toHaveLength(1));
+    await waitFor(() => expect(api.callsTo('/api/v1/auth/session')).toHaveLength(1));
     await waitFor(() => expect(events()).toContain('error server.internal'));
     // The boot's first-visit refresh (no cookie) is the normal case and logs nothing.
     expect(events()).toEqual(['error server.internal']);
@@ -145,7 +145,7 @@ describe('one event per failure (REQ-ROB-007)', () => {
   });
 
   it('(c) the boot refresh cannot reach the API: one event', async () => {
-    boot({ cookie: 'citizen_voter' }, { path: '/api/auth/refresh', with: offline });
+    boot({ cookie: 'citizen_voter' }, { path: '/api/v1/auth/refresh', with: offline });
     await screen.findByTestId(ScreenIds.authWelcome.voterBranchButton);
     await settled();
     expect(events()).toEqual(['info network.offline']);
@@ -158,8 +158,8 @@ describe('one event per failure (REQ-ROB-007)', () => {
     let refreshes = 0;
     api.fetchFn.mockImplementation(async (url, init) => {
       const path = new URL(url).pathname;
-      const whoAmI = path === '/api/auth/session' && init?.method !== 'POST';
-      if (whoAmI || (path === '/api/auth/refresh' && ++refreshes > 1))
+      const whoAmI = path === '/api/v1/auth/session' && init?.method !== 'POST';
+      if (whoAmI || (path === '/api/v1/auth/refresh' && ++refreshes > 1))
         return envelope(401, 'auth.session_expired') as never;
       return real(url, init);
     });
@@ -175,7 +175,7 @@ describe('one event per failure (REQ-ROB-007)', () => {
   it('(e) sign-out whose server call fails: one event', async () => {
     const { user } = await signedInAndQuiet(
       { cookie: 'citizen_voter' },
-      { path: '/api/auth/sign-out', with: async () => envelope(500, 'server.internal') }
+      { path: '/api/v1/auth/sign-out', with: async () => envelope(500, 'server.internal') }
     );
     await user.click(screen.getByTestId(ScreenIds.eligibility.signOutButton));
     await user.click(screen.getByTestId(ScreenIds.eligibility.dialogConfirm));

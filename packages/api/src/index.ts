@@ -4,3 +4,5 @@ export * from './contract.js';
 export * from './client.js';
 export * from './schemas/session.js';
 export * from './session.js';
+export * from './compat.js';
+export * from './schemas/info.js';

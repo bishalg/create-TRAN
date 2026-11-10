@@ -1,4 +1,5 @@
 import { oc } from '@orpc/contract';
+import { apiPath } from './compat.js';
 import { VoteEligibilityInputSchema, VoteEligibilityOutputSchema } from './schemas/vote.js';
 
 /**
@@ -10,7 +11,7 @@ export const tranContract = oc.router({
     eligibility: oc
       .route({
         method: 'POST',
-        path: '/api/vote/eligibility',
+        path: apiPath('/vote/eligibility'),
         successStatus: 200,
       })
       .input(VoteEligibilityInputSchema)

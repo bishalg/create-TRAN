@@ -69,6 +69,12 @@ export const DIALOG_COPY: Record<UserAction, DialogCopy | null> = {
   account_deleted: null,
   // A toast the native apps show for a push received in the foreground; the web has no push.
   notification_received: null,
+  // "Update" reloads into the newest build; "Not now" is remembered for this version (REQ-VER-010).
+  update_recommended: {
+    body: 'shell.updateRecommendedBody',
+    confirm: 'common.update',
+    cancel: 'common.notNow',
+  },
 };
 
 /** Dialog copy for failures the catalogue presents as a dialog; a test keeps it complete. */

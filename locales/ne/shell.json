@@ -18,5 +18,7 @@
     "offline": "API अफलाइन",
     "checking": "API जाँच हुँदैछ…",
     "label": "API स्थिति"
-  }
+  },
+  "updateRecommended": "नयाँ संस्करण उपलब्ध छ",
+  "updateRecommendedBody": "नयाँ सुधारहरू पाउन सुविधा हुँदा अपडेट गर्नुहोस्।"
 }

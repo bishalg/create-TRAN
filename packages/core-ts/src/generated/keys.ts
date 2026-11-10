@@ -59,6 +59,7 @@ export type TranStringKey =
   | 'common.role.electionAuditor'
   | 'common.role.label'
   | 'common.signOut'
+  | 'common.update'
   | 'eligibility.age.example'
   | 'eligibility.age.label'
   | 'eligibility.age.placeholder'
@@ -125,6 +126,8 @@ export type TranStringKey =
   | 'errors.sessionExpiredBody'
   | 'errors.timeout'
   | 'errors.unexpected'
+  | 'errors.updateRequired'
+  | 'errors.updateRequiredBody'
   | 'screen.auditor.intent'
   | 'screen.authWelcome.intent'
   | 'screen.eligibility.intent'
@@ -142,4 +145,6 @@ export type TranStringKey =
   | 'shell.theme.label'
   | 'shell.theme.light'
   | 'shell.theme.sepia'
-  | 'shell.title';
+  | 'shell.title'
+  | 'shell.updateRecommended'
+  | 'shell.updateRecommendedBody';

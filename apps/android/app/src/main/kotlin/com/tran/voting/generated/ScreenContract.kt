@@ -43,6 +43,7 @@ object ScreenContract {
         const val dialogCancel = "dialog-cancel"
         const val deleteAccountConfirm = "delete-account-confirm"
         const val deleteAccountCancel = "delete-account-cancel"
+        const val updateButton = "update-button"
     }
 
     object Auditor {

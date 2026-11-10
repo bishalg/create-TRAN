@@ -25,14 +25,16 @@ export type ErrorCode =
   | 'network.offline'
   | 'network.timeout'
   | 'client.unexpected'
-  | 'client.render_failed';
+  | 'client.render_failed'
+  | 'client.upgrade_required';
 
 export type UserAction =
   | 'sign_out'
   | 'server_check_succeeded'
   | 'delete_account'
   | 'account_deleted'
-  | 'notification_received';
+  | 'notification_received'
+  | 'update_recommended';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -226,6 +228,14 @@ export const ERROR_CATALOGUE: readonly ErrorSpec[] = [
     presentation: { kind: 'screen' },
     messageKey: 'errors.renderFailed',
   },
+  {
+    code: 'client.upgrade_required',
+    httpStatus: 426,
+    retryable: false,
+    logLevel: 'info',
+    presentation: { kind: 'screen' },
+    messageKey: 'errors.updateRequired',
+  },
 ];
 
 export const ACTION_CATALOGUE: readonly ActionSpec[] = [
@@ -253,6 +263,11 @@ export const ACTION_CATALOGUE: readonly ActionSpec[] = [
     action: 'notification_received',
     presentation: { kind: 'toast', tone: 'info', duration: 'medium' },
     messageKey: 'eligibility.notify.received',
+  },
+  {
+    action: 'update_recommended',
+    presentation: { kind: 'dialog', destructive: false },
+    messageKey: 'shell.updateRecommended',
   },
 ];
 
@@ -294,7 +309,9 @@ export const STATUS_FALLBACK: readonly { from: number; to: number; code: ErrorCo
   { from: 413, to: 413, code: 'request.too_large' },
   { from: 414, to: 414, code: 'request.malformed' },
   { from: 415, to: 415, code: 'request.unsupported_media_type' },
-  { from: 416, to: 428, code: 'request.malformed' },
+  { from: 416, to: 425, code: 'request.malformed' },
+  { from: 426, to: 426, code: 'client.upgrade_required' },
+  { from: 427, to: 428, code: 'request.malformed' },
   { from: 429, to: 429, code: 'server.rate_limited' },
   { from: 430, to: 499, code: 'request.malformed' },
   { from: 500, to: 501, code: 'server.internal' },

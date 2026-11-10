@@ -22,4 +22,5 @@
     <string name="common_role_election_auditor">निर्वाचन अडिटर</string>
     <string name="common_role_label">भूमिका</string>
     <string name="common_sign_out">साइन आउट</string>
+    <string name="common_update">अपडेट गर्नुहोस्</string>
 </resources>

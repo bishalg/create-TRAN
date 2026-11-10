@@ -50,6 +50,7 @@
     "common.role.electionAuditor": "Election Auditor",
     "common.role.label": "Role",
     "common.signOut": "Sign out",
+    "common.update": "Update",
     "eligibility.age.example": "e.g. 21",
     "eligibility.age.label": "Your age",
     "eligibility.age.placeholder": "Enter age",
@@ -116,6 +117,8 @@
     "errors.sessionExpiredBody": "Sign in again to continue. Anything you typed stays on this screen until you do.",
     "errors.timeout": "The server is taking too long — results are checked on this device.",
     "errors.unexpected": "Something went wrong in the app. Please try again.",
+    "errors.updateRequired": "Update required",
+    "errors.updateRequiredBody": "This version of the app is no longer supported. Update it to keep going; you stay signed in.",
     "screen.auditor.intent": "Let an election auditor review every country’s minimum voting age exactly as the shared Rust rules apply it.",
     "screen.authWelcome.intent": "Let a signed-out person pick Citizen Voter or Election Auditor in one tap and open that role’s dashboard.",
     "screen.eligibility.intent": "Tell a citizen within seconds, even offline, whether their age meets a country’s minimum voting age, and who vouched for the answer.",
@@ -133,7 +136,9 @@
     "shell.theme.label": "Theme",
     "shell.theme.light": "Light",
     "shell.theme.sepia": "Sepia",
-    "shell.title": "Voting Eligibility"
+    "shell.title": "Voting Eligibility",
+    "shell.updateRecommended": "A new version is available",
+    "shell.updateRecommendedBody": "Update when it suits you to get the latest improvements."
   },
   "hi": {
     "auditor.rules.title": "सत्यापित देश न्यूनतम आयु",
@@ -186,6 +191,7 @@
     "common.role.electionAuditor": "चुनाव ऑडिटर",
     "common.role.label": "भूमिका",
     "common.signOut": "साइन आउट",
+    "common.update": "अपडेट करें",
     "eligibility.age.example": "जैसे 21",
     "eligibility.age.label": "आपकी आयु",
     "eligibility.age.placeholder": "आयु दर्ज करें",
@@ -252,6 +258,8 @@
     "errors.sessionExpiredBody": "जारी रखने के लिए फिर से साइन इन करें। तब तक आपने जो लिखा है वह इसी स्क्रीन पर रहेगा।",
     "errors.timeout": "सर्वर बहुत समय ले रहा है — परिणाम इसी डिवाइस पर जाँचे जा रहे हैं।",
     "errors.unexpected": "ऐप में कुछ गड़बड़ हुई। कृपया फिर कोशिश करें।",
+    "errors.updateRequired": "अपडेट ज़रूरी है",
+    "errors.updateRequiredBody": "ऐप का यह संस्करण अब समर्थित नहीं है। जारी रखने के लिए इसे अपडेट करें; आप साइन इन रहेंगे।",
     "screen.auditor.intent": "चुनाव लेखा परीक्षक को हर देश की न्यूनतम मतदान आयु ठीक वैसे ही देखने दें जैसे साझा Rust नियम उसे लागू करते हैं।",
     "screen.authWelcome.intent": "साइन आउट व्यक्ति को एक टैप में नागरिक मतदाता या चुनाव लेखा परीक्षक चुनने दें और उस भूमिका का डैशबोर्ड खोलें।",
     "screen.eligibility.intent": "नागरिक को कुछ ही सेकंड में, ऑफ़लाइन भी, बताएँ कि उनकी आयु किसी देश की न्यूनतम मतदान आयु पूरी करती है या नहीं, और उत्तर की पुष्टि किसने की।",
@@ -269,7 +277,9 @@
     "shell.theme.label": "थीम",
     "shell.theme.light": "लाइट",
     "shell.theme.sepia": "सेपिया",
-    "shell.title": "मतदान पात्रता"
+    "shell.title": "मतदान पात्रता",
+    "shell.updateRecommended": "नया संस्करण उपलब्ध है",
+    "shell.updateRecommendedBody": "नए सुधार पाने के लिए जब सुविधा हो तब अपडेट करें।"
   },
   "ne": {
     "auditor.rules.title": "प्रमाणित देश न्यूनतम उमेर",
@@ -322,6 +332,7 @@
     "common.role.electionAuditor": "निर्वाचन अडिटर",
     "common.role.label": "भूमिका",
     "common.signOut": "साइन आउट",
+    "common.update": "अपडेट गर्नुहोस्",
     "eligibility.age.example": "जस्तै २१",
     "eligibility.age.label": "तपाईंको उमेर",
     "eligibility.age.placeholder": "उमेर लेख्नुहोस्",
@@ -388,6 +399,8 @@
     "errors.sessionExpiredBody": "जारी राख्न फेरि साइन इन गर्नुहोस्। त्यतिन्जेल तपाईंले लेखेको कुरा यही स्क्रिनमा रहन्छ।",
     "errors.timeout": "सर्भरले धेरै समय लिइरहेको छ — नतिजा यही उपकरणमा जाँचिँदैछ।",
     "errors.unexpected": "एपमा केही गडबड भयो। कृपया फेरि प्रयास गर्नुहोस्।",
+    "errors.updateRequired": "अपडेट आवश्यक छ",
+    "errors.updateRequiredBody": "एपको यो संस्करण अब समर्थित छैन। जारी राख्न यसलाई अपडेट गर्नुहोस्; तपाईं साइन इन नै रहनुहुन्छ।",
     "screen.auditor.intent": "निर्वाचन अडिटरलाई हरेक देशको न्यूनतम मतदान उमेर साझा Rust नियमले लागू गरेजस्तै हेर्न दिनुहोस्।",
     "screen.authWelcome.intent": "साइन आउट भएको व्यक्तिलाई एकै ट्यापमा नागरिक मतदाता वा निर्वाचन अडिटर छान्न दिनुहोस् र त्यो भूमिकाको ड्यासबोर्ड खोल्नुहोस्।",
     "screen.eligibility.intent": "नागरिकलाई केही सेकेन्डमै, अफलाइनमा पनि, उनको उमेरले कुनै देशको न्यूनतम मतदान उमेर पुर्‍याउँछ कि पुर्‍याउँदैन र उत्तर कसले प्रमाणित गर्‍यो भनी बताउनुहोस्।",
@@ -405,6 +418,8 @@
     "shell.theme.label": "थिम",
     "shell.theme.light": "उज्यालो",
     "shell.theme.sepia": "सेपिया",
-    "shell.title": "मतदान योग्यता"
+    "shell.title": "मतदान योग्यता",
+    "shell.updateRecommended": "नयाँ संस्करण उपलब्ध छ",
+    "shell.updateRecommendedBody": "नयाँ सुधारहरू पाउन सुविधा हुँदा अपडेट गर्नुहोस्।"
   }
 }

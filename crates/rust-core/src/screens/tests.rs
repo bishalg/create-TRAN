@@ -251,6 +251,7 @@ fn the_verb_set_is_closed() {
             id: PermissionId::LocationApproximate,
             status: PermissionStatus::Denied,
         },
+        Given::UpgradeRequired,
     ];
     let when = [
         When::Tap("a"),
@@ -292,7 +293,8 @@ fn the_verb_set_is_closed() {
             "theme",
             "largest_text_scale",
             "reduced_motion",
-            "permission"
+            "permission",
+            "upgrade_required"
         ]
     );
     assert_eq!(

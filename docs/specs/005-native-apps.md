@@ -98,7 +98,7 @@ directories fail a regex guard; atom names are identical on both platforms, and 
 
 ### REQ-NAT-011 [verified] API clients
 
-Both apps MUST reach the Axum API through a small client (`GET /api/health`, `POST /api/vote/eligibility`) whose base
+Both apps MUST reach the Axum API through a small client (`GET /api/health`, `POST /api/v1/vote/eligibility`) whose base
 URL is configurable per build — iOS `TranApiBaseUrl` (launch argument → Info.plist `$(TRAN_API_BASE_URL)`), Android
 `tranApiBaseUrl` Gradle property / `TRAN_API_BASE_URL` (BuildConfig) — defaulting to `http://127.0.0.1:3001` on iOS
 and `http://10.0.2.2:3001` on the Android emulator, with an `https://` release default and **debug-only cleartext**

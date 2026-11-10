@@ -14,6 +14,7 @@
 //! | `largest_text_scale` | `Given the largest text scale`                                |
 //! | `reduced_motion`     | `Given reduced motion`                                        |
 //! | `permission`         | `Given the permission "location_approximate" is "denied_permanently"` |
+//! | `upgrade_required`   | `Given the API requires a newer app version`                  |
 //! | `tap`                | `When I tap "check-button"`                                   |
 //! | `type`               | `When I type "20" into "age-field"`                           |
 //! | `select`             | `When I select "dark" in "theme-picker"`                      |
@@ -65,6 +66,7 @@ pub fn given_phrase(given: Given) -> String {
             quote(id.as_str()),
             quote(status.as_str())
         ),
+        Given::UpgradeRequired => "the API requires a newer app version".into(),
     }
 }
 
@@ -206,6 +208,7 @@ mod tests {
                 id: PermissionId::LocationApproximate,
                 status: PermissionStatus::DeniedPermanently,
             },
+            Given::UpgradeRequired,
         ]
         .map(given_phrase)
         .to_vec();
@@ -219,6 +222,7 @@ mod tests {
                 "the largest text scale",
                 "reduced motion",
                 "the permission \"location_approximate\" is \"denied_permanently\"",
+                "the API requires a newer app version",
             ]
         );
         let when: Vec<String> = [

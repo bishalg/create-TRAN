@@ -88,23 +88,23 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     const path = new URL(url).pathname;
     const bearer = ((init?.headers ?? {}) as Record<string, string>).Authorization;
 
-    if (path === '/api/auth/session' && init?.method === 'POST') {
+    if (path === '/api/v1/auth/session' && init?.method === 'POST') {
       return issue(JSON.parse(String(init.body)).role, 201);
     }
-    if (path === '/api/auth/session') {
+    if (path === '/api/v1/auth/session') {
       return cookie && bearer === `Bearer ${accessToken}`
         ? json({ user_id: USER_IDS[cookie], role: cookie })
         : envelope(401, 'auth.session_expired');
     }
-    if (path === '/api/auth/refresh') {
+    if (path === '/api/v1/auth/refresh') {
       return cookie ? issue(cookie, 200) : envelope(401, 'auth.session_expired');
     }
-    if (path === '/api/auth/sign-out') {
+    if (path === '/api/v1/auth/sign-out') {
       cookie = null;
       accessToken = null;
       return json(null, 204);
     }
-    if (path === '/api/account' && init?.method === 'DELETE') {
+    if (path === '/api/v1/account' && init?.method === 'DELETE') {
       // Deletion revokes every session of the user, cookie included (REQ-ACC-001, REQ-ACC-002).
       if (!cookie || bearer !== `Bearer ${accessToken}`)
         return envelope(401, 'auth.session_expired');
@@ -114,8 +114,8 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     }
 
     if (path === '/api/health') return json(healthReport);
-    if (path === '/api/tran/info') return json(stackInfo);
-    if (path === '/api/vote/eligibility') {
+    if (path === '/api/v1/tran/info') return json(stackInfo);
+    if (path === '/api/v1/vote/eligibility') {
       const body = JSON.parse(String(init?.body));
       const headers = (init?.headers ?? {}) as Record<string, string>;
       const country = headers['X-Debug-Country'] ?? 'US';

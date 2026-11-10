@@ -41,7 +41,7 @@ function gateEligibility(api: ReturnType<typeof createFakeApi>) {
   const gate = new Promise<void>((resolve) => (release = resolve));
   const real = createFakeApi();
   api.fetchFn.mockImplementation(async (...args: Parameters<typeof real.fetchFn>) => {
-    if (new URL(String(args[0])).pathname === '/api/vote/eligibility') await gate;
+    if (new URL(String(args[0])).pathname === '/api/v1/vote/eligibility') await gate;
     return real.fetchFn(...args);
   });
   return () => release();
@@ -237,7 +237,7 @@ describe('App: ask the server', () => {
 
     expect(await screen.findByRole('heading', { name: 'Eligible to vote' })).toBeVisible();
     expect(screen.getByText('Checked by the server')).toBeVisible();
-    const [call] = api.callsTo('/api/vote/eligibility');
+    const [call] = api.callsTo('/api/v1/vote/eligibility');
     expect((call[1]?.headers as Record<string, string>)['X-Debug-Country']).toBe('BR');
   });
 
@@ -355,7 +355,7 @@ describe('App: ask the server', () => {
     await check(user, '30', 'US');
 
     expect(await screen.findByText('Checked by the server')).toBeVisible();
-    expect(api.callsTo('/api/vote/eligibility')).toHaveLength(2);
+    expect(api.callsTo('/api/v1/vote/eligibility')).toHaveLength(2);
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
@@ -384,7 +384,7 @@ describe('App: ask the server', () => {
 
     expect(await screen.findByText(fallbackLabel)).toBeVisible();
     expect(screen.queryByText('Checked on this device')).toBeNull();
-    expect(api.callsTo('/api/vote/eligibility')).toHaveLength(3);
+    expect(api.callsTo('/api/v1/vote/eligibility')).toHaveLength(3);
 
     api.fetchFn.mockImplementation(createFakeApi().fetchFn);
     await user.click(submit());
@@ -497,7 +497,7 @@ describe('App: navigation and role branching', () => {
     await settle();
 
     expect(screen.getByRole('heading', { level: 2, name: 'Welcome to TRAN Voting' })).toBeVisible();
-    const [, init] = api.callsTo('/api/vote/eligibility')[0];
+    const [, init] = api.callsTo('/api/v1/vote/eligibility')[0];
     expect(init?.signal?.aborted).toBe(true);
     const notifications = screen.getByRole('region', { name: 'Notifications' });
     expect(within(notifications).queryByText('Server check complete')).toBeNull();

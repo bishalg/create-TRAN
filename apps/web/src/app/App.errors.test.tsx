@@ -26,7 +26,7 @@ async function renderApp(eligibility?: { status: number; code: string }) {
   const real = createFakeApi();
   api.fetchFn.mockImplementation(async (...args: Parameters<typeof real.fetchFn>) => {
     const path = new URL(String(args[0])).pathname;
-    if (eligibility && path === '/api/vote/eligibility') {
+    if (eligibility && path === '/api/v1/vote/eligibility') {
       return envelope(eligibility.status, eligibility.code);
     }
     return real.fetchFn(...args);
@@ -64,7 +64,7 @@ describe('App: an expired session (REQ-ERR-010)', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Your session has expired' });
     expect(dialog).toBeVisible();
     // Not retryable: asked once.
-    expect(api.callsTo('/api/vote/eligibility')).toHaveLength(1);
+    expect(api.callsTo('/api/v1/vote/eligibility')).toHaveLength(1);
 
     await user.click(screen.getByRole('button', { name: 'Sign in again' }));
     expect(screen.getByRole('button', { name: /Continue as Citizen Voter/ })).toBeVisible();

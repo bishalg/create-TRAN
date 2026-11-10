@@ -206,6 +206,7 @@ describe('env contract (REQ-SEC-002)', () => {
         [
           'apps/api/src/config.rs',
           'apps/api/src/push/providers.rs',
+          'apps/api/src/client_versions.rs',
           'apps/web/src/shared/api/apiUrl.ts',
           'apps/ios/fastlane/Fastfile',
           'apps/ios/fastlane/Appfile',

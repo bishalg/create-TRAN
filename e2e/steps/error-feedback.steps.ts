@@ -5,7 +5,7 @@ import { ScreenIds } from '@tran/core';
 const { Given, When, Then } = createBdd();
 
 const API = 'http://127.0.0.1:3001';
-const ELIGIBILITY = `${API}/api/vote/eligibility`;
+const ELIGIBILITY = `${API}/api/v1/vote/eligibility`;
 
 /** A cross-origin reply in the API's error envelope (REQ-ERR-002). */
 function envelope(route: Route, status: number, code: string, requestId: string) {

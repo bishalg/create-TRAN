@@ -45,7 +45,8 @@ Reasons: [ADR-0047](./adr/0047-old-clients-keep-working.md). Switching features 
 | Part                                         | Place                                                                      |
 | :------------------------------------------- | :------------------------------------------------------------------------- |
 | Base path, client header, version comparison | `crates/rust-core/src/compat.rs`, `fixtures/compat.json`                   |
-| Response snapshots                           | `fixtures/contract/v1/`                                                    |
-| Requests of released clients                 | `fixtures/contract/clients/`                                               |
+| Route table, deprecation marker              | `apps/api/src/routes/table.rs`                                             |
+| Response snapshots                           | `fixtures/contract/v1/` (`pnpm contract:snapshots`, `pnpm contract:check`) |
+| Requests of released clients                 | `fixtures/contract/clients/<platform>/` (`current.json`, `<version>.json`) |
 | Minimum and recommended versions             | API configuration (`CLIENT_MIN_VERSION_*`, `CLIENT_RECOMMENDED_VERSION_*`) |
 | Update screen and prompt                     | the feedback catalogue and the screen contract                             |

@@ -15,10 +15,10 @@ Vocabulary used below:
 
 ### REQ-ACC-001 [verified] The API deletes the caller's account
 
-`DELETE /api/account` with a valid bearer token MUST erase the caller's data through an `AccountEraser` trait, revoke
+`DELETE /api/v1/account` with a valid bearer token MUST erase the caller's data through an `AccountEraser` trait, revoke
 every session of that user (all devices), send the header that clears the refresh cookie on the cookie transport, and
 answer `204`. That request carries no cookie (REQ-SEC-018), so a browser ignores the header: a browser client follows a
-successful deletion with the best-effort `POST /api/auth/sign-out`, which carries the cookie and removes it. Without a
+successful deletion with the best-effort `POST /api/v1/auth/sign-out`, which carries the cookie and removes it. Without a
 valid token it MUST answer `401` `auth.session_expired` and erase nothing. If the eraser fails it MUST answer `500`
 `server.internal` with every session intact. The route is under the `Origin` check of REQ-SEC-012 and answers
 `Cache-Control: no-store`.

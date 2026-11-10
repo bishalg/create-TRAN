@@ -15,6 +15,7 @@
 import { expect, type Locator, type Page, type TestInfo } from '@playwright/test';
 import { createBdd } from 'playwright-bdd';
 import {
+  API_BASE_PATH,
   PLATFORM_MINIMUMS,
   SCREENS,
   ScreenIds,
@@ -50,6 +51,8 @@ interface Run {
   largestText: boolean;
   launched: boolean;
   checkedReach: boolean;
+  /** `upgrade_required`: product routes answer 426 once the starting state is on screen. */
+  upgradeRequired: boolean;
   manifest: ScenarioManifest;
 }
 
@@ -74,6 +77,7 @@ function current(testInfo: TestInfo): Run {
       largestText: false,
       launched: false,
       checkedReach: false,
+      upgradeRequired: false,
       manifest: new ScenarioManifest(testInfo.testId, found.scenario.name, () => next.locale),
     };
     run = next;
@@ -163,7 +167,37 @@ async function launch(page: Page, r: Run) {
   }
   if (r.theme)
     await byId(page, ScreenIds.eligibility.themePicker).locator(`[value="${r.theme}"]`).click();
+  if (r.upgradeRequired) await refuseThisVersion(page);
   await r.manifest.record(page, 'given');
+}
+
+/**
+ * The minimum is raised while the app is open (REQ-VER-009): from now on every product route
+ * answers `426 client.upgrade_required` in the envelope. Preflights and health still reach the
+ * real API.
+ */
+async function refuseThisVersion(page: Page) {
+  await page.route(`${API}${API_BASE_PATH}/**`, (route) => {
+    if (route.request().method() === 'OPTIONS') return route.continue();
+    const origin = route.request().headers().origin ?? '*';
+    return route.fulfill({
+      status: 426,
+      contentType: 'application/json',
+      headers: {
+        'access-control-allow-origin': origin,
+        'access-control-allow-credentials': 'true',
+        'access-control-expose-headers': 'x-request-id',
+        'x-request-id': 'req-e2e-upgrade',
+      },
+      body: JSON.stringify({
+        success: false,
+        error: 'staged client.upgrade_required',
+        code: 'client.upgrade_required',
+        retryable: false,
+        request_id: 'req-e2e-upgrade',
+      }),
+    });
+  });
 }
 
 /** Before the first `Then`: at the largest text scale, everything must still be reachable. */
@@ -216,6 +250,10 @@ Given(step(`the theme is ${Q}`), async ({ $testInfo }, theme: string) => {
 
 Given('the largest text scale', async ({ $testInfo }) => {
   current($testInfo).largestText = true;
+});
+
+Given('the API requires a newer app version', async ({ $testInfo }) => {
+  current($testInfo).upgradeRequired = true;
 });
 
 Given('reduced motion', async ({ page, $testInfo }) => {

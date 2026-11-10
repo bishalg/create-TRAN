@@ -128,6 +128,7 @@ pub fn given_step(given: Given) -> Step {
         | Given::ApiUnreachable
         | Given::LargestTextScale
         | Given::ReducedMotion
+        | Given::UpgradeRequired
         | Given::Permission { .. } => None,
     };
     Step {
@@ -252,6 +253,7 @@ mod tests {
                 id: PermissionId::LocationApproximate,
                 status: PermissionStatus::DeniedPermanently,
             },
+            Given::UpgradeRequired,
         ]
         .map(|g| value(given_step(g)))
         .to_vec();
@@ -266,6 +268,7 @@ mod tests {
                 json!({"verb": "largest_text_scale"}),
                 json!({"verb": "reduced_motion"}),
                 json!({"verb": "permission", "permission": "location_approximate", "value": "denied_permanently"}),
+                json!({"verb": "upgrade_required"}),
             ]
         );
         let when: Vec<Value> = [

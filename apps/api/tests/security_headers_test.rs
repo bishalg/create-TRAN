@@ -46,10 +46,10 @@ async fn headers(state: AppState, method: Method, uri: &str, body: &str) -> Head
 fn every_kind_of_response() -> [(Method, &'static str, &'static str); 5] {
     [
         (Method::GET, "/api/health", ""),
-        (Method::POST, "/api/vote/eligibility", "{\"age\": "),
+        (Method::POST, "/api/v1/vote/eligibility", "{\"age\": "),
         (Method::GET, "/api/nope", ""),
-        (Method::GET, "/api/auth/session", ""),
-        (Method::OPTIONS, "/api/vote/eligibility", ""),
+        (Method::GET, "/api/v1/auth/session", ""),
+        (Method::OPTIONS, "/api/v1/vote/eligibility", ""),
     ]
 }
 
@@ -94,14 +94,14 @@ async fn auth_responses_are_never_cached() {
     let auth = [
         (
             Method::POST,
-            "/api/auth/session",
+            "/api/v1/auth/session",
             r#"{"role": "citizen_voter", "transport": "body"}"#,
         ),
-        (Method::POST, "/api/auth/session", "{}"),
-        (Method::GET, "/api/auth/session", ""),
-        (Method::POST, "/api/auth/refresh", ""),
-        (Method::POST, "/api/auth/sign-out", ""),
-        (Method::GET, "/api/auth/unknown", ""),
+        (Method::POST, "/api/v1/auth/session", "{}"),
+        (Method::GET, "/api/v1/auth/session", ""),
+        (Method::POST, "/api/v1/auth/refresh", ""),
+        (Method::POST, "/api/v1/auth/sign-out", ""),
+        (Method::GET, "/api/v1/auth/unknown", ""),
     ];
     for (method, uri, body) in auth {
         let got = headers(AppState::new(), method.clone(), uri, body).await;

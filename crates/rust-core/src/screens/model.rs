@@ -162,6 +162,10 @@ pub enum Given {
         id: PermissionId,
         status: PermissionStatus,
     },
+    /// The API no longer serves this app version (REQ-VER-009): once the scenario's starting state
+    /// is on screen (the minimum is raised while the app is open), every product route answers
+    /// `426 client.upgrade_required` in the envelope; health still answers.
+    UpgradeRequired,
 }
 
 /// What the person does. A closed set (ADR-0038).
@@ -211,7 +215,7 @@ pub enum Then {
 }
 
 impl Given {
-    pub const VERBS: [&'static str; 8] = [
+    pub const VERBS: [&'static str; 9] = [
         "session",
         "api_reachable",
         "api_unreachable",
@@ -220,6 +224,7 @@ impl Given {
         "largest_text_scale",
         "reduced_motion",
         "permission",
+        "upgrade_required",
     ];
 
     pub fn verb(self) -> &'static str {
@@ -232,6 +237,7 @@ impl Given {
             Self::LargestTextScale => Self::VERBS[5],
             Self::ReducedMotion => Self::VERBS[6],
             Self::Permission { .. } => Self::VERBS[7],
+            Self::UpgradeRequired => Self::VERBS[8],
         }
     }
 

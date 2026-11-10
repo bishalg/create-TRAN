@@ -115,6 +115,8 @@ object TranStrings {
         val roleLabel: Int = R.string.common_role_label // common.role.label
         @StringRes
         val signOut: Int = R.string.common_sign_out // common.signOut
+        @StringRes
+        val update: Int = R.string.common_update // common.update
     }
 
     object Eligibility {
@@ -253,6 +255,10 @@ object TranStrings {
         val timeout: Int = R.string.errors_timeout // errors.timeout
         @StringRes
         val unexpected: Int = R.string.errors_unexpected // errors.unexpected
+        @StringRes
+        val updateRequired: Int = R.string.errors_update_required // errors.updateRequired
+        @StringRes
+        val updateRequiredBody: Int = R.string.errors_update_required_body // errors.updateRequiredBody
     }
 
     object Screen {
@@ -295,6 +301,10 @@ object TranStrings {
         val themeSepia: Int = R.string.shell_theme_sepia // shell.theme.sepia
         @StringRes
         val title: Int = R.string.shell_title // shell.title
+        @StringRes
+        val updateRecommended: Int = R.string.shell_update_recommended // shell.updateRecommended
+        @StringRes
+        val updateRecommendedBody: Int = R.string.shell_update_recommended_body // shell.updateRecommendedBody
     }
 
 }
@@ -336,4 +346,6 @@ val feedbackMessageRes: Map<String, Int> = mapOf(
     "errors.sessionExpired" to R.string.errors_session_expired,
     "errors.timeout" to R.string.errors_timeout,
     "errors.unexpected" to R.string.errors_unexpected,
+    "errors.updateRequired" to R.string.errors_update_required,
+    "shell.updateRecommended" to R.string.shell_update_recommended,
 )

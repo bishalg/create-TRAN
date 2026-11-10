@@ -581,6 +581,19 @@
           ]
         },
         {
+          "id": "update-button",
+          "kind": "button",
+          "label": "common.update",
+          "touch": "control",
+          "presence": "when",
+          "state": "update_required",
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ]
+        },
+        {
           "id": "skip-link",
           "kind": "button",
           "label": "shell.skipToContent",
@@ -1644,6 +1657,55 @@
                   "value": "US"
                 }
               ]
+            }
+          ]
+        },
+        {
+          "name": "An unsupported version is asked to update",
+          "verifies": [
+            "REQ-VER-009"
+          ],
+          "within_ms": 4300,
+          "platforms": [
+            "web",
+            "ios",
+            "android"
+          ],
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            },
+            {
+              "verb": "upgrade_required"
+            }
+          ],
+          "when": [
+            {
+              "verb": "tap",
+              "id": "delete-account-button"
+            },
+            {
+              "verb": "tap",
+              "id": "delete-account-confirm"
+            }
+          ],
+          "then": [
+            {
+              "verb": "exists",
+              "id": "update-button"
+            },
+            {
+              "verb": "missing",
+              "id": "check-button"
+            },
+            {
+              "verb": "missing",
+              "id": "delete-account-confirm"
+            },
+            {
+              "verb": "missing",
+              "id": "voter-branch-button"
             }
           ]
         },

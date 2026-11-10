@@ -20,4 +20,6 @@
     <string name="errors_session_expired_body">Sign in again to continue. Anything you typed stays on this screen until you do.</string>
     <string name="errors_timeout">The server is taking too long — results are checked on this device.</string>
     <string name="errors_unexpected">Something went wrong in the app. Please try again.</string>
+    <string name="errors_update_required">Update required</string>
+    <string name="errors_update_required_body">This version of the app is no longer supported. Update it to keep going; you stay signed in.</string>
 </resources>

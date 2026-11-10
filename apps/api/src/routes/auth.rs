@@ -1,4 +1,4 @@
-//! `/api/auth/*`: sign in, who am I, refresh, sign out (REQ-SEC-006 to REQ-SEC-011).
+//! `/api/v1/auth/*`: sign in, who am I, refresh, sign out (REQ-SEC-006 to REQ-SEC-011).
 //!
 //! The sample's sign-in has no credential check: choosing a role is the whole "login". A fork puts
 //! its password, passkey or OIDC verification in front of [`sign_in`]; everything after is real.
@@ -11,6 +11,7 @@ use axum::http::request::Parts;
 use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::Json;
+use rust_core::compat::API_BASE_PATH;
 use rust_core::feedback::ErrorCode;
 use rust_core::session::SESSION_POLICY;
 use rust_core::UserRole;
@@ -91,7 +92,7 @@ fn demo_user(role: RoleParam) -> SessionUser {
 fn refresh_cookie(value: &str, max_age: u64, requires_https: bool) -> HeaderValue {
     let secure = if requires_https { "; Secure" } else { "" };
     let cookie = format!(
-        "{REFRESH_COOKIE}={value}; HttpOnly; SameSite=Strict; Path=/api/auth; Max-Age={max_age}{secure}"
+        "{REFRESH_COOKIE}={value}; HttpOnly; SameSite=Strict; Path={API_BASE_PATH}/auth; Max-Age={max_age}{secure}"
     );
     #[allow(
         clippy::expect_used,
@@ -169,7 +170,7 @@ fn presented_refresh(headers: &HeaderMap, body: &[u8]) -> Option<Presented> {
     })
 }
 
-/// `POST /api/auth/session` — sign in as a role; `201` with the first pair (REQ-SEC-006).
+/// `POST /api/v1/auth/session` — sign in as a role; `201` with the first pair (REQ-SEC-006).
 pub async fn sign_in(
     State(state): State<AppState>,
     payload: Result<Json<SignInRequest>, JsonRejection>,
@@ -228,12 +229,12 @@ impl FromRequestParts<AppState> for Authenticated {
     }
 }
 
-/// `GET /api/auth/session` — who the access token belongs to.
+/// `GET /api/v1/auth/session` — who the access token belongs to.
 pub async fn current_session(Authenticated(live): Authenticated) -> Json<UserBody> {
     Json(UserBody::from(&live.session.user))
 }
 
-/// `POST /api/auth/refresh` — spend the refresh token for a new pair (REQ-SEC-009, REQ-SEC-010).
+/// `POST /api/v1/auth/refresh` — spend the refresh token for a new pair (REQ-SEC-009, REQ-SEC-010).
 pub async fn refresh(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -256,7 +257,7 @@ pub async fn refresh(
     }
 }
 
-/// `POST /api/auth/sign-out` — revoke the session; `204` whatever was sent (REQ-SEC-011).
+/// `POST /api/v1/auth/sign-out` — revoke the session; `204` whatever was sent (REQ-SEC-011).
 pub async fn sign_out(
     State(state): State<AppState>,
     headers: HeaderMap,

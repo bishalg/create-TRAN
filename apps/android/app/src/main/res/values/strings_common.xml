@@ -22,4 +22,5 @@
     <string name="common_role_election_auditor">Election Auditor</string>
     <string name="common_role_label">Role</string>
     <string name="common_sign_out">Sign out</string>
+    <string name="common_update">Update</string>
 </resources>

@@ -686,6 +686,18 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_voting_age_for_country_offline(
     ): Int
+    external fun uniffi_tran_uniffi_checksum_func_client_standing(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_compare_versions(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_decode_wire_enum(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_format_client(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_parse_client(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_update_prompt(
+    ): Int
     external fun uniffi_tran_uniffi_checksum_func_action_spec(
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_admit_toast(
@@ -767,6 +779,18 @@ internal object UniffiLib {
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_voting_age_for_country_offline(`countryCode`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Int
+    external fun uniffi_tran_uniffi_fn_func_client_standing(`client`: RustBuffer.ByValue,`minimum`: RustBuffer.ByValue,`recommended`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_compare_versions(`a`: RustBuffer.ByValue,`b`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    external fun uniffi_tran_uniffi_fn_func_decode_wire_enum(`name`: RustBuffer.ByValue,`raw`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_format_client(`platform`: RustBuffer.ByValue,`version`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_parse_client(`header`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_update_prompt(`state`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
     external fun uniffi_tran_uniffi_fn_func_action_spec(`action`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_admit_toast(`visible`: RustBuffer.ByValue,`incoming`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -958,6 +982,24 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_tran_uniffi_checksum_func_voting_age_for_country_offline() and 0xFFFF) != 55415) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_tran_uniffi_checksum_func_client_standing() and 0xFFFF) != 33709) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_compare_versions() and 0xFFFF) != 62330) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_decode_wire_enum() and 0xFFFF) != 24948) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_format_client() and 0xFFFF) != 19587) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_parse_client() and 0xFFFF) != 18265) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_update_prompt() and 0xFFFF) != 16719) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if ((lib.uniffi_tran_uniffi_checksum_func_action_spec() and 0xFFFF) != 29757) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1131,6 +1173,29 @@ object UniffiWithHandle
  * @suppress
  * */
 object NoHandle
+
+/**
+ * @suppress
+ */
+public object FfiConverterByte: FfiConverter<Byte, Byte> {
+    override fun lift(value: Byte): Byte {
+        return value
+    }
+
+    override fun read(buf: ByteBuffer): Byte {
+        return buf.get()
+    }
+
+    override fun lower(value: Byte): Byte {
+        return value
+    }
+
+    override fun allocationSize(value: Byte) = 1UL
+
+    override fun write(value: Byte, buf: ByteBuffer) {
+        buf.put(value)
+    }
+}
 
 /**
  * @suppress
@@ -1391,6 +1456,53 @@ public object FfiConverterTypeTranActionSpec: FfiConverterRustBuffer<TranActionS
             FfiConverterString.write(value.`wireName`, buf)
             FfiConverterTypeTranPresentation.write(value.`presentation`, buf)
             FfiConverterString.write(value.`messageKey`, buf)
+    }
+}
+
+
+
+/**
+ * A parsed `X-Tran-Client` header.
+ */
+data class TranClient (
+    /**
+     * The platform; [`TranClientPlatform::Unknown`] when the header did not parse.
+     */
+    var `platform`: TranClientPlatform
+    , 
+    /**
+     * The app version; always present for a known platform, never for an unknown one.
+     */
+    var `version`: kotlin.String?
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranClient: FfiConverterRustBuffer<TranClient> {
+    override fun read(buf: ByteBuffer): TranClient {
+        return TranClient(
+            FfiConverterTypeTranClientPlatform.read(buf),
+            FfiConverterOptionalString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranClient) = (
+            FfiConverterTypeTranClientPlatform.allocationSize(value.`platform`) +
+            FfiConverterOptionalString.allocationSize(value.`version`)
+    )
+
+    override fun write(value: TranClient, buf: ByteBuffer) {
+            FfiConverterTypeTranClientPlatform.write(value.`platform`, buf)
+            FfiConverterOptionalString.write(value.`version`, buf)
     }
 }
 
@@ -2241,6 +2353,62 @@ public object FfiConverterTypeTranToastPolicy: FfiConverterRustBuffer<TranToastP
 
 
 /**
+ * What the app knows when an answer arrives, for [`update_prompt`].
+ */
+data class TranUpdatePromptState (
+    /**
+     * [`TranClientStanding::UpdateRecommended`] when the answer carried
+     * `X-Tran-Update: recommended`; [`TranClientStanding::Supported`] otherwise.
+     */
+    var `standing`: TranClientStanding
+    , 
+    /**
+     * `X-Tran-Recommended-Version` of the answer, if present.
+     */
+    var `recommendedVersion`: kotlin.String?
+    , 
+    /**
+     * The recommended version the person last dismissed the prompt for, as the app stored it.
+     */
+    var `dismissedVersion`: kotlin.String?
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranUpdatePromptState: FfiConverterRustBuffer<TranUpdatePromptState> {
+    override fun read(buf: ByteBuffer): TranUpdatePromptState {
+        return TranUpdatePromptState(
+            FfiConverterTypeTranClientStanding.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranUpdatePromptState) = (
+            FfiConverterTypeTranClientStanding.allocationSize(value.`standing`) +
+            FfiConverterOptionalString.allocationSize(value.`recommendedVersion`) +
+            FfiConverterOptionalString.allocationSize(value.`dismissedVersion`)
+    )
+
+    override fun write(value: TranUpdatePromptState, buf: ByteBuffer) {
+            FfiConverterTypeTranClientStanding.write(value.`standing`, buf)
+            FfiConverterOptionalString.write(value.`recommendedVersion`, buf)
+            FfiConverterOptionalString.write(value.`dismissedVersion`, buf)
+    }
+}
+
+
+
+/**
  * The label of one [`TranVerdictSource`].
  */
 data class TranVerdictSourceSpec (
@@ -2466,6 +2634,104 @@ public object FfiConverterTypeTranAppDestination: FfiConverterRustBuffer<TranApp
 
 
 /**
+ * Who sent a request.
+ */
+
+enum class TranClientPlatform {
+    
+    /**
+     * The iOS app.
+     */
+    IOS,
+    /**
+     * The Android app.
+     */
+    ANDROID,
+    /**
+     * The web app.
+     */
+    WEB,
+    /**
+     * No header, or one that does not parse. Served like any other client.
+     */
+    UNKNOWN;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranClientPlatform: FfiConverterRustBuffer<TranClientPlatform> {
+    override fun read(buf: ByteBuffer) = try {
+        TranClientPlatform.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TranClientPlatform) = 4UL
+
+    override fun write(value: TranClientPlatform, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
+ * Where an app version stands against its platform's thresholds.
+ */
+
+enum class TranClientStanding {
+    
+    /**
+     * Served as usual.
+     */
+    SUPPORTED,
+    /**
+     * Served; offer the dismissible update prompt (REQ-VER-006).
+     */
+    UPDATE_RECOMMENDED,
+    /**
+     * Not served: the API answers `426`; show the blocking update screen (REQ-VER-005).
+     */
+    UPGRADE_REQUIRED;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranClientStanding: FfiConverterRustBuffer<TranClientStanding> {
+    override fun read(buf: ByteBuffer) = try {
+        TranClientStanding.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TranClientStanding) = 4UL
+
+    override fun write(value: TranClientStanding, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
  * Why the eligibility verdict is what it is.
  *
  * The native layer turns this into a localized sentence; the bridge never returns a
@@ -2597,7 +2863,13 @@ enum class TranErrorCode {
     /**
      * Rendering failed (web only; native apps report and end the process instead).
      */
-    CLIENT_RENDER_FAILED;
+    CLIENT_RENDER_FAILED,
+    /**
+     * `426`: the API no longer serves this app version. Show the blocking "Update required"
+     * screen (presentation `screen`), whose one action opens the store page; never sign out or
+     * clear the vault (REQ-VER-009).
+     */
+    CLIENT_UPGRADE_REQUIRED;
 
     
 
@@ -3474,7 +3746,13 @@ enum class TranUserAction {
      * A push notification arrived in the foreground: show the toast, not a system banner
      * (REQ-PSH-013).
      */
-    NOTIFICATION_RECEIVED;
+    NOTIFICATION_RECEIVED,
+    /**
+     * The API recommends a newer version (`X-Tran-Update: recommended`): a dismissible dialog with
+     * "Update" (`common.update`) and "Not now" (`common.notNow`), shown when [`crate::update_prompt`]
+     * says so (REQ-VER-010).
+     */
+    UPDATE_RECOMMENDED;
 
     
 
@@ -4301,6 +4579,134 @@ public object FfiConverterSequenceTypeTranToastKey: FfiConverterRustBuffer<List<
     
         
         FfiConverterString.lower(`countryCode`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Where `client` stands against its platform's thresholds (REQ-VER-005, REQ-VER-006).
+         *
+         * # Arguments
+         *
+         * * `client` — usually [`parse_client`] of the app's own header.
+         * * `minimum`, `recommended` — the platform's thresholds; `None` when there is none.
+         */ fun `clientStanding`(`client`: TranClient, `minimum`: kotlin.String?, `recommended`: kotlin.String?): TranClientStanding {
+            return FfiConverterTypeTranClientStanding.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_client_standing(
+    
+        
+        FfiConverterTypeTranClient.lower(`client`),
+        FfiConverterOptionalString.lower(`minimum`),
+        FfiConverterOptionalString.lower(`recommended`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Compares two versions numerically by part; missing parts are zero and a pre-release or build
+         * suffix is ignored (REQ-VER-005).
+         *
+         * # Returns
+         *
+         * `-1`, `0` or `1` when `a` is below, equal to or above `b`.
+         */ fun `compareVersions`(`a`: kotlin.String, `b`: kotlin.String): kotlin.Byte {
+            return FfiConverterByte.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_compare_versions(
+    
+        
+        FfiConverterString.lower(`a`),
+        FfiConverterString.lower(`b`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Decodes a wire enum value tolerantly (REQ-VER-008).
+         *
+         * # Arguments
+         *
+         * * `name` — the enum's name in `fixtures/compat.json` (`user_role`, `country_source`).
+         * * `raw` — the value the server sent.
+         *
+         * # Returns
+         *
+         * `raw` when this build knows it, else the enum's declared fallback; `None` only for an enum name
+         * the catalogue does not declare.
+         */ fun `decodeWireEnum`(`name`: kotlin.String, `raw`: kotlin.String): kotlin.String? {
+            return FfiConverterOptionalString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_decode_wire_enum(
+    
+        
+        FfiConverterString.lower(`name`),
+        FfiConverterString.lower(`raw`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * The `X-Tran-Client` value an app sends: `ios/1.4.0`.
+         *
+         * # Arguments
+         *
+         * * `platform` — the app's platform.
+         * * `version` — the app's product version (`CFBundleShortVersionString`, `versionName`), the one
+         * `pnpm release` writes.
+         */ fun `formatClient`(`platform`: TranClientPlatform, `version`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_format_client(
+    
+        
+        FfiConverterTypeTranClientPlatform.lower(`platform`),
+        FfiConverterString.lower(`version`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Reads an `X-Tran-Client` header value (REQ-VER-004).
+         *
+         * # Arguments
+         *
+         * * `header` — the value, or `None` when the header is absent.
+         *
+         * # Returns
+         *
+         * The platform and version; anything malformed is [`TranClientPlatform::Unknown`], never an error.
+         */ fun `parseClient`(`header`: kotlin.String?): TranClient {
+            return FfiConverterTypeTranClient.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_parse_client(
+    
+        
+        FfiConverterOptionalString.lower(`header`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Whether to show the dismissible update prompt (REQ-VER-010).
+         *
+         * # Returns
+         *
+         * `true` only when an update is recommended and the prompt was not already dismissed for this
+         * recommended version. Store the recommended version when the person taps "Not now".
+         */ fun `updatePrompt`(`state`: TranUpdatePromptState): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_update_prompt(
+    
+        
+        FfiConverterTypeTranUpdatePromptState.lower(`state`),_status)
 }
     )
     }

@@ -79,6 +79,10 @@ mirror_error_codes! {
     ClientUnexpected,
     /// Rendering failed (web only; native apps report and end the process instead).
     ClientRenderFailed,
+    /// `426`: the API no longer serves this app version. Show the blocking "Update required"
+    /// screen (presentation `screen`), whose one action opens the store page; never sign out or
+    /// clear the vault (REQ-VER-009).
+    ClientUpgradeRequired,
 }
 
 /// How loudly to log a failure where it is handled.
@@ -176,6 +180,10 @@ pub enum TranUserAction {
     /// A push notification arrived in the foreground: show the toast, not a system banner
     /// (REQ-PSH-013).
     NotificationReceived,
+    /// The API recommends a newer version (`X-Tran-Update: recommended`): a dismissible dialog with
+    /// "Update" (`common.update`) and "Not now" (`common.notNow`), shown when [`crate::update_prompt`]
+    /// says so (REQ-VER-010).
+    UpdateRecommended,
 }
 
 /// How a [`TranUserAction`] is presented.
@@ -296,6 +304,7 @@ pub fn action_spec(action: TranUserAction) -> TranActionSpec {
         TranUserAction::DeleteAccount => UserAction::DeleteAccount,
         TranUserAction::AccountDeleted => UserAction::AccountDeleted,
         TranUserAction::NotificationReceived => UserAction::NotificationReceived,
+        TranUserAction::UpdateRecommended => UserAction::UpdateRecommended,
     };
     let spec = core.spec();
     TranActionSpec {

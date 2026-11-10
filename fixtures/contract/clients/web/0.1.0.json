@@ -1,0 +1,140 @@
+{
+  "$comment": "The web client 0.1.0 as released: written by `pnpm release` from current.json (REQ-VER-003). Replayed by apps/api/tests/client_replay_test.rs until 0.1.0 is below the web minimum; then delete this file.",
+  "platform": "web",
+  "version": "0.1.0",
+  "requests": [
+    {
+      "name": "getHealth",
+      "method": "GET",
+      "path": "/api/health",
+      "headers": {
+        "X-Tran-Client": "web/0.1.0"
+      },
+      "status": 200,
+      "reads": {
+        "report_id": "string",
+        "timestamp": "string",
+        "overall_status": "string",
+        "components[].layer": "string",
+        "components[].name": "string",
+        "components[].version": "string",
+        "components[].healthy": "boolean",
+        "components[].uptime_seconds": "number"
+      }
+    },
+    {
+      "name": "getInfo",
+      "method": "GET",
+      "path": "/api/v1/tran/info",
+      "headers": {
+        "X-Tran-Client": "web/0.1.0"
+      },
+      "status": 200,
+      "reads": {
+        "stack": "string",
+        "description": "string",
+        "layers.T": "string",
+        "layers.R": "string",
+        "layers.A": "string",
+        "layers.N": "string",
+        "version": "string"
+      }
+    },
+    {
+      "name": "checkVoteEligibility",
+      "method": "POST",
+      "path": "/api/v1/vote/eligibility",
+      "headers": {
+        "X-Tran-Client": "web/0.1.0"
+      },
+      "body": {
+        "age": 20
+      },
+      "status": 200,
+      "reads": {
+        "eligibility_id": "string",
+        "eligible": "boolean",
+        "age": "number",
+        "minimum_age": "number",
+        "country_code": "string",
+        "country_source": "string",
+        "client_ip": "string",
+        "reason": "string",
+        "evaluated_at": "string"
+      }
+    },
+    {
+      "name": "signIn",
+      "method": "POST",
+      "path": "/api/v1/auth/session",
+      "headers": {
+        "X-Tran-Client": "web/0.1.0"
+      },
+      "body": {
+        "role": "citizen_voter",
+        "transport": "cookie"
+      },
+      "status": 201,
+      "reads": {
+        "access_token": "string",
+        "token_type": "string",
+        "expires_in": "number",
+        "user.user_id": "string",
+        "user.role": "string"
+      }
+    },
+    {
+      "name": "refresh",
+      "method": "POST",
+      "path": "/api/v1/auth/refresh",
+      "auth": "cookie",
+      "headers": {
+        "X-Tran-Client": "web/0.1.0"
+      },
+      "status": 200,
+      "reads": {
+        "access_token": "string",
+        "token_type": "string",
+        "expires_in": "number",
+        "user.user_id": "string",
+        "user.role": "string"
+      }
+    },
+    {
+      "name": "whoAmI",
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "auth": "bearer",
+      "headers": {
+        "X-Tran-Client": "web/0.1.0"
+      },
+      "status": 200,
+      "reads": {
+        "user_id": "string",
+        "role": "string"
+      }
+    },
+    {
+      "name": "signOut",
+      "method": "POST",
+      "path": "/api/v1/auth/sign-out",
+      "auth": "cookie",
+      "headers": {
+        "X-Tran-Client": "web/0.1.0"
+      },
+      "status": 204,
+      "reads": {}
+    },
+    {
+      "name": "deleteAccount",
+      "method": "DELETE",
+      "path": "/api/v1/account",
+      "auth": "bearer",
+      "headers": {
+        "X-Tran-Client": "web/0.1.0"
+      },
+      "status": 204,
+      "reads": {}
+    }
+  ]
+}

@@ -465,6 +465,22 @@ fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterInt8: FfiConverterPrimitive {
+    typealias FfiType = Int8
+    typealias SwiftType = Int8
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Int8 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: Int8, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterUInt16: FfiConverterPrimitive {
     typealias FfiType = UInt16
     typealias SwiftType = UInt16
@@ -699,6 +715,75 @@ public func FfiConverterTypeTranActionSpec_lift(_ buf: RustBuffer) throws -> Tra
 #endif
 public func FfiConverterTypeTranActionSpec_lower(_ value: TranActionSpec) -> RustBuffer {
     return FfiConverterTypeTranActionSpec.lower(value)
+}
+
+
+/**
+ * A parsed `X-Tran-Client` header.
+ */
+public struct TranClient: Equatable, Hashable {
+    /**
+     * The platform; [`TranClientPlatform::Unknown`] when the header did not parse.
+     */
+    public var platform: TranClientPlatform
+    /**
+     * The app version; always present for a known platform, never for an unknown one.
+     */
+    public var version: String?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * The platform; [`TranClientPlatform::Unknown`] when the header did not parse.
+         */platform: TranClientPlatform, 
+        /**
+         * The app version; always present for a known platform, never for an unknown one.
+         */version: String?) {
+        self.platform = platform
+        self.version = version
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranClient: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranClient: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranClient {
+        return
+            try TranClient(
+                platform: FfiConverterTypeTranClientPlatform.read(from: &buf), 
+                version: FfiConverterOptionString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranClient, into buf: inout [UInt8]) {
+        FfiConverterTypeTranClientPlatform.write(value.platform, into: &buf)
+        FfiConverterOptionString.write(value.version, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranClient_lift(_ buf: RustBuffer) throws -> TranClient {
+    return try FfiConverterTypeTranClient.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranClient_lower(_ value: TranClient) -> RustBuffer {
+    return FfiConverterTypeTranClient.lower(value)
 }
 
 
@@ -1903,6 +1988,87 @@ public func FfiConverterTypeTranToastPolicy_lower(_ value: TranToastPolicy) -> R
 
 
 /**
+ * What the app knows when an answer arrives, for [`update_prompt`].
+ */
+public struct TranUpdatePromptState: Equatable, Hashable {
+    /**
+     * [`TranClientStanding::UpdateRecommended`] when the answer carried
+     * `X-Tran-Update: recommended`; [`TranClientStanding::Supported`] otherwise.
+     */
+    public var standing: TranClientStanding
+    /**
+     * `X-Tran-Recommended-Version` of the answer, if present.
+     */
+    public var recommendedVersion: String?
+    /**
+     * The recommended version the person last dismissed the prompt for, as the app stored it.
+     */
+    public var dismissedVersion: String?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * [`TranClientStanding::UpdateRecommended`] when the answer carried
+         * `X-Tran-Update: recommended`; [`TranClientStanding::Supported`] otherwise.
+         */standing: TranClientStanding, 
+        /**
+         * `X-Tran-Recommended-Version` of the answer, if present.
+         */recommendedVersion: String?, 
+        /**
+         * The recommended version the person last dismissed the prompt for, as the app stored it.
+         */dismissedVersion: String?) {
+        self.standing = standing
+        self.recommendedVersion = recommendedVersion
+        self.dismissedVersion = dismissedVersion
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranUpdatePromptState: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranUpdatePromptState: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranUpdatePromptState {
+        return
+            try TranUpdatePromptState(
+                standing: FfiConverterTypeTranClientStanding.read(from: &buf), 
+                recommendedVersion: FfiConverterOptionString.read(from: &buf), 
+                dismissedVersion: FfiConverterOptionString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranUpdatePromptState, into buf: inout [UInt8]) {
+        FfiConverterTypeTranClientStanding.write(value.standing, into: &buf)
+        FfiConverterOptionString.write(value.recommendedVersion, into: &buf)
+        FfiConverterOptionString.write(value.dismissedVersion, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranUpdatePromptState_lift(_ buf: RustBuffer) throws -> TranUpdatePromptState {
+    return try FfiConverterTypeTranUpdatePromptState.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranUpdatePromptState_lower(_ value: TranUpdatePromptState) -> RustBuffer {
+    return FfiConverterTypeTranUpdatePromptState.lower(value)
+}
+
+
+/**
  * The label of one [`TranVerdictSource`].
  */
 public struct TranVerdictSourceSpec: Equatable, Hashable {
@@ -2262,6 +2428,186 @@ public func FfiConverterTypeTranAppDestination_lower(_ value: TranAppDestination
 
 
 /**
+ * Who sent a request.
+ */
+
+public enum TranClientPlatform: Equatable, Hashable {
+    
+    /**
+     * The iOS app.
+     */
+    case ios
+    /**
+     * The Android app.
+     */
+    case android
+    /**
+     * The web app.
+     */
+    case web
+    /**
+     * No header, or one that does not parse. Served like any other client.
+     */
+    case unknown
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranClientPlatform: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranClientPlatform: FfiConverterRustBuffer {
+    typealias SwiftType = TranClientPlatform
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranClientPlatform {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .ios
+        
+        case 2: return .android
+        
+        case 3: return .web
+        
+        case 4: return .unknown
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranClientPlatform, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .ios:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .android:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .web:
+            writeInt(&buf, Int32(3))
+        
+        
+        case .unknown:
+            writeInt(&buf, Int32(4))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranClientPlatform_lift(_ buf: RustBuffer) throws -> TranClientPlatform {
+    return try FfiConverterTypeTranClientPlatform.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranClientPlatform_lower(_ value: TranClientPlatform) -> RustBuffer {
+    return FfiConverterTypeTranClientPlatform.lower(value)
+}
+
+
+
+/**
+ * Where an app version stands against its platform's thresholds.
+ */
+
+public enum TranClientStanding: Equatable, Hashable {
+    
+    /**
+     * Served as usual.
+     */
+    case supported
+    /**
+     * Served; offer the dismissible update prompt (REQ-VER-006).
+     */
+    case updateRecommended
+    /**
+     * Not served: the API answers `426`; show the blocking update screen (REQ-VER-005).
+     */
+    case upgradeRequired
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranClientStanding: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranClientStanding: FfiConverterRustBuffer {
+    typealias SwiftType = TranClientStanding
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranClientStanding {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .supported
+        
+        case 2: return .updateRecommended
+        
+        case 3: return .upgradeRequired
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranClientStanding, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .supported:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .updateRecommended:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .upgradeRequired:
+            writeInt(&buf, Int32(3))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranClientStanding_lift(_ buf: RustBuffer) throws -> TranClientStanding {
+    return try FfiConverterTypeTranClientStanding.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranClientStanding_lower(_ value: TranClientStanding) -> RustBuffer {
+    return FfiConverterTypeTranClientStanding.lower(value)
+}
+
+
+
+/**
  * Why the eligibility verdict is what it is.
  *
  * The native layer turns this into a localized sentence; the bridge never returns a
@@ -2426,6 +2772,12 @@ public enum TranErrorCode: Equatable, Hashable {
      * Rendering failed (web only; native apps report and end the process instead).
      */
     case clientRenderFailed
+    /**
+     * `426`: the API no longer serves this app version. Show the blocking "Update required"
+     * screen (presentation `screen`), whose one action opens the store page; never sign out or
+     * clear the vault (REQ-VER-009).
+     */
+    case clientUpgradeRequired
 
 
 
@@ -2486,6 +2838,8 @@ public struct FfiConverterTypeTranErrorCode: FfiConverterRustBuffer {
         case 19: return .clientUnexpected
         
         case 20: return .clientRenderFailed
+        
+        case 21: return .clientUpgradeRequired
         
         default: throw UniffiInternalError.unexpectedEnumCase
         }
@@ -2573,6 +2927,10 @@ public struct FfiConverterTypeTranErrorCode: FfiConverterRustBuffer {
         
         case .clientRenderFailed:
             writeInt(&buf, Int32(20))
+        
+        
+        case .clientUpgradeRequired:
+            writeInt(&buf, Int32(21))
         
         }
     }
@@ -3742,6 +4100,12 @@ public enum TranUserAction: Equatable, Hashable {
      * (REQ-PSH-013).
      */
     case notificationReceived
+    /**
+     * The API recommends a newer version (`X-Tran-Update: recommended`): a dismissible dialog with
+     * "Update" (`common.update`) and "Not now" (`common.notNow`), shown when [`crate::update_prompt`]
+     * says so (REQ-VER-010).
+     */
+    case updateRecommended
 
 
 
@@ -3773,6 +4137,8 @@ public struct FfiConverterTypeTranUserAction: FfiConverterRustBuffer {
         
         case 5: return .notificationReceived
         
+        case 6: return .updateRecommended
+        
         default: throw UniffiInternalError.unexpectedEnumCase
         }
     }
@@ -3799,6 +4165,10 @@ public struct FfiConverterTypeTranUserAction: FfiConverterRustBuffer {
         
         case .notificationReceived:
             writeInt(&buf, Int32(5))
+        
+        
+        case .updateRecommended:
+            writeInt(&buf, Int32(6))
         
         }
     }
@@ -4577,6 +4947,116 @@ public func votingAgeForCountryOffline(countryCode: String) -> UInt16  {
 })
 }
 /**
+ * Where `client` stands against its platform's thresholds (REQ-VER-005, REQ-VER-006).
+ *
+ * # Arguments
+ *
+ * * `client` — usually [`parse_client`] of the app's own header.
+ * * `minimum`, `recommended` — the platform's thresholds; `None` when there is none.
+ */
+public func clientStanding(client: TranClient, minimum: String?, recommended: String?) -> TranClientStanding  {
+    return try!  FfiConverterTypeTranClientStanding_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_client_standing(
+        FfiConverterTypeTranClient_lower(client),
+        FfiConverterOptionString.lower(minimum),
+        FfiConverterOptionString.lower(recommended),uniffiCallStatus
+    )
+})
+}
+/**
+ * Compares two versions numerically by part; missing parts are zero and a pre-release or build
+ * suffix is ignored (REQ-VER-005).
+ *
+ * # Returns
+ *
+ * `-1`, `0` or `1` when `a` is below, equal to or above `b`.
+ */
+public func compareVersions(a: String, b: String) -> Int8  {
+    return try!  FfiConverterInt8.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_compare_versions(
+        FfiConverterString.lower(a),
+        FfiConverterString.lower(b),uniffiCallStatus
+    )
+})
+}
+/**
+ * Decodes a wire enum value tolerantly (REQ-VER-008).
+ *
+ * # Arguments
+ *
+ * * `name` — the enum's name in `fixtures/compat.json` (`user_role`, `country_source`).
+ * * `raw` — the value the server sent.
+ *
+ * # Returns
+ *
+ * `raw` when this build knows it, else the enum's declared fallback; `None` only for an enum name
+ * the catalogue does not declare.
+ */
+public func decodeWireEnum(name: String, raw: String) -> String?  {
+    return try!  FfiConverterOptionString.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_decode_wire_enum(
+        FfiConverterString.lower(name),
+        FfiConverterString.lower(raw),uniffiCallStatus
+    )
+})
+}
+/**
+ * The `X-Tran-Client` value an app sends: `ios/1.4.0`.
+ *
+ * # Arguments
+ *
+ * * `platform` — the app's platform.
+ * * `version` — the app's product version (`CFBundleShortVersionString`, `versionName`), the one
+ * `pnpm release` writes.
+ */
+public func formatClient(platform: TranClientPlatform, version: String) -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_format_client(
+        FfiConverterTypeTranClientPlatform_lower(platform),
+        FfiConverterString.lower(version),uniffiCallStatus
+    )
+})
+}
+/**
+ * Reads an `X-Tran-Client` header value (REQ-VER-004).
+ *
+ * # Arguments
+ *
+ * * `header` — the value, or `None` when the header is absent.
+ *
+ * # Returns
+ *
+ * The platform and version; anything malformed is [`TranClientPlatform::Unknown`], never an error.
+ */
+public func parseClient(header: String?) -> TranClient  {
+    return try!  FfiConverterTypeTranClient_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_parse_client(
+        FfiConverterOptionString.lower(header),uniffiCallStatus
+    )
+})
+}
+/**
+ * Whether to show the dismissible update prompt (REQ-VER-010).
+ *
+ * # Returns
+ *
+ * `true` only when an update is recommended and the prompt was not already dismissed for this
+ * recommended version. Store the recommended version when the person taps "Not now".
+ */
+public func updatePrompt(state: TranUpdatePromptState) -> Bool  {
+    return try!  FfiConverterBool.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_update_prompt(
+        FfiConverterTypeTranUpdatePromptState_lower(state),uniffiCallStatus
+    )
+})
+}
+/**
  * How `action` is presented.
  */
 public func actionSpec(action: TranUserAction) -> TranActionSpec  {
@@ -4988,6 +5468,24 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_voting_age_for_country_offline() != 55415) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_client_standing() != 33709) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_compare_versions() != 62330) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_decode_wire_enum() != 24948) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_format_client() != 19587) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_parse_client() != 18265) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_update_prompt() != 16719) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_action_spec() != 29757) {

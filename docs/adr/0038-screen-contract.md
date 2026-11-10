@@ -68,6 +68,13 @@ and one test, even when the pixels are not.
   `{ "verb": "permission", "permission": "location_approximate", "value": "denied_permanently" }`). It is native only:
   each interpreter stages it through a debug-only launch preset that sets the app's fake permission gateway, so no
   scenario ever reaches a system prompt. Without the given, the fake gateway reports `not_determined`.
+- **One given was added for API versions (spec 028, ADR-0047):** `upgrade_required`, the API no longer serving
+  this app version (`Given the API requires a newer app version`; in `screens.json` `{ "verb": "upgrade_required" }`).
+  It takes effect once the scenario's starting state is on screen, as when a minimum is raised while the app is
+  open: from then every product route answers `426 client.upgrade_required` in the envelope, and health still
+  answers. The web interpreter fulfils `/api/v1/**` with the `426` after launch; the native interpreters stage it
+  through their debug API stub. The update screen it leads to shows `update-button` alone, so the checker counts it
+  as a state of the screen it covered, like a dialog.
 - **Platform-owned controls are an allowlist in the checker,** each with its reason: today only the iOS keyboard and
   a navigation bar back button.
 

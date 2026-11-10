@@ -308,6 +308,50 @@
           }
         }
       }
+    },
+    "shell.updateRecommended": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A new version is available"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नया संस्करण उपलब्ध है"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नयाँ संस्करण उपलब्ध छ"
+          }
+        }
+      }
+    },
+    "shell.updateRecommendedBody": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Update when it suits you to get the latest improvements."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नए सुधार पाने के लिए जब सुविधा हो तब अपडेट करें।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "नयाँ सुधारहरू पाउन सुविधा हुँदा अपडेट गर्नुहोस्।"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -1,5 +1,6 @@
 use std::env;
 
+use crate::client_versions::ClientVersionSettings;
 use crate::push::providers::PushSettings;
 
 /// How the API writes its logs (REQ-ROB-007).
@@ -28,6 +29,8 @@ pub struct AppConfig {
     pub cors_allowed_origins: Option<Vec<String>>,
     /// The APNs and FCM credentials; a provider without them is off (ADR-0046).
     pub push: PushSettings,
+    /// `CLIENT_MIN_VERSION_*` and `CLIENT_RECOMMENDED_VERSION_*`, as read (REQ-VER-005).
+    pub client_versions: ClientVersionSettings,
 }
 
 impl AppConfig {
@@ -54,6 +57,7 @@ impl AppConfig {
                 })
                 .filter(|origins| !origins.is_empty()),
             push: PushSettings::from_lookup(&lookup),
+            client_versions: ClientVersionSettings::from_lookup(&lookup),
         }
     }
 

@@ -45,7 +45,7 @@ Then('I see role selection', async ({ page }) => {
 Given('I am signed in to the API as an election auditor', async ({ page }) => {
   await page.goto('/');
   const signedIn = page.waitForResponse(
-    (r) => r.url().endsWith('/api/auth/session') && r.request().method() === 'POST'
+    (r) => r.url().endsWith('/api/v1/auth/session') && r.request().method() === 'POST'
   );
   await page.getByTestId(ScreenIds.authWelcome.auditorBranchButton).click();
   expect((await signedIn).status()).toBe(201);
@@ -54,7 +54,7 @@ Given('I am signed in to the API as an election auditor', async ({ page }) => {
 When('I delete my account and confirm', async ({ page }) => {
   await page.getByTestId(ScreenIds.auditor.deleteAccountButton).click();
   const deleted = page.waitForResponse(
-    (r) => r.url().endsWith('/api/account') && r.request().method() === 'DELETE'
+    (r) => r.url().endsWith('/api/v1/account') && r.request().method() === 'DELETE'
   );
   await page.getByTestId(ScreenIds.auditor.deleteAccountConfirm).click();
   expect((await deleted).status()).toBe(204);
@@ -72,7 +72,7 @@ Then('after a reload I still see role selection', async ({ page }) => {
   await expect
     .poll(async () => (await page.context().cookies()).map((cookie) => cookie.name))
     .not.toContain('tran_refresh');
-  const refresh = page.waitForResponse((r) => r.url().endsWith('/api/auth/refresh'));
+  const refresh = page.waitForResponse((r) => r.url().endsWith('/api/v1/auth/refresh'));
   await page.reload();
   expect((await refresh).status()).toBe(401);
   await expect(page.getByTestId(ScreenIds.authWelcome.voterBranchButton)).toBeVisible();

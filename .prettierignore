@@ -11,5 +11,10 @@ DESIGN.md
 apps/ios/Tests/TranVotingDemoUITests/Resources/screens.json
 apps/android/app/src/androidTest/assets/screens.json
 
+# Written by tools, compared byte for byte (spec 028): the contract snapshots by
+# `pnpm contract:snapshots`, each released client's requests by `pnpm release`
+fixtures/contract/v1/
+fixtures/contract/clients/**/[0-9]*.json
+
 # Generated reports: mutation (ADR-0029) and docs/reports/ metrics, written by `pnpm metrics --record` (ADR-0031)
 reports/

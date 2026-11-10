@@ -174,6 +174,7 @@ fn actions_match_the_fixture() {
             "delete_account" => TranUserAction::DeleteAccount,
             "account_deleted" => TranUserAction::AccountDeleted,
             "notification_received" => TranUserAction::NotificationReceived,
+            "update_recommended" => TranUserAction::UpdateRecommended,
             other => panic!("unknown fixture action {other:?}"),
         };
         let spec = action_spec(action);

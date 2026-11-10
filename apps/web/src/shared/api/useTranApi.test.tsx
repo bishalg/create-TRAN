@@ -47,7 +47,7 @@ describe('useTranApi: startup', () => {
     await new Promise((r) => setTimeout(r, 50));
 
     expect(api.callsTo('/api/health')).toHaveLength(1);
-    expect(api.callsTo('/api/tran/info')).toHaveLength(1);
+    expect(api.callsTo('/api/v1/tran/info')).toHaveLength(1);
     expect(result.current.health?.overall_status).toBe('HEALTHY');
     expect(result.current.isOffline).toBe(false);
   });
@@ -204,8 +204,8 @@ describe('useTranApi: checkViaApi', () => {
       await result.current.checkViaApi(16, 'BR', { 'X-Debug-Country': 'BR' });
     });
 
-    const [call] = api.callsTo('/api/vote/eligibility');
-    expect(String(call[0])).toBe(`${BASE}/api/vote/eligibility`);
+    const [call] = api.callsTo('/api/v1/vote/eligibility');
+    expect(String(call[0])).toBe(`${BASE}/api/v1/vote/eligibility`);
     expect((call[1]?.headers as Record<string, string>)['X-Debug-Country']).toBe('BR');
     expect(result.current.lastApiResult).toMatchObject({ eligible: true, country_code: 'BR' });
     expect(result.current.fallbackResult).toBeNull();
@@ -218,7 +218,7 @@ describe('useTranApi: checkViaApi', () => {
       await result.current.checkViaApi(30, 'US');
     });
     expect(result.current.lastApiResult?.eligible).toBe(true);
-    expect(api.callsTo('/api/vote/eligibility')).toHaveLength(1);
+    expect(api.callsTo('/api/v1/vote/eligibility')).toHaveLength(1);
   });
 
   it('shows a rejected input inline, without retrying, falling back or going offline', async () => {
@@ -228,7 +228,7 @@ describe('useTranApi: checkViaApi', () => {
       await result.current.checkViaApi(20, 'USA', { 'X-Debug-Country': 'USA' });
     });
 
-    expect(api.callsTo('/api/vote/eligibility')).toHaveLength(1);
+    expect(api.callsTo('/api/v1/vote/eligibility')).toHaveLength(1);
     expect(result.current.fieldError?.code).toBe('validation.invalid_country_code');
     expect(result.current.fallbackResult).toBeNull();
     expect(result.current.isOffline).toBe(false);
@@ -256,7 +256,7 @@ describe('useTranApi: checkViaApi', () => {
       await result.current.checkViaApi(30, 'US');
     });
 
-    expect(api.callsTo('/api/vote/eligibility')).toHaveLength(2);
+    expect(api.callsTo('/api/v1/vote/eligibility')).toHaveLength(2);
     expect(result.current.lastApiResult?.eligible).toBe(true);
     expect(feedback.report).not.toHaveBeenCalled();
   });
@@ -269,7 +269,7 @@ describe('useTranApi: checkViaApi', () => {
       await result.current.checkViaApi(17, 'US');
     });
 
-    expect(api.callsTo('/api/vote/eligibility')).toHaveLength(3);
+    expect(api.callsTo('/api/v1/vote/eligibility')).toHaveLength(3);
     const [reported] = feedback.report.mock.calls[0];
     expect(reported).toMatchObject({ code: 'server.internal', requestId: REQUEST_ID });
     expect(result.current.fallbackResult).toMatchObject({ eligible: false, minimumAge: 18 });

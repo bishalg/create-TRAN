@@ -56,6 +56,9 @@ pub mod state {
     pub const NOTIFY_PRIMING: &str = "notify_priming";
     /// Notifications were refused for good; the control says once where to change it (REQ-PRV-004).
     pub const NOTIFY_SETTINGS_OFFERED: &str = "notify_settings_offered";
+    /// The API answered `426 client.upgrade_required`: the blocking update screen replaces
+    /// everything, and its one action is the only control (REQ-VER-009).
+    pub const UPDATE_REQUIRED: &str = "update_required";
 }
 
 /// iOS and Android: the platforms that ask the system for a permission. The web has no location
@@ -355,6 +358,20 @@ pub const NOTIFY_OPEN_SETTINGS: Element = element(
 )
 .only(NATIVE);
 
+/// The update screen's one action: the store page natively, a reload on the web (REQ-VER-009).
+/// The screen replaces whatever was showing and cannot be dismissed, so this is the only element
+/// on it, and the conformance check counts it as a state of the screen it covered. A control, not
+/// the primary action: a screen has one, and the check button is the dashboard's. It is declared
+/// on the eligibility screen alone because that is where the scenario reaches it; the conformance
+/// check requires every declared state to be observed on each screen that declares it.
+pub const UPDATE_BUTTON: Element = element(
+    "update-button",
+    Kind::Button,
+    "common.update",
+    Touch::Control,
+    Presence::When(state::UPDATE_REQUIRED),
+);
+
 /// Every screen, in navigation order. Codegen and the guards follow this order.
 pub const SCREENS: [Screen; 4] = [
     Screen {
@@ -409,6 +426,7 @@ pub const SCREENS: [Screen; 4] = [
             DIALOG_CANCEL,
             DELETE_ACCOUNT_CONFIRM,
             DELETE_ACCOUNT_CANCEL,
+            UPDATE_BUTTON,
             SKIP_LINK,
             LANGUAGE_PICKER,
             MODE_SWITCH,

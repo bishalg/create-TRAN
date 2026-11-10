@@ -6,10 +6,12 @@ import {
   type AuthSession,
   type SessionClient,
   type SessionUser,
+  type StandingSignal,
   type UserRole,
 } from '@tran/core';
 import type { Feedback } from '../feedback/FeedbackProvider.js';
 import { resolveApiBaseUrl } from './apiUrl.js';
+import { WEB_CLIENT } from './clientIdentity.js';
 
 export interface UseSessionOptions {
   feedback: Feedback;
@@ -17,6 +19,8 @@ export interface UseSessionOptions {
   initialSession?: AuthSession;
   /** Inject a client in tests. */
   client?: SessionClient;
+  /** Told when an answer blocks or nudges this version (REQ-VER-005, REQ-VER-006). */
+  onStanding?: (signal: StandingSignal) => void;
 }
 
 const SIGNED_OUT: AuthSession = { status: 'unauthenticated' };
@@ -37,9 +41,9 @@ const log = (failure: unknown) => logFailure(classifyError(failure));
  * The session the shell routes on (spec 006, spec 022). `null` while the boot refresh is in
  * flight, which is the Splash.
  *
- * - Boot: `POST /api/auth/refresh` with the `HttpOnly` cookie restores the session and its
+ * - Boot: `POST /api/v1/auth/refresh` with the `HttpOnly` cookie restores the session and its
  *   destination; anything else leads to Auth Welcome (REQ-SEC-021). A restored session is then
- *   validated with `GET /api/auth/session`, so a `401` takes the refresh-and-repeat path.
+ *   validated with `GET /api/v1/auth/session`, so a `401` takes the refresh-and-repeat path.
  * - Sign-in: the device session starts at once and works offline; the API session is established
  *   behind it, and its failure only reaches the log (ADR-0039, decision 7).
  * - Sign-out: the device forgets the session first, then tells the server (REQ-SEC-022).
@@ -47,9 +51,20 @@ const log = (failure: unknown) => logFailure(classifyError(failure));
  *   and acknowledges it (REQ-ACC-006); a failure leaves the session exactly as it was.
  * - A session the recovery table signed out opens the `auth.session_expired` dialog (REQ-ERR-010).
  */
-export function useSession({ feedback, initialSession, client: injected }: UseSessionOptions) {
+export function useSession({
+  feedback,
+  initialSession,
+  client: injected,
+  onStanding,
+}: UseSessionOptions) {
   const [client] = useState(
-    () => injected ?? createSessionClient({ baseUrl: resolveApiBaseUrl(import.meta.env) })
+    () =>
+      injected ??
+      createSessionClient({
+        baseUrl: resolveApiBaseUrl(import.meta.env),
+        client: WEB_CLIENT,
+        onStanding,
+      })
   );
   const [session, setSession] = useState<AuthSession | null>(initialSession ?? null);
   /** Bumped by every sign-in and sign-out, so a late answer about an older session is ignored. */

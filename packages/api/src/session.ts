@@ -9,6 +9,7 @@
  */
 import type { ZodType } from 'zod';
 import { readApiError } from './client.js';
+import { apiPath } from './compat.js';
 import {
   SessionTokenSchema,
   SessionUserSchema,
@@ -51,9 +52,9 @@ export interface SessionRequest {
   signal?: AbortSignal;
 }
 
-/** The cookie is scoped to `/api/auth`; no other request may carry credentials (REQ-SEC-018). */
+/** The cookie is scoped to `/api/v1/auth`; no other request may carry credentials (REQ-SEC-018). */
 export function credentialsFor(path: string): 'include' | 'omit' {
-  return path.startsWith('/api/auth/') ? 'include' : 'omit';
+  return path.startsWith(apiPath('/auth/')) ? 'include' : 'omit';
 }
 
 /** A malformed success says nothing useful, and its body is never repeated in an error. */
@@ -91,10 +92,10 @@ export class SessionClient {
     return this.#user;
   }
 
-  /** `POST /api/auth/session` on the cookie transport (REQ-SEC-006, REQ-SEC-018). */
+  /** `POST /api/v1/auth/session` on the cookie transport (REQ-SEC-006, REQ-SEC-018). */
   async signIn(role: SessionUser['role'], { signal }: { signal?: AbortSignal } = {}) {
     const generation = this.#generation;
-    const response = await this.#send('/api/auth/session', {
+    const response = await this.#send(apiPath('/auth/session'), {
       method: 'POST',
       body: JSON.stringify({ role, transport: 'cookie' }),
       signal,
@@ -109,7 +110,7 @@ export class SessionClient {
   }
 
   /**
-   * `POST /api/auth/refresh`, once at a time: every caller while one is in flight gets the same
+   * `POST /api/v1/auth/refresh`, once at a time: every caller while one is in flight gets the same
    * answer (REQ-SEC-016), since two parallel refreshes look like a replay and end the session.
    */
   refresh(): Promise<RefreshOutcome> {
@@ -145,15 +146,15 @@ export class SessionClient {
     }
   }
 
-  /** `GET /api/auth/session`: who the access token belongs to (REQ-SEC-008). */
+  /** `GET /api/v1/auth/session`: who the access token belongs to (REQ-SEC-008). */
   async whoAmI({ signal }: { signal?: AbortSignal } = {}): Promise<SessionUser> {
-    const response = await this.fetch('/api/auth/session', { signal });
+    const response = await this.fetch(apiPath('/auth/session'), { signal });
     if (!response.ok) throw await readApiError(response);
     return parse(response, SessionUserSchema);
   }
 
   /**
-   * `DELETE /api/account` (REQ-ACC-006, ADR-0041): the server decides, then the device follows.
+   * `DELETE /api/v1/account` (REQ-ACC-006, ADR-0041): the server decides, then the device follows.
    * Only a success forgets the session; any failure (offline, timeout, `5xx`) rejects with that
    * failure and leaves the session as it was. A `401` takes the recovery path of every authorized
    * call. It is sent even while no token is held: the server, not the device, says whether there
@@ -167,7 +168,7 @@ export class SessionClient {
   }
 
   async #deleteAccount(signal?: AbortSignal): Promise<void> {
-    const response = await this.fetch('/api/account', { method: 'DELETE', signal });
+    const response = await this.fetch(apiPath('/account'), { method: 'DELETE', signal });
     if (!response.ok) throw await readApiError(response);
     // Like a sign-out: an answer about the old session that lands afterwards is thrown away.
     this.#generation += 1;
@@ -192,7 +193,7 @@ export class SessionClient {
     let event: SessionRecoveryEvent | null;
     let error: unknown;
     try {
-      const response = await this.#send('/api/auth/refresh', { method: 'POST' });
+      const response = await this.#send(apiPath('/auth/refresh'), { method: 'POST' });
       event = this.#rules.refreshEvent(response.status);
       if (event === null) {
         const token = await parse(response, SessionTokenSchema);
@@ -216,7 +217,7 @@ export class SessionClient {
 
   async #revoke(): Promise<unknown> {
     try {
-      const response = await this.#send('/api/auth/sign-out', { method: 'POST' });
+      const response = await this.#send(apiPath('/auth/sign-out'), { method: 'POST' });
       return response.ok ? null : await readApiError(response);
     } catch (error) {
       return error;

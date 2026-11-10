@@ -15,4 +15,6 @@
     <string name="shell_theme_light">लाइट</string>
     <string name="shell_theme_sepia">सेपिया</string>
     <string name="shell_title">मतदान पात्रता</string>
+    <string name="shell_update_recommended">नया संस्करण उपलब्ध है</string>
+    <string name="shell_update_recommended_body">नए सुधार पाने के लिए जब सुविधा हो तब अपडेट करें।</string>
 </resources>

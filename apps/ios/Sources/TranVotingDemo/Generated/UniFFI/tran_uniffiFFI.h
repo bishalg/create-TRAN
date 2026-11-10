@@ -274,6 +274,36 @@ RustBuffer uniffi_tran_uniffi_fn_func_supported_countries_offline(RustCallStatus
 uint16_t uniffi_tran_uniffi_fn_func_voting_age_for_country_offline(RustBuffer country_code, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_CLIENT_STANDING
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_CLIENT_STANDING
+RustBuffer uniffi_tran_uniffi_fn_func_client_standing(RustBuffer client, RustBuffer minimum, RustBuffer recommended, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_COMPARE_VERSIONS
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_COMPARE_VERSIONS
+int8_t uniffi_tran_uniffi_fn_func_compare_versions(RustBuffer a, RustBuffer b, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_DECODE_WIRE_ENUM
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_DECODE_WIRE_ENUM
+RustBuffer uniffi_tran_uniffi_fn_func_decode_wire_enum(RustBuffer name, RustBuffer raw, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_FORMAT_CLIENT
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_FORMAT_CLIENT
+RustBuffer uniffi_tran_uniffi_fn_func_format_client(RustBuffer platform, RustBuffer version, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_PARSE_CLIENT
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_PARSE_CLIENT
+RustBuffer uniffi_tran_uniffi_fn_func_parse_client(RustBuffer header, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_UPDATE_PROMPT
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_UPDATE_PROMPT
+int8_t uniffi_tran_uniffi_fn_func_update_prompt(RustBuffer state, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_ACTION_SPEC
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_ACTION_SPEC
 RustBuffer uniffi_tran_uniffi_fn_func_action_spec(RustBuffer action, RustCallStatus *_Nonnull out_status
@@ -711,6 +741,42 @@ uint16_t uniffi_tran_uniffi_checksum_func_supported_countries_offline(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_VOTING_AGE_FOR_COUNTRY_OFFLINE
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_VOTING_AGE_FOR_COUNTRY_OFFLINE
 uint16_t uniffi_tran_uniffi_checksum_func_voting_age_for_country_offline(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_CLIENT_STANDING
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_CLIENT_STANDING
+uint16_t uniffi_tran_uniffi_checksum_func_client_standing(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_COMPARE_VERSIONS
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_COMPARE_VERSIONS
+uint16_t uniffi_tran_uniffi_checksum_func_compare_versions(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_DECODE_WIRE_ENUM
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_DECODE_WIRE_ENUM
+uint16_t uniffi_tran_uniffi_checksum_func_decode_wire_enum(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_FORMAT_CLIENT
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_FORMAT_CLIENT
+uint16_t uniffi_tran_uniffi_checksum_func_format_client(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_PARSE_CLIENT
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_PARSE_CLIENT
+uint16_t uniffi_tran_uniffi_checksum_func_parse_client(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_UPDATE_PROMPT
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_UPDATE_PROMPT
+uint16_t uniffi_tran_uniffi_checksum_func_update_prompt(void
     
 );
 #endif

@@ -4,6 +4,7 @@
 //! design tokens, and health diagnostic reporting shared across the Axum backend,
 //! WASM/Native bridges, and developer tooling.
 
+pub mod compat;
 pub mod error;
 pub mod feedback;
 pub mod models;

@@ -107,7 +107,7 @@ impl Api {
 
     pub async fn sign_in(&self, role: &str) -> Session {
         let body = json!({ "role": role, "transport": "body" }).to_string();
-        let reply = self.send(post("/api/auth/session", body)).await;
+        let reply = self.send(post("/api/v1/auth/session", body)).await;
         assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.raw);
         Session {
             access: reply.json["access_token"].as_str().unwrap().to_string(),
@@ -124,7 +124,7 @@ impl Api {
     ) -> Reply {
         let mut builder = Request::builder()
             .method(Method::PUT)
-            .uri(format!("/api/devices/{id}"))
+            .uri(format!("/api/v1/devices/{id}"))
             .header(header::AUTHORIZATION, bearer(&session.access))
             .header(header::CONTENT_TYPE, "application/json");
         for (name, value) in extra {
@@ -140,7 +140,7 @@ impl Api {
     pub async fn unregister(&self, session: &Session, id: &str) -> Reply {
         let request = Request::builder()
             .method(Method::DELETE)
-            .uri(format!("/api/devices/{id}"))
+            .uri(format!("/api/v1/devices/{id}"))
             .header(header::AUTHORIZATION, bearer(&session.access))
             .body(Body::empty())
             .unwrap();

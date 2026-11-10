@@ -32,11 +32,11 @@ async function signedIn(role: NonNullable<FakeApiOptions['cookie']> = 'citizen_v
   render(<App retry={instant} />);
   await screen.findByTestId(ScreenIds.eligibility.roleBadge);
   // The boot validation has answered, so the token in memory is the one the server accepts.
-  await waitFor(() => expect(api.callsTo('/api/auth/session')).toHaveLength(1));
+  await waitFor(() => expect(api.callsTo('/api/v1/auth/session')).toHaveLength(1));
   return { api, user: userEvent.setup() };
 }
 
-const deletions = (api: ReturnType<typeof createFakeApi>) => api.callsTo('/api/account');
+const deletions = (api: ReturnType<typeof createFakeApi>) => api.callsTo('/api/v1/account');
 
 async function deleteAndConfirm(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByTestId(ScreenIds.eligibility.deleteAccountButton));
@@ -85,8 +85,8 @@ describe('the device follows the server (REQ-ACC-006)', () => {
     expect(within(notifications).getByText('Your account was deleted')).toBeVisible();
     expect(screen.queryByTestId(ScreenIds.eligibility.deleteAccountButton)).toBeNull();
     // The deletion carried no cookie; the sign-out after it does, so the browser drops it.
-    await waitFor(() => expect(api.callsTo('/api/auth/sign-out')).toHaveLength(1));
-    expect(api.callsTo('/api/auth/sign-out')[0]![1]).toMatchObject({ credentials: 'include' });
+    await waitFor(() => expect(api.callsTo('/api/v1/auth/sign-out')).toHaveLength(1));
+    expect(api.callsTo('/api/v1/auth/sign-out')[0]![1]).toMatchObject({ credentials: 'include' });
   });
 
   it('starts no second deletion while one is in flight', async () => {
@@ -95,7 +95,7 @@ describe('the device follows the server (REQ-ACC-006)', () => {
     const gate = new Promise<void>((resolve) => (release = resolve));
     const real = api.fetchFn.getMockImplementation()!;
     api.fetchFn.mockImplementation(async (url, init) => {
-      if (new URL(url).pathname === '/api/account') await gate;
+      if (new URL(url).pathname === '/api/v1/account') await gate;
       return real(url, init);
     });
     await deleteAndConfirm(user);
@@ -155,7 +155,7 @@ describe('the device follows the server (REQ-ACC-006)', () => {
     const { api, user } = await signedIn();
     const real = api.fetchFn.getMockImplementation()!;
     api.fetchFn.mockImplementation(async (url, init) =>
-      new URL(url).pathname === '/api/account'
+      new URL(url).pathname === '/api/v1/account'
         ? envelope(500, 'server.internal', true)
         : real(url, init)
     );
@@ -172,14 +172,14 @@ describe('the device follows the server (REQ-ACC-006)', () => {
     // Another device deleted the account: every token of the user, the cookie's too, is gone.
     const real = api.fetchFn.getMockImplementation()!;
     api.fetchFn.mockImplementation(async (url, init) =>
-      ['/api/account', '/api/auth/refresh'].includes(new URL(url).pathname)
+      ['/api/v1/account', '/api/v1/auth/refresh'].includes(new URL(url).pathname)
         ? envelope(401, 'auth.session_expired')
         : real(url, init)
     );
     await deleteAndConfirm(user);
 
     const dialog = await screen.findByRole('dialog', { name: /session/i });
-    expect(api.callsTo('/api/auth/refresh').length).toBeGreaterThanOrEqual(2);
+    expect(api.callsTo('/api/v1/auth/refresh').length).toBeGreaterThanOrEqual(2);
     await user.click(within(dialog).getByRole('button', { name: 'Sign in again' }));
     expect(screen.getByRole('heading', WELCOME)).toBeVisible();
   });

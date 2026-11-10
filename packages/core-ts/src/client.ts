@@ -1,11 +1,14 @@
 import {
+  apiPath,
   checkVoteEligibility,
+  HEALTH_PATH,
   readApiError,
   SessionClient,
   TranApiError,
   type VoteEligibilityInput,
   type VoteEligibilityOutput,
 } from '@tran/api';
+import { clientFetch, type ClientFetchOptions } from './compat.js';
 import { RETRY_POLICY } from './generated/feedback.js';
 import { refreshEvent, sessionRecovery } from './session.js';
 import type { TranHealthReport, TranStackInfo } from './types.js';
@@ -19,7 +22,8 @@ export interface TranCallOptions {
   signal?: AbortSignal;
 }
 
-export interface TranApiClientOptions {
+export interface TranApiClientOptions extends ClientFetchOptions {
+  /** The API's origin; paths add the versioned base path themselves (REQ-VER-001). */
   baseUrl?: string;
   timeoutMs?: number;
   fetchFn?: typeof fetch;
@@ -61,13 +65,14 @@ export function timedFetch(fetchFn: typeof fetch, timeoutMs: number): typeof fet
 
 /**
  * The web's session client (spec 022): the recovery table of REQ-SEC-015 and the same deadline
- * and error classes as every other call. Create one per app, so there is one refresh in flight.
+ * and error classes as every other call, naming the client on every request (REQ-VER-004). Create
+ * one per app, so there is one refresh in flight.
  */
 export function createSessionClient(options: Omit<TranApiClientOptions, 'headers'> = {}) {
   return new SessionClient({
     baseUrl: options.baseUrl,
     fetchFn: timedFetch(
-      options.fetchFn ?? globalThis.fetch.bind(globalThis),
+      clientFetch(options.fetchFn ?? globalThis.fetch.bind(globalThis), options),
       options.timeoutMs ?? RETRY_POLICY.requestTimeoutMs
     ),
     rules: { sessionRecovery, refreshEvent },
@@ -87,7 +92,7 @@ export class TranApiClient {
     this.timeoutMs = options.timeoutMs ?? RETRY_POLICY.requestTimeoutMs;
     this.fetchFn = options.fetchFn ?? globalThis.fetch.bind(globalThis);
     this.headers = options.headers ?? {};
-    this.fetchWithTimeout = timedFetch(this.fetchFn, this.timeoutMs);
+    this.fetchWithTimeout = timedFetch(clientFetch(this.fetchFn, options), this.timeoutMs);
   }
 
   /** New client with the same settings plus extra headers; the original is left untouched. */
@@ -108,7 +113,7 @@ export class TranApiClient {
         Accept: 'application/json',
         ...this.headers,
       },
-      // Only `/api/auth/*` may carry the session cookie (REQ-SEC-018).
+      // Only the auth tree may carry the session cookie (REQ-SEC-018).
       credentials: 'omit',
       signal,
     });
@@ -117,11 +122,11 @@ export class TranApiClient {
   }
 
   public async getHealth(options: TranCallOptions = {}): Promise<TranHealthReport> {
-    return this.request<TranHealthReport>('/api/health', options);
+    return this.request<TranHealthReport>(HEALTH_PATH, options);
   }
 
   public async getInfo(options: TranCallOptions = {}): Promise<TranStackInfo> {
-    return this.request<TranStackInfo>('/api/tran/info', options);
+    return this.request<TranStackInfo>(apiPath('/tran/info'), options);
   }
 
   public async checkVoteEligibility(

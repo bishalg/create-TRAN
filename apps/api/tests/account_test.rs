@@ -1,11 +1,11 @@
 // Verifies: REQ-ACC-001 REQ-ACC-002 REQ-ACC-003
-//! `DELETE /api/account` against the real router, an in-memory store and a manual clock. Naming
+//! `DELETE /api/v1/account` against the real router, an in-memory store and a manual clock. Naming
 //! follows the spec's "Verified by" lines: `deletion_*`, `foreign_origin_*`, `a_failing_eraser_*`.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 mod support;
 
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 use api::account::AccountEraser;
 use api::build_app;
@@ -64,13 +64,19 @@ struct Device {
     cookie: bool,
 }
 
+/// The audit test shares the `account deleted` call site with every other test here; they take
+/// turns so it never loses its event (docs/LEARNINGS.md, 2026-11-10).
+static SERIAL: Mutex<()> = Mutex::new(());
+
 struct Api {
     state: AppState,
     clock: Arc<ManualClock>,
+    _serial: MutexGuard<'static, ()>,
 }
 
 impl Api {
     fn new() -> Self {
+        let serial = SERIAL.lock().unwrap_or_else(PoisonError::into_inner);
         let start = DateTime::<Utc>::from_timestamp(1_800_000_000, 0).unwrap();
         let clock = Arc::new(ManualClock::starting_at(start));
         let state = AppState {
@@ -81,7 +87,11 @@ impl Api {
             ),
             ..AppState::from_config(&AppConfig::from_lookup(|_| None))
         };
-        Self { state, clock }
+        Self {
+            state,
+            clock,
+            _serial: serial,
+        }
     }
 
     fn with_eraser(eraser: impl AccountEraser + 'static) -> Self {
@@ -109,7 +119,7 @@ impl Api {
         let body = json!({ "role": role, "transport": transport }).to_string();
         let request = Request::builder()
             .method(Method::POST)
-            .uri("/api/auth/session")
+            .uri("/api/v1/auth/session")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(body))
             .unwrap();
@@ -122,11 +132,11 @@ impl Api {
         }
     }
 
-    /// `DELETE /api/account` with `authorization` and extra headers.
+    /// `DELETE /api/v1/account` with `authorization` and extra headers.
     async fn delete(&self, authorization: Option<&str>, headers: &[(&str, &str)]) -> Reply {
         let mut builder = Request::builder()
             .method(Method::DELETE)
-            .uri("/api/account");
+            .uri("/api/v1/account");
         if let Some(value) = authorization {
             builder = builder.header(header::AUTHORIZATION, value);
         }
@@ -142,7 +152,7 @@ impl Api {
 
     async fn whoami(&self, device: &Device) -> StatusCode {
         let request = Request::builder()
-            .uri("/api/auth/session")
+            .uri("/api/v1/auth/session")
             .header(header::AUTHORIZATION, bearer(&device.access))
             .body(Body::empty())
             .unwrap();
@@ -153,7 +163,7 @@ impl Api {
     async fn refresh(&self, device: &Device) -> StatusCode {
         let builder = Request::builder()
             .method(Method::POST)
-            .uri("/api/auth/refresh")
+            .uri("/api/v1/auth/refresh")
             .header(header::CONTENT_TYPE, "application/json");
         let request = if device.cookie {
             builder
@@ -235,7 +245,7 @@ async fn deletion_on_the_cookie_transport_clears_the_refresh_cookie() {
     assert_deleted(&reply);
     assert_eq!(
         reply.header(header::SET_COOKIE),
-        Some("tran_refresh=; HttpOnly; SameSite=Strict; Path=/api/auth; Max-Age=0")
+        Some("tran_refresh=; HttpOnly; SameSite=Strict; Path=/api/v1/auth; Max-Age=0")
     );
     api.assert_dead(&device, "cookie session").await;
 }
@@ -274,7 +284,7 @@ async fn deletion_accepts_no_other_method() {
     for method in [Method::GET, Method::POST, Method::PUT] {
         let request = Request::builder()
             .method(method.clone())
-            .uri("/api/account")
+            .uri("/api/v1/account")
             .header(header::AUTHORIZATION, bearer(&device.access))
             .body(Body::empty())
             .unwrap();
@@ -303,7 +313,7 @@ async fn deletion_revokes_every_session_of_the_user() {
         .send(
             Request::builder()
                 .method(Method::POST)
-                .uri("/api/auth/refresh")
+                .uri("/api/v1/auth/refresh")
                 .header(header::CONTENT_TYPE, "application/json")
                 .body(Body::from(refresh))
                 .unwrap(),
@@ -355,7 +365,13 @@ async fn deletion_is_logged_without_identity() {
     let fields: Vec<&str> = event.fields.keys().map(String::as_str).collect();
     assert_eq!(
         fields,
-        ["method", "path", "request_id"],
+        [
+            "client_platform",
+            "client_version",
+            "method",
+            "path",
+            "request_id"
+        ],
         "only the request span's own fields"
     );
     for event in captured.events() {
@@ -442,7 +458,7 @@ async fn cors_preflight_allows_the_delete_method() {
     let api = Api::new();
     let request = Request::builder()
         .method(Method::OPTIONS)
-        .uri("/api/account")
+        .uri("/api/v1/account")
         .header(header::ORIGIN, LOCAL_ORIGIN)
         .header(header::ACCESS_CONTROL_REQUEST_METHOD, "DELETE")
         .header(header::ACCESS_CONTROL_REQUEST_HEADERS, "authorization")

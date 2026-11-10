@@ -1,6 +1,7 @@
 {
   "locales_dir": "locales",
   "core_generated_dir": "packages/core-ts/src/generated",
+  "api_generated_dir": "packages/api/src/generated",
   "web_generated_dir": "apps/web/src/styles/generated",
   "ios_generated_dir": "apps/ios/Sources/TranVotingDemo/Generated",
   "ios_info_plist_strings_path": "apps/ios/Sources/TranVotingDemo/Generated/InfoPlist.xcstrings",

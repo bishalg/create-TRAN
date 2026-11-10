@@ -1,6 +1,7 @@
 //! Every artifact of one run, rendered in memory (ADR-0030). The binary writes them; the drift test
 //! compares them with the committed files.
 
+use crate::compat_gen::{render_compat_kotlin, render_compat_swift, render_compat_ts};
 use crate::config::CodegenPaths;
 use crate::files::read_file;
 use crate::files::GeneratedFile;
@@ -70,6 +71,15 @@ pub fn generate_from(
             render_translations_json(&locales),
         ),
         file(core.join("keys.ts"), render_ts_keys(&locales)),
+        file(
+            paths.api_generated_dir.join("compat.ts"),
+            render_compat_ts(),
+        ),
+        file(ios.join("ApiContract.swift"), render_compat_swift()),
+        file(
+            kotlin.join("ApiContract.kt"),
+            render_compat_kotlin(kotlin_package),
+        ),
         file(
             paths.web_generated_dir.join("theme.css"),
             render_theme_css(snapshot),
@@ -347,6 +357,7 @@ mod tests {
         let files = generate(&paths).unwrap();
         let roots = [
             &paths.core_generated_dir,
+            &paths.api_generated_dir,
             &paths.web_generated_dir,
             &paths.ios_generated_dir,
             &paths.android_kotlin_generated_dir,

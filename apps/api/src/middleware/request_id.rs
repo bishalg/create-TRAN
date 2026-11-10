@@ -2,7 +2,10 @@
 //! one. The id scopes the request's logs and is echoed in error bodies (`error::REQUEST_ID`). Every
 //! request ends with one `debug` event, `request completed`, carrying its status and latency
 //! (REQ-ROB-007) — visible with `RUST_LOG=api=debug`, silent at the production default. The span's
-//! `path` is the [`loggable_path`], so an installation id never reaches a log (REQ-PSH-007).
+//! `path` is the [`loggable_path`], a product route's template, so an installation id never reaches
+//! a log (REQ-PSH-007). Right after the id, the client is identified once
+//! ([`super::client::identify`]): the span carries `client_platform` and `client_version`
+//! (REQ-VER-004), so every event of the request, the access log included, names the app version.
 
 use std::time::Instant;
 
@@ -14,12 +17,13 @@ use rust_core::feedback::is_valid_request_id;
 use tracing::Instrument;
 use uuid::Uuid;
 
-use super::loggable_path;
+use super::client::{identify, NO_VERSION};
 use crate::error::REQUEST_ID;
+use crate::routes::table::loggable_path;
 
 pub const REQUEST_ID_HEADER: HeaderName = HeaderName::from_static("x-request-id");
 
-pub async fn request_id(request: Request, next: Next) -> Response {
+pub async fn request_id(mut request: Request, next: Next) -> Response {
     let started = Instant::now();
     let id = request
         .headers()
@@ -28,12 +32,17 @@ pub async fn request_id(request: Request, next: Next) -> Response {
         .filter(|value| is_valid_request_id(value))
         .map(str::to_owned)
         .unwrap_or_else(|| Uuid::new_v4().to_string());
+    let client = identify(&mut request);
+    let client_platform = client.platform.as_str();
+    let client_version = client.version.as_deref().unwrap_or(NO_VERSION);
 
     let span = tracing::info_span!(
         "request",
         request_id = %id,
         method = %request.method(),
-        path = %loggable_path(request.uri().path())
+        path = %loggable_path(request.uri().path()),
+        client_platform,
+        client_version
     );
     let mut response = REQUEST_ID
         .scope(id.clone(), next.run(request))

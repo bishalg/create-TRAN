@@ -16,7 +16,7 @@ async function open(page: Page, theme: string) {
   await expect(page.getByText(/API (online|offline)/)).toBeVisible();
 }
 
-const ELIGIBILITY = 'http://127.0.0.1:3001/api/vote/eligibility';
+const ELIGIBILITY = 'http://127.0.0.1:3001/api/v1/vote/eligibility';
 
 /** Server mode, a valid age and country, submitted. */
 async function askServer(page: Page) {

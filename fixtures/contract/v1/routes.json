@@ -1,0 +1,14 @@
+[
+  "GET /api/health",
+  "GET /api/v1/tran/info",
+  "GET /api/v1/vote/countries",
+  "GET /api/v1/vote/countries/{code}",
+  "POST /api/v1/vote/eligibility",
+  "POST /api/v1/auth/session",
+  "GET /api/v1/auth/session",
+  "POST /api/v1/auth/refresh",
+  "POST /api/v1/auth/sign-out",
+  "DELETE /api/v1/account",
+  "PUT /api/v1/devices/{installation_id}",
+  "DELETE /api/v1/devices/{installation_id}"
+]

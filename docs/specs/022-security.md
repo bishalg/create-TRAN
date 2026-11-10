@@ -17,7 +17,7 @@ Vocabulary used below:
 - The **vault** is the one place a platform persists the refresh token: the Keychain on iOS, a Keystore-encrypted
   record on Android, an `HttpOnly` cookie on the web.
 - The sample's sign-in has **no credential check**: choosing a role is the whole "login". Everything after that point
-  is real. A fork puts its password, passkey or OIDC verification in front of `POST /api/auth/session`.
+  is real. A fork puts its password, passkey or OIDC verification in front of `POST /api/v1/auth/session`.
 
 ## Secrets and configuration
 
@@ -63,7 +63,7 @@ them only through `pnpm tokens:sync` (ADR-0027) and native code only through Uni
 
 ### REQ-SEC-006 [verified] Sign-in issues an opaque token pair
 
-`POST /api/auth/session` with `{ "role": "citizen_voter" | "election_auditor", "transport": "cookie" | "body" }` MUST
+`POST /api/v1/auth/session` with `{ "role": "citizen_voter" | "election_auditor", "transport": "cookie" | "body" }` MUST
 answer `201` with `{ "access_token", "token_type": "Bearer", "expires_in", "user": { "user_id", "role" } }`. Each token
 MUST be `SESSION_POLICY.token_bytes` bytes from the operating system's CSPRNG, encoded as unpadded base64url. The
 server MUST keep only the SHA-256 digest of each token, behind a `SessionStore` trait whose in-memory implementation is
@@ -73,7 +73,7 @@ the sample's. An unknown role or transport is `400` in the envelope of REQ-API-0
 ### REQ-SEC-007 [verified] The refresh token travels by exactly one transport
 
 With `transport: "cookie"` the refresh token MUST be sent only as
-`Set-Cookie: tran_refresh=<token>; HttpOnly; SameSite=Strict; Path=/api/auth; Max-Age=<refresh lifetime>`, with
+`Set-Cookie: tran_refresh=<token>; HttpOnly; SameSite=Strict; Path=/api/v1/auth; Max-Age=<refresh lifetime>`, with
 `Secure` added whenever `APP_ENV` is not `development` or `test`, and MUST NOT appear in any response body. With
 `transport: "body"` it MUST be the `refresh_token` field of the JSON body and no cookie is set. A session keeps its
 transport for life: a refresh presented by cookie is answered by cookie, one presented in the body is answered in the
@@ -82,14 +82,14 @@ body.
 
 ### REQ-SEC-008 [verified] Bearer authentication gives one answer to every bad token
 
-`GET /api/auth/session` with `Authorization: Bearer <access token>` MUST answer `200` with `{ "user_id", "role" }`. A
+`GET /api/v1/auth/session` with `Authorization: Bearer <access token>` MUST answer `200` with `{ "user_id", "role" }`. A
 missing header, another scheme, a malformed, unknown, revoked or expired token MUST all answer the same `401` with code
 `auth.session_expired` and `WWW-Authenticate: Bearer`. Expiry MUST be measured on the injected clock (ADR-0004).
 **Verified by:** `auth_test.rs` (`bearer_*`).
 
 ### REQ-SEC-009 [verified] Refresh rotates the pair
 
-`POST /api/auth/refresh` with a valid refresh token (cookie, or `{ "refresh_token" }` in the body) MUST answer `200`
+`POST /api/v1/auth/refresh` with a valid refresh token (cookie, or `{ "refresh_token" }` in the body) MUST answer `200`
 with a new access token, a new refresh token on the same transport and the `user` object, and MUST invalidate the
 refresh token it was given; the previous access token stays valid until it expires or its session is revoked. A missing, unknown or expired refresh token MUST answer `401` `auth.session_expired`; on the
 cookie transport that answer MUST also clear the cookie (`Max-Age=0`).
@@ -103,14 +103,14 @@ access and refresh token of that family answers `401` from then on.
 
 ### REQ-SEC-011 [verified] Sign-out revokes on the server
 
-`POST /api/auth/sign-out` with a refresh token (cookie or body) MUST revoke its family, clear the cookie on the cookie
+`POST /api/v1/auth/sign-out` with a refresh token (cookie or body) MUST revoke its family, clear the cookie on the cookie
 transport and answer `204`. It MUST answer `204` for a missing or unknown token too, so it reveals nothing and is safe
 to repeat.
 **Verified by:** `auth_test.rs` (`sign_out_*`).
 
 ### REQ-SEC-012 [verified] Auth endpoints reject a foreign origin
 
-A request to `/api/auth/*` (or to `/api/account`, REQ-ACC-001) whose `Origin` header is present and not in the CORS
+A request to `/api/v1/auth/*` (or to `/api/v1/account`, REQ-ACC-001) whose `Origin` header is present and not in the CORS
 allowlist (REQ-API-007) MUST answer `403` `auth.forbidden` and change nothing. A request without `Origin` (a native
 client, a server) is not affected.
 **Verified by:** `auth_test.rs` (`foreign_origin_*`), `account_test.rs` (`foreign_origin_cannot_delete_the_account`).
@@ -119,8 +119,8 @@ client, a server) is not affected.
 
 Every response MUST carry `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY`
 and `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'`. When `APP_ENV` is not `development` or
-`test` it MUST also carry `Strict-Transport-Security: max-age=63072000; includeSubDomains`. Every `/api/auth/*` and
-`/api/account` response MUST carry `Cache-Control: no-store`.
+`test` it MUST also carry `Strict-Transport-Security: max-age=63072000; includeSubDomains`. Every `/api/v1/auth/*` and
+`/api/v1/account` response MUST carry `Cache-Control: no-store`.
 **Verified by:** `apps/api/tests/security_headers_test.rs`.
 
 ### REQ-SEC-014 [verified] Tokens never reach a log, an error body or a report
@@ -164,7 +164,7 @@ restart a client obtains a new one by refreshing.
 
 ### REQ-SEC-018 [verified] The web app holds no credential a script can read
 
-The web app MUST request `transport: "cookie"`, MUST send `credentials: 'include'` only on `/api/auth/*` requests and
+The web app MUST request `transport: "cookie"`, MUST send `credentials: 'include'` only on `/api/v1/auth/*` requests and
 `credentials: 'omit'` on every other one, and MUST NOT write a token or a session to `localStorage`, `sessionStorage`,
 IndexedDB or `document.cookie`. A guard test MUST fail when Web Storage is used outside the theme preference module.
 **Verified by:** `packages/api/tests/session-client.test.ts`, `apps/web/tests/web-storage-guard.test.ts`.
@@ -190,15 +190,15 @@ transfer.
 ### REQ-SEC-021 [verified] Launch restores the stored session
 
 On launch the native Splash MUST read the vault and route with `resolve_destination` without waiting for the network,
-then validate the session against `GET /api/auth/session` in the background and act per REQ-SEC-015. The web app MUST
-call `POST /api/auth/refresh` on boot: success restores the session and its destination, anything else leads to Auth
+then validate the session against `GET /api/v1/auth/session` in the background and act per REQ-SEC-015. The web app MUST
+call `POST /api/v1/auth/refresh` on boot: success restores the session and its destination, anything else leads to Auth
 Welcome. An unreachable API MUST NOT sign a native user out.
 **Verified by:** `SessionRestoreTests.swift`, `SessionRestoreTest.kt`, `apps/web/tests/session-restore.test.tsx`.
 
 ### REQ-SEC-022 [verified] Sign-out clears the device first
 
 Signing out MUST clear the vault and the in-memory access token before, and regardless of, the call to
-`POST /api/auth/sign-out`; a failed or unreachable server call MUST NOT keep the user signed in.
+`POST /api/v1/auth/sign-out`; a failed or unreachable server call MUST NOT keep the user signed in.
 **Verified by:** the session-client tests on each platform.
 
 ### REQ-SEC-023 [verified] The app switcher shows no user data

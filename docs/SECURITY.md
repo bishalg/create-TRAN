@@ -38,13 +38,13 @@ How this template handles secrets, sessions and sensitive data, and what a fork 
 ## The session, end to end
 
 ```
-sign in      POST /api/auth/session   → access token (15 min) + refresh token (30 days)
+sign in      POST /api/v1/auth/session   → access token (15 min) + refresh token (30 days)
 call         Authorization: Bearer …  → 200, or 401 auth.session_expired
-on 401       POST /api/auth/refresh   → new pair; the old refresh token is dead
+on 401       POST /api/v1/auth/refresh   → new pair; the old refresh token is dead
              refresh rejected (401)   → clear the vault, ask the user to sign in again
              refresh failed (network) → keep the session, try later
 replay       an old refresh token     → the whole session is revoked
-sign out     clear the device first, then POST /api/auth/sign-out
+sign out     clear the device first, then POST /api/v1/auth/sign-out
 ```
 
 The lifetimes are `SESSION_POLICY` and the reactions are `session_recovery`, both in
@@ -53,7 +53,7 @@ look like a replay.
 
 ## What a fork must add
 
-- **A real credential check** in front of `POST /api/auth/session` (password with a slow hash, passkeys, or OIDC with
+- **A real credential check** in front of `POST /api/v1/auth/session` (password with a slow hash, passkeys, or OIDC with
   PKCE). The sample signs in whoever picks a role.
 - **Rate limiting and lockout** on that check.
 - **A durable `SessionStore`** (a database or Redis) before running more than one API process.
@@ -61,7 +61,7 @@ look like a replay.
 - **Response headers for the web host**: `Content-Security-Policy` with `frame-ancestors 'none'`,
   `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`. The built page carries a CSP
   `<meta>`, which cannot express `frame-ancestors`.
-- **The same site for web and API** (`app.example.com`, `api.example.com`), or a same-site proxy for `/api/auth`.
+- **The same site for web and API** (`app.example.com`, `api.example.com`), or a same-site proxy for `/api/v1/auth`.
 - **A decision on certificate pinning**, with a rotation plan if the answer is yes.
 - **Biometric gating** (`kSecAccessControl`, `setUserAuthenticationRequired`) if a stolen unlocked phone is in your
   threat model.

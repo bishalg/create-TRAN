@@ -4,7 +4,7 @@
     {
       "id": "FM-S01",
       "name": "truncated JSON",
-      "request": { "method": "POST", "path": "/api/vote/eligibility", "body": "{\"age\": " },
+      "request": { "method": "POST", "path": "/api/v1/vote/eligibility", "body": "{\"age\": " },
       "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
     },
     {
@@ -12,7 +12,7 @@
       "name": "a wrong type never echoes the submitted value",
       "request": {
         "method": "POST",
-        "path": "/api/vote/eligibility",
+        "path": "/api/v1/vote/eligibility",
         "body": "{\"age\": \"SENTINEL-7f3a\"}"
       },
       "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" },
@@ -23,7 +23,7 @@
       "name": "a bad birthdate never echoes the submitted value",
       "request": {
         "method": "POST",
-        "path": "/api/vote/eligibility",
+        "path": "/api/v1/vote/eligibility",
         "body": "{\"age\": 20, \"birthdate\": \"SENTINEL-1999\"}"
       },
       "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" },
@@ -32,49 +32,61 @@
     {
       "id": "FM-S04",
       "name": "fractional age",
-      "request": { "method": "POST", "path": "/api/vote/eligibility", "body": "{\"age\": 18.5}" },
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/vote/eligibility",
+        "body": "{\"age\": 18.5}"
+      },
       "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
     },
     {
       "id": "FM-S05",
       "name": "age beyond u16",
-      "request": { "method": "POST", "path": "/api/vote/eligibility", "body": "{\"age\": 65536}" },
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/vote/eligibility",
+        "body": "{\"age\": 65536}"
+      },
       "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
     },
     {
       "id": "FM-S06",
       "name": "negative age",
-      "request": { "method": "POST", "path": "/api/vote/eligibility", "body": "{\"age\": -1}" },
+      "request": { "method": "POST", "path": "/api/v1/vote/eligibility", "body": "{\"age\": -1}" },
       "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
     },
     {
       "id": "FM-S07",
       "name": "null age",
-      "request": { "method": "POST", "path": "/api/vote/eligibility", "body": "{\"age\": null}" },
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/vote/eligibility",
+        "body": "{\"age\": null}"
+      },
       "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
     },
     {
       "id": "FM-S08",
       "name": "empty body",
-      "request": { "method": "POST", "path": "/api/vote/eligibility", "body": "" },
+      "request": { "method": "POST", "path": "/api/v1/vote/eligibility", "body": "" },
       "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
     },
     {
       "id": "FM-S09",
       "name": "a JSON array instead of an object",
-      "request": { "method": "POST", "path": "/api/vote/eligibility", "body": "[20]" },
+      "request": { "method": "POST", "path": "/api/v1/vote/eligibility", "body": "[20]" },
       "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
     },
     {
       "id": "FM-S10",
       "name": "deep nesting is rejected, not a stack overflow",
-      "request": { "method": "POST", "path": "/api/vote/eligibility", "nesting": 5000 },
+      "request": { "method": "POST", "path": "/api/v1/vote/eligibility", "nesting": 5000 },
       "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
     },
     {
       "id": "FM-S11",
       "name": "a body over the limit",
-      "request": { "method": "POST", "path": "/api/vote/eligibility", "bodyBytes": 65536 },
+      "request": { "method": "POST", "path": "/api/v1/vote/eligibility", "bodyBytes": 65536 },
       "expect": { "status": 413, "code": "request.too_large", "logLevel": "warn" }
     },
     {
@@ -82,7 +94,7 @@
       "name": "no content type",
       "request": {
         "method": "POST",
-        "path": "/api/vote/eligibility",
+        "path": "/api/v1/vote/eligibility",
         "contentType": null,
         "body": "{\"age\": 20}"
       },
@@ -93,7 +105,7 @@
       "name": "a non-JSON content type",
       "request": {
         "method": "POST",
-        "path": "/api/vote/eligibility",
+        "path": "/api/v1/vote/eligibility",
         "contentType": "text/plain",
         "body": "{\"age\": 20}"
       },
@@ -102,7 +114,7 @@
     {
       "id": "FM-S14",
       "name": "age above the maximum",
-      "request": { "method": "POST", "path": "/api/vote/eligibility", "body": "{\"age\": 151}" },
+      "request": { "method": "POST", "path": "/api/v1/vote/eligibility", "body": "{\"age\": 151}" },
       "expect": { "status": 400, "code": "validation.age_out_of_range", "logLevel": "debug" }
     },
     {
@@ -110,7 +122,7 @@
       "name": "a birthdate implying an age above the maximum",
       "request": {
         "method": "POST",
-        "path": "/api/vote/eligibility",
+        "path": "/api/v1/vote/eligibility",
         "body": "{\"age\": 20, \"birthdate\": \"1800-01-01\"}"
       },
       "expect": { "status": 400, "code": "validation.age_out_of_range", "logLevel": "debug" }
@@ -120,7 +132,7 @@
       "name": "a signed-year birthdate",
       "request": {
         "method": "POST",
-        "path": "/api/vote/eligibility",
+        "path": "/api/v1/vote/eligibility",
         "body": "{\"age\": 20, \"birthdate\": \"-262143-01-01\"}"
       },
       "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
@@ -130,7 +142,7 @@
       "name": "an impossible calendar date",
       "request": {
         "method": "POST",
-        "path": "/api/vote/eligibility",
+        "path": "/api/v1/vote/eligibility",
         "body": "{\"age\": 20, \"birthdate\": \"2000-02-30\"}"
       },
       "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
@@ -140,7 +152,7 @@
       "name": "a birthdate in the future",
       "request": {
         "method": "POST",
-        "path": "/api/vote/eligibility",
+        "path": "/api/v1/vote/eligibility",
         "body": "{\"age\": 1, \"birthdate\": \"2999-01-01\"}"
       },
       "expect": { "status": 400, "code": "validation.birthdate_in_future", "logLevel": "debug" }
@@ -150,7 +162,7 @@
       "name": "a malformed debug country never echoes the header",
       "request": {
         "method": "POST",
-        "path": "/api/vote/eligibility",
+        "path": "/api/v1/vote/eligibility",
         "headers": { "x-debug-country": "SENTINEL-CC" },
         "body": "{\"age\": 20}"
       },
@@ -174,7 +186,7 @@
       "name": "a birthdate that is not a string",
       "request": {
         "method": "POST",
-        "path": "/api/vote/eligibility",
+        "path": "/api/v1/vote/eligibility",
         "body": "{\"age\": 20, \"birthdate\": 20000101}"
       },
       "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
@@ -187,7 +199,7 @@
       "setup": { "transport": "body" },
       "request": {
         "method": "POST",
-        "path": "/api/vote/eligibility",
+        "path": "/api/v1/vote/eligibility",
         "headers": { "authorization": "Bearer {access_token}" },
         "body": "{\"age\": \"x\"}"
       },
@@ -200,7 +212,7 @@
       "setup": { "transport": "body" },
       "request": {
         "method": "GET",
-        "path": "/api/auth/session",
+        "path": "/api/v1/auth/session",
         "headers": { "authorization": "Bearer {refresh_token}" }
       },
       "expect": { "status": 401, "code": "auth.session_expired", "logLevel": "info" },
@@ -212,7 +224,7 @@
       "setup": { "transport": "body" },
       "request": {
         "method": "GET",
-        "path": "/api/auth/session",
+        "path": "/api/v1/auth/session",
         "headers": { "authorization": "Basic {access_token}" }
       },
       "expect": { "status": 401, "code": "auth.session_expired", "logLevel": "info" },
@@ -224,7 +236,7 @@
       "setup": { "transport": "body", "rotate": true },
       "request": {
         "method": "POST",
-        "path": "/api/auth/refresh",
+        "path": "/api/v1/auth/refresh",
         "body": "{\"refresh_token\": \"{refresh_token}\"}"
       },
       "expect": { "status": 401, "code": "auth.session_expired", "logLevel": "info" },
@@ -236,7 +248,7 @@
       "setup": { "transport": "cookie", "rotate": true },
       "request": {
         "method": "POST",
-        "path": "/api/auth/refresh",
+        "path": "/api/v1/auth/refresh",
         "headers": { "cookie": "tran_refresh={refresh_token}" }
       },
       "expect": { "status": 401, "code": "auth.session_expired", "logLevel": "info" },
@@ -248,7 +260,7 @@
       "setup": { "transport": "cookie" },
       "request": {
         "method": "POST",
-        "path": "/api/auth/sign-out",
+        "path": "/api/v1/auth/sign-out",
         "headers": {
           "authorization": "Bearer {access_token}",
           "cookie": "tran_refresh={refresh_token}",
@@ -264,7 +276,7 @@
       "setup": { "transport": "cookie" },
       "request": {
         "method": "POST",
-        "path": "/api/auth/session",
+        "path": "/api/v1/auth/session",
         "headers": {
           "authorization": "Bearer {access_token}",
           "cookie": "tran_refresh={refresh_token}"
@@ -280,7 +292,7 @@
       "setup": { "transport": "cookie" },
       "request": {
         "method": "DELETE",
-        "path": "/api/account",
+        "path": "/api/v1/account",
         "headers": {
           "authorization": "Bearer {refresh_token}",
           "cookie": "tran_refresh={refresh_token}"
@@ -298,7 +310,7 @@
       },
       "request": {
         "method": "PUT",
-        "path": "/api/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
+        "path": "/api/v1/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
         "headers": {
           "authorization": "Bearer {access_token}"
         },
@@ -324,7 +336,7 @@
       },
       "request": {
         "method": "DELETE",
-        "path": "/api/devices/SENTINEL-installation",
+        "path": "/api/v1/devices/SENTINEL-installation",
         "headers": {
           "authorization": "Bearer {access_token}"
         },
@@ -345,7 +357,7 @@
       },
       "request": {
         "method": "PUT",
-        "path": "/api/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
+        "path": "/api/v1/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
         "headers": {
           "authorization": "Bearer {access_token}"
         },
@@ -371,7 +383,7 @@
       },
       "request": {
         "method": "PUT",
-        "path": "/api/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
+        "path": "/api/v1/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
         "body": "{\"platform\": \"ios\", \"push_token\": \"5e4f1d2c3b4a59687706f5e4d3c2b1a05e4f1d2c3b4a59687706f5e4d3c2b1a0\", \"environment\": \"production\", \"locale\": \"en\", \"app_version\": \"1.4.0\"}"
       },
       "expect": {
@@ -394,7 +406,7 @@
       },
       "request": {
         "method": "PUT",
-        "path": "/api/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
+        "path": "/api/v1/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
         "headers": {
           "authorization": "Bearer {access_token}",
           "cookie": "tran_refresh={refresh_token}",
@@ -423,7 +435,7 @@
       },
       "request": {
         "method": "DELETE",
-        "path": "/api/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
+        "path": "/api/v1/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
         "headers": {
           "authorization": "Bearer {refresh_token}"
         },

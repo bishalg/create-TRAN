@@ -1,4 +1,4 @@
-//! `POST /api/vote/eligibility` and `GET /api/vote/countries[/{code}]`.
+//! `POST /api/v1/vote/eligibility` and `GET /api/v1/vote/countries[/{code}]`.
 //! Delegates to `rust_core` (see `docs/SAMPLE_APP.md`).
 
 use axum::extract::rejection::JsonRejection;
@@ -18,14 +18,14 @@ pub struct CountriesResponse {
     pub countries: &'static [CountryVotingAge],
 }
 
-/// `GET /api/vote/countries` — list supported countries (REQ-API-009).
+/// `GET /api/v1/vote/countries` — list supported countries (REQ-API-009).
 pub async fn list_countries_handler() -> Json<CountriesResponse> {
     Json(CountriesResponse {
         countries: SUPPORTED_COUNTRIES,
     })
 }
 
-/// `GET /api/vote/countries/{code}` — single country lookup (REQ-API-010).
+/// `GET /api/v1/vote/countries/{code}` — single country lookup (REQ-API-010).
 pub async fn get_country_handler(
     Path(code): Path<String>,
 ) -> Result<Json<CountryVotingAge>, ApiError> {

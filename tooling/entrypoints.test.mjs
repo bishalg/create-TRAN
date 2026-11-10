@@ -35,6 +35,7 @@ const TOOLS = [
   ['mobile-release/mobile-release.mjs', ['check'], /mobile-release: ok/],
   ['todos/todos.mjs', [], /todos: ok \(\d+ test\(s\) switched off/],
   ['release/release.mjs', ['check'], /release: every version agrees/],
+  ['contract/contract.mjs', [], /contract: /],
 ];
 
 describe('tooling entry points run through a symlinked path', () => {

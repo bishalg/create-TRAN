@@ -1,4 +1,5 @@
 pub mod account;
+pub mod client_versions;
 pub mod clock;
 pub mod config;
 pub mod device_store;
@@ -19,9 +20,11 @@ use axum::extract::DefaultBodyLimit;
 use axum::Router;
 use config::AppConfig;
 use middleware::{
-    auth_origin, create_cors_layer, deadline, panic_response, request_id, security_headers,
+    auth_origin, client_standing, create_cors_layer, deadline, deprecation, panic_response,
+    request_id, security_headers,
 };
 use routes::create_router;
+use routes::table::{Route, ROUTES};
 use rust_core::feedback::SERVER_DEADLINE_MS;
 use state::{AppState, EdgePolicy};
 use tower_http::catch_panic::CatchPanicLayer;
@@ -52,9 +55,21 @@ pub fn build_app(state: AppState) -> Router {
 }
 
 /// The cross-cutting stack every route runs inside, outermost first: the security headers (so
-/// even a CORS preflight carries them), CORS, the request id (so everything below logs with it),
-/// the auth `Origin` check, the panic boundary, the deadline and the body limit.
+/// even a CORS preflight carries them), CORS, the request id and the client's identity (so
+/// everything below logs with both), the client's standing (a `426` before any handler), the
+/// deprecation notice, the auth `Origin` check, the panic boundary, the deadline and the body limit.
 pub fn with_layers(router: Router, limits: Limits, edge: &EdgePolicy) -> Router {
+    with_layers_and_routes(router, limits, edge, &ROUTES)
+}
+
+/// [`with_layers`] with another route table, so a test can prove the deprecation notice on a
+/// route the sample does not deprecate (REQ-VER-007).
+pub fn with_layers_and_routes(
+    router: Router,
+    limits: Limits,
+    edge: &EdgePolicy,
+    routes: &'static [Route],
+) -> Router {
     router
         .layer(DefaultBodyLimit::max(limits.max_body_bytes))
         .layer(axum::middleware::from_fn_with_state(
@@ -66,6 +81,11 @@ pub fn with_layers(router: Router, limits: Limits, edge: &EdgePolicy) -> Router 
             edge.allowed_origins.clone(),
             auth_origin,
         ))
+        .layer(axum::middleware::from_fn_with_state(routes, deprecation))
+        .layer(axum::middleware::from_fn_with_state(
+            edge.client_thresholds.clone(),
+            client_standing,
+        ))
         .layer(axum::middleware::from_fn(request_id))
         .layer(create_cors_layer(&edge.allowed_origins))
         .layer(axum::middleware::from_fn_with_state(
@@ -75,14 +95,18 @@ pub fn with_layers(router: Router, limits: Limits, edge: &EdgePolicy) -> Router 
 }
 
 /// Switches on the configured push senders, binds the configured address and serves until the
-/// process stops. Push configuration that does not parse fails here, naming the variable.
+/// process stops. Push configuration or a client version threshold that does not parse fails
+/// here, naming the variable.
 pub async fn run_server(config: AppConfig) -> std::io::Result<()> {
+    let invalid = |error: String| std::io::Error::new(std::io::ErrorKind::InvalidInput, error);
+    client_versions::ClientThresholds::from_settings(&config.client_versions)
+        .map_err(|error| invalid(error.to_string()))?;
     let providers = push::providers::PushProviders::from_settings(
         &config.push,
         push::providers::Endpoints::real(),
         std::sync::Arc::new(clock::SystemClock),
     )
-    .map_err(|error| std::io::Error::new(std::io::ErrorKind::InvalidInput, error.to_string()))?;
+    .map_err(|error| invalid(error.to_string()))?;
     providers.log_state();
     let addr = config.socket_addr();
     let listener = tokio::net::TcpListener::bind(&addr).await?;

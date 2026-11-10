@@ -14,6 +14,9 @@ use thiserror::Error as ThisError;
 
 uniffi::setup_scaffolding!("tran_uniffi");
 
+mod compat;
+pub use compat::*;
+
 mod feedback;
 pub use feedback::*;
 

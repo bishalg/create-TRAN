@@ -15,4 +15,6 @@
     <string name="shell_theme_light">Light</string>
     <string name="shell_theme_sepia">Sepia</string>
     <string name="shell_title">Voting Eligibility</string>
+    <string name="shell_update_recommended">A new version is available</string>
+    <string name="shell_update_recommended_body">Update when it suits you to get the latest improvements.</string>
 </resources>

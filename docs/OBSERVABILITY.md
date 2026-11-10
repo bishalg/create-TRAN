@@ -31,7 +31,7 @@ Two ids, two jobs. The **request id** is one HTTP exchange and is what a user re
 - Error ratio above 1% for 5 minutes on any route (page).
 - p95 latency above the route's budget for 10 minutes (ticket).
 - `up == 0` for the metrics target, or readiness failing for longer than a deploy takes (page).
-- A sudden rise in `401` on `/api/auth/refresh` (ticket): a client bug, or replayed tokens.
+- A sudden rise in `401` on `/api/v1/auth/refresh` (ticket): a client bug, or replayed tokens.
 
 ## Lifecycle
 

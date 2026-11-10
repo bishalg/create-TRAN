@@ -25,7 +25,7 @@ Every route MUST return complete HTML (content and metadata) in the first respon
 
 ### REQ-SEO-003 [planned] Data comes from the API, on the server
 
-The voting-age pages MUST load their data on the server from `GET /api/vote/countries[/{code}]` (REQ-API-009/010)
+The voting-age pages MUST load their data on the server from `GET /api/v1/vote/countries[/{code}]` (REQ-API-009/010)
 through a server function. The API base URL for the server is server-side configuration.
 **Verified by:** loader unit tests, BDD (page content equals API content).
 

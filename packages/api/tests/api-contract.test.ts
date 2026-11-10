@@ -45,7 +45,7 @@ describe('@tran/api vote contract', () => {
     );
 
     expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:3001/api/vote/eligibility',
+      'http://localhost:3001/api/v1/vote/eligibility',
       expect.objectContaining({ method: 'POST' })
     );
     expect(result.eligible).toBe(false);
@@ -71,7 +71,7 @@ describe('@tran/api client edge cases', () => {
     const fetchFn = vi.fn().mockResolvedValue({ ok: true, json: async () => ok });
     const client = createTranOrpcClient({ baseUrl: 'http://x/', fetchFn: fetchFn as never });
     expect((await client.vote.eligibility({ age: 21 })).eligible).toBe(true);
-    expect(fetchFn.mock.calls[0][0]).toBe('http://x/api/vote/eligibility');
+    expect(fetchFn.mock.calls[0][0]).toBe('http://x/api/v1/vote/eligibility');
   });
 
   it('defaults to localhost:3001 and the global fetch', async () => {
@@ -79,7 +79,7 @@ describe('@tran/api client edge cases', () => {
     vi.stubGlobal('fetch', fetchFn);
     await checkVoteEligibility({ age: 21 });
     vi.unstubAllGlobals();
-    expect(fetchFn.mock.calls[0][0]).toBe('http://localhost:3001/api/vote/eligibility');
+    expect(fetchFn.mock.calls[0][0]).toBe('http://localhost:3001/api/v1/vote/eligibility');
   });
 
   it('throws TranApiError carrying status and the server message', async () => {

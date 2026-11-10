@@ -93,7 +93,7 @@ describe('TranApiClient', () => {
     const res = await client.checkVoteEligibility({ age: 21 });
 
     expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:3001/api/vote/eligibility',
+      'http://localhost:3001/api/v1/vote/eligibility',
       expect.objectContaining({ method: 'POST' })
     );
     expect(res.eligible).toBe(true);

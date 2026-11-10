@@ -4,6 +4,40 @@ The Axum app in `apps/api` exposes a small REST surface. JSON shapes match `@tra
 
 **Base URL (local):** `http://127.0.0.1:3001` (see `HOST` / `PORT` in `.env.example`)
 
+## Versions and clients
+
+Every product route lives under **`/api/v1`**; only the health route stays at `/api/health`
+([spec 028](./specs/028-api-versioning.md), [ADR-0047](./adr/0047-old-clients-keep-working.md),
+[playbook](./API_VERSIONING.md)). There are no unversioned aliases: `/api/vote/…` or an unknown version such as
+`/api/v9/…` answers `404 route.not_found` in the envelope. The base path is one Rust constant, generated as
+`API_BASE_PATH` (`@tran/api`) and `ApiContract.basePath` (Swift, Kotlin); routes are declared once in
+`apps/api/src/routes/table.rs`.
+
+| Header                       | Direction | Meaning                                                                                                                                                                               |
+| :--------------------------- | :-------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `X-Tran-Client`              | request   | `<platform>/<version>` (`ios/1.4.0`, `android/1.4.0`, `web/1.4.0`), on every request. Missing or malformed is `unknown` and served. Logged as `client_platform` and `client_version`. |
+| `X-Tran-Update`              | response  | `recommended` when the client is below its platform's recommended version: the app may offer an update. Nothing else about the answer changes.                                        |
+| `X-Tran-Recommended-Version` | response  | Beside `X-Tran-Update`: the recommended version, so the app remembers a dismissed prompt per version.                                                                                 |
+| `Deprecation`, `Sunset`      | response  | On a route the table marks deprecated: `Deprecation: @<seconds>` (RFC 9745) and `Sunset: <HTTP-date>` (RFC 8594). The route still answers until it is removed.                        |
+
+A client below its platform's minimum gets **`426 client.upgrade_required`** on every product route, before any
+handler runs (health is exempt):
+
+```json
+{
+  "success": false,
+  "error": "This app version is no longer supported; update the app",
+  "code": "client.upgrade_required",
+  "retryable": false,
+  "request_id": "…"
+}
+```
+
+The thresholds are `CLIENT_MIN_VERSION_IOS|ANDROID|WEB` and `CLIENT_RECOMMENDED_VERSION_IOS|ANDROID|WEB` (unset: none;
+a value that is not a version stops start-up). Snapshots of every answer are in `fixtures/contract/v1/`
+(`pnpm contract:snapshots` rewrites them, `pnpm contract:check` compares them with the last release), and the requests
+each released client makes are replayed from `fixtures/contract/clients/`.
+
 ---
 
 ## `GET /api/health`
@@ -45,14 +79,14 @@ curl -s http://127.0.0.1:3001/api/health | jq
 
 ---
 
-## `GET /api/tran/info`
+## `GET /api/v1/tran/info`
 
 Stack metadata for the template demo (not a compute endpoint).
 
 ### Example
 
 ```bash
-curl -s http://127.0.0.1:3001/api/tran/info | jq
+curl -s http://127.0.0.1:3001/api/v1/tran/info | jq
 ```
 
 ### Sample response
@@ -74,7 +108,7 @@ curl -s http://127.0.0.1:3001/api/tran/info | jq
 
 ---
 
-## `POST /api/vote/eligibility`
+## `POST /api/v1/vote/eligibility`
 
 Evaluates voting eligibility using **Rust Core** (`crates/rust-core/src/voting.rs`). Country is resolved from the client IP via a **stub geo resolver** (not production geolocation).
 
@@ -99,7 +133,7 @@ Optional: `"birthdate": "2004-06-15"` (ISO date; age derived when provided).
 ### Example — eligible (US, age 21)
 
 ```bash
-curl -s -X POST http://127.0.0.1:3001/api/vote/eligibility \
+curl -s -X POST http://127.0.0.1:3001/api/v1/vote/eligibility \
   -H 'Content-Type: application/json' \
   -H 'X-Debug-Country: US' \
   -d '{"age": 21}' | jq
@@ -123,7 +157,7 @@ curl -s -X POST http://127.0.0.1:3001/api/vote/eligibility \
 ### Example — not eligible (India, age 16)
 
 ```bash
-curl -s -X POST http://127.0.0.1:3001/api/vote/eligibility \
+curl -s -X POST http://127.0.0.1:3001/api/v1/vote/eligibility \
   -H 'Content-Type: application/json' \
   -H 'X-Debug-Country: IN' \
   -d '{"age": 16}' | jq
@@ -156,22 +190,22 @@ const result = await client.checkVoteEligibility({ age: 20 });
 
 ---
 
-## Sessions: `/api/auth/*`
+## Sessions: `/api/v1/auth/*`
 
 Opaque rotating tokens ([spec 022](./specs/022-security.md), [ADR-0039](./adr/0039-sessions-tokens-and-secret-storage.md)).
 The sample's sign-in has no credential check: choosing a role is the whole login; a fork verifies its credential in
-front of `POST /api/auth/session`. Tokens are 32 random bytes, unpadded base64url; the access token lives 900 s, the
+front of `POST /api/v1/auth/session`. Tokens are 32 random bytes, unpadded base64url; the access token lives 900 s, the
 refresh token 30 days (`SESSION_POLICY` in `rust-core`). The server keeps only their SHA-256 digests.
 
 The refresh token travels by one **transport**, chosen at sign-in and kept for the session's life: `cookie` (the web
-app: an `HttpOnly`, `SameSite=Strict` cookie scoped to `/api/auth`, never in a body) or `body` (native apps, which
-keep it in the Keychain or Keystore). Every `/api/auth/*` answer carries `Cache-Control: no-store`. A request whose
+app: an `HttpOnly`, `SameSite=Strict` cookie scoped to `/api/v1/auth`, never in a body) or `body` (native apps, which
+keep it in the Keychain or Keystore). Every `/api/v1/auth/*` answer carries `Cache-Control: no-store`. A request whose
 `Origin` header is present and not in `CORS_ALLOWED_ORIGINS` answers `403 auth.forbidden` and changes nothing.
 
-### `POST /api/auth/session` — sign in
+### `POST /api/v1/auth/session` — sign in
 
 ```bash
-curl -s -X POST http://127.0.0.1:3001/api/auth/session \
+curl -s -X POST http://127.0.0.1:3001/api/v1/auth/session \
   -H 'Content-Type: application/json' \
   -d '{"role": "citizen_voter", "transport": "body"}'
 ```
@@ -191,29 +225,29 @@ curl -s -X POST http://127.0.0.1:3001/api/auth/session \
 With `"transport": "cookie"` the body has no `refresh_token`; instead:
 
 ```http
-Set-Cookie: tran_refresh=Vb1n…; HttpOnly; SameSite=Strict; Path=/api/auth; Max-Age=2592000
+Set-Cookie: tran_refresh=Vb1n…; HttpOnly; SameSite=Strict; Path=/api/v1/auth; Max-Age=2592000
 ```
 
 `; Secure` is added whenever `APP_ENV` is not `development` or `test`. `role` is `citizen_voter` (user
 `voter-001`) or `election_auditor` (user `auditor-001`); any other `role` or `transport` is `400 request.malformed`.
 
-### `GET /api/auth/session` — who am I
+### `GET /api/v1/auth/session` — who am I
 
 ```bash
-curl -s http://127.0.0.1:3001/api/auth/session -H "Authorization: Bearer $ACCESS_TOKEN"
+curl -s http://127.0.0.1:3001/api/v1/auth/session -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
 `200`: `{ "user_id": "voter-001", "role": "citizen_voter" }`. A missing header, another scheme, or a malformed,
 unknown, revoked or expired token all answer the same `401 auth.session_expired` with `WWW-Authenticate: Bearer`.
 
-### `POST /api/auth/refresh` — rotate the pair
+### `POST /api/v1/auth/refresh` — rotate the pair
 
 ```bash
 # body transport
-curl -s -X POST http://127.0.0.1:3001/api/auth/refresh \
+curl -s -X POST http://127.0.0.1:3001/api/v1/auth/refresh \
   -H 'Content-Type: application/json' -d "{\"refresh_token\": \"$REFRESH_TOKEN\"}"
 # cookie transport (the browser sends the cookie itself)
-curl -s -X POST http://127.0.0.1:3001/api/auth/refresh -H "Cookie: tran_refresh=$REFRESH_TOKEN"
+curl -s -X POST http://127.0.0.1:3001/api/v1/auth/refresh -H "Cookie: tran_refresh=$REFRESH_TOKEN"
 ```
 
 `200` with the same shape as sign-in: a new access token, a new refresh token on the session's transport, and `user`.
@@ -222,24 +256,24 @@ clears the cookie, `Max-Age=0`, unless the token came in the body). Presenting a
 whole session: every access and refresh token of it answers `401` from then on. Clients therefore share one in-flight
 refresh, and decide what to do after a failure with `session_recovery` (`fixtures/session.json`).
 
-### `POST /api/auth/sign-out` — revoke
+### `POST /api/v1/auth/sign-out` — revoke
 
 ```bash
-curl -s -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:3001/api/auth/sign-out \
+curl -s -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:3001/api/v1/auth/sign-out \
   -H 'Content-Type: application/json' -d "{\"refresh_token\": \"$REFRESH_TOKEN\"}"
 ```
 
 `204` always, with or without a known token, so it reveals nothing and is safe to repeat. The session is revoked and,
 unless the token came in the body, the cookie is cleared.
 
-## Account: `DELETE /api/account`
+## Account: `DELETE /api/v1/account`
 
 Deletes the caller's account for good ([spec 024](./specs/024-account-deletion.md),
 [ADR-0041](./adr/0041-account-deletion.md)). Authenticated by the access token like any other call; it falls under the
-same `Origin` check and `Cache-Control: no-store` as `/api/auth/*`.
+same `Origin` check and `Cache-Control: no-store` as `/api/v1/auth/*`.
 
 ```bash
-curl -s -o /dev/null -w '%{http_code}\n' -X DELETE http://127.0.0.1:3001/api/account \
+curl -s -o /dev/null -w '%{http_code}\n' -X DELETE http://127.0.0.1:3001/api/v1/account \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
@@ -249,11 +283,11 @@ refresh token issued before answers `401 auth.session_expired`. Other users are 
 uses the cookie transport, the answer also sends the header that clears the cookie:
 
 ```http
-Set-Cookie: tran_refresh=; HttpOnly; SameSite=Strict; Path=/api/auth; Max-Age=0
+Set-Cookie: tran_refresh=; HttpOnly; SameSite=Strict; Path=/api/v1/auth; Max-Age=0
 ```
 
-A browser ignores that header here: the request goes out without credentials (only `/api/auth/*` carries the cookie,
-REQ-SEC-018). So the web client follows a successful deletion with the best-effort `POST /api/auth/sign-out`, which
+A browser ignores that header here: the request goes out without credentials (only `/api/v1/auth/*` carries the cookie,
+REQ-SEC-018). So the web client follows a successful deletion with the best-effort `POST /api/v1/auth/sign-out`, which
 carries the cookie and gets it removed; whether that call succeeds does not change the deletion, whose sessions are
 already revoked.
 
@@ -266,18 +300,18 @@ registration of the user (REQ-PSH-003).
 
 ---
 
-## Devices: `/api/devices/{installation_id}`
+## Devices: `/api/v1/devices/{installation_id}`
 
 The push registry ([spec 027](./specs/027-push-and-devices.md), [ADR-0044](./adr/0044-push-is-a-server-owned-registry.md),
 playbook [PUSH.md](./PUSH.md)). Both routes need the access token, fall under the same `Origin` check and
-`Cache-Control: no-store` as `/api/auth/*`, and answer failures with the envelope below. `installation_id` is the random
+`Cache-Control: no-store` as `/api/v1/auth/*`, and answer failures with the envelope below. `installation_id` is the random
 version-4 UUID the app created on first launch, hyphenated, either case.
 
-### `PUT /api/devices/{installation_id}` — register this installation's token
+### `PUT /api/v1/devices/{installation_id}` — register this installation's token
 
 ```bash
 curl -s -o /dev/null -w '%{http_code}\n' -X PUT \
-  http://127.0.0.1:3001/api/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c \
+  http://127.0.0.1:3001/api/v1/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c \
   -H "Authorization: Bearer $ACCESS_TOKEN" -H 'Content-Type: application/json' \
   -d '{"platform": "ios", "push_token": "a1b2…(64 hex)", "environment": "sandbox",
        "locale": "ne-NP", "app_version": "1.4.0", "marketing": false}'
@@ -299,11 +333,11 @@ removed first (REQ-PSH-002).
 Unknown fields, a bad id or any rule broken answers `400 request.malformed` naming the field, never its value. A
 missing, unknown or expired access token answers `401 auth.session_expired` and stores nothing.
 
-### `DELETE /api/devices/{installation_id}` — unregister
+### `DELETE /api/v1/devices/{installation_id}` — unregister
 
 ```bash
 curl -s -o /dev/null -w '%{http_code}\n' -X DELETE \
-  http://127.0.0.1:3001/api/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c \
+  http://127.0.0.1:3001/api/v1/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
@@ -314,7 +348,7 @@ user's on account deletion (REQ-PSH-003).
 Registry events log fixed fields only: `device registered` (`platform`, `environment`, `replaced`), `device
 unregistered` (`removed`), and from the sender `push token dead; registration removed`, `push rejected by the provider`
 (`platform`) and `stale device registrations pruned` (`removed`). The request span logs the path as
-`/api/devices/{installation_id}`, so no installation id or token reaches a log (REQ-PSH-007).
+`/api/v1/devices/{installation_id}`, so no installation id or token reaches a log (REQ-PSH-007).
 
 ---
 
@@ -369,6 +403,7 @@ The catalogue lives in [`crates/rust-core/src/feedback.rs`](../crates/rust-core/
 | `network.timeout`                 | —    | yes   | `info`  | banner until a call succeeds      |
 | `client.unexpected`               | —    | no    | `error` | error toast, 10 s                 |
 | `client.render_failed`            | —    | no    | `error` | full-page screen + Reload (web)   |
+| `client.upgrade_required`         | 426  | no    | `info`  | full-page screen + Update         |
 
 `—` means the client observes it without an HTTP answer.
 
@@ -459,14 +494,14 @@ try {
 
 ## Route modules
 
-| Path                    | Rust module                      |
-| :---------------------- | :------------------------------- |
-| `/api/health`           | `apps/api/src/routes/health.rs`  |
-| `/api/tran/info`        | `apps/api/src/routes/tran.rs`    |
-| `/api/vote/eligibility` | `apps/api/src/routes/vote.rs`    |
-| `/api/auth/*`           | `apps/api/src/routes/auth.rs`    |
-| `/api/account`          | `apps/api/src/routes/account.rs` |
-| `/api/devices/*`        | `apps/api/src/routes/devices.rs` |
+| Path                       | Rust module                      |
+| :------------------------- | :------------------------------- |
+| `/api/health`              | `apps/api/src/routes/health.rs`  |
+| `/api/v1/tran/info`        | `apps/api/src/routes/tran.rs`    |
+| `/api/v1/vote/eligibility` | `apps/api/src/routes/vote.rs`    |
+| `/api/v1/auth/*`           | `apps/api/src/routes/auth.rs`    |
+| `/api/v1/account`          | `apps/api/src/routes/account.rs` |
+| `/api/v1/devices/*`        | `apps/api/src/routes/devices.rs` |
 
 Router wiring: `apps/api/src/routes/mod.rs`.
 

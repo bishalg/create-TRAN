@@ -58,7 +58,7 @@ function boot(
 }
 
 const isWhoAmI = (path: string, init: RequestInit | undefined) =>
-  path === '/api/auth/session' && init?.method !== 'POST';
+  path === '/api/v1/auth/session' && init?.method !== 'POST';
 
 const authCalls = (api: FakeApi, path: string, method = 'POST') =>
   api.callsTo(path).filter(([, init]) => (init?.method ?? 'GET') === method);
@@ -74,7 +74,7 @@ describe('boot restores the session (REQ-SEC-021)', () => {
       { cookie: 'citizen_voter' },
       {
         intercept: (path) => {
-          if (path !== '/api/auth/refresh' || held) return undefined;
+          if (path !== '/api/v1/auth/refresh' || held) return undefined;
           held = true;
           return gate.then(() => undefined);
         },
@@ -92,10 +92,10 @@ describe('boot restores the session (REQ-SEC-021)', () => {
     expect(await screen.findByTestId(ScreenIds.eligibility.roleBadge)).toHaveTextContent(
       'Citizen Voter'
     );
-    const [refresh] = authCalls(api, '/api/auth/refresh');
+    const [refresh] = authCalls(api, '/api/v1/auth/refresh');
     expect(refresh![1]).toMatchObject({ method: 'POST', credentials: 'include' });
-    await waitFor(() => expect(authCalls(api, '/api/auth/session', 'GET')).toHaveLength(1));
-    const [, who] = authCalls(api, '/api/auth/session', 'GET')[0]!;
+    await waitFor(() => expect(authCalls(api, '/api/v1/auth/session', 'GET')).toHaveLength(1));
+    const [, who] = authCalls(api, '/api/v1/auth/session', 'GET')[0]!;
     expect((who!.headers as Record<string, string>).Authorization).toBe('Bearer access-token-1');
   });
 
@@ -111,7 +111,7 @@ describe('boot restores the session (REQ-SEC-021)', () => {
     const { api } = boot();
     expect(await screen.findByRole('heading', WELCOME)).toBeVisible();
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(authCalls(api, '/api/auth/session', 'GET')).toHaveLength(0);
+    expect(authCalls(api, '/api/v1/auth/session', 'GET')).toHaveLength(0);
     expect(output()).not.toContain('auth.session_expired');
   });
 
@@ -126,7 +126,7 @@ describe('boot restores the session (REQ-SEC-021)', () => {
   it('sends one refresh even under React’s development double effects (REQ-SEC-016)', async () => {
     const { api } = boot({ cookie: 'citizen_voter' }, { strict: true });
     await screen.findByTestId(ScreenIds.eligibility.roleBadge);
-    expect(authCalls(api, '/api/auth/refresh')).toHaveLength(1);
+    expect(authCalls(api, '/api/v1/auth/refresh')).toHaveLength(1);
   });
 });
 
@@ -138,7 +138,7 @@ describe('a restored session the server no longer accepts (REQ-SEC-015, REQ-ERR-
       { cookie: 'citizen_voter' },
       {
         intercept: (path, init) => {
-          if (path === '/api/auth/refresh' && ++refreshes > 1) return afterRestore();
+          if (path === '/api/v1/auth/refresh' && ++refreshes > 1) return afterRestore();
           if (isWhoAmI(path, init)) return Promise.resolve(envelope(401, 'auth.session_expired'));
           return undefined;
         },
@@ -151,13 +151,13 @@ describe('a restored session the server no longer accepts (REQ-SEC-015, REQ-ERR-
     const output = captureOutput();
     const { api, user } = bootRevoked(rejected);
     const dialog = await screen.findByRole('dialog');
-    expect(authCalls(api, '/api/auth/refresh')).toHaveLength(2);
+    expect(authCalls(api, '/api/v1/auth/refresh')).toHaveLength(2);
     // Refused, and the one refresh is rejected too: the session is over, nothing is repeated.
-    expect(authCalls(api, '/api/auth/session', 'GET')).toHaveLength(1);
+    expect(authCalls(api, '/api/v1/auth/session', 'GET')).toHaveLength(1);
 
     await user.click(within(dialog).getByRole('button', { name: 'Sign in again' }));
     expect(screen.getByRole('heading', WELCOME)).toBeVisible();
-    await waitFor(() => expect(authCalls(api, '/api/auth/sign-out')).toHaveLength(1));
+    await waitFor(() => expect(authCalls(api, '/api/v1/auth/sign-out')).toHaveLength(1));
     expect(output()).not.toMatch(TOKEN);
   });
 
@@ -195,7 +195,7 @@ describe('a restored session the server no longer accepts (REQ-SEC-015, REQ-ERR-
       within(screen.getByRole('dialog')).getByRole('button', { name: 'Sign out' })
     );
     answer();
-    await waitFor(() => expect(authCalls(booted.api, '/api/auth/sign-out')).toHaveLength(1));
+    await waitFor(() => expect(authCalls(booted.api, '/api/v1/auth/sign-out')).toHaveLength(1));
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(screen.getByRole('heading', WELCOME)).toBeVisible();
   });
@@ -208,8 +208,8 @@ describe('choosing a role signs in on the device first (ADR-0039 decision 7)', (
     await user.click(await screen.findByTestId(ScreenIds.authWelcome.voterBranchButton));
     expect(screen.getByTestId(ScreenIds.eligibility.roleBadge)).toHaveTextContent('Citizen Voter');
 
-    await waitFor(() => expect(authCalls(api, '/api/auth/session')).toHaveLength(1));
-    const [, init] = authCalls(api, '/api/auth/session')[0]!;
+    await waitFor(() => expect(authCalls(api, '/api/v1/auth/session')).toHaveLength(1));
+    const [, init] = authCalls(api, '/api/v1/auth/session')[0]!;
     expect(JSON.parse(String(init!.body))).toEqual({ role: 'citizen_voter', transport: 'cookie' });
     expect(init!.credentials).toBe('include');
     // Nothing a script can read holds the session (REQ-SEC-017, REQ-SEC-018).
@@ -243,8 +243,10 @@ describe('signing out clears the device first (REQ-SEC-022)', () => {
     await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Sign out' }));
 
     expect(screen.getByRole('heading', WELCOME)).toBeVisible();
-    await waitFor(() => expect(authCalls(api, '/api/auth/sign-out')).toHaveLength(1));
-    expect(authCalls(api, '/api/auth/sign-out')[0]![1]).toMatchObject({ credentials: 'include' });
+    await waitFor(() => expect(authCalls(api, '/api/v1/auth/sign-out')).toHaveLength(1));
+    expect(authCalls(api, '/api/v1/auth/sign-out')[0]![1]).toMatchObject({
+      credentials: 'include',
+    });
     await waitFor(() => expect(output()).toContain('network.offline'));
     expect(output()).not.toMatch(TOKEN);
   });

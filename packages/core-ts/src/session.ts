@@ -35,7 +35,7 @@ export function sessionRecovery(event: SessionEvent): SessionAction {
 }
 
 /**
- * Classifies the answer to `POST /api/auth/refresh`: `status` is `null` when no HTTP answer
+ * Classifies the answer to `POST /api/v1/auth/refresh`: `status` is `null` when no HTTP answer
  * arrived. `null` means the refresh succeeded; only `401` and `403` reject the credential.
  */
 export function refreshEvent(status: number | null): SessionEvent | null {

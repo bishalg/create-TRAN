@@ -378,6 +378,24 @@ pub const ELIGIBILITY: &[Scenario] = &[
             verdict!(BELOW, "17", "18", "US"),
         ],
     ),
+    // Decision (REQ-VER-009): the `upgrade_required` given takes effect once the signed-in
+    // dashboard is on screen, the moment a minimum is raised while the app is open, so launching
+    // and signing in are untouched. The first product call after that must meet the 426; deleting
+    // the account is the one every platform makes on request (the web's device check never calls
+    // the server, REQ-WEB-001). The screen replaces the dashboard and the deletion dialog, and the
+    // person is not signed out.
+    Scenario::new(
+        "An unsupported version is asked to update",
+        &["REQ-VER-009"],
+        &[VOTER, Given::UpgradeRequired],
+        &[Tap("delete-account-button"), Tap("delete-account-confirm")],
+        &[
+            Exists("update-button"),
+            Missing("check-button"),
+            Missing("delete-account-confirm"),
+            Missing("voter-branch-button"),
+        ],
+    ),
     theme!("The light theme is selectable", "light"),
     theme!("The dark theme is selectable", "dark"),
     theme!("The black theme is selectable", "black"),

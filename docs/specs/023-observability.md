@@ -14,7 +14,7 @@ Vocabulary used below:
   `00-<trace id>-<span id>-<flags>`.
 - The **request id** (REQ-ERR-002) names one HTTP exchange and is the reference a user can read out. The trace id
   joins exchanges that belong together (a call and its retries, a refresh and the call it rescued).
-- A **route** is the matched route template (`/api/vote/countries/{code}`), never the raw path, so a label or a log
+- A **route** is the matched route template (`/api/v1/vote/countries/{code}`), never the raw path, so a label or a log
   field has a bounded set of values and carries no user input.
 - **RED** metrics are the rate, errors and duration of requests.
 

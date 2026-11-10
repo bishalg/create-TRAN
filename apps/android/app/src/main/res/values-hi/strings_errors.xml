@@ -20,4 +20,6 @@
     <string name="errors_session_expired_body">जारी रखने के लिए फिर से साइन इन करें। तब तक आपने जो लिखा है वह इसी स्क्रीन पर रहेगा।</string>
     <string name="errors_timeout">सर्वर बहुत समय ले रहा है — परिणाम इसी डिवाइस पर जाँचे जा रहे हैं।</string>
     <string name="errors_unexpected">ऐप में कुछ गड़बड़ हुई। कृपया फिर कोशिश करें।</string>
+    <string name="errors_update_required">अपडेट ज़रूरी है</string>
+    <string name="errors_update_required_body">ऐप का यह संस्करण अब समर्थित नहीं है। जारी रखने के लिए इसे अपडेट करें; आप साइन इन रहेंगे।</string>
 </resources>

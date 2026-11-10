@@ -67,6 +67,7 @@ enum L10n {
         static var roleElectionAuditor: String { String(localized: "common.role.electionAuditor", table: "Common") }
         static var roleLabel: String { String(localized: "common.role.label", table: "Common") }
         static var signOut: String { String(localized: "common.signOut", table: "Common") }
+        static var update: String { String(localized: "common.update", table: "Common") }
     }
 
     enum Eligibility {
@@ -145,6 +146,8 @@ enum L10n {
         static var sessionExpiredBody: String { String(localized: "errors.sessionExpiredBody", table: "Errors") }
         static var timeout: String { String(localized: "errors.timeout", table: "Errors") }
         static var unexpected: String { String(localized: "errors.unexpected", table: "Errors") }
+        static var updateRequired: String { String(localized: "errors.updateRequired", table: "Errors") }
+        static var updateRequiredBody: String { String(localized: "errors.updateRequiredBody", table: "Errors") }
     }
 
     enum Screen {
@@ -171,6 +174,8 @@ enum L10n {
         static var themeLight: String { String(localized: "shell.theme.light", table: "Shell") }
         static var themeSepia: String { String(localized: "shell.theme.sepia", table: "Shell") }
         static var title: String { String(localized: "shell.title", table: "Shell") }
+        static var updateRecommended: String { String(localized: "shell.updateRecommended", table: "Shell") }
+        static var updateRecommendedBody: String { String(localized: "shell.updateRecommendedBody", table: "Shell") }
     }
 
 }
@@ -217,6 +222,8 @@ extension L10n {
         case "errors.sessionExpired": return L10n.Errors.sessionExpired
         case "errors.timeout": return L10n.Errors.timeout
         case "errors.unexpected": return L10n.Errors.unexpected
+        case "errors.updateRequired": return L10n.Errors.updateRequired
+        case "shell.updateRecommended": return L10n.Shell.updateRecommended
         default: return nil
         }
     }

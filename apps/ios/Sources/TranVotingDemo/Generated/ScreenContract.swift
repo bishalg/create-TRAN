@@ -44,6 +44,7 @@ enum ScreenContract {
         static let dialogCancel = "dialog-cancel"
         static let deleteAccountConfirm = "delete-account-confirm"
         static let deleteAccountCancel = "delete-account-cancel"
+        static let updateButton = "update-button"
     }
 
     enum Auditor {

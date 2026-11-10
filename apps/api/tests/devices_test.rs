@@ -91,7 +91,7 @@ async fn register_without_a_valid_token_answers_401_and_stores_nothing() {
     }
     let request = Request::builder()
         .method(Method::PUT)
-        .uri(format!("/api/devices/{PHONE}"))
+        .uri(format!("/api/v1/devices/{PHONE}"))
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(ios(IOS_TOKEN).to_string()))
         .unwrap();
@@ -212,7 +212,7 @@ async fn register_accepts_no_other_method() {
     for method in [Method::GET, Method::POST, Method::PATCH] {
         let request = Request::builder()
             .method(method.clone())
-            .uri(format!("/api/devices/{PHONE}"))
+            .uri(format!("/api/v1/devices/{PHONE}"))
             .header(header::AUTHORIZATION, bearer(&voter.access))
             .body(Body::empty())
             .unwrap();
@@ -268,7 +268,7 @@ async fn sign_out_removes_the_registrations_made_in_that_session_only() {
 
     let body = json!({ "refresh_token": phone.refresh }).to_string();
     assert_eq!(
-        api.send(post("/api/auth/sign-out", body)).await.status,
+        api.send(post("/api/v1/auth/sign-out", body)).await.status,
         StatusCode::NO_CONTENT
     );
     assert_eq!(
@@ -279,7 +279,7 @@ async fn sign_out_removes_the_registrations_made_in_that_session_only() {
 
     let body = json!({ "refresh_token": "unknown" }).to_string();
     assert_eq!(
-        api.send(post("/api/auth/sign-out", body)).await.status,
+        api.send(post("/api/v1/auth/sign-out", body)).await.status,
         StatusCode::NO_CONTENT
     );
     assert_eq!(api.tokens("voter-001"), [IOS_TOKEN_2]);
@@ -298,7 +298,7 @@ async fn replay_of_a_refresh_token_removes_the_sessions_registrations() {
 
     let body = json!({ "refresh_token": stolen.refresh }).to_string();
     assert_eq!(
-        api.send(post("/api/auth/refresh", body.clone()))
+        api.send(post("/api/v1/auth/refresh", body.clone()))
             .await
             .status,
         StatusCode::OK
@@ -309,7 +309,7 @@ async fn replay_of_a_refresh_token_removes_the_sessions_registrations() {
         "a rotation keeps the session"
     );
     assert_eq!(
-        api.send(post("/api/auth/refresh", body)).await.status,
+        api.send(post("/api/v1/auth/refresh", body)).await.status,
         StatusCode::UNAUTHORIZED
     );
     assert_eq!(api.tokens("voter-001"), [IOS_TOKEN_2]);
@@ -336,7 +336,7 @@ async fn account_deletion_removes_every_registration_of_the_user() {
 
     let request = Request::builder()
         .method(Method::DELETE)
-        .uri("/api/account")
+        .uri("/api/v1/account")
         .header(header::AUTHORIZATION, bearer(&phone.access))
         .body(Body::empty())
         .unwrap();
@@ -391,7 +391,7 @@ async fn foreign_origin_cannot_register_or_unregister_a_device() {
 
     let request = Request::builder()
         .method(Method::DELETE)
-        .uri(format!("/api/devices/{PHONE}"))
+        .uri(format!("/api/v1/devices/{PHONE}"))
         .header(header::AUTHORIZATION, bearer(&voter.access))
         .header(header::ORIGIN, FOREIGN_ORIGIN)
         .body(Body::empty())
@@ -405,7 +405,7 @@ async fn foreign_origin_check_comes_with_a_cors_preflight_that_allows_put() {
     let api = Api::new();
     let request = Request::builder()
         .method(Method::OPTIONS)
-        .uri(format!("/api/devices/{PHONE}"))
+        .uri(format!("/api/v1/devices/{PHONE}"))
         .header(header::ORIGIN, LOCAL_ORIGIN)
         .header(header::ACCESS_CONTROL_REQUEST_METHOD, "PUT")
         .header(
@@ -454,6 +454,8 @@ async fn logs_carry_fixed_fields_and_never_a_token_an_installation_or_a_user() {
     assert_eq!(
         fields,
         [
+            "client_platform",
+            "client_version",
             "environment",
             "method",
             "path",
@@ -464,7 +466,7 @@ async fn logs_carry_fixed_fields_and_never_a_token_an_installation_or_a_user() {
     );
     assert_eq!(
         registered[0].field("path"),
-        Some("/api/devices/{installation_id}")
+        Some("/api/v1/devices/{installation_id}")
     );
     assert_eq!(registered[1].field("platform"), Some("android"));
     assert_eq!(

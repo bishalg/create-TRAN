@@ -1,0 +1,60 @@
+{
+  "POST /api/v1/auth/refresh": {
+    "refresh_token": {
+      "required": false,
+      "type": "string"
+    }
+  },
+  "POST /api/v1/auth/session": {
+    "role": {
+      "required": true,
+      "type": "string"
+    },
+    "transport": {
+      "required": true,
+      "type": "string"
+    }
+  },
+  "POST /api/v1/auth/sign-out": {
+    "refresh_token": {
+      "required": false,
+      "type": "string"
+    }
+  },
+  "POST /api/v1/vote/eligibility": {
+    "age": {
+      "required": true,
+      "type": "number"
+    },
+    "birthdate": {
+      "required": false,
+      "type": "string"
+    }
+  },
+  "PUT /api/v1/devices/{installation_id}": {
+    "app_version": {
+      "required": true,
+      "type": "string"
+    },
+    "environment": {
+      "required": true,
+      "type": "string"
+    },
+    "locale": {
+      "required": true,
+      "type": "string"
+    },
+    "marketing": {
+      "required": false,
+      "type": "boolean"
+    },
+    "platform": {
+      "required": true,
+      "type": "string"
+    },
+    "push_token": {
+      "required": true,
+      "type": "string"
+    }
+  }
+}

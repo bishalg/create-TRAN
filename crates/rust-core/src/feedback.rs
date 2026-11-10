@@ -106,8 +106,9 @@ pub enum Presentation {
     Banner,
     /// Blocking; the user must choose.
     Dialog { destructive: bool },
-    /// The view tree itself is broken: a full-page message with a reload action (REQ-ERR-011).
-    /// The last resort, and web-only — native view trees cannot be recovered.
+    /// Replaces the whole screen with a message and one action, and cannot be dismissed: a broken
+    /// web view tree with a reload (REQ-ERR-011), or an app version the API no longer serves with
+    /// an update (REQ-VER-009, on every platform).
     Screen,
 }
 
@@ -153,6 +154,9 @@ pub enum ErrorCode {
     ClientUnexpected,
     /// Rendering failed and the screen cannot be shown (REQ-ERR-011).
     ClientRenderFailed,
+    /// `426`: the API no longer serves this app version; it must be updated (REQ-VER-005). Never
+    /// signs the user out.
+    ClientUpgradeRequired,
 }
 
 const fn spec(
@@ -179,7 +183,7 @@ const ERROR_TOAST: Presentation = Presentation::Toast {
 
 impl ErrorCode {
     /// Every code, in catalogue order (codegen and fixtures follow this order).
-    pub const ALL: [Self; 20] = [
+    pub const ALL: [Self; 21] = [
         Self::ValidationAgeOutOfRange,
         Self::ValidationBirthdateInFuture,
         Self::ValidationInvalidCountryCode,
@@ -200,6 +204,7 @@ impl ErrorCode {
         Self::NetworkTimeout,
         Self::ClientUnexpected,
         Self::ClientRenderFailed,
+        Self::ClientUpgradeRequired,
     ];
 
     /// The wire value (`"validation.invalid_country_code"`).
@@ -225,6 +230,7 @@ impl ErrorCode {
             Self::NetworkTimeout => "network.timeout",
             Self::ClientUnexpected => "client.unexpected",
             Self::ClientRenderFailed => "client.render_failed",
+            Self::ClientUpgradeRequired => "client.upgrade_required",
         }
     }
 
@@ -353,6 +359,14 @@ impl ErrorCode {
                 Presentation::Screen,
                 "errors.renderFailed",
             ),
+            // Info: an outdated app is expected after a minimum is raised, not a fault.
+            Self::ClientUpgradeRequired => spec(
+                Some(426),
+                false,
+                Info,
+                Presentation::Screen,
+                "errors.updateRequired",
+            ),
         }
     }
 }
@@ -377,6 +391,7 @@ pub fn code_for_http_status(status: u16) -> ErrorCode {
         409 => ErrorCode::RequestConflict,
         413 => ErrorCode::RequestTooLarge,
         415 => ErrorCode::RequestUnsupportedMediaType,
+        426 => ErrorCode::ClientUpgradeRequired,
         429 => ErrorCode::ServerRateLimited,
         502..=504 => ErrorCode::ServerUnavailable,
         400..=499 => ErrorCode::RequestMalformed,
@@ -398,6 +413,9 @@ pub enum UserAction {
     /// A push notification arrived while the app was in the foreground: an in-app toast, never a
     /// system banner over the app (REQ-PSH-013).
     NotificationReceived,
+    /// The API recommends a newer version (`X-Tran-Update: recommended`): a prompt offering
+    /// `common.update` and `common.notNow`, shown once per recommended version (REQ-VER-010).
+    UpdateRecommended,
 }
 
 /// How a [`UserAction`] is presented, and the locale key of its headline.
@@ -408,12 +426,13 @@ pub struct ActionSpec {
 }
 
 impl UserAction {
-    pub const ALL: [Self; 5] = [
+    pub const ALL: [Self; 6] = [
         Self::SignOut,
         Self::ServerCheckSucceeded,
         Self::DeleteAccount,
         Self::AccountDeleted,
         Self::NotificationReceived,
+        Self::UpdateRecommended,
     ];
 
     pub fn as_str(self) -> &'static str {
@@ -423,6 +442,7 @@ impl UserAction {
             Self::DeleteAccount => "delete_account",
             Self::AccountDeleted => "account_deleted",
             Self::NotificationReceived => "notification_received",
+            Self::UpdateRecommended => "update_recommended",
         }
     }
 
@@ -458,6 +478,11 @@ impl UserAction {
                     duration: ToastDuration::Medium,
                 },
                 message_key: "eligibility.notify.received",
+            },
+            // A dialog the person may dismiss with "Not now": not destructive, never blocking twice.
+            Self::UpdateRecommended => ActionSpec {
+                presentation: Presentation::Dialog { destructive: false },
+                message_key: "shell.updateRecommended",
             },
         }
     }

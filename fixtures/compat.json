@@ -1,0 +1,376 @@
+{
+  "$comment": "API versioning and client compatibility (spec 028, ADR-0047) shared by Rust (crates/rust-core/tests/compat_fixtures.rs), UniFFI (crates/tran-uniffi/tests/compat_fixtures.rs), TypeScript (packages/core-ts/tests/compat.test.ts, packages/api/tests/compat.test.ts), iOS (CompatTests.swift) and Android (CompatTest.kt). Change a rule here first (red), then crates/rust-core/src/compat.rs, then `pnpm tokens:sync`. `clients`: how `X-Tran-Client` parses (`header: null` is no header; `version: null` is no version). `versions`: `order` is -1, 0 or 1 for a below, equal or above b; a part that is not a number counts as 0 (only thresholds are compared, and they are validated first). `standings`: `minimum`/`recommended` are the client's platform's thresholds (`null`: none). `updatePrompts`: whether the dismissible prompt shows. `wireEnums`: the fallback of every enum a client decodes; `wireEnumCases` pins decoding. `responsesFromTheFuture`: one answer per route as a newer server may send it (extra fields at every level, an unknown enum value where the route has one); every platform must decode each with its own schemas and read `expect` (dotted paths; `user.role` is the `role` inside `user`, `components.0` the first item). Routes that answer `204` have no body to decode and are not listed.",
+  "basePath": "/api/v1",
+  "healthPath": "/api/health",
+  "headers": {
+    "client": "X-Tran-Client",
+    "update": "X-Tran-Update",
+    "updateRecommended": "recommended",
+    "recommendedVersion": "X-Tran-Recommended-Version"
+  },
+  "clients": [
+    { "name": "iOS", "header": "ios/1.4.0", "platform": "ios", "version": "1.4.0" },
+    { "name": "Android", "header": "android/1.4.0", "platform": "android", "version": "1.4.0" },
+    { "name": "web", "header": "web/1.4.0", "platform": "web", "version": "1.4.0" },
+    { "name": "two parts", "header": "web/2.0", "platform": "web", "version": "2.0" },
+    { "name": "four parts", "header": "ios/1.4.0.7", "platform": "ios", "version": "1.4.0.7" },
+    {
+      "name": "pre-release",
+      "header": "ios/1.4.0-beta.1",
+      "platform": "ios",
+      "version": "1.4.0-beta.1"
+    },
+    {
+      "name": "build metadata",
+      "header": "android/1.4.0+42",
+      "platform": "android",
+      "version": "1.4.0+42"
+    },
+    {
+      "name": "surrounding spaces",
+      "header": "  web/1.4.0 ",
+      "platform": "web",
+      "version": "1.4.0"
+    },
+    { "name": "no header", "header": null, "platform": "unknown", "version": null },
+    { "name": "empty", "header": "", "platform": "unknown", "version": null },
+    { "name": "no slash", "header": "ios", "platform": "unknown", "version": null },
+    { "name": "no version", "header": "ios/", "platform": "unknown", "version": null },
+    { "name": "unknown platform", "header": "watch/1.0.0", "platform": "unknown", "version": null },
+    {
+      "name": "platform in capitals",
+      "header": "IOS/1.4.0",
+      "platform": "unknown",
+      "version": null
+    },
+    {
+      "name": "the word unknown",
+      "header": "unknown/1.0.0",
+      "platform": "unknown",
+      "version": null
+    },
+    { "name": "not a number", "header": "web/one", "platform": "unknown", "version": null },
+    { "name": "empty part", "header": "web/1..0", "platform": "unknown", "version": null },
+    { "name": "five parts", "header": "web/1.2.3.4.5", "platform": "unknown", "version": null },
+    {
+      "name": "a part too long",
+      "header": "web/1234567890.0",
+      "platform": "unknown",
+      "version": null
+    },
+    { "name": "empty suffix", "header": "web/1.0.0-", "platform": "unknown", "version": null },
+    { "name": "odd suffix", "header": "web/1.0.0-beta!", "platform": "unknown", "version": null },
+    { "name": "a space inside", "header": "web/1.0 .0", "platform": "unknown", "version": null },
+    { "name": "a second slash", "header": "web/1.0.0/x", "platform": "unknown", "version": null },
+    {
+      "name": "longer than 32 characters",
+      "header": "web/1.0.0-aaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "platform": "unknown",
+      "version": null
+    },
+    {
+      "name": "exactly 32 characters",
+      "header": "web/1.0.0-aaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "platform": "web",
+      "version": "1.0.0-aaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "name": "a log injection",
+      "header": "web/1.0.0\nlevel=error",
+      "platform": "unknown",
+      "version": null
+    }
+  ],
+  "formatted": [
+    { "platform": "ios", "version": "1.4.0", "header": "ios/1.4.0" },
+    { "platform": "android", "version": "2.0.0", "header": "android/2.0.0" },
+    { "platform": "web", "version": "0.1.0", "header": "web/0.1.0" }
+  ],
+  "versions": [
+    { "a": "1.4.0", "b": "1.4.0", "order": 0 },
+    { "a": "1.4", "b": "1.4.0", "order": 0 },
+    { "a": "1", "b": "1.0.0.0", "order": 0 },
+    { "a": "1.4.0", "b": "1.5.0", "order": -1 },
+    { "a": "1.10.0", "b": "1.9.0", "order": 1 },
+    { "a": "2.0.0", "b": "1.99.99", "order": 1 },
+    { "a": "1.4.1", "b": "1.4", "order": 1 },
+    { "a": "1.4.0-beta.1", "b": "1.4.0", "order": 0 },
+    { "a": "1.4.0+42", "b": "1.4.0", "order": 0 },
+    { "a": "1.3.9-rc.1", "b": "1.4.0", "order": -1 },
+    { "a": "0.1.0", "b": "0.0.9", "order": 1 },
+    { "a": "01.2", "b": "1.2", "order": 0 },
+    { "a": "1.x", "b": "1.0", "order": 0 }
+  ],
+  "standings": [
+    {
+      "name": "no thresholds",
+      "client": "ios/1.0.0",
+      "minimum": null,
+      "recommended": null,
+      "standing": "supported"
+    },
+    {
+      "name": "at the minimum",
+      "client": "ios/1.2.0",
+      "minimum": "1.2.0",
+      "recommended": null,
+      "standing": "supported"
+    },
+    {
+      "name": "below the minimum",
+      "client": "ios/1.1.9",
+      "minimum": "1.2.0",
+      "recommended": null,
+      "standing": "upgrade_required"
+    },
+    {
+      "name": "below the minimum and the recommended",
+      "client": "android/1.0.0",
+      "minimum": "1.2.0",
+      "recommended": "1.5.0",
+      "standing": "upgrade_required"
+    },
+    {
+      "name": "between the minimum and the recommended",
+      "client": "android/1.3.0",
+      "minimum": "1.2.0",
+      "recommended": "1.5.0",
+      "standing": "update_recommended"
+    },
+    {
+      "name": "below the recommended only",
+      "client": "web/1.4.9",
+      "minimum": null,
+      "recommended": "1.5.0",
+      "standing": "update_recommended"
+    },
+    {
+      "name": "at the recommended",
+      "client": "web/1.5.0",
+      "minimum": "1.2.0",
+      "recommended": "1.5.0",
+      "standing": "supported"
+    },
+    {
+      "name": "above both",
+      "client": "web/2.0.0",
+      "minimum": "1.2.0",
+      "recommended": "1.5.0",
+      "standing": "supported"
+    },
+    {
+      "name": "a pre-release of the minimum counts as the minimum",
+      "client": "ios/1.2.0-beta.1",
+      "minimum": "1.2.0",
+      "recommended": null,
+      "standing": "supported"
+    },
+    {
+      "name": "an unknown client is served",
+      "client": null,
+      "minimum": "9.0.0",
+      "recommended": "9.0.0",
+      "standing": "supported"
+    },
+    {
+      "name": "a malformed header is served",
+      "client": "ios/latest",
+      "minimum": "9.0.0",
+      "recommended": null,
+      "standing": "supported"
+    }
+  ],
+  "updatePrompts": [
+    {
+      "name": "recommended and never dismissed",
+      "standing": "update_recommended",
+      "recommendedVersion": "1.5.0",
+      "dismissedVersion": null,
+      "show": true
+    },
+    {
+      "name": "dismissed for this recommended version",
+      "standing": "update_recommended",
+      "recommendedVersion": "1.5.0",
+      "dismissedVersion": "1.5.0",
+      "show": false
+    },
+    {
+      "name": "dismissed for an older recommended version",
+      "standing": "update_recommended",
+      "recommendedVersion": "1.6.0",
+      "dismissedVersion": "1.5.0",
+      "show": true
+    },
+    {
+      "name": "dismissed for the same version spelled shorter",
+      "standing": "update_recommended",
+      "recommendedVersion": "1.5",
+      "dismissedVersion": "1.5.0",
+      "show": false
+    },
+    {
+      "name": "recommended without a version, never dismissed",
+      "standing": "update_recommended",
+      "recommendedVersion": null,
+      "dismissedVersion": null,
+      "show": true
+    },
+    {
+      "name": "recommended without a version, dismissed before",
+      "standing": "update_recommended",
+      "recommendedVersion": null,
+      "dismissedVersion": "1.5.0",
+      "show": false
+    },
+    {
+      "name": "supported",
+      "standing": "supported",
+      "recommendedVersion": null,
+      "dismissedVersion": null,
+      "show": false
+    },
+    {
+      "name": "required: the blocking screen, never the prompt",
+      "standing": "upgrade_required",
+      "recommendedVersion": "1.5.0",
+      "dismissedVersion": null,
+      "show": false
+    }
+  ],
+  "wireEnums": [
+    {
+      "name": "user_role",
+      "field": "role",
+      "values": ["citizen_voter", "election_auditor"],
+      "fallback": "citizen_voter"
+    },
+    {
+      "name": "country_source",
+      "field": "country_source",
+      "values": ["x-debug-country", "loopback-default", "private-range-stub", "default"],
+      "fallback": "default"
+    }
+  ],
+  "wireEnumCases": [
+    { "enum": "user_role", "raw": "election_auditor", "decoded": "election_auditor" },
+    { "enum": "user_role", "raw": "citizen_voter", "decoded": "citizen_voter" },
+    { "enum": "user_role", "raw": "returning_officer", "decoded": "citizen_voter" },
+    { "enum": "user_role", "raw": "", "decoded": "citizen_voter" },
+    { "enum": "user_role", "raw": "Election_Auditor", "decoded": "citizen_voter" },
+    { "enum": "country_source", "raw": "loopback-default", "decoded": "loopback-default" },
+    { "enum": "country_source", "raw": "gps", "decoded": "default" }
+  ],
+  "responsesFromTheFuture": [
+    {
+      "route": "GET /api/health",
+      "status": 200,
+      "body": {
+        "report_id": "6b1f3d7e-2c4a-4f8e-9b0d-1a2b3c4d5e6f",
+        "timestamp": "2027-01-01T00:00:00Z",
+        "overall_status": "HEALTHY",
+        "region": "eu-west",
+        "components": [
+          {
+            "layer": "rustcore",
+            "name": "rust-core",
+            "version": "9.0.0",
+            "healthy": true,
+            "uptime_seconds": 42,
+            "memory_bytes": 1024
+          }
+        ]
+      },
+      "expect": { "overall_status": "HEALTHY", "components.0.name": "rust-core" }
+    },
+    {
+      "route": "GET /api/v1/tran/info",
+      "status": 200,
+      "body": {
+        "stack": "TRAN",
+        "description": "Voting Eligibility demo",
+        "demo": "voting-eligibility",
+        "layers": { "T": "t", "R": "r", "A": "a", "N": "n", "X": "a layer from the future" },
+        "version": "9.0.0",
+        "build": { "commit": "abc123" }
+      },
+      "expect": { "stack": "TRAN", "version": "9.0.0", "layers.N": "n" }
+    },
+    {
+      "route": "GET /api/v1/vote/countries",
+      "status": 200,
+      "body": {
+        "countries": [{ "country_code": "NP", "minimum_age": 18, "name": "Nepal" }],
+        "total": 1
+      },
+      "expect": { "countries.0.country_code": "NP", "countries.0.minimum_age": 18 }
+    },
+    {
+      "route": "GET /api/v1/vote/countries/{code}",
+      "status": 200,
+      "body": { "country_code": "BR", "minimum_age": 16, "compulsory_from": 18 },
+      "expect": { "country_code": "BR", "minimum_age": 16 }
+    },
+    {
+      "route": "POST /api/v1/vote/eligibility",
+      "status": 200,
+      "body": {
+        "eligibility_id": "550e8400-e29b-41d4-a716-446655440000",
+        "eligible": true,
+        "age": 20,
+        "minimum_age": 18,
+        "country_code": "NP",
+        "country_source": "gps",
+        "client_ip": "127.0.0.1",
+        "reason": "Meets minimum voting age for NP (18).",
+        "evaluated_at": "2027-01-01T00:00:00Z",
+        "explanation": { "rule": "age", "source": "statute" }
+      },
+      "expect": { "eligible": true, "minimum_age": 18, "country_source": "default" }
+    },
+    {
+      "route": "POST /api/v1/auth/session",
+      "status": 201,
+      "body": {
+        "access_token": "q3JxAccessTokenFromTheFutureXXXXXXXXXXXXXXX",
+        "token_type": "Bearer",
+        "expires_in": 900,
+        "scope": "vote",
+        "user": { "user_id": "voter-001", "role": "returning_officer", "display_name": "Voter" }
+      },
+      "expect": { "expires_in": 900, "user.user_id": "voter-001", "user.role": "citizen_voter" }
+    },
+    {
+      "route": "POST /api/v1/auth/refresh",
+      "status": 200,
+      "body": {
+        "access_token": "q3JxAccessTokenFromTheFutureXXXXXXXXXXXXXXX",
+        "token_type": "Bearer",
+        "expires_in": 900,
+        "refresh_token": "Vb1nRefreshTokenFromTheFutureXXXXXXXXXXXXX",
+        "rotated_at": "2027-01-01T00:00:00Z",
+        "user": { "user_id": "auditor-001", "role": "election_auditor", "team": "north" }
+      },
+      "expect": { "user.user_id": "auditor-001", "user.role": "election_auditor" }
+    },
+    {
+      "route": "GET /api/v1/auth/session",
+      "status": 200,
+      "body": { "user_id": "voter-001", "role": "observer", "since": "2027-01-01T00:00:00Z" },
+      "expect": { "user_id": "voter-001", "role": "citizen_voter" }
+    },
+    {
+      "route": "error envelope",
+      "status": 409,
+      "body": {
+        "success": false,
+        "error": "A rule from the future",
+        "code": "future.code",
+        "retryable": false,
+        "request_id": "req-future-1",
+        "details": { "field": "age" }
+      },
+      "expect": { "code": "request.conflict", "request_id": "req-future-1" }
+    }
+  ]
+}

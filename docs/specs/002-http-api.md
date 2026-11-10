@@ -11,7 +11,7 @@ Route handlers MUST only translate HTTP to a call on `rust_core::TranEngine` and
 
 ### REQ-API-002 [verified] Eligibility endpoint
 
-`POST /api/vote/eligibility` with `{ "age": n, "birthdate"?: "YYYY-MM-DD" }` MUST return `200` with
+`POST /api/v1/vote/eligibility` with `{ "age": n, "birthdate"?: "YYYY-MM-DD" }` MUST return `200` with
 `eligibility_id` (UUID), `eligible`, `age`, `minimum_age`, `country_code`, `country_source`, `client_ip`, `reason`,
 `evaluated_at`, computed by the rules in spec 001.
 **Verified by:** `apps/api/tests/api_test.rs` (`eligibility_*`).
@@ -58,22 +58,22 @@ MUST be read in one place and be injectable for tests.
 
 ### REQ-API-009 [verified] List supported countries
 
-`GET /api/vote/countries` MUST return `200` with `{ "countries": [{ "country_code", "minimum_age" }] }` sorted by code,
+`GET /api/v1/vote/countries` MUST return `200` with `{ "countries": [{ "country_code", "minimum_age" }] }` sorted by code,
 taken from REQ-RULE-009.
 **Verified by:** `api_test.rs`.
 
 ### REQ-API-010 [verified] Single country
 
-`GET /api/vote/countries/{code}` MUST return `200` `{ "country_code", "minimum_age" }` for a supported country
+`GET /api/v1/vote/countries/{code}` MUST return `200` `{ "country_code", "minimum_age" }` for a supported country
 (case-insensitive), `400` for a malformed code, and `404` for a well-formed code that is not supported. (The eligibility
 endpoint still falls back to 18 for unsupported codes, REQ-RULE-002; pages need a real "not found".)
 **Verified by:** `api_test.rs`.
 
-### REQ-API-011 [planned] Contract snapshots
+### REQ-API-011 [verified] Contract snapshots
 
 Real responses of the router MUST be validated against the TypeScript Zod schemas. A Rust test writes normalised
-response snapshots to `fixtures/contract/`; CI fails if regenerating them changes anything; a TypeScript test parses
-every snapshot with the schemas.
+response snapshots to `fixtures/contract/v1/` (spec 028, REQ-VER-002); CI fails if regenerating them changes anything;
+a TypeScript test parses every snapshot with the schemas.
 **Verified by:** `apps/api/tests/contract_test.rs`, `packages/api/tests/contract-snapshots.test.ts`.
 
 ### REQ-API-012 [verified] Health reports only what the server can observe

@@ -101,11 +101,11 @@ impl Api {
 
     async fn sign_in(&self, role: &str, transport: &str) -> Reply {
         let body = json!({ "role": role, "transport": transport }).to_string();
-        self.send(post("/api/auth/session", &body, &[])).await
+        self.send(post("/api/v1/auth/session", &body, &[])).await
     }
 
     async fn whoami(&self, authorization: Option<&str>) -> Reply {
-        let mut builder = Request::builder().uri("/api/auth/session");
+        let mut builder = Request::builder().uri("/api/v1/auth/session");
         if let Some(value) = authorization {
             builder = builder.header(header::AUTHORIZATION, value);
         }
@@ -114,12 +114,12 @@ impl Api {
 
     async fn refresh_by_body(&self, token: &str) -> Reply {
         let body = json!({ "refresh_token": token }).to_string();
-        self.send(post("/api/auth/refresh", &body, &[])).await
+        self.send(post("/api/v1/auth/refresh", &body, &[])).await
     }
 
     async fn refresh_by_cookie(&self, token: &str) -> Reply {
         let cookie = format!("theme=dark; tran_refresh={token}");
-        self.send(post("/api/auth/refresh", "", &[("cookie", &cookie)]))
+        self.send(post("/api/v1/auth/refresh", "", &[("cookie", &cookie)]))
             .await
     }
 }
@@ -154,7 +154,7 @@ fn assert_cleared(reply: &Reply) {
     let cookie = reply.header(header::SET_COOKIE).expect("Set-Cookie");
     assert_eq!(
         cookie,
-        "tran_refresh=; HttpOnly; SameSite=Strict; Path=/api/auth; Max-Age=0"
+        "tran_refresh=; HttpOnly; SameSite=Strict; Path=/api/v1/auth; Max-Age=0"
     );
 }
 
@@ -198,7 +198,7 @@ async fn sign_in_rejects_an_unknown_role_or_transport_with_the_envelope() {
         r#"{"role": "citizen_voter"}"#,
         "",
     ] {
-        let reply = api.send(post("/api/auth/session", body, &[])).await;
+        let reply = api.send(post("/api/v1/auth/session", body, &[])).await;
         assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{body}");
         assert_eq!(reply.json["code"], "request.malformed", "{body}");
         assert!(reply.header(header::SET_COOKIE).is_none(), "{body}");
@@ -216,7 +216,9 @@ async fn cookie_transport_sends_the_refresh_token_only_as_an_http_only_cookie() 
     assert_opaque(token);
     assert_eq!(
         reply.header(header::SET_COOKIE).unwrap(),
-        format!("tran_refresh={token}; HttpOnly; SameSite=Strict; Path=/api/auth; Max-Age=2592000")
+        format!(
+            "tran_refresh={token}; HttpOnly; SameSite=Strict; Path=/api/v1/auth; Max-Age=2592000"
+        )
     );
     assert!(reply.json.get("refresh_token").is_none(), "{}", reply.json);
     assert!(!reply.json.to_string().contains(token));
@@ -292,7 +294,7 @@ async fn bearer_gives_one_answer_to_every_bad_token() {
     let access = signed_in.str("access_token").to_string();
     let revoked = api.sign_in("citizen_voter", "body").await;
     let body = json!({ "refresh_token": revoked.str("refresh_token") }).to_string();
-    api.send(post("/api/auth/sign-out", &body, &[])).await;
+    api.send(post("/api/v1/auth/sign-out", &body, &[])).await;
 
     let cases: Vec<(&str, Option<String>)> = vec![
         ("missing header", None),
@@ -324,7 +326,7 @@ async fn bearer_gives_one_answer_to_every_bad_token() {
         "{bodies:?}"
     );
 
-    let mut request = Request::builder().uri("/api/auth/session");
+    let mut request = Request::builder().uri("/api/v1/auth/session");
     request = request.header(
         header::AUTHORIZATION,
         HeaderValue::from_bytes(b"Bearer \xff\xfe").unwrap(),
@@ -384,7 +386,7 @@ async fn refresh_without_a_token_answers_401_and_clears_the_cookie() {
             vec![("cookie", "theme=dark; tran_refreshx=1")],
         ),
     ] {
-        let reply = api.send(post("/api/auth/refresh", body, &headers)).await;
+        let reply = api.send(post("/api/v1/auth/refresh", body, &headers)).await;
         assert_session_expired(&reply, label);
         assert_cleared(&reply);
     }
@@ -453,7 +455,7 @@ async fn sign_out_by_cookie_revokes_the_session_and_clears_the_cookie() {
     let cookie = format!("tran_refresh={}", signed_in.cookie_token().unwrap());
 
     let reply = api
-        .send(post("/api/auth/sign-out", "", &[("cookie", &cookie)]))
+        .send(post("/api/v1/auth/sign-out", "", &[("cookie", &cookie)]))
         .await;
     assert_eq!(reply.status, StatusCode::NO_CONTENT);
     assert_cleared(&reply);
@@ -475,7 +477,7 @@ async fn sign_out_by_body_revokes_the_session_without_a_cookie() {
     let signed_in = api.sign_in("election_auditor", "body").await;
     let body = json!({ "refresh_token": signed_in.str("refresh_token") }).to_string();
 
-    let reply = api.send(post("/api/auth/sign-out", &body, &[])).await;
+    let reply = api.send(post("/api/v1/auth/sign-out", &body, &[])).await;
     assert_eq!(reply.status, StatusCode::NO_CONTENT);
     assert!(reply.header(header::SET_COOKIE).is_none());
     assert_session_expired(
@@ -493,7 +495,7 @@ async fn sign_out_answers_204_for_a_missing_or_unknown_token_and_can_repeat() {
         r#"{"refresh_token": "unknown"}"#,
         r#"{"refresh_token": "unknown"}"#,
     ] {
-        let reply = api.send(post("/api/auth/sign-out", body, &[])).await;
+        let reply = api.send(post("/api/v1/auth/sign-out", body, &[])).await;
         assert_eq!(reply.status, StatusCode::NO_CONTENT, "{body}");
     }
 }
@@ -506,11 +508,11 @@ async fn foreign_origin_is_refused_on_every_auth_endpoint() {
     let origin = [("origin", FOREIGN_ORIGIN)];
     for (uri, body) in [
         (
-            "/api/auth/session",
+            "/api/v1/auth/session",
             r#"{"role": "citizen_voter", "transport": "cookie"}"#,
         ),
-        ("/api/auth/refresh", ""),
-        ("/api/auth/sign-out", ""),
+        ("/api/v1/auth/refresh", ""),
+        ("/api/v1/auth/sign-out", ""),
     ] {
         let reply = api.send(post(uri, body, &origin)).await;
         assert_eq!(reply.status, StatusCode::FORBIDDEN, "{uri}");
@@ -529,7 +531,7 @@ async fn foreign_origin_changes_nothing() {
 
     let refused = api
         .send(post(
-            "/api/auth/sign-out",
+            "/api/v1/auth/sign-out",
             "",
             &[("cookie", &cookie), ("origin", FOREIGN_ORIGIN)],
         ))
@@ -546,7 +548,11 @@ async fn foreign_origin_check_spares_allowed_origins_and_other_routes() {
     let api = Api::new();
     let body = r#"{"role": "citizen_voter", "transport": "cookie"}"#;
     let reply = api
-        .send(post("/api/auth/session", body, &[("origin", LOCAL_ORIGIN)]))
+        .send(post(
+            "/api/v1/auth/session",
+            body,
+            &[("origin", LOCAL_ORIGIN)],
+        ))
         .await;
     assert_eq!(reply.status, StatusCode::CREATED);
     assert_eq!(

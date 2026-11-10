@@ -18,5 +18,7 @@
     "offline": "API offline",
     "checking": "Checking API…",
     "label": "API status"
-  }
+  },
+  "updateRecommended": "A new version is available",
+  "updateRecommendedBody": "Update when it suits you to get the latest improvements."
 }

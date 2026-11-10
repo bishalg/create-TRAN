@@ -71,7 +71,7 @@ export type SessionKind = 'none' | 'unauthenticated' | 'citizen_voter' | 'electi
 export interface MessageArg {{\n  readonly name: string;\n  readonly value: string;\n}}\n\n\
 export interface ExpectedMessage {{\n  readonly id: ElementId;\n  readonly key: TranStringKey;\n  readonly args: readonly MessageArg[];\n}}\n\n\
 /** The closed verb set (ADR-0038): {given}. */\n\
-export type Given =\n  | {{ readonly session: SessionKind }}\n  | 'api_reachable'\n  | 'api_unreachable'\n  | {{ readonly locale: string }}\n  | {{ readonly theme: string }}\n  | 'largest_text_scale'\n  | 'reduced_motion'\n  | {{ readonly permission: {{ readonly id: PermissionId; readonly status: PermissionStatus }} }};\n\n\
+export type Given =\n  | {{ readonly session: SessionKind }}\n  | 'api_reachable'\n  | 'api_unreachable'\n  | {{ readonly locale: string }}\n  | {{ readonly theme: string }}\n  | 'largest_text_scale'\n  | 'reduced_motion'\n  | {{ readonly permission: {{ readonly id: PermissionId; readonly status: PermissionStatus }} }}\n  | 'upgrade_required';\n\n\
 /** {when}. `type` replaces the field's content. */\n\
 export type When =\n  | {{ readonly tap: ElementId }}\n  | {{ readonly type: {{ readonly id: ElementId; readonly text: string }} }}\n  | {{ readonly select: {{ readonly id: ElementId; readonly option: string }} }}\n  | {{ readonly press_key: {{ readonly id: ElementId; readonly key: string }} }}\n  | 'go_offline'\n  | 'go_online';\n\n\
 /** {then}. */\n\

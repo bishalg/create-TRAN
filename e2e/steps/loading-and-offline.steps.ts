@@ -3,7 +3,7 @@ import { createBdd } from 'playwright-bdd';
 
 const { Given, When, Then } = createBdd();
 
-const ELIGIBILITY = 'http://127.0.0.1:3001/api/vote/eligibility';
+const ELIGIBILITY = 'http://127.0.0.1:3001/api/v1/vote/eligibility';
 
 /** CORS preflights pass straight through; only the real request is staged. */
 async function stage(page: Page, handle: (route: Route) => Promise<void>) {

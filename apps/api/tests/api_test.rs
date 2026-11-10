@@ -42,11 +42,11 @@ fn get(uri: &str) -> Request<Body> {
     Request::builder().uri(uri).body(Body::empty()).unwrap()
 }
 
-/// POST /api/vote/eligibility with optional extra headers.
+/// POST /api/v1/vote/eligibility with optional extra headers.
 fn eligibility(body: &str, headers: &[(&str, &str)]) -> Request<Body> {
     let mut builder = Request::builder()
         .method(Method::POST)
-        .uri("/api/vote/eligibility")
+        .uri("/api/v1/vote/eligibility")
         .header(header::CONTENT_TYPE, "application/json");
     for (name, value) in headers {
         builder = builder.header(*name, *value);
@@ -93,18 +93,18 @@ async fn health_reports_core_and_api_with_real_versions() {
     assert_eq!(components[1]["version"], env!("CARGO_PKG_VERSION"));
 }
 
-// ── GET /api/tran/info ─────────────────────────────────────────────────────
+// ── GET /api/v1/tran/info ─────────────────────────────────────────────────────
 
 #[tokio::test]
 async fn info_identifies_the_stack_and_demo() {
-    let reply = send(get("/api/tran/info")).await;
+    let reply = send(get("/api/v1/tran/info")).await;
 
     assert_eq!(reply.status, StatusCode::OK);
     assert_eq!(reply.json["stack"], "TRAN");
     assert_eq!(reply.json["demo"], "voting-eligibility");
 }
 
-// ── POST /api/vote/eligibility: happy paths ────────────────────────────────
+// ── POST /api/v1/vote/eligibility: happy paths ────────────────────────────────
 
 #[tokio::test]
 async fn eligibility_adult_with_debug_country_is_eligible() {
@@ -163,7 +163,7 @@ async fn eligibility_response_carries_a_uuid_and_timestamp() {
     assert!(reply.json["evaluated_at"].as_str().unwrap().contains('T'));
 }
 
-// ── POST /api/vote/eligibility: client IP + geo resolution ─────────────────
+// ── POST /api/v1/vote/eligibility: client IP + geo resolution ─────────────────
 
 #[tokio::test]
 async fn eligibility_without_headers_defaults_to_loopback_us() {
@@ -231,7 +231,7 @@ async fn eligibility_debug_country_is_honoured_in_test_env() {
     assert_eq!(reply.json["country_source"], "x-debug-country");
 }
 
-// ── POST /api/vote/eligibility: rejected input (uniform error envelope) ────
+// ── POST /api/v1/vote/eligibility: rejected input (uniform error envelope) ────
 
 #[tokio::test]
 async fn eligibility_age_above_maximum_is_a_400_with_envelope() {
@@ -317,7 +317,7 @@ async fn eligibility_impossible_calendar_date_is_a_400_with_envelope() {
 async fn eligibility_without_json_content_type_is_a_415_with_envelope() {
     let request = Request::builder()
         .method(Method::POST)
-        .uri("/api/vote/eligibility")
+        .uri("/api/v1/vote/eligibility")
         .body(Body::from(r#"{"age": 21}"#))
         .unwrap();
     let reply = send(request).await;
@@ -341,7 +341,7 @@ async fn unknown_route_is_404_with_envelope() {
 
 #[tokio::test]
 async fn eligibility_rejects_get_with_405_envelope() {
-    let reply = send(get("/api/vote/eligibility")).await;
+    let reply = send(get("/api/v1/vote/eligibility")).await;
 
     assert_error_envelope(
         &reply,
@@ -391,7 +391,7 @@ async fn request_id_replaces_an_unsafe_incoming_id() {
 async fn cors_preflight_allows_the_debug_country_header() {
     let request = Request::builder()
         .method(Method::OPTIONS)
-        .uri("/api/vote/eligibility")
+        .uri("/api/v1/vote/eligibility")
         .header(header::ORIGIN, "http://localhost:3000")
         .header(header::ACCESS_CONTROL_REQUEST_METHOD, "POST")
         .header(
@@ -418,7 +418,7 @@ async fn cors_preflight_allows_the_debug_country_header() {
 async fn preflight(state: AppState, origin: &str) -> axum::http::HeaderMap {
     let request = Request::builder()
         .method(Method::OPTIONS)
-        .uri("/api/auth/session")
+        .uri("/api/v1/auth/session")
         .header(header::ORIGIN, origin)
         .header(header::ACCESS_CONTROL_REQUEST_METHOD, "POST")
         .header(
@@ -494,7 +494,7 @@ async fn cors_origins_come_from_configuration_outside_development() {
 
 #[tokio::test]
 async fn countries_list_returns_sorted_supported_countries() {
-    let reply = send(get("/api/vote/countries")).await;
+    let reply = send(get("/api/v1/vote/countries")).await;
 
     assert_eq!(reply.status, StatusCode::OK);
     let list = reply.json["countries"].as_array().expect("countries array");
@@ -508,12 +508,12 @@ async fn countries_list_returns_sorted_supported_countries() {
 
 #[tokio::test]
 async fn countries_single_returns_country_for_supported_code_case_insensitive() {
-    let reply_lower = send(get("/api/vote/countries/br")).await;
+    let reply_lower = send(get("/api/v1/vote/countries/br")).await;
     assert_eq!(reply_lower.status, StatusCode::OK);
     assert_eq!(reply_lower.json["country_code"], "BR");
     assert_eq!(reply_lower.json["minimum_age"], 16);
 
-    let reply_upper = send(get("/api/vote/countries/BR")).await;
+    let reply_upper = send(get("/api/v1/vote/countries/BR")).await;
     assert_eq!(reply_upper.status, StatusCode::OK);
     assert_eq!(reply_upper.json["country_code"], "BR");
     assert_eq!(reply_upper.json["minimum_age"], 16);
@@ -521,7 +521,7 @@ async fn countries_single_returns_country_for_supported_code_case_insensitive() 
 
 #[tokio::test]
 async fn countries_single_returns_400_for_malformed_code() {
-    let reply = send(get("/api/vote/countries/USA")).await;
+    let reply = send(get("/api/v1/vote/countries/USA")).await;
     assert_error_envelope(
         &reply,
         StatusCode::BAD_REQUEST,
@@ -529,7 +529,7 @@ async fn countries_single_returns_400_for_malformed_code() {
         "two ASCII letters",
     );
 
-    let reply_digit = send(get("/api/vote/countries/12")).await;
+    let reply_digit = send(get("/api/v1/vote/countries/12")).await;
     assert_error_envelope(
         &reply_digit,
         StatusCode::BAD_REQUEST,
@@ -540,7 +540,7 @@ async fn countries_single_returns_400_for_malformed_code() {
 
 #[tokio::test]
 async fn countries_single_returns_404_for_unsupported_well_formed_code() {
-    let reply = send(get("/api/vote/countries/XX")).await;
+    let reply = send(get("/api/v1/vote/countries/XX")).await;
     assert_error_envelope(
         &reply,
         StatusCode::NOT_FOUND,

@@ -105,7 +105,7 @@ describe('TranApiClient.checkVoteEligibility', () => {
     });
 
     const [url, init] = fetchFn.mock.calls[0];
-    expect(url).toBe('http://api.test/api/vote/eligibility');
+    expect(url).toBe('http://api.test/api/v1/vote/eligibility');
     expect(init.method).toBe('POST');
     expect(JSON.parse(init.body)).toEqual({ age: 21 });
     expect(init.headers['X-Debug-Country']).toBe('US');
@@ -181,7 +181,7 @@ describe('TranApiClient.withHeaders', () => {
 
     expect(derived).not.toBe(base);
     await derived.getInfo();
-    expect(fetchFn.mock.calls[0][0]).toBe('http://api.test/api/tran/info');
+    expect(fetchFn.mock.calls[0][0]).toBe('http://api.test/api/v1/tran/info');
     expect(fetchFn.mock.calls[0][1].headers).toMatchObject({ 'X-A': '1', 'X-B': '2' });
 
     await base.getInfo();
@@ -199,7 +199,7 @@ describe('TranApiClient defaults', () => {
   });
 });
 
-// Verifies: REQ-SEC-018 (only `/api/auth/*` carries credentials)
+// Verifies: REQ-SEC-018 (only `/api/v1/auth/*` carries credentials)
 describe('credentials', () => {
   it('omits credentials on every TranApiClient call', async () => {
     const fetchFn = vi.fn().mockResolvedValue(jsonResponse(validEligibility));
@@ -242,6 +242,6 @@ describe('createSessionClient', () => {
     vi.stubGlobal('fetch', fetchFn);
     await expect(createSessionClient().signOut()).resolves.toBeNull();
     vi.unstubAllGlobals();
-    expect(fetchFn.mock.calls[0][0]).toBe('http://localhost:3001/api/auth/sign-out');
+    expect(fetchFn.mock.calls[0][0]).toBe('http://localhost:3001/api/v1/auth/sign-out');
   });
 });

@@ -418,6 +418,50 @@
           }
         }
       }
+    },
+    "errors.updateRequired": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Update required"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अपडेट ज़रूरी है"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अपडेट आवश्यक छ"
+          }
+        }
+      }
+    },
+    "errors.updateRequiredBody": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This version of the app is no longer supported. Update it to keep going; you stay signed in."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ऐप का यह संस्करण अब समर्थित नहीं है। जारी रखने के लिए इसे अपडेट करें; आप साइन इन रहेंगे।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "एपको यो संस्करण अब समर्थित छैन। जारी राख्न यसलाई अपडेट गर्नुहोस्; तपाईं साइन इन नै रहनुहुन्छ।"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

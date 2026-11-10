@@ -18,7 +18,7 @@ and Google Play reject apps with accounts and no deletion, and privacy law requi
 ## The flow
 
 ```
-tap "Delete account" → confirmation dialog → DELETE /api/account (bearer)
+tap "Delete account" → confirmation dialog → DELETE /api/v1/account (bearer)
   204      → clear vault and token → Auth Welcome → success toast
   failure  → keep everything → normal error feedback
   401      → the usual refresh-and-repeat (spec 022)

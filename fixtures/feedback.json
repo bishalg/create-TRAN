@@ -474,6 +474,16 @@
         "kind": "screen"
       },
       "messageKey": "errors.renderFailed"
+    },
+    {
+      "code": "client.upgrade_required",
+      "httpStatus": 426,
+      "retryable": false,
+      "logLevel": "info",
+      "presentation": {
+        "kind": "screen"
+      },
+      "messageKey": "errors.updateRequired"
     }
   ],
   "statusFallback": [
@@ -512,6 +522,10 @@
     {
       "status": 418,
       "code": "request.malformed"
+    },
+    {
+      "status": 426,
+      "code": "client.upgrade_required"
     },
     {
       "status": 429,
@@ -581,6 +595,14 @@
         "duration": "medium"
       },
       "messageKey": "eligibility.notify.received"
+    },
+    {
+      "action": "update_recommended",
+      "presentation": {
+        "kind": "dialog",
+        "destructive": false
+      },
+      "messageKey": "shell.updateRecommended"
     }
   ]
 }

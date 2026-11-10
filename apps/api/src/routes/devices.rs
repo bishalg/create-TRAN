@@ -1,4 +1,4 @@
-//! `/api/devices/{installation_id}`: register and unregister this installation's push token
+//! `/api/v1/devices/{installation_id}`: register and unregister this installation's push token
 //! (REQ-PSH-001, REQ-PSH-002, REQ-PSH-004, REQ-PSH-007, ADR-0044).
 //!
 //! Both need a bearer token, run behind the same `Origin` check and `Cache-Control: no-store` as
@@ -21,7 +21,7 @@ use crate::devices::{
 use crate::error::ApiError;
 use crate::state::AppState;
 
-/// The body of `PUT /api/devices/{installation_id}`. Unknown fields are refused.
+/// The body of `PUT /api/v1/devices/{installation_id}`. Unknown fields are refused.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DeviceBody {
@@ -50,7 +50,7 @@ fn installation(path: Result<Path<String>, PathRejection>) -> Result<Installatio
         .ok_or_else(|| invalid("The installation id must be a random UUID"))
 }
 
-/// `PUT /api/devices/{installation_id}` — create or replace this installation's registration,
+/// `PUT /api/v1/devices/{installation_id}` — create or replace this installation's registration,
 /// bound to the caller and this session; `204`. Idempotent.
 pub async fn register(
     State(state): State<AppState>,
@@ -91,7 +91,7 @@ pub async fn register(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// `DELETE /api/devices/{installation_id}` — remove this installation's registration if it is
+/// `DELETE /api/v1/devices/{installation_id}` — remove this installation's registration if it is
 /// the caller's; `204` whether or not there was one.
 pub async fn unregister(
     State(state): State<AppState>,

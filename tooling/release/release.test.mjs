@@ -1,7 +1,7 @@
-// Verifies: REQ-REL-001, REQ-REL-002, REQ-REL-003, REQ-REL-004
+// Verifies: REQ-REL-001, REQ-REL-002, REQ-REL-003, REQ-REL-004, REQ-VER-003
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,13 +9,17 @@ import { describe, it } from 'node:test';
 import {
   buildNumber,
   changelogSection,
+  CLIENTS_DIR,
+  clientPlatforms,
   checkVersions,
   lintCommitMessage,
+  missingClients,
   nextVersion,
   notesFor,
   parseCommit,
   prependChangelog,
   readVersions,
+  releasedClient,
   setVersion,
   versionFiles,
 } from './release.mjs';
@@ -266,6 +270,11 @@ describe('version and changelog from history (REQ-REL-003)', () => {
       git('config', 'user.name', 't');
       writeFileSync(join(dir, 'package.json'), '{\n  "version": "0.1.0"\n}\n');
       writeFileSync(join(dir, 'CHANGELOG.md'), '# Changelog\n');
+      mkdirSync(join(dir, CLIENTS_DIR, 'web'), { recursive: true });
+      writeFileSync(
+        join(dir, CLIENTS_DIR, 'web/current.json'),
+        JSON.stringify({ $comment: 'hand', platform: 'web', version: '{version}', requests: [] })
+      );
       git('add', '.');
       git('commit', '-q', '-m', 'chore: start');
       git('tag', 'v0.1.0');
@@ -278,6 +287,11 @@ describe('version and changelog from history (REQ-REL-003)', () => {
       rmSync(join(dir, 'b.txt'));
       const out = cli('bump', 'auto', '--date', '2026-10-22');
       assert.match(out, /0\.1\.0 -> 0\.2\.0/);
+      assert.match(out, /recorded fixtures\/contract\/clients\/web\/0\.2\.0\.json/);
+      assert.equal(
+        JSON.parse(readFileSync(join(dir, CLIENTS_DIR, 'web/0.2.0.json'), 'utf8')).version,
+        '0.2.0'
+      );
       assert.match(out, /git tag v0\.2\.0/);
       assert.match(readFileSync(join(dir, 'package.json'), 'utf8'), /"version": "0.2.0"/);
       assert.match(
@@ -288,6 +302,51 @@ describe('version and changelog from history (REQ-REL-003)', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe('each release records what its clients send (REQ-VER-003)', () => {
+  const current = JSON.stringify({
+    $comment: 'what the web client in this tree sends',
+    platform: 'web',
+    version: '{version}',
+    requests: [{ name: 'getInfo', headers: { 'X-Tran-Client': 'web/{version}' } }],
+  });
+
+  it('fills in the version everywhere and says where the copy came from', () => {
+    const released = releasedClient(current, '1.4.0');
+    const json = JSON.parse(released);
+    assert.equal(json.version, '1.4.0');
+    assert.equal(json.requests[0].headers['X-Tran-Client'], 'web/1.4.0');
+    assert.match(json.$comment, /The web client 1\.4\.0 as released/);
+    assert.ok(released.endsWith('}\n'));
+    assert.ok(!released.includes('{version}'));
+  });
+
+  it('finds the platforms with a manifest and the releases not recorded', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'tran-clients-'));
+    try {
+      assert.deepEqual(clientPlatforms(dir), []);
+      for (const platform of ['web', 'ios', 'android']) {
+        mkdirSync(join(dir, CLIENTS_DIR, platform), { recursive: true });
+      }
+      writeFileSync(join(dir, CLIENTS_DIR, 'web/current.json'), current);
+      writeFileSync(join(dir, CLIENTS_DIR, 'ios/current.json'), current);
+      writeFileSync(join(dir, CLIENTS_DIR, 'ios/1.4.0.json'), current);
+      writeFileSync(join(dir, CLIENTS_DIR, 'README'), 'not a platform');
+      assert.deepEqual(clientPlatforms(dir), ['ios', 'web']);
+      assert.deepEqual(missingClients(dir, '1.4.0'), [
+        'fixtures/contract/clients/web/1.4.0.json is missing: `pnpm release` records it from current.json',
+      ]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('the repository has recorded the current version of every client', () => {
+    const version = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version;
+    assert.deepEqual(missingClients(ROOT, version), []);
+    assert.ok(clientPlatforms(ROOT).includes('web'));
   });
 });
 

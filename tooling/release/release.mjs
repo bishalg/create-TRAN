@@ -3,7 +3,8 @@
  * Release tooling (ADR-0034, spec 017). Plain Node, no dependencies.
  *
  *   pnpm release:check [--tag vX.Y.Z]     every version field agrees with the root package.json
- *   pnpm release <auto|patch|minor|major>  bump every version, prepend the CHANGELOG section; never tags
+ *   pnpm release <auto|patch|minor|major>  bump every version, prepend the CHANGELOG section, record
+ *                                          each client's requests for the replay; never tags
  *   node tooling/release/release.mjs set <version>     write one version everywhere (create-tran uses it)
  *   node tooling/release/release.mjs notes <version>   print that version's CHANGELOG section (release notes)
  *   node tooling/release/release.mjs lint-commit <file>  the commit-msg hook
@@ -278,6 +279,51 @@ export function notesFor(changelog, version) {
   return section.split('\n').slice(1).join('\n').trim();
 }
 
+/** Where each platform keeps what its client sends and reads (spec 028, REQ-VER-003). */
+export const CLIENTS_DIR = 'fixtures/contract/clients';
+
+/**
+ * The released copy of a platform's `current.json`: `{version}` filled in, so the API replays
+ * exactly what that release sends until its version falls below the minimum.
+ */
+export function releasedClient(text, version) {
+  const client = JSON.parse(text.replaceAll('{version}', version));
+  client.$comment =
+    `The ${client.platform} client ${version} as released: written by \`pnpm release\` from ` +
+    `current.json (REQ-VER-003). Replayed by apps/api/tests/client_replay_test.rs until ${version} ` +
+    `is below the ${client.platform} minimum; then delete this file.`;
+  return `${JSON.stringify(client, null, 2)}\n`;
+}
+
+/** Platforms with a client manifest: the folders of `CLIENTS_DIR` holding `current.json`. */
+export function clientPlatforms(root) {
+  const dir = join(root, CLIENTS_DIR);
+  return (existsSync(dir) ? readdirSync(dir, { withFileTypes: true }) : [])
+    .filter((entry) => entry.isDirectory() && existsSync(join(dir, entry.name, 'current.json')))
+    .map((entry) => entry.name)
+    .sort();
+}
+
+/** Writes `<platform>/<version>.json` for every platform; returns the paths written. */
+export function recordClients(root, version) {
+  return clientPlatforms(root).map((platform) => {
+    const path = `${CLIENTS_DIR}/${platform}/${version}.json`;
+    const current = readFileSync(join(root, CLIENTS_DIR, platform, 'current.json'), 'utf8');
+    writeFileSync(join(root, path), releasedClient(current, version));
+    return path;
+  });
+}
+
+/** A platform with a client manifest but no recorded release of `version` (REQ-VER-003). */
+export function missingClients(root, version) {
+  return clientPlatforms(root)
+    .filter((platform) => !existsSync(join(root, CLIENTS_DIR, platform, `${version}.json`)))
+    .map(
+      (platform) =>
+        `${CLIENTS_DIR}/${platform}/${version}.json is missing: \`pnpm release\` records it from current.json`
+    );
+}
+
 export const EMPTY_CHANGELOG =
   '# Changelog\n\nAll notable changes, newest first. Written by `pnpm release` from Conventional Commits.\n';
 
@@ -326,7 +372,12 @@ function main(root, argv) {
   const flag = (name) => (argv.includes(name) ? argv[argv.indexOf(name) + 1] : undefined);
   switch (command) {
     case 'check': {
-      const problems = checkVersions(readFiles(root), { tag: flag('--tag') });
+      const files = readFiles(root);
+      const version = PACKAGE_VERSION.pattern.exec(files.get('package.json') ?? '')?.[2];
+      const problems = [
+        ...checkVersions(files, { tag: flag('--tag') }),
+        ...(version ? missingClients(root, version) : []),
+      ];
       for (const problem of problems) console.error(`✗ ${problem}`);
       if (problems.length) return 1;
       console.log('release: every version agrees');
@@ -370,12 +421,14 @@ function main(root, argv) {
         changelogPath,
         prependChangelog(existing, changelogSection(version, date, commits))
       );
+      const clients = recordClients(root, version);
       console.log(
         [
           `release: ${current} -> ${version} (${commits.length} commits since ${tag ?? 'the start'})`,
+          ...clients.map((path) => `release: recorded ${path} for the client replay (REQ-VER-003)`),
           'Read the diff, then:',
           '  pnpm tokens:sync   # the store release notes come from this CHANGELOG section (REQ-MOB-011)',
-          `  git add apps/*/fastlane/metadata && git commit -am "chore(release): v${version}"`,
+          `  git add apps/*/fastlane/metadata ${CLIENTS_DIR} && git commit -am "chore(release): v${version}"`,
           `  git tag v${version}`,
           `  git push origin HEAD v${version}`,
         ].join('\n')

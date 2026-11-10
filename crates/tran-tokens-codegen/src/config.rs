@@ -19,6 +19,9 @@ pub struct CodegenConfig {
     pub locales_dir: String,
     /// `@tran/core` generated tokens and string keys.
     pub core_generated_dir: String,
+    /// `@tran/api` generated wire contract: the versioned base path, the compatibility headers and
+    /// the wire-enum fallbacks (spec 028).
+    pub api_generated_dir: String,
     /// Web CSS custom properties output.
     pub web_generated_dir: String,
     /// iOS SwiftUI generated tokens and String Catalogs.
@@ -62,6 +65,7 @@ impl CodegenConfig {
         Self {
             locales_dir: "locales".into(),
             core_generated_dir: "packages/core-ts/src/generated".into(),
+            api_generated_dir: "packages/api/src/generated".into(),
             web_generated_dir: "apps/web/src/styles/generated".into(),
             ios_generated_dir: "apps/ios/Sources/TranVotingDemo/Generated".into(),
             ios_info_plist_strings_path:
@@ -100,6 +104,7 @@ impl CodegenConfig {
         CodegenPaths {
             locales_dir: workspace_root.join(&self.locales_dir),
             core_generated_dir: workspace_root.join(&self.core_generated_dir),
+            api_generated_dir: workspace_root.join(&self.api_generated_dir),
             web_generated_dir: workspace_root.join(&self.web_generated_dir),
             ios_generated_dir: workspace_root.join(&self.ios_generated_dir),
             ios_info_plist_strings_path: workspace_root.join(&self.ios_info_plist_strings_path),
@@ -125,6 +130,7 @@ impl CodegenConfig {
 pub struct CodegenPaths {
     pub locales_dir: PathBuf,
     pub core_generated_dir: PathBuf,
+    pub api_generated_dir: PathBuf,
     pub web_generated_dir: PathBuf,
     pub ios_generated_dir: PathBuf,
     pub ios_info_plist_strings_path: PathBuf,
@@ -171,6 +177,7 @@ mod tests {
             r#"{{
   "locales_dir": "locales",
   "core_generated_dir": "packages/core-ts/src/generated",
+  "api_generated_dir": "packages/api/src/generated",
   "web_generated_dir": "apps/web/src/styles/generated",
   "ios_generated_dir": "apps/ios/Sources/Renamed/Generated",
   "ios_info_plist_strings_path": "apps/ios/Sources/Renamed/Generated/InfoPlist.xcstrings",

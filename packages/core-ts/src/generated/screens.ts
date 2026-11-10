@@ -52,6 +52,7 @@ export type ElementId =
   | 'dialog-cancel'
   | 'delete-account-confirm'
   | 'delete-account-cancel'
+  | 'update-button'
   | 'mode-switch';
 
 /** What an element is, never how it looks (REQ-SCR-003). */
@@ -83,7 +84,7 @@ export interface ExpectedMessage {
   readonly args: readonly MessageArg[];
 }
 
-/** The closed verb set (ADR-0038): session, api_reachable, api_unreachable, locale, theme, largest_text_scale, reduced_motion, permission. */
+/** The closed verb set (ADR-0038): session, api_reachable, api_unreachable, locale, theme, largest_text_scale, reduced_motion, permission, upgrade_required. */
 export type Given =
   | { readonly session: SessionKind }
   | 'api_reachable'
@@ -92,7 +93,8 @@ export type Given =
   | { readonly theme: string }
   | 'largest_text_scale'
   | 'reduced_motion'
-  | { readonly permission: { readonly id: PermissionId; readonly status: PermissionStatus } };
+  | { readonly permission: { readonly id: PermissionId; readonly status: PermissionStatus } }
+  | 'upgrade_required';
 
 /** tap, type, select, press_key, go_offline, go_online. `type` replaces the field's content. */
 export type When =
@@ -678,6 +680,20 @@ export const SCREENS: readonly Screen[] = [
         "touch": "control",
         "presence": {
           "when": "delete_account_confirm"
+        },
+        "platforms": [
+          "web",
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "id": "update-button",
+        "kind": "button",
+        "label": "common.update",
+        "touch": "control",
+        "presence": {
+          "when": "update_required"
         },
         "platforms": [
           "web",
@@ -1635,6 +1651,41 @@ export const SCREENS: readonly Screen[] = [
         "within_ms": 4300
       },
       {
+        "name": "An unsupported version is asked to update",
+        "verifies": [
+          "REQ-VER-009"
+        ],
+        "given": [
+          {
+            "session": "citizen_voter"
+          },
+          "upgrade_required"
+        ],
+        "when": [
+          {
+            "tap": "delete-account-button"
+          },
+          {
+            "tap": "delete-account-confirm"
+          }
+        ],
+        "then": [
+          {
+            "exists": "update-button"
+          },
+          {
+            "missing": "check-button"
+          },
+          {
+            "missing": "delete-account-confirm"
+          },
+          {
+            "missing": "voter-branch-button"
+          }
+        ],
+        "within_ms": 4300
+      },
+      {
         "name": "The light theme is selectable",
         "verifies": [
           "REQ-NAT-007",
@@ -2006,6 +2057,7 @@ export const ScreenIds = {
     dialogCancel: 'dialog-cancel',
     deleteAccountConfirm: 'delete-account-confirm',
     deleteAccountCancel: 'delete-account-cancel',
+    updateButton: 'update-button',
     skipLink: 'skip-link',
     languagePicker: 'language-picker',
     modeSwitch: 'mode-switch',

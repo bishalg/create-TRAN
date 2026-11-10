@@ -1,0 +1,140 @@
+{
+  "$comment": "What the web client in this tree sends and reads (spec 028, REQ-VER-003): one entry per call of `@tran/api` and `@tran/core`, `reads` being every field its Zod schema requires. Maintained by hand and checked against the client code by packages/api/tests/client-manifest.test.ts, so it cannot drift. `pnpm release` copies it to `<version>.json` with `{version}` filled in; apps/api/tests/client_replay_test.rs replays this file and every released one against today's router. `auth`: `cookie` signs in with the cookie transport first and sends the cookie, `bearer` signs in and sends the access token, `refresh_token` signs in with the body transport and puts the refresh token where the body says `{refresh_token}` (the native apps' refresh and sign-out).",
+  "platform": "web",
+  "version": "{version}",
+  "requests": [
+    {
+      "name": "getHealth",
+      "method": "GET",
+      "path": "/api/health",
+      "headers": {
+        "X-Tran-Client": "web/{version}"
+      },
+      "status": 200,
+      "reads": {
+        "report_id": "string",
+        "timestamp": "string",
+        "overall_status": "string",
+        "components[].layer": "string",
+        "components[].name": "string",
+        "components[].version": "string",
+        "components[].healthy": "boolean",
+        "components[].uptime_seconds": "number"
+      }
+    },
+    {
+      "name": "getInfo",
+      "method": "GET",
+      "path": "/api/v1/tran/info",
+      "headers": {
+        "X-Tran-Client": "web/{version}"
+      },
+      "status": 200,
+      "reads": {
+        "stack": "string",
+        "description": "string",
+        "layers.T": "string",
+        "layers.R": "string",
+        "layers.A": "string",
+        "layers.N": "string",
+        "version": "string"
+      }
+    },
+    {
+      "name": "checkVoteEligibility",
+      "method": "POST",
+      "path": "/api/v1/vote/eligibility",
+      "headers": {
+        "X-Tran-Client": "web/{version}"
+      },
+      "body": {
+        "age": 20
+      },
+      "status": 200,
+      "reads": {
+        "eligibility_id": "string",
+        "eligible": "boolean",
+        "age": "number",
+        "minimum_age": "number",
+        "country_code": "string",
+        "country_source": "string",
+        "client_ip": "string",
+        "reason": "string",
+        "evaluated_at": "string"
+      }
+    },
+    {
+      "name": "signIn",
+      "method": "POST",
+      "path": "/api/v1/auth/session",
+      "headers": {
+        "X-Tran-Client": "web/{version}"
+      },
+      "body": {
+        "role": "citizen_voter",
+        "transport": "cookie"
+      },
+      "status": 201,
+      "reads": {
+        "access_token": "string",
+        "token_type": "string",
+        "expires_in": "number",
+        "user.user_id": "string",
+        "user.role": "string"
+      }
+    },
+    {
+      "name": "refresh",
+      "method": "POST",
+      "path": "/api/v1/auth/refresh",
+      "auth": "cookie",
+      "headers": {
+        "X-Tran-Client": "web/{version}"
+      },
+      "status": 200,
+      "reads": {
+        "access_token": "string",
+        "token_type": "string",
+        "expires_in": "number",
+        "user.user_id": "string",
+        "user.role": "string"
+      }
+    },
+    {
+      "name": "whoAmI",
+      "method": "GET",
+      "path": "/api/v1/auth/session",
+      "auth": "bearer",
+      "headers": {
+        "X-Tran-Client": "web/{version}"
+      },
+      "status": 200,
+      "reads": {
+        "user_id": "string",
+        "role": "string"
+      }
+    },
+    {
+      "name": "signOut",
+      "method": "POST",
+      "path": "/api/v1/auth/sign-out",
+      "auth": "cookie",
+      "headers": {
+        "X-Tran-Client": "web/{version}"
+      },
+      "status": 204,
+      "reads": {}
+    },
+    {
+      "name": "deleteAccount",
+      "method": "DELETE",
+      "path": "/api/v1/account",
+      "auth": "bearer",
+      "headers": {
+        "X-Tran-Client": "web/{version}"
+      },
+      "status": 204,
+      "reads": {}
+    }
+  ]
+}

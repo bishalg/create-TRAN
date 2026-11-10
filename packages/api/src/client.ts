@@ -1,4 +1,5 @@
 import type { ContractRouterClient } from '@orpc/contract';
+import { apiPath } from './compat.js';
 import type { TranContract } from './contract.js';
 import { ErrorEnvelopeSchema } from './schemas/error.js';
 import {
@@ -83,7 +84,7 @@ export async function checkVoteEligibility(
   const baseUrl = (options.baseUrl ?? 'http://localhost:3001').replace(/\/+$/, '');
   const fetchFn = options.fetchFn ?? globalThis.fetch.bind(globalThis);
 
-  const response = await fetchFn(`${baseUrl}/api/vote/eligibility`, {
+  const response = await fetchFn(`${baseUrl}${apiPath('/vote/eligibility')}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -91,7 +92,7 @@ export async function checkVoteEligibility(
       ...(options.headers ?? {}),
     },
     body: JSON.stringify(parsed),
-    // Only `/api/auth/*` may carry the session cookie (REQ-SEC-018).
+    // Only the auth tree may carry the session cookie (REQ-SEC-018).
     credentials: 'omit',
     signal: options.signal,
   });

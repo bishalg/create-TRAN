@@ -22,7 +22,7 @@ Vocabulary used below:
 
 ### REQ-PSH-001 [verified] A device registers its token to the signed-in user
 
-`PUT /api/devices/{installation_id}` with a bearer token and
+`PUT /api/v1/devices/{installation_id}` with a bearer token and
 `{ "platform": "ios" | "android", "push_token", "environment": "sandbox" | "production", "locale", "app_version",
 "marketing": false }` MUST create or replace that installation's registration, bound to the caller's user and session,
 and answer `204`. The call MUST be idempotent. Without a valid token it answers `401` and stores nothing. The registry
@@ -56,7 +56,7 @@ references the session row with `ON DELETE CASCADE` (the `DeviceStore` trait say
 
 ### REQ-PSH-004 [verified] A device can unregister itself
 
-`DELETE /api/devices/{installation_id}` with a bearer token MUST remove that installation's registration if it belongs
+`DELETE /api/v1/devices/{installation_id}` with a bearer token MUST remove that installation's registration if it belongs
 to the caller and answer `204` whether or not one existed. It MUST NOT remove another user's registration.
 **Verified by:** `devices_test.rs`.
 
@@ -99,7 +99,7 @@ is added by the sender and is never part of a body. The sample's one type is `el
 ### REQ-PSH-007 [verified] The registry never appears in a log or an error
 
 No log line or error body may contain a push token or an installation id. Registry events log the fixed fields only.
-The request span logs a device path as `/api/devices/{installation_id}`.
+The request span logs a device path as `/api/v1/devices/{installation_id}`.
 **Verified by:** rows `FM-A09` to `FM-A14` in `fixtures/failure-modes.json`; `devices_test.rs` (`logs_*`);
 `middleware/auth_origin.rs` unit tests.
 

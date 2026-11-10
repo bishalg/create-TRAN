@@ -36,7 +36,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** The boot refresh of a first visit answers 401 (no cookie yet); Chrome logs that response. */
 const firstVisitRefresh = (text: string, url: string) =>
-  url.endsWith('/api/auth/refresh') && text.includes('401');
+  url.endsWith('/api/v1/auth/refresh') && text.includes('401');
 
 test('web: the production build loads cleanly and answers a server check', async ({ page }) => {
   const errors: string[] = [];
@@ -68,7 +68,7 @@ test('web: the production build loads cleanly and answers a server check', async
 
   // No session cookie yet: role selection; choosing a role establishes the API session.
   const signedIn = page.waitForResponse(
-    (r) => r.url().endsWith('/api/auth/session') && r.request().method() === 'POST'
+    (r) => r.url().endsWith('/api/v1/auth/session') && r.request().method() === 'POST'
   );
   await page.getByTestId(ScreenIds.authWelcome.voterBranchButton).click();
   expect((await signedIn).status()).toBe(201);

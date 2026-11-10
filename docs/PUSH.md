@@ -24,9 +24,9 @@ another, and prompting at launch or sending marketing without opt-in gets an app
 
 ```
 tap "Notify me"     → priming → system prompt → granted
-token from the OS   → push_sync → PUT /api/devices/{installation_id}   (bound to this session)
+token from the OS   → push_sync → PUT /api/v1/devices/{installation_id}   (bound to this session)
 new token / weekly  → push_sync → PUT again
-permission off      → push_sync → DELETE /api/devices/{installation_id}
+permission off      → push_sync → DELETE /api/v1/devices/{installation_id}
 sign out            → DELETE (best effort) → the server drops the session's registrations anyway
 delete account      → the server drops every registration of the user
 provider says dead  → the server drops that registration
@@ -36,7 +36,7 @@ provider says dead  → the server drops that registration
 
 | Part                                   | Place                                                             |
 | :------------------------------------- | :---------------------------------------------------------------- |
-| Registry routes, `DeviceStore`         | `apps/api` (`/api/devices/{installation_id}`)                     |
+| Registry routes, `DeviceStore`         | `apps/api` (`/api/v1/devices/{installation_id}`)                  |
 | `PushSender` seam and payload builders | `apps/api/src/push/`                                              |
 | The real APNs and FCM senders          | `apps/api/src/push/{apns,fcm,providers}.rs`, off until configured |
 | `push_sync` and `DEVICE_POLICY`        | `crates/rust-core/src/push.rs`, `fixtures/push.json`              |

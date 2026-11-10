@@ -13,7 +13,7 @@ const { Given, When, Then } = createBdd();
 Given('I open the voting eligibility app', async ({ page }) => {
   await page.goto('/');
   const signedIn = page.waitForResponse(
-    (r) => r.url().endsWith('/api/auth/session') && r.request().method() === 'POST'
+    (r) => r.url().endsWith('/api/v1/auth/session') && r.request().method() === 'POST'
   );
   await page.getByTestId(ScreenIds.authWelcome.voterBranchButton).click();
   expect((await signedIn).status()).toBe(201);

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { loadEnv } from 'vite';
 import { defineConfig } from 'vitest/config';
@@ -11,7 +12,13 @@ import { resolveApiBaseUrl } from './src/shared/api/apiUrl.js';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
+/** The product version `pnpm release` writes (ADR-0034): the web names itself with it (REQ-VER-004). */
+const version: string = JSON.parse(
+  readFileSync(new URL('package.json', import.meta.url), 'utf8')
+).version;
+
 export default defineConfig(({ mode }) => ({
+  define: { __TRAN_VERSION__: JSON.stringify(version) },
   plugins: [
     react(),
     // The public account-deletion page, static and in every language (REQ-ACC-007).

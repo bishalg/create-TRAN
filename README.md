@@ -62,7 +62,7 @@ One small domain you can extend:
 | **Offline** | `evaluateVoteEligibilityOffline` in `@tran/core` (mirrors `voting.rs`) | `evaluate_vote_eligibility_offline` via UniFFI → `TranEngine` |
 | **API**     | `checkVoteEligibility` / `TranApiClient` + Zod                         | `TranApiClient` (URLSession / OkHttp) — health + confirmation |
 
-**API (async)** — `POST /api/vote/eligibility` uses Rust Core plus a stub geo resolver:
+**API (async)** — `POST /api/v1/vote/eligibility` uses Rust Core plus a stub geo resolver:
 
 - `X-Forwarded-For` / `X-Real-IP` for client IP
 - `X-Debug-Country` (e.g. `US`, `IN`, `NP`, `BR`) — documented as dev-only; **not gated by env in code yet**
@@ -80,7 +80,7 @@ Both native apps share the same rules, theme registry, strings and tokens, and s
 ### Try it
 
 ```bash
-curl -s -X POST http://127.0.0.1:3001/api/vote/eligibility \
+curl -s -X POST http://127.0.0.1:3001/api/v1/vote/eligibility \
   -H 'Content-Type: application/json' \
   -H 'X-Debug-Country: NP' \
   -d '{"age": 20}'
@@ -119,7 +119,7 @@ graph TD
         UniFFI[UniFFI exports]
     end
     subgraph Backend ["apps/api Axum"]
-        VoteRoute["POST /api/vote/eligibility"]
+        VoteRoute["POST /api/v1/vote/eligibility"]
         Geo[Stub geo / headers]
     end
     subgraph Core ["crates/rust-core"]

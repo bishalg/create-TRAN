@@ -11,6 +11,7 @@
     reason = "build-time CLI: it reports what it wrote, and failing loudly is its error handling (ADR-0029)"
 )]
 
+pub mod compat_gen;
 pub mod config;
 pub mod design_md;
 pub mod feedback_ts;

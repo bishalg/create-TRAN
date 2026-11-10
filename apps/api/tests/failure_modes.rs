@@ -147,7 +147,7 @@ async fn sign_in(state: &AppState, setup: &Setup) -> Tokens {
         r#"{{"role": "citizen_voter", "transport": "{}"}}"#,
         setup.transport
     );
-    let (cookie, json) = call(state, post("/api/auth/session", &[], body)).await;
+    let (cookie, json) = call(state, post("/api/v1/auth/session", &[], body)).await;
     let tokens = Tokens {
         access: json["access_token"].as_str().unwrap().to_string(),
         refresh: cookie
@@ -159,7 +159,7 @@ async fn sign_in(state: &AppState, setup: &Setup) -> Tokens {
         let body = format!(r#"{{"refresh_token": "{}"}}"#, tokens.refresh);
         let (_, json) = call(
             state,
-            post("/api/auth/refresh", &[("cookie", &cookie)], body),
+            post("/api/v1/auth/refresh", &[("cookie", &cookie)], body),
         )
         .await;
         assert!(json["access_token"].is_string(), "setup refresh: {json}");

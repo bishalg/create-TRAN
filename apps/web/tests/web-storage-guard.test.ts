@@ -1,8 +1,8 @@
 // Verifies: REQ-SEC-017 REQ-SEC-018
 /**
  * Script-readable storage holds preferences, never a credential (spec 022, ADR-0039). Web Storage
- * is allowed in exactly one module, the theme preference; the inline script in `index.html` may
- * only read that module's key before first paint. IndexedDB and `document.cookie` are not used at
+ * is allowed in the preference modules listed below, each with the reason; the inline script in
+ * `index.html` may only read the theme's key before first paint. IndexedDB and `document.cookie` are not used at
  * all. A regex guard over the shipped sources, not a type checker: it reads comments too.
  */
 import { readdirSync, readFileSync } from 'node:fs';
@@ -17,6 +17,13 @@ const ROOT = join(here, '../../..');
 /** Everything that runs in the browser: the app, the shared SDK and the API client. */
 const SOURCE_DIRS = ['apps/web/src', 'packages/core-ts/src', 'packages/api/src'];
 const THEME_MODULE = 'apps/web/src/shared/lib/theme.ts';
+
+/** Every module allowed Web Storage, and what it keeps. None holds a credential. */
+const PREFERENCE_MODULES: Record<string, string> = {
+  [THEME_MODULE]: 'the chosen colour theme (REQ-WEB-014)',
+  'apps/web/src/shared/lib/updatePrompt.ts':
+    'the recommended version the update prompt was dismissed for (REQ-VER-010)',
+};
 
 const STORAGE = /\b(localStorage|sessionStorage|indexedDB|cookieStore)\b|document\.cookie/g;
 
@@ -53,12 +60,14 @@ describe('Web Storage holds no credential (REQ-SEC-018)', () => {
     ]);
   });
 
-  it('is used only by the theme preference module, and only as localStorage', () => {
+  it('is used only by the preference modules, and only as localStorage', () => {
     const files = SOURCE_DIRS.flatMap(sources);
-    expect(files).toContain(THEME_MODULE);
+    for (const module of Object.keys(PREFERENCE_MODULES)) expect(files).toContain(module);
     const uses = files.flatMap((file) => storageUses(file, readFileSync(join(ROOT, file), 'utf8')));
-    const outside = uses.filter((use) => !use.startsWith(`${THEME_MODULE}:`));
-    expect(outside, 'Web Storage outside the theme preference module').toEqual([]);
+    const outside = uses.filter(
+      (use) => !Object.keys(PREFERENCE_MODULES).some((module) => use.startsWith(`${module}:`))
+    );
+    expect(outside, 'Web Storage outside the preference modules').toEqual([]);
     expect(uses.length).toBeGreaterThan(0);
     for (const use of uses) expect(use).toMatch(/ localStorage$/);
   });

@@ -17,5 +17,7 @@
   "forbidden": "You don't have permission to do that.",
   "conflict": "This changed while you were working on it. Refresh and try again.",
   "renderFailed": "This screen couldn't be shown",
-  "renderFailedBody": "Something in the app broke. Reloading usually fixes it; your settings are kept."
+  "renderFailedBody": "Something in the app broke. Reloading usually fixes it; your settings are kept.",
+  "updateRequired": "Update required",
+  "updateRequiredBody": "This version of the app is no longer supported. Update it to keep going; you stay signed in."
 }

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ScreenIds,
   t,
   type AppDestination,
   type AuthSession,
+  type StandingSignal,
   type UserRole,
   resolveDestination,
 } from '@tran/core';
@@ -14,7 +15,9 @@ import { useSession } from '../shared/api/useSession.js';
 import { type UseTranApiOptions, useTranApi } from '../shared/api/useTranApi.js';
 import { CrashBoundary } from '../shared/feedback/CrashBoundary.js';
 import { FeedbackProvider, useFeedback } from '../shared/feedback/FeedbackProvider.js';
+import { UpdateRequired } from '../shared/feedback/UpdateRequired.js';
 import { useGlobalErrors } from '../shared/feedback/useGlobalErrors.js';
+import { useUpdatePrompt } from '../shared/feedback/useUpdatePrompt.js';
 import { TranText } from '../shared/ui/TranText.js';
 import { Header } from './Header.js';
 import { type ApiState, StatusFooter } from './StatusFooter.js';
@@ -27,7 +30,15 @@ export interface AppProps {
   retry?: UseTranApiOptions['retry'];
   /** Tests inject the indicator delay (`0` or huge) instead of using fake timers (REQ-LOAD-002). */
   loading?: { indicatorDelayMs: number };
+  /** Tests inject this; "Update" reloads the page into the newest build (REQ-VER-009, 010). */
+  reload?: () => void;
 }
+
+const reloadPage = () => window.location.reload();
+
+/** Whether `next` says something `previous` did not. */
+const changed = (previous: StandingSignal | null, next: StandingSignal) =>
+  previous?.standing !== next.standing || previous.recommendedVersion !== next.recommendedVersion;
 
 export function App(props: AppProps = {}) {
   const preferences = usePreferences();
@@ -46,18 +57,34 @@ function Shell({
   initialSession,
   retry,
   loading,
+  reload = reloadPage,
   preferences: { locale, setLocale, theme, setTheme },
 }: AppProps & { preferences: ReturnType<typeof usePreferences> }) {
   const feedback = useFeedback();
   useGlobalErrors(feedback);
-  const api = useTranApi({ feedback, retry });
+  // What the last answers said about this version. Once blocked, a later nudge never lifts the
+  // update screen (REQ-VER-009).
+  const [standing, setStanding] = useState<StandingSignal | null>(null);
+  const onStanding = useCallback(
+    (signal: StandingSignal) =>
+      setStanding((previous) =>
+        previous?.standing === 'upgrade_required' || !changed(previous, signal) ? previous : signal
+      ),
+    []
+  );
+  useUpdatePrompt(standing, feedback, reload);
+  const api = useTranApi({ feedback, retry, onStanding });
   const apiState: ApiState = api.isLoading
     ? 'checking'
     : api.isOffline || !api.health
       ? 'offline'
       : 'online';
 
-  const { session, signIn, signOut, deleteAccount } = useSession({ feedback, initialSession });
+  const { session, signIn, signOut, deleteAccount } = useSession({
+    feedback,
+    initialSession,
+    onStanding,
+  });
 
   // Until the boot refresh answers, the Splash: nothing to choose yet (REQ-NAV-001, REQ-SEC-021).
   const destination: AppDestination = session ? resolveDestination(session) : 'splash';
@@ -81,6 +108,11 @@ function Shell({
     setDeleting(false);
     if (failure) api.reportFailure(failure);
   };
+
+  // The catalogue's `screen` for `client.upgrade_required`: it replaces everything (REQ-VER-009).
+  if (standing?.standing === 'upgrade_required') {
+    return <UpdateRequired locale={locale} onUpdate={reload} />;
+  }
 
   return (
     <div className="app">

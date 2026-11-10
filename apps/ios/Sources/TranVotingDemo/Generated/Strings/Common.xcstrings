@@ -462,6 +462,28 @@
           }
         }
       }
+    },
+    "common.update": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Update"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अपडेट करें"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अपडेट गर्नुहोस्"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

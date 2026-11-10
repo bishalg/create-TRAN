@@ -15,7 +15,7 @@ const server = {
   age: 16,
   minimum_age: 18,
   country_code: 'US',
-  country_source: 'x-debug-country',
+  country_source: 'x-debug-country' as const,
   client_ip: '127.0.0.1',
   reason: 'server reason',
   evaluated_at: '2026-10-18T00:00:00Z',

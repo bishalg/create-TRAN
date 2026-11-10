@@ -1,0 +1,372 @@
+[
+  {
+    "body": {
+      "components": [
+        {
+          "healthy": true,
+          "layer": "rustcore",
+          "name": "rust-core",
+          "uptime_seconds": 0,
+          "version": "<version>"
+        },
+        {
+          "healthy": true,
+          "layer": "axumapi",
+          "name": "axum-api",
+          "uptime_seconds": 0,
+          "version": "<version>"
+        }
+      ],
+      "overall_status": "HEALTHY",
+      "report_id": "00000000-0000-4000-8000-000000000000",
+      "timestamp": "1970-01-01T00:00:00Z"
+    },
+    "case": "health",
+    "route": "GET /api/health",
+    "status": 200
+  },
+  {
+    "body": {
+      "demo": "voting-eligibility",
+      "description": "Voting Eligibility demo — TanStack + Rust Core + Axum + Native",
+      "layers": {
+        "A": "Axum (High-performance Async Web Backend)",
+        "N": "Native mobile — SwiftUI (iOS) and Jetpack Compose (Android); apps/ios + apps/android",
+        "R": "Rust Core (Shared logic, Domain, Validation, Algorithms)",
+        "T": "Vite + React SPA today; TanStack Start SSR is planned (ADR-0010, REQ-SEO)"
+      },
+      "stack": "TRAN",
+      "version": "<version>"
+    },
+    "case": "stack info",
+    "route": "GET /api/v1/tran/info",
+    "status": 200
+  },
+  {
+    "body": {
+      "countries": [
+        {
+          "country_code": "BR",
+          "minimum_age": 16
+        },
+        {
+          "country_code": "DE",
+          "minimum_age": 18
+        },
+        {
+          "country_code": "FR",
+          "minimum_age": 18
+        },
+        {
+          "country_code": "GB",
+          "minimum_age": 18
+        },
+        {
+          "country_code": "IN",
+          "minimum_age": 18
+        },
+        {
+          "country_code": "NP",
+          "minimum_age": 18
+        },
+        {
+          "country_code": "US",
+          "minimum_age": 18
+        }
+      ]
+    },
+    "case": "countries",
+    "route": "GET /api/v1/vote/countries",
+    "status": 200
+  },
+  {
+    "body": {
+      "country_code": "BR",
+      "minimum_age": 16
+    },
+    "case": "one country",
+    "route": "GET /api/v1/vote/countries/{code}",
+    "status": 200
+  },
+  {
+    "body": {
+      "code": "route.not_found",
+      "error": "Country not supported",
+      "request_id": "<request-id>",
+      "retryable": false,
+      "success": false
+    },
+    "case": "an unsupported country",
+    "route": "GET /api/v1/vote/countries/{code}",
+    "status": 404
+  },
+  {
+    "body": {
+      "code": "validation.invalid_country_code",
+      "error": "Country code must be two ASCII letters (ISO 3166-1 alpha-2)",
+      "request_id": "<request-id>",
+      "retryable": false,
+      "success": false
+    },
+    "case": "a malformed country",
+    "route": "GET /api/v1/vote/countries/{code}",
+    "status": 400
+  },
+  {
+    "body": {
+      "age": 20,
+      "client_ip": "127.0.0.1",
+      "country_code": "NP",
+      "country_source": "x-debug-country",
+      "eligibility_id": "00000000-0000-4000-8000-000000000000",
+      "eligible": true,
+      "evaluated_at": "1970-01-01T00:00:00Z",
+      "minimum_age": 18,
+      "reason": "Age 20 meets the minimum voting age of 18 in NP."
+    },
+    "case": "eligible",
+    "route": "POST /api/v1/vote/eligibility",
+    "status": 200
+  },
+  {
+    "body": {
+      "age": 26,
+      "client_ip": "127.0.0.1",
+      "country_code": "US",
+      "country_source": "loopback-default",
+      "eligibility_id": "00000000-0000-4000-8000-000000000000",
+      "eligible": true,
+      "evaluated_at": "1970-01-01T00:00:00Z",
+      "minimum_age": 18,
+      "reason": "Age 26 meets the minimum voting age of 18 in US."
+    },
+    "case": "eligible by birthdate",
+    "route": "POST /api/v1/vote/eligibility",
+    "status": 200
+  },
+  {
+    "body": {
+      "code": "validation.age_out_of_range",
+      "error": "Age must be 150 or less",
+      "request_id": "<request-id>",
+      "retryable": false,
+      "success": false
+    },
+    "case": "an age out of range",
+    "route": "POST /api/v1/vote/eligibility",
+    "status": 400
+  },
+  {
+    "body": {
+      "code": "request.malformed",
+      "error": "The body is not valid JSON",
+      "request_id": "<request-id>",
+      "retryable": false,
+      "success": false
+    },
+    "case": "an unreadable body",
+    "route": "POST /api/v1/vote/eligibility",
+    "status": 400
+  },
+  {
+    "body": {
+      "access_token": "<token>",
+      "expires_in": 900,
+      "refresh_token": "<token>",
+      "token_type": "Bearer",
+      "user": {
+        "role": "citizen_voter",
+        "user_id": "voter-001"
+      }
+    },
+    "case": "sign in, body transport",
+    "route": "POST /api/v1/auth/session",
+    "status": 201
+  },
+  {
+    "body": {
+      "access_token": "<token>",
+      "expires_in": 900,
+      "token_type": "Bearer",
+      "user": {
+        "role": "election_auditor",
+        "user_id": "auditor-001"
+      }
+    },
+    "case": "sign in, cookie transport",
+    "route": "POST /api/v1/auth/session",
+    "set_cookie": "tran_refresh=<token>; HttpOnly; SameSite=Strict; Path=/api/v1/auth; Max-Age=2592000",
+    "status": 201
+  },
+  {
+    "body": {
+      "code": "request.malformed",
+      "error": "The body does not match the expected shape (see docs/API.md)",
+      "request_id": "<request-id>",
+      "retryable": false,
+      "success": false
+    },
+    "case": "sign in as an unknown role",
+    "route": "POST /api/v1/auth/session",
+    "status": 400
+  },
+  {
+    "body": {
+      "role": "citizen_voter",
+      "user_id": "voter-001"
+    },
+    "case": "who am I",
+    "route": "GET /api/v1/auth/session",
+    "status": 200
+  },
+  {
+    "body": {
+      "code": "auth.session_expired",
+      "error": "The session is missing, expired or revoked; sign in again",
+      "request_id": "<request-id>",
+      "retryable": false,
+      "success": false
+    },
+    "case": "who am I without a session",
+    "route": "GET /api/v1/auth/session",
+    "status": 401
+  },
+  {
+    "body": {
+      "access_token": "<token>",
+      "expires_in": 900,
+      "token_type": "Bearer",
+      "user": {
+        "role": "citizen_voter",
+        "user_id": "voter-001"
+      }
+    },
+    "case": "refresh, cookie transport",
+    "route": "POST /api/v1/auth/refresh",
+    "set_cookie": "tran_refresh=<token>; HttpOnly; SameSite=Strict; Path=/api/v1/auth; Max-Age=2592000",
+    "status": 200
+  },
+  {
+    "body": {
+      "code": "auth.session_expired",
+      "error": "The session is missing, expired or revoked; sign in again",
+      "request_id": "<request-id>",
+      "retryable": false,
+      "success": false
+    },
+    "case": "refresh without a token",
+    "route": "POST /api/v1/auth/refresh",
+    "set_cookie": "tran_refresh=; HttpOnly; SameSite=Strict; Path=/api/v1/auth; Max-Age=0",
+    "status": 401
+  },
+  {
+    "body": null,
+    "case": "sign out",
+    "route": "POST /api/v1/auth/sign-out",
+    "set_cookie": "tran_refresh=; HttpOnly; SameSite=Strict; Path=/api/v1/auth; Max-Age=0",
+    "status": 204
+  },
+  {
+    "body": null,
+    "case": "delete the account",
+    "route": "DELETE /api/v1/account",
+    "status": 204
+  },
+  {
+    "body": {
+      "code": "auth.session_expired",
+      "error": "The session is missing, expired or revoked; sign in again",
+      "request_id": "<request-id>",
+      "retryable": false,
+      "success": false
+    },
+    "case": "delete the account without a session",
+    "route": "DELETE /api/v1/account",
+    "status": 401
+  },
+  {
+    "body": null,
+    "case": "register a device",
+    "route": "PUT /api/v1/devices/{installation_id}",
+    "status": 204
+  },
+  {
+    "body": {
+      "code": "request.malformed",
+      "error": "The installation id must be a random UUID (see docs/API.md)",
+      "request_id": "<request-id>",
+      "retryable": false,
+      "success": false
+    },
+    "case": "register a device with a bad id",
+    "route": "PUT /api/v1/devices/{installation_id}",
+    "status": 400
+  },
+  {
+    "body": null,
+    "case": "unregister a device",
+    "route": "DELETE /api/v1/devices/{installation_id}",
+    "status": 204
+  },
+  {
+    "body": {
+      "code": "route.not_found",
+      "error": "No route matches this path",
+      "request_id": "<request-id>",
+      "retryable": false,
+      "success": false
+    },
+    "case": "an unknown route",
+    "route": "GET /api/v1/nope",
+    "status": 404
+  },
+  {
+    "body": {
+      "code": "route.not_found",
+      "error": "No route matches this path",
+      "request_id": "<request-id>",
+      "retryable": false,
+      "success": false
+    },
+    "case": "an unknown version",
+    "route": "GET /api/v2/tran/info",
+    "status": 404
+  },
+  {
+    "body": {
+      "code": "route.method_not_allowed",
+      "error": "This route does not accept that method",
+      "request_id": "<request-id>",
+      "retryable": false,
+      "success": false
+    },
+    "case": "a method the route does not take",
+    "route": "PATCH /api/v1/vote/eligibility",
+    "status": 405
+  },
+  {
+    "body": {
+      "code": "client.upgrade_required",
+      "error": "This app version is no longer supported; update the app",
+      "request_id": "<request-id>",
+      "retryable": false,
+      "success": false
+    },
+    "case": "a client below the minimum",
+    "route": "GET /api/v1/tran/info",
+    "status": 426
+  },
+  {
+    "body": {
+      "country_code": "NP",
+      "minimum_age": 18
+    },
+    "case": "a client below the recommended version",
+    "headers": {
+      "x-tran-recommended-version": "1.1.0",
+      "x-tran-update": "recommended"
+    },
+    "route": "GET /api/v1/vote/countries/{code}",
+    "status": 200
+  }
+]
