@@ -49,6 +49,7 @@ fn misbehaving(limits: Limits) -> Router {
             }),
         ),
         limits,
+        &AppState::new().edge,
     )
 }
 

@@ -156,6 +156,84 @@ const result = await client.checkVoteEligibility({ age: 20 });
 
 ---
 
+## Sessions: `/api/auth/*`
+
+Opaque rotating tokens ([spec 022](./specs/022-security.md), [ADR-0039](./adr/0039-sessions-tokens-and-secret-storage.md)).
+The sample's sign-in has no credential check: choosing a role is the whole login; a fork verifies its credential in
+front of `POST /api/auth/session`. Tokens are 32 random bytes, unpadded base64url; the access token lives 900 s, the
+refresh token 30 days (`SESSION_POLICY` in `rust-core`). The server keeps only their SHA-256 digests.
+
+The refresh token travels by one **transport**, chosen at sign-in and kept for the session's life: `cookie` (the web
+app: an `HttpOnly`, `SameSite=Strict` cookie scoped to `/api/auth`, never in a body) or `body` (native apps, which
+keep it in the Keychain or Keystore). Every `/api/auth/*` answer carries `Cache-Control: no-store`. A request whose
+`Origin` header is present and not in `CORS_ALLOWED_ORIGINS` answers `403 auth.forbidden` and changes nothing.
+
+### `POST /api/auth/session` — sign in
+
+```bash
+curl -s -X POST http://127.0.0.1:3001/api/auth/session \
+  -H 'Content-Type: application/json' \
+  -d '{"role": "citizen_voter", "transport": "body"}'
+```
+
+`201`:
+
+```json
+{
+  "access_token": "q3Jx…43 chars",
+  "token_type": "Bearer",
+  "expires_in": 900,
+  "refresh_token": "Vb1n…43 chars",
+  "user": { "user_id": "voter-001", "role": "citizen_voter" }
+}
+```
+
+With `"transport": "cookie"` the body has no `refresh_token`; instead:
+
+```http
+Set-Cookie: tran_refresh=Vb1n…; HttpOnly; SameSite=Strict; Path=/api/auth; Max-Age=2592000
+```
+
+`; Secure` is added whenever `APP_ENV` is not `development` or `test`. `role` is `citizen_voter` (user
+`voter-001`) or `election_auditor` (user `auditor-001`); any other `role` or `transport` is `400 request.malformed`.
+
+### `GET /api/auth/session` — who am I
+
+```bash
+curl -s http://127.0.0.1:3001/api/auth/session -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+`200`: `{ "user_id": "voter-001", "role": "citizen_voter" }`. A missing header, another scheme, or a malformed,
+unknown, revoked or expired token all answer the same `401 auth.session_expired` with `WWW-Authenticate: Bearer`.
+
+### `POST /api/auth/refresh` — rotate the pair
+
+```bash
+# body transport
+curl -s -X POST http://127.0.0.1:3001/api/auth/refresh \
+  -H 'Content-Type: application/json' -d "{\"refresh_token\": \"$REFRESH_TOKEN\"}"
+# cookie transport (the browser sends the cookie itself)
+curl -s -X POST http://127.0.0.1:3001/api/auth/refresh -H "Cookie: tran_refresh=$REFRESH_TOKEN"
+```
+
+`200` with the same shape as sign-in: a new access token, a new refresh token on the session's transport, and `user`.
+The token presented is spent. A missing, unknown or expired refresh token answers `401 auth.session_expired` (and
+clears the cookie, `Max-Age=0`, unless the token came in the body). Presenting a **spent** token again revokes the
+whole session: every access and refresh token of it answers `401` from then on. Clients therefore share one in-flight
+refresh, and decide what to do after a failure with `session_recovery` (`fixtures/session.json`).
+
+### `POST /api/auth/sign-out` — revoke
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:3001/api/auth/sign-out \
+  -H 'Content-Type: application/json' -d "{\"refresh_token\": \"$REFRESH_TOKEN\"}"
+```
+
+`204` always, with or without a known token, so it reveals nothing and is safe to repeat. The session is revoked and,
+unless the token came in the body, the cookie is cleared.
+
+---
+
 ## Errors
 
 Every failure — from any route, an unknown route (`404`) or a wrong method (`405`) — has one shape
@@ -302,7 +380,9 @@ try {
 | `/api/health`           | `apps/api/src/routes/health.rs` |
 | `/api/tran/info`        | `apps/api/src/routes/tran.rs`   |
 | `/api/vote/eligibility` | `apps/api/src/routes/vote.rs`   |
+| `/api/auth/*`           | `apps/api/src/routes/auth.rs`   |
 
 Router wiring: `apps/api/src/routes/mod.rs`.
 
-Integration tests: `apps/api/tests/api_test.rs`.
+Integration tests: `apps/api/tests/api_test.rs`, `apps/api/tests/auth_test.rs`,
+`apps/api/tests/security_headers_test.rs`.

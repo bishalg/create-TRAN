@@ -29,3 +29,10 @@ export const VALIDATION_MESSAGES = {
   birthdateInFuture: 'Birthdate cannot be in the future',
   invalidCountryCode: 'Country code must be two ASCII letters (ISO 3166-1 alpha-2)',
 } as const;
+
+/** Token lifetimes in seconds and token size in bytes (REQ-SEC-005). */
+export const SESSION_POLICY = {
+  accessTtlSeconds: 900,
+  refreshTtlSeconds: 2592000,
+  tokenBytes: 32,
+} as const;

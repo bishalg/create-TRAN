@@ -1,4 +1,4 @@
-// Verifies: REQ-API-001 REQ-API-002 REQ-API-003 REQ-API-004 REQ-API-005 REQ-API-006 REQ-API-008 REQ-API-009 REQ-API-010 REQ-API-012 REQ-ERR-002
+// Verifies: REQ-API-001 REQ-API-002 REQ-API-003 REQ-API-004 REQ-API-005 REQ-API-006 REQ-API-007 REQ-API-008 REQ-API-009 REQ-API-010 REQ-API-012 REQ-ERR-002
 //! HTTP-level integration tests. Each test drives the real router in-process (no socket),
 //! so they are fast and deterministic. Naming: `<endpoint>_<condition>_<outcome>`.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
@@ -412,6 +412,82 @@ async fn cors_preflight_allows_the_debug_country_header() {
         allowed.contains("x-debug-country") || allowed == "*",
         "allow-headers was {allowed:?}"
     );
+}
+
+/// A preflight from `origin` asking for every header the clients send.
+async fn preflight(state: AppState, origin: &str) -> axum::http::HeaderMap {
+    let request = Request::builder()
+        .method(Method::OPTIONS)
+        .uri("/api/auth/session")
+        .header(header::ORIGIN, origin)
+        .header(header::ACCESS_CONTROL_REQUEST_METHOD, "POST")
+        .header(
+            header::ACCESS_CONTROL_REQUEST_HEADERS,
+            "content-type,accept,authorization,x-debug-country,x-request-id",
+        )
+        .body(Body::empty())
+        .unwrap();
+    let response = build_app(state).oneshot(request).await.unwrap();
+    assert!(response.status().is_success());
+    response.headers().clone()
+}
+
+fn allowed_origin(headers: &axum::http::HeaderMap) -> Option<&str> {
+    headers
+        .get(header::ACCESS_CONTROL_ALLOW_ORIGIN)
+        .map(|v| v.to_str().unwrap())
+}
+
+// Verifies: REQ-API-007
+#[tokio::test]
+async fn cors_preflight_echoes_an_allowed_origin_with_credentials_and_the_listed_headers() {
+    let headers = preflight(AppState::new(), "http://127.0.0.1:3000").await;
+    assert_eq!(allowed_origin(&headers), Some("http://127.0.0.1:3000"));
+    assert_eq!(
+        headers
+            .get(header::ACCESS_CONTROL_ALLOW_CREDENTIALS)
+            .map(|v| v.to_str().unwrap()),
+        Some("true")
+    );
+    let allowed = headers
+        .get(header::ACCESS_CONTROL_ALLOW_HEADERS)
+        .map(|v| v.to_str().unwrap().to_lowercase())
+        .unwrap_or_default();
+    for name in [
+        "content-type",
+        "accept",
+        "authorization",
+        "x-debug-country",
+        "x-request-id",
+    ] {
+        assert!(allowed.contains(name), "{name} missing from {allowed:?}");
+    }
+    assert_ne!(allowed, "*");
+}
+
+// Verifies: REQ-API-007
+#[tokio::test]
+async fn cors_preflight_ignores_an_origin_that_is_not_allowed() {
+    let headers = preflight(AppState::new(), "https://evil.example").await;
+    assert_eq!(allowed_origin(&headers), None);
+}
+
+// Verifies: REQ-API-007
+#[tokio::test]
+async fn cors_origins_come_from_configuration_outside_development() {
+    let configured = |key: &str| match key {
+        "APP_ENV" => Some("production".to_string()),
+        "CORS_ALLOWED_ORIGINS" => Some("https://app.example.com,not a\u{7f}header".to_string()),
+        _ => None,
+    };
+    let state = AppState::from_config(&AppConfig::from_lookup(configured));
+    let headers = preflight(state.clone(), "https://app.example.com").await;
+    assert_eq!(allowed_origin(&headers), Some("https://app.example.com"));
+    let local = preflight(state, "http://localhost:3000").await;
+    assert_eq!(allowed_origin(&local), None);
+
+    let unset = preflight(state_for_env("production"), "http://localhost:3000").await;
+    assert_eq!(allowed_origin(&unset), None);
 }
 
 // ── Countries (REQ-API-009, REQ-API-010) ────────────────────────────────────

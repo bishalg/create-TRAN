@@ -44,5 +44,10 @@ chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.10", features = ["v4", "serde"] }
 uniffi = { version = "0.32", features = ["build"] }
 
+# Sessions (ADR-0039): token digests, token encoding, the OS random source
+sha2 = "0.11"
+base64 = "0.23"
+getrandom = "0.4"
+
 # Internal Workspace Crates
 rust-core = { path = "crates/rust-core" }

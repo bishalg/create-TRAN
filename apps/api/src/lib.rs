@@ -1,8 +1,12 @@
+pub mod clock;
 pub mod config;
 pub mod error;
 pub mod geo;
 pub mod middleware;
 pub mod routes;
+pub mod secret;
+pub mod session_store;
+pub mod sessions;
 pub mod state;
 
 use std::time::Duration;
@@ -10,10 +14,12 @@ use std::time::Duration;
 use axum::extract::DefaultBodyLimit;
 use axum::Router;
 use config::AppConfig;
-use middleware::{create_cors_layer, deadline, panic_response, request_id};
+use middleware::{
+    auth_origin, create_cors_layer, deadline, panic_response, request_id, security_headers,
+};
 use routes::create_router;
 use rust_core::feedback::SERVER_DEADLINE_MS;
-use state::AppState;
+use state::{AppState, EdgePolicy};
 use tower_http::catch_panic::CatchPanicLayer;
 
 /// What one request may cost the server (REQ-ROB-004).
@@ -36,12 +42,14 @@ impl Default for Limits {
 }
 
 pub fn build_app(state: AppState) -> Router {
-    with_layers(create_router(state), Limits::default())
+    let edge = state.edge.clone();
+    with_layers(create_router(state), Limits::default(), &edge)
 }
 
-/// The cross-cutting stack every route runs inside, outermost last: CORS, then the request id (so
-/// everything below logs with it), the panic boundary, the deadline and the body limit.
-pub fn with_layers(router: Router, limits: Limits) -> Router {
+/// The cross-cutting stack every route runs inside, outermost first: the security headers (so
+/// even a CORS preflight carries them), CORS, the request id (so everything below logs with it),
+/// the auth `Origin` check, the panic boundary, the deadline and the body limit.
+pub fn with_layers(router: Router, limits: Limits, edge: &EdgePolicy) -> Router {
     router
         .layer(DefaultBodyLimit::max(limits.max_body_bytes))
         .layer(axum::middleware::from_fn_with_state(
@@ -49,8 +57,16 @@ pub fn with_layers(router: Router, limits: Limits) -> Router {
             deadline,
         ))
         .layer(CatchPanicLayer::custom(panic_response))
+        .layer(axum::middleware::from_fn_with_state(
+            edge.allowed_origins.clone(),
+            auth_origin,
+        ))
         .layer(axum::middleware::from_fn(request_id))
-        .layer(create_cors_layer())
+        .layer(create_cors_layer(&edge.allowed_origins))
+        .layer(axum::middleware::from_fn_with_state(
+            edge.requires_https,
+            security_headers,
+        ))
 }
 
 /// Binds the configured address and serves until the process stops.

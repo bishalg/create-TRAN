@@ -9,11 +9,21 @@ pub enum LogFormat {
     Json,
 }
 
+/// Browser origins allowed when `CORS_ALLOWED_ORIGINS` is unset, in `development` and `test` only:
+/// the Vite dev server (both spellings) and Expo web.
+pub const LOCAL_DEV_ORIGINS: [&str; 3] = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8081",
+];
+
 #[derive(Debug, Clone)]
 pub struct AppConfig {
     pub host: String,
     pub port: u16,
     pub environment: String,
+    /// `CORS_ALLOWED_ORIGINS`, split on commas; `None` when unset or blank.
+    pub cors_allowed_origins: Option<Vec<String>>,
 }
 
 impl AppConfig {
@@ -30,12 +40,42 @@ impl AppConfig {
                 .and_then(|p| p.parse::<u16>().ok())
                 .unwrap_or(3001),
             environment: lookup("APP_ENV").unwrap_or_else(|| "development".to_string()),
+            cors_allowed_origins: lookup("CORS_ALLOWED_ORIGINS")
+                .map(|raw| {
+                    raw.split(',')
+                        .map(str::trim)
+                        .filter(|origin| !origin.is_empty())
+                        .map(str::to_owned)
+                        .collect::<Vec<_>>()
+                })
+                .filter(|origins| !origins.is_empty()),
         }
+    }
+
+    /// `development` and `test`: a developer's machine or CI, not a deployment.
+    fn is_local(&self) -> bool {
+        matches!(self.environment.as_str(), "development" | "test")
     }
 
     /// Debug-only request headers (`X-Debug-Country`) are trusted only in `development` and `test`.
     pub fn allows_debug_headers(&self) -> bool {
-        matches!(self.environment.as_str(), "development" | "test")
+        self.is_local()
+    }
+
+    /// Every other environment is served over HTTPS: cookies get `Secure` (REQ-SEC-007) and
+    /// responses get `Strict-Transport-Security` (REQ-SEC-013).
+    pub fn requires_https(&self) -> bool {
+        !self.is_local()
+    }
+
+    /// The browser origins allowed to call the API with credentials (REQ-API-007): the configured
+    /// list, else the local dev origins on a local machine, else none.
+    pub fn allowed_origins(&self) -> Vec<String> {
+        match &self.cors_allowed_origins {
+            Some(origins) => origins.clone(),
+            None if self.is_local() => LOCAL_DEV_ORIGINS.map(str::to_owned).to_vec(),
+            None => Vec::new(),
+        }
     }
 
     fn is_development(&self) -> bool {
@@ -119,6 +159,46 @@ mod tests {
             assert_eq!(cfg.log_format(), LogFormat::Json, "{env}");
             assert_eq!(cfg.default_log_filter(), "api=info", "{env}");
         }
+    }
+
+    // Verifies: REQ-API-007
+    #[test]
+    fn cors_origins_come_from_configuration() {
+        let cfg = config_from(&[(
+            "CORS_ALLOWED_ORIGINS",
+            " https://app.example.com, ,https://admin.example.com ",
+        )]);
+        assert_eq!(
+            cfg.allowed_origins(),
+            ["https://app.example.com", "https://admin.example.com"]
+        );
+        let prod = config_from(&[
+            ("APP_ENV", "production"),
+            ("CORS_ALLOWED_ORIGINS", "https://app.example.com"),
+        ]);
+        assert_eq!(prod.allowed_origins(), ["https://app.example.com"]);
+    }
+
+    // Verifies: REQ-API-007
+    #[test]
+    fn unset_cors_origins_allow_local_dev_only_on_a_local_machine() {
+        for env in ["development", "test"] {
+            let cfg = config_from(&[("APP_ENV", env), ("CORS_ALLOWED_ORIGINS", " , ")]);
+            assert_eq!(cfg.allowed_origins(), LOCAL_DEV_ORIGINS, "{env}");
+        }
+        for env in ["staging", "production"] {
+            assert!(config_from(&[("APP_ENV", env)])
+                .allowed_origins()
+                .is_empty());
+        }
+    }
+
+    // Verifies: REQ-SEC-007 REQ-SEC-013
+    #[test]
+    fn https_is_required_outside_development_and_test() {
+        assert!(!config_from(&[]).requires_https());
+        assert!(!config_from(&[("APP_ENV", "test")]).requires_https());
+        assert!(config_from(&[("APP_ENV", "production")]).requires_https());
     }
 
     #[test]

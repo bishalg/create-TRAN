@@ -1,5 +1,6 @@
 //! HTTP route modules — see `docs/API.md` for request/response samples.
 
+pub mod auth;
 pub mod health;
 pub mod tran;
 pub mod vote;
@@ -19,6 +20,12 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/vote/countries", get(vote::list_countries_handler))
         .route("/api/vote/countries/{code}", get(vote::get_country_handler))
         .route("/api/vote/eligibility", post(vote::eligibility_handler))
+        .route(
+            "/api/auth/session",
+            post(auth::sign_in).get(auth::current_session),
+        )
+        .route("/api/auth/refresh", post(auth::refresh))
+        .route("/api/auth/sign-out", post(auth::sign_out))
         .fallback(not_found)
         .method_not_allowed_fallback(method_not_allowed)
         .with_state(state)

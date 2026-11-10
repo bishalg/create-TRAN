@@ -1102,6 +1102,85 @@ public func FfiConverterTypeTranRetryPolicy_lower(_ value: TranRetryPolicy) -> R
 
 
 /**
+ * Token lifetimes and size issued by the API.
+ */
+public struct TranSessionPolicy: Equatable, Hashable {
+    /**
+     * Seconds an access token is accepted after it is issued (15 minutes).
+     */
+    public var accessTtlSeconds: UInt64
+    /**
+     * Seconds a refresh token can buy a new pair after it is issued (30 days).
+     */
+    public var refreshTtlSeconds: UInt64
+    /**
+     * Random bytes in each token before base64url encoding.
+     */
+    public var tokenBytes: UInt32
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Seconds an access token is accepted after it is issued (15 minutes).
+         */accessTtlSeconds: UInt64, 
+        /**
+         * Seconds a refresh token can buy a new pair after it is issued (30 days).
+         */refreshTtlSeconds: UInt64, 
+        /**
+         * Random bytes in each token before base64url encoding.
+         */tokenBytes: UInt32) {
+        self.accessTtlSeconds = accessTtlSeconds
+        self.refreshTtlSeconds = refreshTtlSeconds
+        self.tokenBytes = tokenBytes
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranSessionPolicy: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranSessionPolicy: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranSessionPolicy {
+        return
+            try TranSessionPolicy(
+                accessTtlSeconds: FfiConverterUInt64.read(from: &buf), 
+                refreshTtlSeconds: FfiConverterUInt64.read(from: &buf), 
+                tokenBytes: FfiConverterUInt32.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranSessionPolicy, into buf: inout [UInt8]) {
+        FfiConverterUInt64.write(value.accessTtlSeconds, into: &buf)
+        FfiConverterUInt64.write(value.refreshTtlSeconds, into: &buf)
+        FfiConverterUInt32.write(value.tokenBytes, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranSessionPolicy_lift(_ buf: RustBuffer) throws -> TranSessionPolicy {
+    return try FfiConverterTypeTranSessionPolicy.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranSessionPolicy_lower(_ value: TranSessionPolicy) -> RustBuffer {
+    return FfiConverterTypeTranSessionPolicy.lower(value)
+}
+
+
+/**
  * What makes two toasts "the same".
  */
 public struct TranToastKey: Equatable, Hashable {
@@ -2064,6 +2143,186 @@ public func FfiConverterTypeTranPresentation_lower(_ value: TranPresentation) ->
 
 
 /**
+ * What the app does next.
+ */
+
+public enum TranSessionAction: Equatable, Hashable {
+    
+    /**
+     * Refresh once (one shared in-flight refresh), then repeat the call with the new token.
+     */
+    case refresh
+    /**
+     * Clear the vault and the access token, and present `auth.session_expired`.
+     */
+    case signOut
+    /**
+     * Keep the vault and the device session; try again later. Never signs the user out.
+     */
+    case keep
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranSessionAction: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranSessionAction: FfiConverterRustBuffer {
+    typealias SwiftType = TranSessionAction
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranSessionAction {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .refresh
+        
+        case 2: return .signOut
+        
+        case 3: return .keep
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranSessionAction, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .refresh:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .signOut:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .keep:
+            writeInt(&buf, Int32(3))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranSessionAction_lift(_ buf: RustBuffer) throws -> TranSessionAction {
+    return try FfiConverterTypeTranSessionAction.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranSessionAction_lower(_ value: TranSessionAction) -> RustBuffer {
+    return FfiConverterTypeTranSessionAction.lower(value)
+}
+
+
+
+/**
+ * What just went wrong with the session.
+ */
+
+public enum TranSessionEvent: Equatable, Hashable {
+    
+    /**
+     * An API call answered `401`.
+     */
+    case unauthorized(
+        /**
+         * The vault holds a refresh token.
+         */hasRefreshCredential: Bool, 
+        /**
+         * This call was already repeated once after a refresh.
+         */alreadyRetried: Bool
+    )
+    /**
+     * The refresh call answered `401` or `403`: the credential is dead.
+     */
+    case refreshRejected
+    /**
+     * The refresh call got no usable answer (offline, timeout, `429`, `5xx`).
+     */
+    case refreshFailed
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranSessionEvent: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranSessionEvent: FfiConverterRustBuffer {
+    typealias SwiftType = TranSessionEvent
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranSessionEvent {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .unauthorized(hasRefreshCredential: try FfiConverterBool.read(from: &buf), alreadyRetried: try FfiConverterBool.read(from: &buf)
+        )
+        
+        case 2: return .refreshRejected
+        
+        case 3: return .refreshFailed
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranSessionEvent, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case let .unauthorized(hasRefreshCredential,alreadyRetried):
+            writeInt(&buf, Int32(1))
+            FfiConverterBool.write(hasRefreshCredential, into: &buf)
+            FfiConverterBool.write(alreadyRetried, into: &buf)
+            
+        
+        case .refreshRejected:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .refreshFailed:
+            writeInt(&buf, Int32(3))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranSessionEvent_lift(_ buf: RustBuffer) throws -> TranSessionEvent {
+    return try FfiConverterTypeTranSessionEvent.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranSessionEvent_lower(_ value: TranSessionEvent) -> RustBuffer {
+    return FfiConverterTypeTranSessionEvent.lower(value)
+}
+
+
+
+/**
  * What to do with an incoming toast.
  */
 
@@ -2779,6 +3038,30 @@ fileprivate struct FfiConverterOptionTypeTranErrorCode: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterOptionTypeTranSessionEvent: FfiConverterRustBuffer {
+    typealias SwiftType = TranSessionEvent?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeTranSessionEvent.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeTranSessionEvent.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterOptionTypeTranUserRole: FfiConverterRustBuffer {
     typealias SwiftType = TranUserRole?
 
@@ -3226,6 +3509,62 @@ public func verdictSourceSpec(source: TranVerdictSource) -> TranVerdictSourceSpe
     )
 })
 }
+/**
+ * The session policy from `rust-core`.
+ *
+ * # Returns
+ *
+ * The lifetimes the API issues tokens with; pinned by the `policy` section of
+ * `fixtures/session.json`.
+ */
+public func sessionPolicy() -> TranSessionPolicy  {
+    return try!  FfiConverterTypeTranSessionPolicy_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_session_policy(uniffiCallStatus
+    )
+})
+}
+/**
+ * What to do after an auth failure (REQ-SEC-015).
+ *
+ * # Arguments
+ *
+ * * `event` — the failure: a `401` on an API call, or the outcome of a refresh.
+ *
+ * # Returns
+ *
+ * [`TranSessionAction::Refresh`] only for a first `401` while a refresh token is held;
+ * [`TranSessionAction::SignOut`] when the credential is missing or dead;
+ * [`TranSessionAction::Keep`] when the refresh merely failed.
+ */
+public func sessionRecovery(event: TranSessionEvent) -> TranSessionAction  {
+    return try!  FfiConverterTypeTranSessionAction_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_session_recovery(
+        FfiConverterTypeTranSessionEvent_lower(event),uniffiCallStatus
+    )
+})
+}
+/**
+ * Classifies the answer to `POST /api/auth/refresh`.
+ *
+ * # Arguments
+ *
+ * * `status` — the HTTP status, or `None` when no answer arrived (offline, timeout).
+ *
+ * # Returns
+ *
+ * `None` when the refresh succeeded (`2xx`); otherwise the event to pass to
+ * [`session_recovery`]: `401` and `403` reject the credential, anything else merely failed.
+ */
+public func sessionRefreshEvent(status: UInt16?) -> TranSessionEvent?  {
+    return try!  FfiConverterOptionTypeTranSessionEvent.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_session_refresh_event(
+        FfiConverterOptionUInt16.lower(status),uniffiCallStatus
+    )
+})
+}
 
 private enum InitializationResult {
     case ok
@@ -3312,6 +3651,15 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_verdict_source_spec() != 18040) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_session_policy() != 15140) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_session_recovery() != 17296) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_session_refresh_event() != 10936) {
         return InitializationResult.apiChecksumMismatch
     }
 

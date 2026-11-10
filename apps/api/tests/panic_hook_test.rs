@@ -5,6 +5,7 @@
 mod support;
 
 use api::middleware::install_panic_hook;
+use api::state::AppState;
 use api::{with_layers, Limits};
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
@@ -35,6 +36,7 @@ async fn panics_are_logged_through_tracing_once_with_their_location() {
     let app = with_layers(
         Router::new().route("/boom", get(in_a_handler)),
         Limits::default(),
+        &AppState::new().edge,
     );
     let request = Request::builder().uri("/boom").body(Body::empty()).unwrap();
     let response = app.oneshot(request).await.unwrap();

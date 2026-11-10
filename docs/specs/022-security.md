@@ -21,7 +21,7 @@ Vocabulary used below:
 
 ## Secrets and configuration
 
-### REQ-SEC-001 [planned] No secret is committed
+### REQ-SEC-001 [verified] No secret is committed
 
 `.env` and `.env.*` MUST be ignored by git, except `.env.example`. `pnpm secrets:check` MUST scan every tracked file
 for private-key blocks and well-known provider token shapes (GitHub, AWS, Anthropic, OpenAI, Stripe, Slack, Google) and
@@ -30,7 +30,7 @@ fail on a match; with `--staged` it MUST scan only the staged content. An except
 MUST fail the check. The check MUST run in the `pre-commit` hook, in `pnpm check:quick` and in CI.
 **Verified by:** `tooling/secrets/secrets.test.mjs`; the hook and workflow assertions in the same file.
 
-### REQ-SEC-002 [planned] `.env.example` is the configuration contract
+### REQ-SEC-002 [verified] `.env.example` is the configuration contract
 
 Every environment variable the code reads (the API's config lookup, `import.meta.env.VITE_*` in the web app) MUST be
 listed in `.env.example` with a comment, and every variable listed there MUST be read by code. Values in `.env.example`
@@ -38,14 +38,14 @@ MUST be safe local defaults or empty, never a real credential. `pnpm secrets:che
 from either side.
 **Verified by:** `tooling/secrets/secrets.test.mjs`.
 
-### REQ-SEC-003 [planned] Whatever ships to a client is public
+### REQ-SEC-003 [verified] Whatever ships to a client is public
 
 A value compiled into a client is readable by anyone who downloads it. A `VITE_*` variable, an Android `BuildConfig`
 field and a custom iOS `Info.plist` key MUST NOT have a name containing `SECRET`, `TOKEN`, `PASSWORD`, `PRIVATE`,
 `CREDENTIAL` or `API_KEY` (any case, with or without the underscore). `pnpm secrets:check` MUST fail on one.
 **Verified by:** `tooling/secrets/secrets.test.mjs`.
 
-### REQ-SEC-004 [planned] A secret in memory cannot be printed by accident
+### REQ-SEC-004 [verified] A secret in memory cannot be printed by accident
 
 The API MUST hold every token and any future configuration secret in a `Secret` wrapper whose `Debug` and `Display`
 print `[redacted]`, which does not implement `Serialize`, and whose value is reachable only through an explicit
@@ -61,7 +61,7 @@ print `[redacted]`, which does not implement `Serialize`, and whose value is rea
 them only through `pnpm tokens:sync` (ADR-0027) and native code only through UniFFI.
 **Verified by:** `session.rs` unit tests, the `policy` section of `fixtures/session.json` on every platform.
 
-### REQ-SEC-006 [planned] Sign-in issues an opaque token pair
+### REQ-SEC-006 [verified] Sign-in issues an opaque token pair
 
 `POST /api/auth/session` with `{ "role": "citizen_voter" | "election_auditor", "transport": "cookie" | "body" }` MUST
 answer `201` with `{ "access_token", "token_type": "Bearer", "expires_in", "user": { "user_id", "role" } }`. Each token
@@ -70,7 +70,7 @@ server MUST keep only the SHA-256 digest of each token, behind a `SessionStore` 
 the sample's. An unknown role or transport is `400` in the envelope of REQ-API-003.
 **Verified by:** `apps/api/tests/auth_test.rs`, `session_store.rs` unit tests.
 
-### REQ-SEC-007 [planned] The refresh token travels by exactly one transport
+### REQ-SEC-007 [verified] The refresh token travels by exactly one transport
 
 With `transport: "cookie"` the refresh token MUST be sent only as
 `Set-Cookie: tran_refresh=<token>; HttpOnly; SameSite=Strict; Path=/api/auth; Max-Age=<refresh lifetime>`, with
@@ -80,41 +80,41 @@ transport for life: a refresh presented by cookie is answered by cookie, one pre
 body.
 **Verified by:** `auth_test.rs` (`cookie_transport_*`, `body_transport_*`).
 
-### REQ-SEC-008 [planned] Bearer authentication gives one answer to every bad token
+### REQ-SEC-008 [verified] Bearer authentication gives one answer to every bad token
 
 `GET /api/auth/session` with `Authorization: Bearer <access token>` MUST answer `200` with `{ "user_id", "role" }`. A
 missing header, another scheme, a malformed, unknown, revoked or expired token MUST all answer the same `401` with code
 `auth.session_expired` and `WWW-Authenticate: Bearer`. Expiry MUST be measured on the injected clock (ADR-0004).
 **Verified by:** `auth_test.rs` (`bearer_*`).
 
-### REQ-SEC-009 [planned] Refresh rotates the pair
+### REQ-SEC-009 [verified] Refresh rotates the pair
 
 `POST /api/auth/refresh` with a valid refresh token (cookie, or `{ "refresh_token" }` in the body) MUST answer `200`
 with a new access token, a new refresh token on the same transport and the `user` object, and MUST invalidate the
-refresh token it was given. A missing, unknown or expired refresh token MUST answer `401` `auth.session_expired`; on the
+refresh token it was given; the previous access token stays valid until it expires or its session is revoked. A missing, unknown or expired refresh token MUST answer `401` `auth.session_expired`; on the
 cookie transport that answer MUST also clear the cookie (`Max-Age=0`).
 **Verified by:** `auth_test.rs` (`refresh_*`).
 
-### REQ-SEC-010 [planned] A replayed refresh token ends the session
+### REQ-SEC-010 [verified] A replayed refresh token ends the session
 
 Presenting a refresh token that was already rotated MUST revoke the whole session: the request answers `401`, and every
 access and refresh token of that family answers `401` from then on.
 **Verified by:** `auth_test.rs` (`replayed_refresh_token_revokes_the_family`).
 
-### REQ-SEC-011 [planned] Sign-out revokes on the server
+### REQ-SEC-011 [verified] Sign-out revokes on the server
 
 `POST /api/auth/sign-out` with a refresh token (cookie or body) MUST revoke its family, clear the cookie on the cookie
 transport and answer `204`. It MUST answer `204` for a missing or unknown token too, so it reveals nothing and is safe
 to repeat.
 **Verified by:** `auth_test.rs` (`sign_out_*`).
 
-### REQ-SEC-012 [planned] Auth endpoints reject a foreign origin
+### REQ-SEC-012 [verified] Auth endpoints reject a foreign origin
 
 A request to `/api/auth/*` whose `Origin` header is present and not in the CORS allowlist (REQ-API-007) MUST answer
 `403` `auth.forbidden` and change nothing. A request without `Origin` (a native client, a server) is not affected.
 **Verified by:** `auth_test.rs` (`foreign_origin_*`).
 
-### REQ-SEC-013 [planned] Every API response carries the security headers
+### REQ-SEC-013 [verified] Every API response carries the security headers
 
 Every response MUST carry `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY`
 and `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'`. When `APP_ENV` is not `development` or
@@ -135,7 +135,8 @@ the session-client tests on each platform assert the captured log events.
 ### REQ-SEC-015 [planned] What to do after an auth failure is one Rust decision
 
 `crates/rust-core/src/session.rs` MUST define `session_recovery(event) -> action`, pinned by the `recovery` section of
-`fixtures/session.json`:
+`fixtures/session.json`, and `refresh_event(status)`, which names the outcome of a refresh call (`refreshResponses`
+section: `2xx` is success, `401` and `403` are a rejection, everything else including no answer is a failure):
 
 | Event                                                                 | Action     | Meaning                                                 |
 | :-------------------------------------------------------------------- | :--------- | :------------------------------------------------------ |

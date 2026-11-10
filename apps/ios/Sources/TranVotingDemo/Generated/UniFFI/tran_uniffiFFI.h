@@ -369,6 +369,22 @@ RustBuffer uniffi_tran_uniffi_fn_func_toast_policy(RustCallStatus *_Nonnull out_
 RustBuffer uniffi_tran_uniffi_fn_func_verdict_source_spec(RustBuffer source, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_SESSION_POLICY
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_SESSION_POLICY
+RustBuffer uniffi_tran_uniffi_fn_func_session_policy(RustCallStatus *_Nonnull out_status
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_SESSION_RECOVERY
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_SESSION_RECOVERY
+RustBuffer uniffi_tran_uniffi_fn_func_session_recovery(RustBuffer event, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_SESSION_REFRESH_EVENT
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_SESSION_REFRESH_EVENT
+RustBuffer uniffi_tran_uniffi_fn_func_session_refresh_event(RustBuffer status, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_FFI_TRAN_UNIFFI_RUSTBUFFER_ALLOC
 #define UNIFFI_FFIDEF_FFI_TRAN_UNIFFI_RUSTBUFFER_ALLOC
 RustBuffer ffi_tran_uniffi_rustbuffer_alloc(uint64_t size, RustCallStatus *_Nonnull out_status
@@ -770,6 +786,24 @@ uint16_t uniffi_tran_uniffi_checksum_func_toast_policy(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_VERDICT_SOURCE_SPEC
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_VERDICT_SOURCE_SPEC
 uint16_t uniffi_tran_uniffi_checksum_func_verdict_source_spec(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_SESSION_POLICY
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_SESSION_POLICY
+uint16_t uniffi_tran_uniffi_checksum_func_session_policy(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_SESSION_RECOVERY
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_SESSION_RECOVERY
+uint16_t uniffi_tran_uniffi_checksum_func_session_recovery(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_SESSION_REFRESH_EVENT
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_SESSION_REFRESH_EVENT
+uint16_t uniffi_tran_uniffi_checksum_func_session_refresh_event(void
     
 );
 #endif

@@ -1,7 +1,8 @@
-// Verifies: REQ-ROB-004 REQ-ROB-007 REQ-ROB-010
-//! Every `server` row of `fixtures/failure-modes.json` against the real router: the envelope, the
-//! catalogue status, exactly one `request failed` event at the catalogue level carrying the request
-//! id, and no trace of the payload anywhere.
+// Verifies: REQ-ROB-004 REQ-ROB-007 REQ-ROB-010 REQ-SEC-014
+//! Every `server` and `auth` row of `fixtures/failure-modes.json` against the real router: the
+//! envelope, the catalogue status, exactly one `request failed` event at the catalogue level
+//! carrying the request id, and no trace of the payload anywhere. `auth` rows first sign in, so the
+//! tokens that must not leak are real ones.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 mod support;
@@ -24,6 +25,29 @@ const FIXTURE: &str = include_str!("../../../fixtures/failure-modes.json");
 #[derive(Deserialize)]
 struct Fixtures {
     server: Vec<ServerCase>,
+    auth: Vec<ServerCase>,
+}
+
+/// Sign in before the request, and optionally spend the refresh token once.
+#[derive(Deserialize)]
+struct Setup {
+    transport: String,
+    #[serde(default)]
+    rotate: bool,
+}
+
+/// The real pair that `{access_token}` and `{refresh_token}` stand for.
+#[derive(Default)]
+struct Tokens {
+    access: String,
+    refresh: String,
+}
+
+impl Tokens {
+    fn fill(&self, text: &str) -> String {
+        text.replace("{access_token}", &self.access)
+            .replace("{refresh_token}", &self.refresh)
+    }
 }
 
 #[derive(Deserialize)]
@@ -31,6 +55,8 @@ struct Fixtures {
 struct ServerCase {
     id: String,
     name: String,
+    #[serde(default)]
+    setup: Option<Setup>,
     request: CaseRequest,
     expect: Expect,
     #[serde(default)]
@@ -79,7 +105,7 @@ impl CaseRequest {
         self.body.clone().unwrap_or_default()
     }
 
-    fn build(&self) -> Request<Body> {
+    fn build(&self, tokens: &Tokens) -> Request<Body> {
         let mut builder = Request::builder()
             .method(self.method.as_str())
             .uri(&self.path);
@@ -87,21 +113,75 @@ impl CaseRequest {
             builder = builder.header(header::CONTENT_TYPE, content_type);
         }
         for (name, value) in &self.headers {
-            builder = builder.header(name, value);
+            builder = builder.header(name, tokens.fill(value));
         }
-        builder.body(Body::from(self.body())).unwrap()
+        builder.body(Body::from(tokens.fill(&self.body()))).unwrap()
     }
+}
+
+async fn call(state: &AppState, request: Request<Body>) -> (Option<String>, Value) {
+    let response = build_app(state.clone()).oneshot(request).await.unwrap();
+    let cookie = response
+        .headers()
+        .get(header::SET_COOKIE)
+        .and_then(|v| v.to_str().unwrap().strip_prefix("tran_refresh="))
+        .map(|v| v.split(';').next().unwrap().to_string());
+    let bytes = response.into_body().collect().await.unwrap().to_bytes();
+    (cookie, serde_json::from_slice(&bytes).unwrap())
+}
+
+fn post(path: &str, headers: &[(&str, &str)], body: String) -> Request<Body> {
+    let mut builder = Request::builder()
+        .method("POST")
+        .uri(path)
+        .header(header::CONTENT_TYPE, "application/json");
+    for (name, value) in headers {
+        builder = builder.header(*name, *value);
+    }
+    builder.body(Body::from(body)).unwrap()
+}
+
+/// Signs in on `state` (and refreshes once when asked) before any log is captured.
+async fn sign_in(state: &AppState, setup: &Setup) -> Tokens {
+    let body = format!(
+        r#"{{"role": "citizen_voter", "transport": "{}"}}"#,
+        setup.transport
+    );
+    let (cookie, json) = call(state, post("/api/auth/session", &[], body)).await;
+    let tokens = Tokens {
+        access: json["access_token"].as_str().unwrap().to_string(),
+        refresh: cookie
+            .or_else(|| json["refresh_token"].as_str().map(str::to_string))
+            .unwrap(),
+    };
+    if setup.rotate {
+        let cookie = format!("tran_refresh={}", tokens.refresh);
+        let body = format!(r#"{{"refresh_token": "{}"}}"#, tokens.refresh);
+        let (_, json) = call(
+            state,
+            post("/api/auth/refresh", &[("cookie", &cookie)], body),
+        )
+        .await;
+        assert!(json["access_token"].is_string(), "setup refresh: {json}");
+    }
+    tokens
 }
 
 #[tokio::test]
 async fn every_server_failure_mode_is_answered_and_logged_once() {
     let fixtures: Fixtures = serde_json::from_str(FIXTURE).expect("valid fixture");
-    for case in fixtures.server {
+    assert!(!fixtures.auth.is_empty(), "REQ-SEC-014 needs auth rows");
+    for case in fixtures.server.into_iter().chain(fixtures.auth) {
         let label = format!("{} {}", case.id, case.name);
+        let state = AppState::new();
+        let tokens = match &case.setup {
+            Some(setup) => sign_in(&state, setup).await,
+            None => Tokens::default(),
+        };
         let (captured, _guard) = Captured::install();
 
-        let response = build_app(AppState::new())
-            .oneshot(case.request.build())
+        let response = build_app(state)
+            .oneshot(case.request.build(&tokens))
             .await
             .unwrap();
         let status = response.status().as_u16();
@@ -109,6 +189,7 @@ async fn every_server_failure_mode_is_answered_and_logged_once() {
             .headers()
             .get("x-request-id")
             .map(|v| v.to_str().unwrap().to_string());
+        let header_text = format!("{:?}", response.headers());
         let bytes = response.into_body().collect().await.unwrap().to_bytes();
         let raw = String::from_utf8_lossy(&bytes).to_string();
         let body: Value = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
@@ -147,10 +228,11 @@ async fn every_server_failure_mode_is_answered_and_logged_once() {
             "{label}"
         );
 
-        // No payload in the answer or in any log line.
-        for secret in &case.must_not_leak {
+        // No payload and no token in the answer or in any log line.
+        for secret in case.must_not_leak.iter().map(|s| tokens.fill(s)) {
+            assert!(!secret.is_empty() && !secret.contains('{'), "{label}");
             assert!(
-                !raw.contains(secret.as_str()),
+                !raw.contains(secret.as_str()) && !header_text.contains(secret.as_str()),
                 "{label}: response leaks {secret}"
             );
             for event in captured.events() {

@@ -41,7 +41,7 @@ private ranges → `IN` (template stub), anything else → `US`. The response MU
 ignored (not rejected) and the country resolved from the IP.
 **Verified by:** `api_test.rs` (`eligibility_debug_country_is_ignored_in_production`), `config.rs` unit tests.
 
-### REQ-API-007 [planned] CORS allowlist from configuration
+### REQ-API-007 [verified] CORS allowlist from configuration
 
 Allowed origins MUST come from `CORS_ALLOWED_ORIGINS` (comma-separated). When unset, only the local development
 origins are allowed and only when `APP_ENV` is `development` or `test`; in other environments no origin is allowed.

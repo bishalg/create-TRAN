@@ -1,5 +1,5 @@
 {
-  "$comment": "Failure modes every implementation must handle (REQ-ROB-010, ADR-0029). `server`: requests the Axum API must reject with the envelope and exactly one `request failed` log event — consumed by apps/api/tests/failure_modes.rs. `responses`: HTTP answers every client must classify the same way — consumed by packages/core-ts/tests/failure-modes.test.ts, TranApiClientTests.swift and TranApiClientTests.kt. `mustNotLeak` strings may appear in neither the response nor any log line. Add a row first (red), then fix every platform (green).",
+  "$comment": "Failure modes every implementation must handle (REQ-ROB-010, ADR-0029). `server`: requests the Axum API must reject with the envelope and exactly one `request failed` log event — consumed by apps/api/tests/failure_modes.rs. `responses`: HTTP answers every client must classify the same way — consumed by packages/core-ts/tests/failure-modes.test.ts, TranApiClientTests.swift and TranApiClientTests.kt. `mustNotLeak` strings may appear in neither the response nor any log line. Add a row first (red), then fix every platform (green). `auth`: like `server`, but `setup` first signs in (`transport` `body` or `cookie`; `rotate: true` also refreshes once, so the pair is spent) and `{access_token}` / `{refresh_token}` in the request and in `mustNotLeak` stand for that real pair (REQ-SEC-014); consumed by apps/api/tests/failure_modes.rs only.",
   "server": [
     {
       "id": "FM-S01",
@@ -178,6 +178,101 @@
         "body": "{\"age\": 20, \"birthdate\": 20000101}"
       },
       "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" }
+    }
+  ],
+  "auth": [
+    {
+      "id": "FM-A01",
+      "name": "an access token on a failing request is never echoed",
+      "setup": { "transport": "body" },
+      "request": {
+        "method": "POST",
+        "path": "/api/vote/eligibility",
+        "headers": { "authorization": "Bearer {access_token}" },
+        "body": "{\"age\": \"x\"}"
+      },
+      "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" },
+      "mustNotLeak": ["{access_token}"]
+    },
+    {
+      "id": "FM-A02",
+      "name": "a refresh token presented as an access token",
+      "setup": { "transport": "body" },
+      "request": {
+        "method": "GET",
+        "path": "/api/auth/session",
+        "headers": { "authorization": "Bearer {refresh_token}" }
+      },
+      "expect": { "status": 401, "code": "auth.session_expired", "logLevel": "info" },
+      "mustNotLeak": ["{refresh_token}"]
+    },
+    {
+      "id": "FM-A03",
+      "name": "an access token under another scheme",
+      "setup": { "transport": "body" },
+      "request": {
+        "method": "GET",
+        "path": "/api/auth/session",
+        "headers": { "authorization": "Basic {access_token}" }
+      },
+      "expect": { "status": 401, "code": "auth.session_expired", "logLevel": "info" },
+      "mustNotLeak": ["{access_token}"]
+    },
+    {
+      "id": "FM-A04",
+      "name": "a replayed refresh token in the body",
+      "setup": { "transport": "body", "rotate": true },
+      "request": {
+        "method": "POST",
+        "path": "/api/auth/refresh",
+        "body": "{\"refresh_token\": \"{refresh_token}\"}"
+      },
+      "expect": { "status": 401, "code": "auth.session_expired", "logLevel": "info" },
+      "mustNotLeak": ["{refresh_token}", "{access_token}"]
+    },
+    {
+      "id": "FM-A05",
+      "name": "a replayed refresh cookie",
+      "setup": { "transport": "cookie", "rotate": true },
+      "request": {
+        "method": "POST",
+        "path": "/api/auth/refresh",
+        "headers": { "cookie": "tran_refresh={refresh_token}" }
+      },
+      "expect": { "status": 401, "code": "auth.session_expired", "logLevel": "info" },
+      "mustNotLeak": ["{refresh_token}", "{access_token}"]
+    },
+    {
+      "id": "FM-A06",
+      "name": "a refresh cookie and a bearer token from a foreign origin",
+      "setup": { "transport": "cookie" },
+      "request": {
+        "method": "POST",
+        "path": "/api/auth/sign-out",
+        "headers": {
+          "authorization": "Bearer {access_token}",
+          "cookie": "tran_refresh={refresh_token}",
+          "origin": "https://SENTINEL-origin.example"
+        }
+      },
+      "expect": { "status": 403, "code": "auth.forbidden", "logLevel": "warn" },
+      "mustNotLeak": ["{refresh_token}", "{access_token}", "SENTINEL-origin"]
+    },
+    {
+      "id": "FM-A07",
+      "name": "real tokens on a malformed sign-in",
+      "setup": { "transport": "cookie" },
+      "request": {
+        "method": "POST",
+        "path": "/api/auth/session",
+        "headers": {
+          "authorization": "Bearer {access_token}",
+          "cookie": "tran_refresh={refresh_token}"
+        },
+        "body": "{\"role\": \"SENTINEL-role\", \"transport\": \"body\"}"
+      },
+      "expect": { "status": 400, "code": "request.malformed", "logLevel": "warn" },
+      "mustNotLeak": ["{refresh_token}", "{access_token}", "SENTINEL-role"]
     }
   ],
   "responses": [

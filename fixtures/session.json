@@ -1,0 +1,56 @@
+{
+  "$comment": "Session policy and recovery cases (spec 022, REQ-SEC-005, REQ-SEC-015, ADR-0039) shared by Rust (crates/rust-core/tests/session_fixtures.rs), UniFFI (crates/tran-uniffi/tests/session_fixtures.rs), TypeScript (packages/core-ts/tests/session.test.ts), iOS and Android parity tests. `policy`: lifetimes in seconds and token size in bytes. `recovery`: what a client does after an auth failure. `refreshResponses`: how the answer to `POST /api/auth/refresh` becomes a recovery event; `status: null` means no HTTP answer at all (offline, timeout), `event: null` means the refresh succeeded.",
+  "policy": { "accessTtlSeconds": 900, "refreshTtlSeconds": 2592000, "tokenBytes": 32 },
+  "recovery": [
+    {
+      "name": "401 with a refresh credential, first time: refresh once",
+      "event": "unauthorized",
+      "hasRefreshCredential": true,
+      "alreadyRetried": false,
+      "action": "refresh"
+    },
+    {
+      "name": "401 again after the refresh and retry: sign out",
+      "event": "unauthorized",
+      "hasRefreshCredential": true,
+      "alreadyRetried": true,
+      "action": "sign_out"
+    },
+    {
+      "name": "401 without a refresh credential: sign out",
+      "event": "unauthorized",
+      "hasRefreshCredential": false,
+      "alreadyRetried": false,
+      "action": "sign_out"
+    },
+    {
+      "name": "401 without a refresh credential after a retry: sign out",
+      "event": "unauthorized",
+      "hasRefreshCredential": false,
+      "alreadyRetried": true,
+      "action": "sign_out"
+    },
+    {
+      "name": "the refresh was rejected: the credential is dead",
+      "event": "refresh_rejected",
+      "action": "sign_out"
+    },
+    {
+      "name": "the refresh failed some other way: keep the session",
+      "event": "refresh_failed",
+      "action": "keep"
+    }
+  ],
+  "refreshResponses": [
+    { "name": "success", "status": 200, "event": null },
+    { "name": "unauthorized", "status": 401, "event": "refresh_rejected" },
+    { "name": "forbidden", "status": 403, "event": "refresh_rejected" },
+    { "name": "no answer (offline or timeout)", "status": null, "event": "refresh_failed" },
+    { "name": "malformed request", "status": 400, "event": "refresh_failed" },
+    { "name": "rate limited", "status": 429, "event": "refresh_failed" },
+    { "name": "server error", "status": 500, "event": "refresh_failed" },
+    { "name": "bad gateway", "status": 502, "event": "refresh_failed" },
+    { "name": "unavailable", "status": 503, "event": "refresh_failed" },
+    { "name": "gateway timeout", "status": 504, "event": "refresh_failed" }
+  ]
+}

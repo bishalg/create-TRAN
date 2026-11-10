@@ -722,6 +722,12 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_verdict_source_spec(
     ): Int
+    external fun uniffi_tran_uniffi_checksum_func_session_policy(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_session_recovery(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_session_refresh_event(
+    ): Int
     external fun ffi_tran_uniffi_uniffi_contract_version(
     ): Int
 
@@ -784,6 +790,12 @@ internal object UniffiLib {
     external fun uniffi_tran_uniffi_fn_func_toast_policy(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_verdict_source_spec(`source`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_session_policy(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_session_recovery(`event`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_session_refresh_event(`status`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun ffi_tran_uniffi_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -974,6 +986,15 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_tran_uniffi_checksum_func_verdict_source_spec() and 0xFFFF) != 18040) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_session_policy() and 0xFFFF) != 15140) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_session_recovery() and 0xFFFF) != 17296) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_session_refresh_event() and 0xFFFF) != 10936) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
 }
@@ -1596,6 +1617,61 @@ public object FfiConverterTypeTranRetryPolicy: FfiConverterRustBuffer<TranRetryP
             FfiConverterULong.write(value.`baseDelayMs`, buf)
             FfiConverterULong.write(value.`maxDelayMs`, buf)
             FfiConverterULong.write(value.`requestTimeoutMs`, buf)
+    }
+}
+
+
+
+/**
+ * Token lifetimes and size issued by the API.
+ */
+data class TranSessionPolicy (
+    /**
+     * Seconds an access token is accepted after it is issued (15 minutes).
+     */
+    var `accessTtlSeconds`: kotlin.ULong
+    , 
+    /**
+     * Seconds a refresh token can buy a new pair after it is issued (30 days).
+     */
+    var `refreshTtlSeconds`: kotlin.ULong
+    , 
+    /**
+     * Random bytes in each token before base64url encoding.
+     */
+    var `tokenBytes`: kotlin.UInt
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranSessionPolicy: FfiConverterRustBuffer<TranSessionPolicy> {
+    override fun read(buf: ByteBuffer): TranSessionPolicy {
+        return TranSessionPolicy(
+            FfiConverterULong.read(buf),
+            FfiConverterULong.read(buf),
+            FfiConverterUInt.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranSessionPolicy) = (
+            FfiConverterULong.allocationSize(value.`accessTtlSeconds`) +
+            FfiConverterULong.allocationSize(value.`refreshTtlSeconds`) +
+            FfiConverterUInt.allocationSize(value.`tokenBytes`)
+    )
+
+    override fun write(value: TranSessionPolicy, buf: ByteBuffer) {
+            FfiConverterULong.write(value.`accessTtlSeconds`, buf)
+            FfiConverterULong.write(value.`refreshTtlSeconds`, buf)
+            FfiConverterUInt.write(value.`tokenBytes`, buf)
     }
 }
 
@@ -2252,6 +2328,162 @@ public object FfiConverterTypeTranPresentation : FfiConverterRustBuffer<TranPres
 
 
 /**
+ * What the app does next.
+ */
+
+enum class TranSessionAction {
+    
+    /**
+     * Refresh once (one shared in-flight refresh), then repeat the call with the new token.
+     */
+    REFRESH,
+    /**
+     * Clear the vault and the access token, and present `auth.session_expired`.
+     */
+    SIGN_OUT,
+    /**
+     * Keep the vault and the device session; try again later. Never signs the user out.
+     */
+    KEEP;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranSessionAction: FfiConverterRustBuffer<TranSessionAction> {
+    override fun read(buf: ByteBuffer) = try {
+        TranSessionAction.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TranSessionAction) = 4UL
+
+    override fun write(value: TranSessionAction, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
+ * What just went wrong with the session.
+ */
+sealed class TranSessionEvent {
+    
+    /**
+     * An API call answered `401`.
+     */
+    data class Unauthorized(
+        /**
+         * The vault holds a refresh token.
+         */
+        val `hasRefreshCredential`: kotlin.Boolean, 
+        /**
+         * This call was already repeated once after a refresh.
+         */
+        val `alreadyRetried`: kotlin.Boolean) : TranSessionEvent()
+        
+    {
+        
+
+        companion object
+    }
+    
+    /**
+     * The refresh call answered `401` or `403`: the credential is dead.
+     */
+    object RefreshRejected : TranSessionEvent()
+    
+    
+    /**
+     * The refresh call got no usable answer (offline, timeout, `429`, `5xx`).
+     */
+    object RefreshFailed : TranSessionEvent()
+    
+    
+
+    
+
+    
+    
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranSessionEvent : FfiConverterRustBuffer<TranSessionEvent>{
+    override fun read(buf: ByteBuffer): TranSessionEvent {
+        return when(buf.getInt()) {
+            1 -> TranSessionEvent.Unauthorized(
+                FfiConverterBoolean.read(buf),
+                FfiConverterBoolean.read(buf),
+                )
+            2 -> TranSessionEvent.RefreshRejected
+            3 -> TranSessionEvent.RefreshFailed
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: TranSessionEvent): ULong = when(value) {
+        is TranSessionEvent.Unauthorized -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterBoolean.allocationSize(value.`hasRefreshCredential`)
+                + FfiConverterBoolean.allocationSize(value.`alreadyRetried`)
+            )
+        }
+        is TranSessionEvent.RefreshRejected -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is TranSessionEvent.RefreshFailed -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+    }
+
+    override fun write(value: TranSessionEvent, buf: ByteBuffer) {
+        when(value) {
+            is TranSessionEvent.Unauthorized -> {
+                buf.putInt(1)
+                FfiConverterBoolean.write(value.`hasRefreshCredential`, buf)
+                FfiConverterBoolean.write(value.`alreadyRetried`, buf)
+                Unit
+            }
+            is TranSessionEvent.RefreshRejected -> {
+                buf.putInt(2)
+                Unit
+            }
+            is TranSessionEvent.RefreshFailed -> {
+                buf.putInt(3)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+/**
  * What to do with an incoming toast.
  */
 sealed class TranToastAdmission {
@@ -2849,6 +3081,38 @@ public object FfiConverterOptionalTypeTranErrorCode: FfiConverterRustBuffer<Tran
 /**
  * @suppress
  */
+public object FfiConverterOptionalTypeTranSessionEvent: FfiConverterRustBuffer<TranSessionEvent?> {
+    override fun read(buf: ByteBuffer): TranSessionEvent? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeTranSessionEvent.read(buf)
+    }
+
+    override fun allocationSize(value: TranSessionEvent?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeTranSessionEvent.allocationSize(value)
+        }
+    }
+
+    override fun write(value: TranSessionEvent?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeTranSessionEvent.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterOptionalTypeTranUserRole: FfiConverterRustBuffer<TranUserRole?> {
     override fun read(buf: ByteBuffer): TranUserRole? {
         if (buf.get().toInt() == 0) {
@@ -3379,6 +3643,71 @@ public object FfiConverterSequenceTypeTranToastKey: FfiConverterRustBuffer<List<
     
         
         FfiConverterTypeTranVerdictSource.lower(`source`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * The session policy from `rust-core`.
+         *
+         * # Returns
+         *
+         * The lifetimes the API issues tokens with; pinned by the `policy` section of
+         * `fixtures/session.json`.
+         */ fun `sessionPolicy`(): TranSessionPolicy {
+            return FfiConverterTypeTranSessionPolicy.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_session_policy(
+    
+        _status)
+}
+    )
+    }
+    
+
+        /**
+         * What to do after an auth failure (REQ-SEC-015).
+         *
+         * # Arguments
+         *
+         * * `event` — the failure: a `401` on an API call, or the outcome of a refresh.
+         *
+         * # Returns
+         *
+         * [`TranSessionAction::Refresh`] only for a first `401` while a refresh token is held;
+         * [`TranSessionAction::SignOut`] when the credential is missing or dead;
+         * [`TranSessionAction::Keep`] when the refresh merely failed.
+         */ fun `sessionRecovery`(`event`: TranSessionEvent): TranSessionAction {
+            return FfiConverterTypeTranSessionAction.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_session_recovery(
+    
+        
+        FfiConverterTypeTranSessionEvent.lower(`event`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Classifies the answer to `POST /api/auth/refresh`.
+         *
+         * # Arguments
+         *
+         * * `status` — the HTTP status, or `None` when no answer arrived (offline, timeout).
+         *
+         * # Returns
+         *
+         * `None` when the refresh succeeded (`2xx`); otherwise the event to pass to
+         * [`session_recovery`]: `401` and `403` reject the credential, anything else merely failed.
+         */ fun `sessionRefreshEvent`(`status`: kotlin.UShort?): TranSessionEvent? {
+            return FfiConverterOptionalTypeTranSessionEvent.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_session_refresh_event(
+    
+        
+        FfiConverterOptionalUShort.lower(`status`),_status)
 }
     )
     }

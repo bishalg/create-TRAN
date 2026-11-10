@@ -1,18 +1,24 @@
+//! CORS from configuration (REQ-API-007): exact origins, never `*`, with credentials so the
+//! refresh cookie of REQ-SEC-007 can travel.
+
 use axum::http::{header, HeaderName, HeaderValue, Method};
 use tower_http::cors::CorsLayer;
 
-pub fn create_cors_layer() -> CorsLayer {
+/// `origins` comes from `AppConfig::allowed_origins`; a value that is not a valid header is
+/// skipped, so it can never match.
+pub fn create_cors_layer(origins: &[String]) -> CorsLayer {
+    let origins: Vec<HeaderValue> = origins
+        .iter()
+        .filter_map(|origin| HeaderValue::from_str(origin).ok())
+        .collect();
     CorsLayer::new()
-        .allow_origin([
-            HeaderValue::from_static("http://localhost:3000"),
-            HeaderValue::from_static("http://127.0.0.1:3000"),
-            HeaderValue::from_static("http://localhost:8081"),
-        ])
+        .allow_origin(origins)
+        .allow_credentials(true)
         .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
         .allow_headers([
             header::CONTENT_TYPE,
-            header::AUTHORIZATION,
             header::ACCEPT,
+            header::AUTHORIZATION,
             // Dev-only geo override sent by the web/native demo clients.
             HeaderName::from_static("x-debug-country"),
             HeaderName::from_static("x-request-id"),
