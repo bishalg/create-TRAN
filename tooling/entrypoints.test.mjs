@@ -31,6 +31,7 @@ const TOOLS = [
     /gate: needs-detail/,
   ],
   ['supply-chain/supply-chain.mjs', [], /supply-chain: actions pinned/],
+  ['secrets/secrets.mjs', [], /secrets: ok/],
   ['release/release.mjs', ['check'], /release: every version agrees/],
 ];
 

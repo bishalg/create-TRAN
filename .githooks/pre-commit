@@ -9,16 +9,20 @@ echo "🔍 [pre-commit] Running local quality gates..."
 echo "  ↳ Checking requirement traceability (spec:check)..."
 pnpm run spec:check
 
-# 2. Formatting
+# 2. Secrets: staged content only (the full check runs in secrets:check)
+echo "  ↳ Scanning staged files for secrets..."
+node tooling/secrets/secrets.mjs --staged
+
+# 3. Formatting
 echo "  ↳ Checking Rust and TypeScript formatting..."
 cargo fmt --all -- --check
 pnpm run format:check
 
-# 3. TypeScript Typechecking
+# 4. TypeScript Typechecking
 echo "  ↳ Typechecking TypeScript packages and apps..."
 pnpm run typecheck
 
-# 4. Rust Clippy Linter
+# 5. Rust Clippy Linter
 echo "  ↳ Running cargo clippy..."
 cargo clippy --workspace --all-targets -- -D warnings
 
