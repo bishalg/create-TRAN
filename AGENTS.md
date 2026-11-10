@@ -32,6 +32,9 @@ This is a **template**: keep the sample tiny, exemplary and fully tested.
   `release` never rebuilds; a new iOS required-reason API goes in `PrivacyInfo.xcprivacy`.
 - Store rules ([docs/APP_REVIEW.md](docs/APP_REVIEW.md)): before adding a permission, a sign-in provider, a purchase
   or a personal question, find its row there; add the row if it is missing.
+- No third-party product SDKs (purchases, sign-in, analytics, push, crash reporting): build on the platform APIs behind
+  a seam and learn the pattern from the best SDK instead of importing it, so the template shows how the thing works. A
+  fork may swap an SDK in behind the seam. Record an unavoidable exception in an ADR.
 - Hand-written code and test files stay at or under 800 lines (`pnpm tooling:test`): split by responsibility, not
   by line count. Generated files are exempt; docs have no hard limit but are split by topic.
 - Commits are Conventional Commits (`feat(scope): …`, `fix!: …`; the `commit-msg` hook checks). One version for every
