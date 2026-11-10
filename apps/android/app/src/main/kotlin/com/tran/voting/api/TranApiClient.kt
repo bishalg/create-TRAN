@@ -199,9 +199,12 @@ class TranApiClient(
         private val JSON = "application/json".toMediaType()
         private val COUNTRY_CODE = Regex("^[A-Za-z]{2}$")
 
-        /** Shared so screens never build a connection pool per recomposition. */
-        /** The catalogue's per-attempt timeout: a status pill must never make the dashboard feel stuck. */
-        private val sharedHttpClient: OkHttpClient by lazy {
+        /**
+         * Shared so screens never build a connection pool per recomposition; the session client
+         * uses it too. The catalogue's per-attempt timeout: a status pill must never make the
+         * dashboard feel stuck.
+         */
+        internal val sharedHttpClient: OkHttpClient by lazy {
             OkHttpClient.Builder()
                 .connectTimeout(2, TimeUnit.SECONDS)
                 .callTimeout(retryPolicy().requestTimeoutMs.toLong(), TimeUnit.MILLISECONDS)

@@ -48,6 +48,29 @@ describe('native API clients (dialect: config, cleartext, debug header)', () => 
     expect(() => read('apps/android/app/src/release/AndroidManifest.xml')).toThrow();
   });
 
+  // Verifies: REQ-SEC-020
+  it('keeps the Android session vault out of backup and device transfer', () => {
+    const manifest = read('apps/android/app/src/main/AndroidManifest.xml');
+    expect(manifest).toMatch(/android:allowBackup="false"/);
+    expect(manifest).toMatch(/android:dataExtractionRules="@xml\/data_extraction_rules"/);
+    // minSdk 26 predates data-extraction rules (API 31): the older full-backup rules apply there.
+    expect(manifest).toMatch(/android:fullBackupContent="@xml\/backup_rules"/);
+    expect(read('apps/android/app/build.gradle.kts')).toMatch(/minSdk = 26/);
+
+    const vault = /<exclude domain="sharedpref" path="tran_session_vault\.xml" \/>/;
+    const extraction = read('apps/android/app/src/main/res/xml/data_extraction_rules.xml');
+    for (const section of ['cloud-backup', 'device-transfer']) {
+      const body = extraction.match(new RegExp(`<${section}>([\\s\\S]*?)</${section}>`))?.[1] ?? '';
+      expect(body, section).toMatch(vault);
+    }
+    expect(read('apps/android/app/src/main/res/xml/backup_rules.xml')).toMatch(vault);
+
+    // The file name is the vault's own preferences name.
+    expect(
+      read('apps/android/app/src/main/kotlin/com/tran/voting/session/KeystoreSessionVault.kt')
+    ).toContain('const val PREFERENCES = "tran_session_vault"');
+  });
+
   it('makes the Android base URL configurable with emulator and HTTPS defaults', () => {
     const gradle = read('apps/android/app/build.gradle.kts');
     expect(gradle).toMatch(/findProperty\("tranApiBaseUrl"\)/);

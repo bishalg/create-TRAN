@@ -50,7 +50,7 @@ class TranConfirmation(
  */
 class TranFeedback(
     /** Injected in JVM tests, where `android.util.Log` is unavailable. */
-    private val log: (TranLogLevel, String) -> Unit = ::logcat,
+    private val log: (TranLogLevel, String) -> Unit = ::tranLogcat,
 ) {
     /** Oldest first; at most `toastPolicy().maxVisible` (REQ-ERR-012). */
     var toasts: List<TranToastState> by mutableStateOf(emptyList())
@@ -204,7 +204,8 @@ class TranFeedback(
     }
 }
 
-private fun logcat(level: TranLogLevel, message: String) {
+/** The app's one logcat writer (REQ-ROB-007): callers pass a `logLine`, never a payload. */
+internal fun tranLogcat(level: TranLogLevel, message: String) {
     val tag = "TranFeedback"
     when (level) {
         TranLogLevel.DEBUG -> Log.d(tag, message)

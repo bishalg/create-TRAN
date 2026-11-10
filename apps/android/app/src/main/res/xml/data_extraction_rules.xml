@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- REQ-SEC-020 (API 31+): the session vault is excluded from cloud backup and from device transfer. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="tran_session_vault.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="tran_session_vault.xml" />
+    </device-transfer>
+</data-extraction-rules>

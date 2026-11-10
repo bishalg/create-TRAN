@@ -1,4 +1,4 @@
-# Verifies: REQ-NAT-002
+# Verifies: REQ-NAT-002 REQ-SEC-021
 # Launch smoke: the installed app, started from its real entry point (MainActivity on Android, the
 # app scene on iOS) on a booted simulator, emulator or a real device, gives a device verdict. Every
 # journey lives in the screen contract (crates/rust-core/src/screens/scenarios.rs) and runs in
@@ -9,6 +9,9 @@ tags: [smoke]
 ---
 - launchApp:
     clearState: true
+# A fresh install has an empty session vault (REQ-SEC-021), so both platforms open on Welcome.
+- tapOn:
+    id: voter-branch-button
 - assertVisible:
     id: age-field
 - tapOn:

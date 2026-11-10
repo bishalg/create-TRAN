@@ -4,8 +4,13 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Hear when the network returns, so the offline banner can recover at once (REQ-ERR-013). -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- REQ-SEC-020: the session vault never leaves the device. No backup at all, and on API 31+, where
+         device-to-device transfer ignores allowBackup, explicit rules exclude the vault too; restored
+         ciphertext would be useless anyway, since its Keystore key is not backed up. -->
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:label="@string/common_app_name"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
