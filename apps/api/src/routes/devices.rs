@@ -86,7 +86,10 @@ pub async fn register(
         refreshed_at: state.sessions.clock().now(),
     };
     let (platform, environment) = (body.platform.as_str(), body.environment.as_str());
-    let replaced = state.sessions.register_device(registration);
+    let replaced = state
+        .sessions
+        .blocking(move |sessions| sessions.register_device(registration))
+        .await?;
     tracing::info!(platform, environment, replaced, "device registered");
     Ok(StatusCode::NO_CONTENT)
 }
@@ -99,10 +102,11 @@ pub async fn unregister(
     path: Result<Path<String>, PathRejection>,
 ) -> Result<StatusCode, ApiError> {
     let installation = installation(path)?;
+    let user_id = live.session.user.user_id;
     let removed = state
         .sessions
-        .devices()
-        .unregister(&live.session.user.user_id, &installation);
+        .blocking(move |sessions| sessions.devices().unregister(&user_id, &installation))
+        .await?;
     tracing::info!(removed, "device unregistered");
     Ok(StatusCode::NO_CONTENT)
 }

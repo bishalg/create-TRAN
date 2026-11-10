@@ -442,10 +442,11 @@ async fn logs_carry_fixed_fields_and_never_a_token_an_installation_or_a_user() {
     let id = OpaqueId::parse("evt_7Hq2-x9").unwrap();
     api.push()
         .notify("voter-001", &ELIGIBILITY_REACHED, &id)
-        .await;
+        .await
+        .unwrap();
     assert_no_content(&api.unregister(&voter, TABLET).await, "unregister");
     api.clock.advance(Duration::days(61));
-    api.push().prune_stale();
+    api.prune().await;
 
     let registered = captured.named("device registered");
     assert_eq!(registered.len(), 2, "{registered:?}");
@@ -481,7 +482,7 @@ async fn logs_carry_fixed_fields_and_never_a_token_an_installation_or_a_user() {
         (Level::WARN, Some("android"))
     );
     assert_eq!(
-        captured.named("stale device registrations pruned")[0].field("removed"),
+        captured.named("database pruned")[0].field("devices"),
         Some("0")
     );
     assert_eq!(captured.named("request failed").len(), 1);

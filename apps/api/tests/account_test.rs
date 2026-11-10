@@ -1,6 +1,7 @@
 // Verifies: REQ-ACC-001 REQ-ACC-002 REQ-ACC-003
-//! `DELETE /api/v1/account` against the real router, an in-memory store and a manual clock. Naming
-//! follows the spec's "Verified by" lines: `deletion_*`, `foreign_origin_*`, `a_failing_eraser_*`.
+//! `DELETE /api/v1/account` against the real router, the SQL stores on an in-memory database and a
+//! manual clock. Naming follows the spec's "Verified by" lines: `deletion_*`, `foreign_origin_*`,
+//! `a_failing_eraser_*`.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 mod support;
@@ -11,9 +12,9 @@ use api::account::AccountEraser;
 use api::build_app;
 use api::clock::ManualClock;
 use api::config::AppConfig;
-use api::device_store::InMemoryDeviceStore;
+use api::db::Database;
 use api::error::ApiError;
-use api::session_store::{InMemorySessionStore, SessionUser};
+use api::session_store::SessionUser;
 use api::sessions::Sessions;
 use api::state::AppState;
 use axum::body::Body;
@@ -80,11 +81,7 @@ impl Api {
         let start = DateTime::<Utc>::from_timestamp(1_800_000_000, 0).unwrap();
         let clock = Arc::new(ManualClock::starting_at(start));
         let state = AppState {
-            sessions: Sessions::new(
-                Arc::new(InMemorySessionStore::default()),
-                Arc::new(InMemoryDeviceStore::default()),
-                clock.clone(),
-            ),
+            sessions: Sessions::sql(Database::in_memory(), clock.clone()),
             ..AppState::from_config(&AppConfig::from_lookup(|_| None))
         };
         Self {

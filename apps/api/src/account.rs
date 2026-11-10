@@ -14,8 +14,10 @@ use crate::sessions::Sessions;
 
 pub trait AccountEraser: Send + Sync {
     /// Erases everything the server holds for `user`, ending with every session and every device
-    /// registration of the user ([`Sessions::revoke_user`]), so no notification reaches a device
-    /// of a deleted account.
+    /// registration of the user ([`Sessions::revoke_user`], one transaction, REQ-DB-006), so no
+    /// notification reaches a device of a deleted account. The route runs it off the async
+    /// executor ([`Sessions::blocking`]), so it may wait on a database. A store failure answers
+    /// `503 server.unavailable` and changes nothing.
     fn erase(&self, user: &SessionUser, sessions: &Sessions) -> Result<(), ApiError>;
 }
 
@@ -25,7 +27,6 @@ pub struct SessionsOnly;
 
 impl AccountEraser for SessionsOnly {
     fn erase(&self, user: &SessionUser, sessions: &Sessions) -> Result<(), ApiError> {
-        sessions.revoke_user(&user.user_id);
-        Ok(())
+        Ok(sessions.revoke_user(&user.user_id)?)
     }
 }

@@ -3,8 +3,7 @@
 //! `cargo run -p api -- send-test-push --platform ios --environment sandbox --token <hex>` sends
 //! the sample's doorbell (`eligibility.reached`) to that token through the configured sender and
 //! reports the provider's answer. There is no public route for it: sending is an operator's act.
-//! The registry is in memory and belongs to the running server, so the command addresses a token,
-//! not a user; code inside the API rings a user with [`super::Push::eligibility_reached`].
+//! The command addresses a token, not a user, so it works without the server's database; code inside the API rings a user with [`super::Push::eligibility_reached`].
 
 use std::sync::Arc;
 

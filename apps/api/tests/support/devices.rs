@@ -1,5 +1,5 @@
 //! The device registry harness shared by `devices_test.rs` and `push_test.rs`: the real router,
-//! in-memory stores, a manual clock and a fake push sender.
+//! the SQL stores on an in-memory database, a manual clock and a fake push sender.
 #![allow(dead_code, clippy::unwrap_used, clippy::expect_used)]
 
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
@@ -7,11 +7,11 @@ use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use api::build_app;
 use api::clock::ManualClock;
 use api::config::AppConfig;
-use api::device_store::InMemoryDeviceStore;
+use api::db::prune::{run_once, PruneReport};
+use api::db::Database;
 use api::devices::Registration;
 use api::push::sender::FakeSender;
 use api::push::Push;
-use api::session_store::InMemorySessionStore;
 use api::sessions::Sessions;
 use api::state::AppState;
 use axum::body::Body;
@@ -57,6 +57,11 @@ pub struct Session {
 /// hide that test's events; the tests take turns instead.
 static SERIAL: Mutex<()> = Mutex::new(());
 
+/// Waits for this binary's other tests to finish logging; held until the guard drops.
+pub fn take_turn() -> MutexGuard<'static, ()> {
+    SERIAL.lock().unwrap_or_else(PoisonError::into_inner)
+}
+
 pub struct Api {
     pub state: AppState,
     pub clock: Arc<ManualClock>,
@@ -66,15 +71,11 @@ pub struct Api {
 
 impl Api {
     pub fn new() -> Self {
-        let serial = SERIAL.lock().unwrap_or_else(PoisonError::into_inner);
+        let serial = take_turn();
         let start = DateTime::<Utc>::from_timestamp(1_800_000_000, 0).unwrap();
         let clock = Arc::new(ManualClock::starting_at(start));
         let state = AppState {
-            sessions: Sessions::new(
-                Arc::new(InMemorySessionStore::default()),
-                Arc::new(InMemoryDeviceStore::default()),
-                clock.clone(),
-            ),
+            sessions: Sessions::sql(Database::in_memory(), clock.clone()),
             ..AppState::from_config(&AppConfig::from_lookup(|_| None))
         };
         Self {
@@ -83,6 +84,11 @@ impl Api {
             sender: Arc::new(FakeSender::default()),
             _serial: serial,
         }
+    }
+
+    /// One run of the database prune, as the server's task runs it (REQ-DB-009).
+    pub async fn prune(&self) -> PruneReport {
+        run_once(&self.state.sessions).await.unwrap()
     }
 
     pub fn push(&self) -> Push {
@@ -148,7 +154,7 @@ impl Api {
     }
 
     pub fn registrations(&self, user_id: &str) -> Vec<Registration> {
-        let mut found = self.state.sessions.devices().for_user(user_id);
+        let mut found = self.state.sessions.devices().for_user(user_id).unwrap();
         found.sort_by_key(|r| r.token.expose().to_string());
         found
     }

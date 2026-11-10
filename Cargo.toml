@@ -58,5 +58,11 @@ hyper-rustls = { version = "0.27", default-features = false, features = ["aws-lc
 http-body-util = "0.1"
 aws-lc-rs = "1"
 
+# Persistence (ADR-0049): SQLite through rusqlite, with SQLite itself compiled in (`bundled`) so every
+# machine and CI runner uses the same reviewed version and needs no system library. Synchronous on
+# purpose: the stores run on tokio's blocking pool (`api::db::off_runtime`), and transactions stay
+# straight-line code. No ORM and no migration library: `api::db::migrate` is ours.
+rusqlite = { version = "0.41", default-features = false, features = ["bundled"] }
+
 # Internal Workspace Crates
 rust-core = { path = "crates/rust-core" }

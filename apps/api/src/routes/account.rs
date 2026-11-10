@@ -20,7 +20,11 @@ pub async fn delete_account(
     Authenticated(live): Authenticated,
 ) -> Result<Response, ApiError> {
     let session = live.session;
-    state.eraser.erase(&session.user, &state.sessions)?;
+    let (eraser, user) = (state.eraser.clone(), session.user.clone());
+    state
+        .sessions
+        .blocking(move |sessions| eraser.erase(&user, sessions))
+        .await?;
     tracing::info!("account deleted");
     let mut response = StatusCode::NO_CONTENT.into_response();
     if session.transport == Transport::Cookie {

@@ -3,9 +3,10 @@
 //!
 //! [`Push::notify`] builds the payload for each registration of a user that may receive it
 //! ([`payload`]), hands it to the [`PushSender`] ([`sender`]) and removes a registration whose
-//! token the provider reports dead. [`Push::prune_stale`] removes what nobody refreshed for
-//! `DEVICE_POLICY.stale_after_days`; a fork runs it on a schedule. Log lines carry fixed fields
-//! only: never a token, an installation id or a user id.
+//! token the provider reports dead. What nobody refreshed for `DEVICE_POLICY.stale_after_days` is
+//! removed by the database prune (`crate::db::prune`, REQ-DB-009). Registry reads and writes run
+//! off the async executor (REQ-DB-008). Log lines carry fixed fields only: never a token, an
+//! installation id or a user id.
 
 pub mod apns;
 pub mod fcm;
@@ -18,11 +19,9 @@ pub mod transport;
 
 use std::sync::Arc;
 
-use chrono::Duration;
-use rust_core::push::DEVICE_POLICY;
-
-use crate::clock::Clock;
+use crate::db::off_runtime;
 use crate::devices::{DevicePlatform, DeviceStore, Registration};
+use crate::session_store::StoreError;
 use crate::sessions::Sessions;
 use payload::{apns_request, fcm_message, Notification, OpaqueId};
 use sender::{ProviderAnswer, PushMessage, PushSender};
@@ -44,18 +43,16 @@ pub struct Delivery {
 
 pub struct Push {
     devices: Arc<dyn DeviceStore>,
-    clock: Arc<dyn Clock>,
     sender: Arc<dyn PushSender>,
     /// The iOS bundle id, sent as `apns-topic`.
     apns_topic: String,
 }
 
 impl Push {
-    /// Sends through `sender` to the registry `sessions` keeps, on its clock.
+    /// Sends through `sender` to the registry `sessions` keeps.
     pub fn new(sessions: &Sessions, sender: Arc<dyn PushSender>, apns_topic: &str) -> Self {
         Self {
             devices: sessions.devices().clone(),
-            clock: sessions.clock().clone(),
             sender,
             apns_topic: apns_topic.to_string(),
         }
@@ -71,15 +68,19 @@ impl Push {
         }
     }
 
-    /// Rings every device of `user_id` that may receive `notification`, about `id`.
+    /// Rings every device of `user_id` that may receive `notification`, about `id`. Fails only
+    /// when the registry cannot be read; nothing was sent then.
     pub async fn notify(
         &self,
         user_id: &str,
         notification: &Notification,
         id: &OpaqueId,
-    ) -> Delivery {
+    ) -> Result<Delivery, StoreError> {
         let mut delivery = Delivery::default();
-        for registration in self.devices.for_user(user_id) {
+        let devices = self.devices.clone();
+        let user_id = user_id.to_owned();
+        let registrations = off_runtime(move || devices.for_user(&user_id)).await?;
+        for registration in registrations {
             if !notification.may_reach(registration.marketing) {
                 delivery.skipped += 1;
                 continue;
@@ -89,11 +90,13 @@ impl Push {
             match self.sender.send(&registration, &message).await {
                 ProviderAnswer::Delivered => delivery.delivered += 1,
                 ProviderAnswer::TokenDead => {
-                    // Only while it still holds this token: a renewed one stays.
-                    delivery.removed += usize::from(
-                        self.devices
-                            .remove_if_token(&registration.installation, &registration.token),
-                    );
+                    // Only while it still holds this token: a renewed one stays. A registry that
+                    // fails here keeps the registration; the next send finds the token dead again.
+                    let devices = self.devices.clone();
+                    let (installation, token) = (registration.installation, registration.token);
+                    let removed =
+                        off_runtime(move || devices.remove_if_token(&installation, &token)).await;
+                    delivery.removed += usize::from(removed == Ok(true));
                     tracing::info!(platform, "push token dead; registration removed");
                 }
                 ProviderAnswer::RetryLater => delivery.retry_later += 1,
@@ -105,7 +108,7 @@ impl Push {
                 ProviderAnswer::NotConfigured => delivery.not_configured += 1,
             }
         }
-        delivery
+        Ok(delivery)
     }
 
     /// The sample's one notification: "you can vote now", about `id` (REQ-PSH-006).
@@ -113,16 +116,7 @@ impl Push {
         &'a self,
         user_id: &'a str,
         id: &'a OpaqueId,
-    ) -> impl std::future::Future<Output = Delivery> + 'a {
+    ) -> impl std::future::Future<Output = Result<Delivery, StoreError>> + 'a {
         self.notify(user_id, &payload::ELIGIBILITY_REACHED, id)
-    }
-
-    /// Removes every registration not refreshed for `DEVICE_POLICY.stale_after_days`; returns
-    /// how many (REQ-PSH-005).
-    pub fn prune_stale(&self) -> usize {
-        let cutoff = self.clock.now() - Duration::seconds(DEVICE_POLICY.stale_after_seconds());
-        let removed = self.devices.prune(cutoff);
-        tracing::info!(removed, "stale device registrations pruned");
-        removed
     }
 }

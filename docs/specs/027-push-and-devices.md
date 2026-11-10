@@ -26,7 +26,7 @@ Vocabulary used below:
 `{ "platform": "ios" | "android", "push_token", "environment": "sandbox" | "production", "locale", "app_version",
 "marketing": false }` MUST create or replace that installation's registration, bound to the caller's user and session,
 and answer `204`. The call MUST be idempotent. Without a valid token it answers `401` and stores nothing. The registry
-sits behind a `DeviceStore` trait; the sample's is in memory. Inputs are validated strictly, and a failure answers
+sits behind a `DeviceStore` trait; the sample's is SQL (spec 030, ADR-0049). Inputs are validated strictly, and a failure answers
 `400 request.malformed` naming the field, never its value: the installation id is a hyphenated version-4 UUID (either
 case); `platform` and `environment` are closed sets, and Android is always `production`; an iOS token is even-length
 hex of 64–200 characters (held lowercase), an Android token 32–1024 of `[A-Za-z0-9_:-]`; `locale` is a language tag of
@@ -47,10 +47,9 @@ notifications to another.
 
 When a session is revoked (sign-out, a replayed refresh token, REQ-SEC-010 and REQ-SEC-011), every registration made
 in that session MUST be removed in the same operation. When an account is deleted (REQ-ACC-001) every registration of
-that user MUST be removed. Neither may depend on the device making another call. The session service (`Sessions`)
-owns this tie, above both stores, so a fork replacing either store keeps it; a registration written for a session revoked
-meanwhile is removed by the write itself. A durable fork makes each revocation and its removal one transaction, or
-references the session row with `ON DELETE CASCADE` (the `DeviceStore` trait says so).
+that user MUST be removed. Neither may depend on the device making another call. The SQL stores keep this tie inside their
+transactions (spec 030 REQ-DB-006): ending a session deletes its registrations in the same transaction, and a
+registration is written only while its session is live, so one written for a session revoked meanwhile is never kept.
 **Verified by:** `devices_test.rs` (`sign_out_*`, `replay_*`, `account_deletion_*`), `sessions.rs` and
 `device_store.rs` unit tests.
 
@@ -64,8 +63,8 @@ to the caller and answer `204` whether or not one existed. It MUST NOT remove an
 
 Sending goes through a `PushSender` trait. When the provider reports a token as unregistered or invalid (APNs `410` /
 `Unregistered`, `BadDeviceToken`; FCM `UNREGISTERED`, `INVALID_ARGUMENT` for the token), the API MUST remove that
-registration. A registration not refreshed for `DEVICE_POLICY.stale_after_days` (`60`) MUST be removed by a prune the
-API can run on a schedule: one refreshed exactly 60 days ago is stale. The policy numbers are Rust data. Every provider
+registration. A registration not refreshed for `DEVICE_POLICY.stale_after_days` (`60`) MUST be removed by the database
+prune, which the server runs on a schedule (spec 030 REQ-DB-009): one refreshed exactly 60 days ago is stale. The policy numbers are Rust data. Every provider
 reply maps onto one of four answers (`delivered`, `token dead`, `retry later`, `rejected`); only `token dead` removes a
 registration, and only while it still holds that token, so a token renewed since is kept. `INVALID_ARGUMENT` from FCM
 counts as dead only when the error names `message.token`. The real senders, `ApnsSender` (HTTP/2, an ES256 provider
@@ -75,7 +74,7 @@ variables are set (`APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_KEY_P8`, `APNS_TOPIC`; `
 set, a send for that platform answers `not configured`, which never removes a registration, and one start-up line says
 which providers are on. A provider half configured, or a key that does not parse, stops start-up with a message naming
 the variable, never its value.
-**Verified by:** `apps/api/tests/push_test.rs` (`provider_*`, `prune_*`) with a fake sender; `device_store.rs` unit tests on the
+**Verified by:** `apps/api/tests/push_test.rs` (`provider_*`, `prune_*`) with a fake sender; `src/db/device_store_tests.rs` on the
 injected clock; `apps/api/src/push/sender.rs` unit tests (the reply mappings); `apps/api/tests/push_senders_test.rs`
 (`apns_*`, `fcm_*`: the JWTs over throwaway keys, request shapes, token reuse, every `providerReplies` row of
 `fixtures/push.json`, against a local fake provider); `apps/api/tests/push_providers_test.rs` (`provider_*`:

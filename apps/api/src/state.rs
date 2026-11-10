@@ -37,7 +37,8 @@ pub struct AppState {
 
 impl AppState {
     /// Development defaults: debug headers are honoured, the local dev origins are allowed, plain
-    /// HTTP, sessions in memory on the real clock.
+    /// HTTP, sessions in a fresh in-memory database on the real clock. [`crate::run_server`] puts
+    /// the configured database in its place.
     pub fn new() -> Self {
         Self {
             engine: Arc::new(TranEngine::new()),

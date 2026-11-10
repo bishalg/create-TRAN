@@ -12,7 +12,7 @@ use serde::Deserialize;
 use uuid::{Uuid, Variant, Version};
 
 use crate::secret::{Secret, REDACTED};
-use crate::session_store::SessionId;
+use crate::session_store::{SessionId, StoreError};
 
 /// The random id one install of the app creates on first launch (REQ-PSH-010): a version-4 UUID
 /// in its hyphenated form, either case, held lowercase.
@@ -30,6 +30,11 @@ impl InstallationId {
     /// A new random id, for a send made by hand with no app behind it (`push::manual`).
     pub fn random() -> Self {
         Self(Uuid::new_v4())
+    }
+
+    /// The hyphenated lowercase form the database keeps; [`Self::parse`] reads it back.
+    pub(crate) fn stored(&self) -> String {
+        self.0.hyphenated().to_string()
     }
 }
 
@@ -165,42 +170,39 @@ pub struct Registration {
 
 /// Where registrations are kept.
 ///
-/// [`crate::device_store::InMemoryDeviceStore`] is the sample's. A fork puts its database behind
-/// the same trait and keeps three guarantees:
+/// [`crate::db::SqlDeviceStore`] is the one implementation (ADR-0049). A fork that moves to another
+/// database keeps three guarantees:
 ///
 /// - [`register`](Self::register) is one transaction: removing the token's other registrations
-///   and writing this one (a unique index on the token enforces REQ-PSH-002).
-/// - A registration ends with its session (REQ-PSH-003). [`crate::sessions::Sessions`] calls
-///   [`remove_session`](Self::remove_session) right after revoking a session and
-///   [`remove_user`](Self::remove_user) after removing a user's sessions; with one database, make
-///   each pair one transaction, or reference the session row with `ON DELETE CASCADE` so the
-///   database does it.
+///   and writing this one, only while its session is live (REQ-PSH-002, REQ-PSH-003, REQ-DB-006).
+///   A unique token decides what two concurrent registrations of it leave (REQ-DB-007).
+/// - A registration ends with its session: [`crate::session_store::SessionStore`] removes it in
+///   the transaction that ends the session (REQ-PSH-003).
 /// - Nothing here logs a token or an installation id (REQ-PSH-007).
 pub trait DeviceStore: Send + Sync {
     /// Creates or replaces `registration.installation`'s registration, first removing every other
     /// registration of the same token, of any installation and any user. Returns how many it
-    /// removed.
-    fn register(&self, registration: Registration) -> usize;
+    /// removed. When `registration.session` is not a live session of `registration.user_id`, it
+    /// changes nothing and returns 0: a registration never outlives the session it was made in.
+    fn register(&self, registration: Registration) -> Result<usize, StoreError>;
 
     /// Removes `installation`'s registration if it belongs to `user_id`; `true` when one was
     /// removed. Another user's registration stays (REQ-PSH-004).
-    fn unregister(&self, user_id: &str, installation: &InstallationId) -> bool;
-
-    /// Removes every registration made in `session`; returns how many.
-    fn remove_session(&self, session: SessionId) -> usize;
-
-    /// Removes every registration of `user_id`; returns how many.
-    fn remove_user(&self, user_id: &str) -> usize;
+    fn unregister(&self, user_id: &str, installation: &InstallationId) -> Result<bool, StoreError>;
 
     /// Removes `installation`'s registration only while it still holds `token`, so a token the
     /// provider reports dead never removes the newer token the device registered since.
-    fn remove_if_token(&self, installation: &InstallationId, token: &PushToken) -> bool;
+    fn remove_if_token(
+        &self,
+        installation: &InstallationId,
+        token: &PushToken,
+    ) -> Result<bool, StoreError>;
 
     /// Every registration of `user_id`.
-    fn for_user(&self, user_id: &str) -> Vec<Registration>;
+    fn for_user(&self, user_id: &str) -> Result<Vec<Registration>, StoreError>;
 
     /// Removes every registration last refreshed at or before `cutoff`; returns how many.
-    fn prune(&self, cutoff: DateTime<Utc>) -> usize;
+    fn prune(&self, cutoff: DateTime<Utc>) -> Result<usize, StoreError>;
 }
 
 #[cfg(test)]

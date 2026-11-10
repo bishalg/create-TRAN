@@ -1,5 +1,6 @@
 // Verifies: REQ-SEC-006 REQ-SEC-007 REQ-SEC-008 REQ-SEC-009 REQ-SEC-010 REQ-SEC-011 REQ-SEC-012
-//! The session endpoints against the real router and an in-memory store on a manual clock.
+//! The session endpoints against the real router and the SQL stores on an in-memory database, on a
+//! manual clock.
 //! Naming follows the spec's "Verified by" lines: `cookie_transport_*`, `body_transport_*`,
 //! `bearer_*`, `refresh_*`, `sign_out_*`, `foreign_origin_*`.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
@@ -9,8 +10,7 @@ use std::sync::Arc;
 use api::build_app;
 use api::clock::ManualClock;
 use api::config::AppConfig;
-use api::device_store::InMemoryDeviceStore;
-use api::session_store::InMemorySessionStore;
+use api::db::Database;
 use api::sessions::Sessions;
 use api::state::AppState;
 use axum::body::Body;
@@ -53,7 +53,7 @@ impl Reply {
     }
 }
 
-/// One API instance: shared in-memory sessions on a clock the test moves.
+/// One API instance: sessions in its own in-memory database, on a clock the test moves.
 struct Api {
     state: AppState,
     clock: Arc<ManualClock>,
@@ -68,11 +68,7 @@ impl Api {
         let start = DateTime::<Utc>::from_timestamp(1_800_000_000, 0).unwrap();
         let clock = Arc::new(ManualClock::starting_at(start));
         let state = AppState {
-            sessions: Sessions::new(
-                Arc::new(InMemorySessionStore::default()),
-                Arc::new(InMemoryDeviceStore::default()),
-                clock.clone(),
-            ),
+            sessions: Sessions::sql(Database::in_memory(), clock.clone()),
             ..AppState::from_config(&config)
         };
         Self { state, clock }

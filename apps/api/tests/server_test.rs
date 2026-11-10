@@ -38,6 +38,7 @@ async fn run_server_starts_on_the_configured_address() {
     let config = AppConfig::from_lookup(|key| match key {
         "HOST" => Some("127.0.0.1".into()),
         "PORT" => Some("0".into()),
+        "DATABASE_URL" => Some("sqlite::memory:".into()),
         _ => None,
     });
     let server = tokio::spawn(run_server(config));
@@ -50,6 +51,7 @@ async fn run_server_starts_on_the_configured_address() {
 async fn run_server_reports_an_unbindable_address() {
     let config = AppConfig::from_lookup(|key| match key {
         "HOST" => Some("256.256.256.256".into()),
+        "DATABASE_URL" => Some("sqlite::memory:".into()),
         _ => None,
     });
     assert!(run_server(config).await.is_err());

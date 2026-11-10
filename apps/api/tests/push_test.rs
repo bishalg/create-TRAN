@@ -41,7 +41,8 @@ async fn provider_feedback_removes_a_dead_token_and_keeps_the_rest() {
     let delivery = api
         .push()
         .notify("voter-001", &ELIGIBILITY_REACHED, &id)
-        .await;
+        .await
+        .unwrap();
     assert_eq!(
         delivery,
         Delivery {
@@ -87,7 +88,10 @@ async fn provider_feedback_removes_a_dead_token_and_keeps_the_rest() {
         "no payload carries its token"
     );
     assert_eq!(
-        api.push().notify("nobody", &ELIGIBILITY_REACHED, &id).await,
+        api.push()
+            .notify("nobody", &ELIGIBILITY_REACHED, &id)
+            .await
+            .unwrap(),
         Delivery::default()
     );
 }
@@ -99,7 +103,11 @@ async fn provider_not_configured_keeps_the_registration() {
     assert_no_content(&api.register(&voter, PHONE, ios(IOS_TOKEN)).await, "phone");
     api.sender.answer(IOS_TOKEN, ProviderAnswer::NotConfigured);
     let id = OpaqueId::parse("evt_1").unwrap();
-    let delivery = api.push().eligibility_reached("voter-001", &id).await;
+    let delivery = api
+        .push()
+        .eligibility_reached("voter-001", &id)
+        .await
+        .unwrap();
     assert_eq!(
         delivery,
         Delivery {
@@ -124,7 +132,11 @@ async fn provider_feedback_on_marketing_reaches_only_those_who_opted_in() {
         ..ELIGIBILITY_REACHED
     };
     let id = OpaqueId::parse("promo-1").unwrap();
-    let delivery = api.push().notify("voter-001", &marketing, &id).await;
+    let delivery = api
+        .push()
+        .notify("voter-001", &marketing, &id)
+        .await
+        .unwrap();
     assert_eq!((delivery.delivered, delivery.skipped), (1, 1));
     let sent = api.sender.sent();
     assert_eq!(
@@ -149,9 +161,29 @@ async fn prune_removes_registrations_not_refreshed_for_sixty_days() {
         &api.register(&refreshed, TABLET, ios(IOS_TOKEN_2)).await,
         "weekly refresh",
     );
-    assert_eq!(api.push().prune_stale(), 0, "59 days is not stale");
+    assert_eq!(api.prune().await.devices, 0, "59 days is not stale");
 
     api.clock.advance(Duration::days(1));
-    assert_eq!(api.push().prune_stale(), 1, "60 days is");
+    assert_eq!(api.prune().await.devices, 1, "60 days is");
     assert_eq!(api.tokens("voter-001"), [IOS_TOKEN_2]);
+}
+
+// Verifies: REQ-DB-008 — here, so this binary takes every branch of `Push::notify`
+// (docs/LEARNINGS.md, 2026-11-10).
+#[tokio::test]
+async fn provider_sends_nothing_when_the_registry_cannot_be_read() {
+    let file = support::db::TempDb::new();
+    let sessions =
+        api::sessions::Sessions::sql(file.open(), std::sync::Arc::new(api::clock::SystemClock));
+    file.raw()
+        .execute_batch("DROP TABLE device_registrations")
+        .unwrap();
+    let sender = std::sync::Arc::new(api::push::sender::FakeSender::default());
+    let push = api::push::Push::new(&sessions, sender.clone(), TOPIC);
+    let id = OpaqueId::parse("evt-1").unwrap();
+    assert_eq!(
+        push.eligibility_reached("voter-001", &id).await,
+        Err(api::db::StoreError::Failed)
+    );
+    assert!(sender.sent().is_empty());
 }

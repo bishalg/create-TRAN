@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use api::clock::SystemClock;
+use api::commands::{self, Command};
 use api::config::{AppConfig, LogFormat};
 use api::middleware::install_panic_hook;
 use api::push::{manual, providers::Endpoints, sender::ProviderAnswer};
@@ -27,27 +28,54 @@ async fn main() {
     }
     install_panic_hook();
 
-    // `api send-test-push ...`: ring one device by hand (docs/PUSH.md), then exit.
     let args: Vec<String> = std::env::args().skip(1).collect();
-    if args.first().map(String::as_str) == Some(manual::COMMAND) {
-        let clock = Arc::new(SystemClock);
-        match manual::run(&args[1..], &config.push, Endpoints::real(), clock).await {
-            Ok(ProviderAnswer::Delivered) => tracing::info!("test push accepted by the provider"),
-            Ok(answer) => {
-                tracing::error!(?answer, "test push not accepted");
-                std::process::exit(1);
-            }
-            Err(err) => {
-                tracing::error!(%err, "test push not sent");
-                std::process::exit(2);
+    let command = match commands::parse(&args) {
+        Ok(command) => command,
+        Err(usage) => {
+            tracing::error!(usage, "unknown arguments");
+            std::process::exit(2);
+        }
+    };
+    match command {
+        // Ring one device by hand (docs/PUSH.md), then exit.
+        Command::SendTestPush => {
+            let clock = Arc::new(SystemClock);
+            match manual::run(&args[1..], &config.push, Endpoints::real(), clock).await {
+                Ok(ProviderAnswer::Delivered) => {
+                    tracing::info!("test push accepted by the provider")
+                }
+                Ok(answer) => {
+                    tracing::error!(?answer, "test push not accepted");
+                    std::process::exit(1);
+                }
+                Err(err) => {
+                    tracing::error!(%err, "test push not sent");
+                    std::process::exit(2);
+                }
             }
         }
-        return;
+        // Apply or check migrations (docs/PERSISTENCE.md), then exit.
+        Command::Migrate { check } => match commands::migrate(&config, check) {
+            Ok(done) => tracing::info!("{done}"),
+            Err(failure) => exit_with(failure),
+        },
+        // Delete expired rows once; `run_once` logs the counts.
+        Command::Prune => {
+            if let Err(failure) = commands::prune(&config).await {
+                exit_with(failure);
+            }
+        }
+        Command::Serve => {
+            tracing::info!(environment = %config.environment, "Initializing TRAN Axum API service");
+            if let Err(err) = run_server(config).await {
+                tracing::error!(%err, "server stopped");
+                std::process::exit(1);
+            }
+        }
     }
+}
 
-    tracing::info!(environment = %config.environment, "Initializing TRAN Axum API service");
-    if let Err(err) = run_server(config).await {
-        tracing::error!(%err, "server stopped");
-        std::process::exit(1);
-    }
+fn exit_with(failure: commands::Failure) -> ! {
+    tracing::error!(error = %failure.message, "command failed");
+    std::process::exit(failure.exit_code);
 }

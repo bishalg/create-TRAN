@@ -18,7 +18,7 @@ Vocabulary used below:
 
 ## The API
 
-### REQ-DB-001 [planned] One store implementation, the one that runs in production
+### REQ-DB-001 [verified] One store implementation, the one that runs in production
 
 `SessionStore`, `DeviceStore` and the erasure path MUST be implemented on SQL (SQLite), and that implementation MUST be
 the only one: tests run it against an in-memory database, so no test passes on a store production never uses. The
@@ -27,7 +27,7 @@ local file under `./data/`, so the sample still starts with no setup.
 **Verified by:** the existing `auth_test.rs`, `account_test.rs`, `devices_test.rs` and `push_test.rs`, unchanged in
 behaviour, running on the SQL stores.
 
-### REQ-DB-002 [planned] Migrations are forward-only, numbered, embedded and checked
+### REQ-DB-002 [verified] Migrations are forward-only, numbered, embedded and checked
 
 Migrations MUST be files `apps/api/migrations/NNNN_<name>.sql`, embedded in the binary, applied in order, each in one
 transaction, and recorded in a `schema_migrations` table with a checksum. Start-up MUST refuse to serve when an applied
@@ -35,7 +35,7 @@ migration's checksum differs from the embedded file, when the database holds a m
 newer schema than this version understands is reported, not "fixed"), or when numbers have a gap or a duplicate.
 **Verified by:** `apps/api/tests/migrations_test.rs`.
 
-### REQ-DB-003 [planned] Migrating is a deliberate step, separate from serving
+### REQ-DB-003 [verified] Migrating is a deliberate step, separate from serving
 
 `api migrate` MUST apply pending migrations and exit; `api migrate --check` MUST exit non-zero when any are pending
 and change nothing. The server MUST apply pending migrations at start-up only when `MIGRATE_ON_START` is `true` (the
@@ -43,13 +43,13 @@ default in `development` and `test`); in any other environment it MUST refuse to
 to run `api migrate`. Two processes migrating at once MUST NOT both apply the same migration.
 **Verified by:** `migrations_test.rs`.
 
-### REQ-DB-004 [planned] The schema is a reviewed snapshot
+### REQ-DB-004 [verified] The schema is a reviewed snapshot
 
 Applying every migration to an empty database MUST produce exactly `apps/api/schema.sql`, which is committed. A test
 MUST fail when they differ, so a schema change always shows as a readable diff in review.
 **Verified by:** `migrations_test.rs` (`schema_snapshot_is_current`).
 
-### REQ-DB-005 [planned] A migration never breaks the version that is still running
+### REQ-DB-005 [verified] A migration never breaks the version that is still running
 
 A migration MUST be usable by the previous release's code (expand, then contract). `pnpm migrations:check` MUST fail on
 a migration that drops or renames a table or column, adds a `NOT NULL` column without a default, or tightens a
@@ -57,34 +57,34 @@ constraint, unless the file carries `-- contract: <reason and the release that s
 when a migration that has already been released (present at the last release tag) is changed or removed.
 **Verified by:** `tooling/migrations/migrations.test.mjs`.
 
-### REQ-DB-006 [planned] Operations that must happen together happen in one transaction
+### REQ-DB-006 [verified] Operations that must happen together happen in one transaction
 
 Each of these MUST be one transaction: rotating a refresh token (REQ-SEC-009); revoking a session and its device
 registrations (REQ-PSH-003); erasing an account with every session and registration (REQ-ACC-001); moving a push token
 to its newest owner (REQ-PSH-002). A failure part-way MUST leave nothing changed.
 **Verified by:** store tests that inject a failure between the steps.
 
-### REQ-DB-007 [planned] Concurrent requests cannot both win
+### REQ-DB-007 [verified] Concurrent requests cannot both win
 
 Two concurrent rotations of the same refresh token MUST produce exactly one new pair, and the other MUST be treated as
 a replay (REQ-SEC-010). Two concurrent registrations of one push token MUST leave exactly one registration.
 **Verified by:** `apps/api/tests/concurrency_test.rs` (many parallel attempts, repeated).
 
-### REQ-DB-008 [planned] Database work never blocks the request runtime, and is bounded
+### REQ-DB-008 [verified] Database work never blocks the request runtime, and is bounded
 
 Store calls MUST NOT block the async executor, MUST wait at most `DB_POLICY.busy_timeout_ms` for a lock, and a store
 failure MUST answer `503 server.unavailable` in the envelope with one logged event, never a panic and never the SQL
 text. SQLite MUST run with write-ahead logging and foreign keys enforced.
 **Verified by:** `apps/api/tests/store_failure_test.rs`.
 
-### REQ-DB-009 [planned] Expired data is removed on a schedule
+### REQ-DB-009 [verified] Expired data is removed on a schedule
 
 Sessions past their refresh lifetime, spent tokens older than the refresh lifetime and stale device registrations
 (REQ-PSH-005) MUST be deleted by a prune task that runs on an interval from `DB_POLICY` and on the injected clock.
 `api prune` MUST run it once. The task MUST log how many rows it removed and nothing about them.
 **Verified by:** `apps/api/tests/prune_test.rs`.
 
-### REQ-DB-010 [planned] The database holds no more than it needs
+### REQ-DB-010 [verified] The database holds no more than it needs
 
 The schema MUST store token digests, never tokens (REQ-SEC-006); MUST NOT store anything the API does not read back;
 and every column MUST be listed, with its purpose and retention, in the table of `docs/PERSISTENCE.md`. A test MUST

@@ -19,7 +19,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::ApiError;
 use crate::secret::Secret;
-use crate::session_store::{LiveSession, SessionUser, StoredSession, Transport};
+use crate::session_store::{LiveSession, Rotation, SessionUser, StoredSession, Transport};
 use crate::sessions::IssuedTokens;
 use crate::state::AppState;
 
@@ -183,7 +183,11 @@ pub async fn sign_in(
             TransportParam::Body => Transport::Body,
         },
     };
-    let tokens = state.sessions.sign_in(session.clone());
+    let started = session.clone();
+    let tokens = state
+        .sessions
+        .blocking(move |sessions| sessions.sign_in(started))
+        .await?;
     Ok(issued(
         StatusCode::CREATED,
         &session,
@@ -210,22 +214,32 @@ impl IntoResponse for Unauthenticated {
     }
 }
 
+/// `401` for a bad token, `503` when the store cannot say (REQ-DB-008).
 impl FromRequestParts<AppState> for Authenticated {
-    type Rejection = Unauthenticated;
+    type Rejection = Response;
 
     async fn from_request_parts(
         parts: &mut Parts,
         state: &AppState,
     ) -> Result<Self, Self::Rejection> {
-        parts
+        let token = parts
             .headers
             .get(header::AUTHORIZATION)
             .and_then(|value| value.to_str().ok())
             .and_then(|value| value.split_once(' '))
             .filter(|(scheme, _)| scheme.eq_ignore_ascii_case("bearer"))
-            .and_then(|(_, token)| state.sessions.authenticate(token.trim()))
+            .map(|(_, token)| Secret::new(token.trim()));
+        let Some(token) = token else {
+            return Err(Unauthenticated.into_response());
+        };
+        let found = state
+            .sessions
+            .blocking(move |sessions| sessions.authenticate(token.expose()))
+            .await
+            .map_err(|error| ApiError::from(error).into_response())?;
+        found
             .map(Authenticated)
-            .ok_or(Unauthenticated)
+            .ok_or_else(|| Unauthenticated.into_response())
     }
 }
 
@@ -235,26 +249,37 @@ pub async fn current_session(Authenticated(live): Authenticated) -> Json<UserBod
 }
 
 /// `POST /api/v1/auth/refresh` — spend the refresh token for a new pair (REQ-SEC-009, REQ-SEC-010).
+/// A replay ends the session, with its device registrations, and is logged once.
 pub async fn refresh(
     State(state): State<AppState>,
     headers: HeaderMap,
     body: Result<Bytes, BytesRejection>,
-) -> Response {
+) -> Result<Response, ApiError> {
     let requires_https = state.edge.requires_https;
     let presented = presented_refresh(&headers, &body.unwrap_or_default());
-    let rotated = presented
-        .as_ref()
-        .and_then(|p| state.sessions.refresh(p.token.expose()).ok());
-    match rotated {
-        Some((session, tokens)) => issued(StatusCode::OK, &session, tokens, requires_https),
-        None => {
+    let outcome = match &presented {
+        Some(p) => {
+            let token = p.token.clone();
+            state
+                .sessions
+                .blocking(move |sessions| sessions.refresh(token.expose()))
+                .await?
+        }
+        None => Err(Rotation::Unknown),
+    };
+    if let Err(Rotation::Replayed(_)) = outcome {
+        tracing::warn!("refresh token replayed; session revoked");
+    }
+    Ok(match outcome {
+        Ok((session, tokens)) => issued(StatusCode::OK, &session, tokens, requires_https),
+        Err(_) => {
             let mut response = session_expired().into_response();
             if presented.map(|p| p.via) != Some(Transport::Body) {
                 clear_cookie(&mut response, requires_https);
             }
             response
         }
-    }
+    })
 }
 
 /// `POST /api/v1/auth/sign-out` — revoke the session; `204` whatever was sent (REQ-SEC-011).
@@ -262,14 +287,18 @@ pub async fn sign_out(
     State(state): State<AppState>,
     headers: HeaderMap,
     body: Result<Bytes, BytesRejection>,
-) -> Response {
+) -> Result<Response, ApiError> {
     let presented = presented_refresh(&headers, &body.unwrap_or_default());
     if let Some(p) = &presented {
-        state.sessions.sign_out(p.token.expose());
+        let token = p.token.clone();
+        state
+            .sessions
+            .blocking(move |sessions| sessions.sign_out(token.expose()))
+            .await?;
     }
     let mut response = StatusCode::NO_CONTENT.into_response();
     if presented.map(|p| p.via) != Some(Transport::Body) {
         clear_cookie(&mut response, state.edge.requires_https);
     }
-    response
+    Ok(response)
 }

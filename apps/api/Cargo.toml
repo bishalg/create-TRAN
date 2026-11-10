@@ -28,6 +28,7 @@ hyper-util = { workspace = true }
 hyper-rustls = { workspace = true }
 http-body-util = { workspace = true }
 aws-lc-rs = { workspace = true }
+rusqlite = { workspace = true }
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }

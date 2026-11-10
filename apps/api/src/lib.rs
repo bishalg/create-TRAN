@@ -1,8 +1,9 @@
 pub mod account;
 pub mod client_versions;
 pub mod clock;
+pub mod commands;
 pub mod config;
-pub mod device_store;
+pub mod db;
 pub mod devices;
 pub mod error;
 pub mod geo;
@@ -94,9 +95,10 @@ pub fn with_layers_and_routes(
         ))
 }
 
-/// Switches on the configured push senders, binds the configured address and serves until the
-/// process stops. Push configuration or a client version threshold that does not parse fails
-/// here, naming the variable.
+/// Switches on the configured push senders, opens the database (migrating it or refusing pending
+/// migrations, as `MIGRATE_ON_START` says), starts the prune task, binds the configured address
+/// and serves until the process stops. Push configuration, a client version threshold or a
+/// database setting that does not parse fails here, naming the variable.
 pub async fn run_server(config: AppConfig) -> std::io::Result<()> {
     let invalid = |error: String| std::io::Error::new(std::io::ErrorKind::InvalidInput, error);
     client_versions::ClientThresholds::from_settings(&config.client_versions)
@@ -108,10 +110,14 @@ pub async fn run_server(config: AppConfig) -> std::io::Result<()> {
     )
     .map_err(|error| invalid(error.to_string()))?;
     providers.log_state();
+    let db = commands::database_for_serving(&config).map_err(|failure| invalid(failure.message))?;
+    let sessions = sessions::Sessions::sql(db, std::sync::Arc::new(clock::SystemClock));
+    db::prune::spawn(sessions.clone(), db::DB_POLICY.prune_interval());
     let addr = config.socket_addr();
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     tracing::info!(%addr, "Server listening");
     let state = AppState {
+        sessions,
         push_providers: std::sync::Arc::new(providers),
         ..AppState::from_config(&config)
     };

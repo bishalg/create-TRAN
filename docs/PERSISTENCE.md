@@ -33,20 +33,55 @@ practised on in-memory stores. Rules: [spec 030](./specs/030-persistence-and-mig
 ## Commands
 
 ```
-pnpm dev:api                 migrates on start (development only)
+pnpm dev:api                         serve; migrates on start (MIGRATE_ON_START, on in development and test)
 cargo run -p api -- migrate          apply pending migrations and exit
-cargo run -p api -- migrate --check  fail if any are pending
-cargo run -p api -- prune            delete expired rows once
-pnpm migrations:check        the expand/contract and immutability rules
+cargo run -p api -- migrate --check  exit 1 if any are pending; changes nothing
+cargo run -p api -- prune            delete expired rows once and exit (the server also does it hourly)
+pnpm migrations:check                the expand/contract, immutability and "what is stored" rules
+pnpm schema:snapshot                 rewrite apps/api/schema.sql after adding a migration
 ```
+
+`DATABASE_URL` names the database: `sqlite:<path>` or `sqlite::memory:`. Unset, the API uses `data/api.sqlite3`
+under the working directory (the repository root for `pnpm dev:api`) and creates the folder; `data/` is ignored by
+git. To start again from an empty database, stop the API and delete `data/`. The e2e and smoke runs use
+`sqlite::memory:`, so every run starts empty and leaves nothing behind.
+
+A store failure (the database locked past `DB_POLICY.busy_timeout_ms`, or broken) answers
+`503 server.unavailable`, retryable, and logs one `request failed` event without SQL. Store calls run on tokio's
+blocking pool through `Sessions::blocking`, never on the request runtime; one connection per process is the single
+writer, and every write transaction takes SQLite's lock first (`BEGIN IMMEDIATE`), so another process waits for it.
 
 ## What is stored
 
-Filled in by the phase that builds it: every table and column, its purpose and how long it is kept. A test fails when
-the schema has a column this table does not list.
+Every table and column, its purpose and how long it is kept. Times are Unix microseconds, UTC. `pnpm migrations:check`
+fails when `apps/api/schema.sql` has a column this table does not list, or the table lists one the schema lacks.
 
-| Table | Column | Purpose | Kept until |
-| :---- | :----- | :------ | :--------- |
+| Table                  | Column            | Purpose                                                                    | Kept until                                                                    |
+| :--------------------- | :---------------- | :------------------------------------------------------------------------- | :---------------------------------------------------------------------------- |
+| `sessions`             | `id`              | Names one sign-in (token family); never reused                             | Sign-out, a replayed refresh token, account deletion, or its refresh lifetime |
+| `sessions`             | `user_id`         | Whose session it is, for `who am I` and account deletion                   | As the row                                                                    |
+| `sessions`             | `role`            | The role the session acts as                                               | As the row                                                                    |
+| `sessions`             | `transport`       | Cookie or body: how the refresh token travels (REQ-SEC-007)                | As the row                                                                    |
+| `access_tokens`        | `digest`          | SHA-256 of an access token, never the token (REQ-SEC-006)                  | Its expiry (pruned), or its session's end                                     |
+| `access_tokens`        | `session_id`      | The session it authenticates                                               | As the row                                                                    |
+| `access_tokens`        | `expires_at`      | When it stops working                                                      | As the row                                                                    |
+| `refresh_tokens`       | `digest`          | SHA-256 of a refresh token, never the token (REQ-SEC-006)                  | Its expiry, spent or not (pruned), or its session's end                       |
+| `refresh_tokens`       | `session_id`      | The session it renews                                                      | As the row                                                                    |
+| `refresh_tokens`       | `expires_at`      | When it stops working; a session with none left is pruned                  | As the row                                                                    |
+| `refresh_tokens`       | `spent`           | Already rotated once: presenting it again is a replay (REQ-SEC-010)        | As the row                                                                    |
+| `device_registrations` | `installation_id` | The app install the registration belongs to (REQ-PSH-010)                  | Unregistered, its session revoked, a dead token, or 60 days unrefreshed       |
+| `device_registrations` | `user_id`         | Whose devices to notify; account deletion removes them                     | As the row                                                                    |
+| `device_registrations` | `session_id`      | The session it was made in; revoking that session removes it               | As the row                                                                    |
+| `device_registrations` | `platform`        | Which push service sends to it (APNs or FCM)                               | As the row                                                                    |
+| `device_registrations` | `environment`     | Which APNs gateway (sandbox or production)                                 | As the row                                                                    |
+| `device_registrations` | `push_token`      | Where the push service delivers; unique, so a token has one owner          | As the row                                                                    |
+| `device_registrations` | `locale`          | The language the notification text is written in                           | As the row                                                                    |
+| `device_registrations` | `app_version`     | The app build that registered (REQ-PSH-001); read back, not yet decided on | As the row                                                                    |
+| `device_registrations` | `marketing`       | The person opted in to marketing messages (REQ-PSH-006)                    | As the row                                                                    |
+| `device_registrations` | `refreshed_at`    | Last registration; 60 days without one makes it stale (REQ-PSH-005)        | As the row                                                                    |
+| `schema_migrations`    | `version`         | Which migration is applied (REQ-DB-002)                                    | For the life of the database                                                  |
+| `schema_migrations`    | `name`            | Its file name, for messages                                                | For the life of the database                                                  |
+| `schema_migrations`    | `checksum`        | SHA-256 of the file as applied; a changed file stops start-up              | For the life of the database                                                  |
 
 ## Where it lives
 

@@ -1,7 +1,9 @@
 use std::env;
 
 use crate::client_versions::ClientVersionSettings;
+use crate::db::Location;
 use crate::push::providers::PushSettings;
+use crate::secret::Secret;
 
 /// How the API writes its logs (REQ-ROB-007).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -31,6 +33,10 @@ pub struct AppConfig {
     pub push: PushSettings,
     /// `CLIENT_MIN_VERSION_*` and `CLIENT_RECOMMENDED_VERSION_*`, as read (REQ-VER-005).
     pub client_versions: ClientVersionSettings,
+    /// `DATABASE_URL`: it may carry a password, so it is a [`Secret`] (REQ-DB-001).
+    pub database_url: Option<Secret>,
+    /// `MIGRATE_ON_START`, as read (REQ-DB-003).
+    pub migrate_on_start: Option<String>,
 }
 
 impl AppConfig {
@@ -58,6 +64,26 @@ impl AppConfig {
                 .filter(|origins| !origins.is_empty()),
             push: PushSettings::from_lookup(&lookup),
             client_versions: ClientVersionSettings::from_lookup(&lookup),
+            database_url: lookup("DATABASE_URL")
+                .filter(|url| !url.trim().is_empty())
+                .map(Secret::new),
+            migrate_on_start: lookup("MIGRATE_ON_START"),
+        }
+    }
+
+    /// Where the database is (REQ-DB-001): `DATABASE_URL`, else `data/api.sqlite3`.
+    pub fn database(&self) -> Result<Location, String> {
+        Location::parse(self.database_url.as_ref())
+    }
+
+    /// Whether the server applies pending migrations when it starts (REQ-DB-003): `true` or
+    /// `false`; unset or empty, only in `development` and `test`.
+    pub fn migrate_on_start(&self) -> Result<bool, String> {
+        match self.migrate_on_start.as_deref().map(str::trim) {
+            None | Some("") => Ok(self.is_local()),
+            Some("true") => Ok(true),
+            Some("false") => Ok(false),
+            Some(_) => Err("MIGRATE_ON_START must be true or false".to_string()),
         }
     }
 
@@ -208,6 +234,47 @@ mod tests {
         assert!(!config_from(&[]).requires_https());
         assert!(!config_from(&[("APP_ENV", "test")]).requires_https());
         assert!(config_from(&[("APP_ENV", "production")]).requires_https());
+    }
+
+    // Verifies: REQ-DB-001
+    #[test]
+    fn the_database_is_a_file_under_data_unless_database_url_names_one() {
+        assert_eq!(
+            config_from(&[]).database(),
+            Ok(Location::File("data/api.sqlite3".into()))
+        );
+        assert_eq!(
+            config_from(&[("DATABASE_URL", " ")]).database(),
+            Ok(Location::File("data/api.sqlite3".into()))
+        );
+        let memory = config_from(&[("DATABASE_URL", "sqlite::memory:")]);
+        assert_eq!(memory.database(), Ok(Location::Memory));
+        assert_eq!(format!("{:?}", memory.database_url), "Some([redacted])");
+        assert!(config_from(&[("DATABASE_URL", "mysql://x")])
+            .database()
+            .is_err());
+    }
+
+    // Verifies: REQ-DB-003
+    #[test]
+    fn migrating_on_start_is_the_default_only_in_development_and_test() {
+        assert_eq!(config_from(&[]).migrate_on_start(), Ok(true));
+        assert_eq!(
+            config_from(&[("APP_ENV", "test")]).migrate_on_start(),
+            Ok(true)
+        );
+        for env in ["staging", "production"] {
+            let cfg = config_from(&[("APP_ENV", env), ("MIGRATE_ON_START", "")]);
+            assert_eq!(cfg.migrate_on_start(), Ok(false), "{env}");
+        }
+        let forced = config_from(&[("APP_ENV", "production"), ("MIGRATE_ON_START", "true")]);
+        assert_eq!(forced.migrate_on_start(), Ok(true));
+        let off = config_from(&[("MIGRATE_ON_START", " false ")]);
+        assert_eq!(off.migrate_on_start(), Ok(false));
+        assert_eq!(
+            config_from(&[("MIGRATE_ON_START", "yes")]).migrate_on_start(),
+            Err("MIGRATE_ON_START must be true or false".to_string())
+        );
     }
 
     #[test]

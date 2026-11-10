@@ -113,3 +113,8 @@ mutants.out*/
 # Conformance manifests: local, like screenshot references (REQ-SCR-008, ADR-0031)
 e2e/conformance/*.json
 e2e/conformance/.web-parts/
+
+# Local SQLite databases (spec 030, docs/PERSISTENCE.md)
+data/
+*.sqlite3*
+

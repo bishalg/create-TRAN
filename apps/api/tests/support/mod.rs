@@ -2,6 +2,7 @@
 #![allow(dead_code, clippy::unwrap_used, clippy::expect_used)]
 
 pub mod contract;
+pub mod db;
 pub mod devices;
 pub mod providers;
 

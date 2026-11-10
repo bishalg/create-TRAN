@@ -99,7 +99,8 @@ async fn provider_off_answers_not_configured_and_keeps_every_registration() {
         .state
         .push()
         .eligibility_reached("voter-001", &OpaqueId::parse("e1").unwrap())
-        .await;
+        .await
+        .unwrap();
     assert_eq!(
         delivery,
         Delivery {
@@ -136,7 +137,8 @@ async fn provider_dead_token_from_apns_removes_the_registration_end_to_end() {
     let push = api::push::Push::new(&api.state.sessions, Arc::new(providers), TOPIC);
     let delivery = push
         .eligibility_reached("voter-001", &OpaqueId::parse("e1").unwrap())
-        .await;
+        .await
+        .unwrap();
     assert_eq!(
         delivery,
         Delivery {
@@ -314,21 +316,21 @@ async fn provider_logs_say_on_or_off_and_never_a_secret() {
             Script::Reply(status, refusal.clone()),
             Script::Reply(status, refusal.clone()),
         ]);
-        push.eligibility_reached("voter-001", &id).await;
+        push.eligibility_reached("voter-001", &id).await.unwrap();
     }
     fake.script_sends([Script::Hang, Script::Hang]);
-    push.eligibility_reached("voter-001", &id).await;
+    push.eligibility_reached("voter-001", &id).await.unwrap();
     // A 401 makes FCM drop its access token, so the next send asks Google again, and is refused.
     fake.script_sends([
         Script::Reply(401, String::new()),
         Script::Reply(401, String::new()),
     ]);
-    push.eligibility_reached("voter-001", &id).await;
+    push.eligibility_reached("voter-001", &id).await.unwrap();
     fake.script_tokens([Script::json(
         400,
         &json!({ "error": "invalid_grant", "error_description": "SENTINEL_reply" }),
     )]);
-    push.eligibility_reached("voter-001", &id).await;
+    push.eligibility_reached("voter-001", &id).await.unwrap();
 
     let events = captured.events();
     for name in [
