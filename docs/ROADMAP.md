@@ -68,8 +68,8 @@ Platform-native iOS (`apps/ios`) and Android (`apps/android`) are the real **N**
 
 ## 6. Production-readiness topics, one at a time
 
-Phases 2 to 8 follow the store rules in [APP_REVIEW.md](./APP_REVIEW.md); phases 9 to 14 are backend
-operations. Each topic is one phase: documented first, then built and tested on every platform before the next starts. The
+Phases 2 to 5 and 8 to 10 follow the store rules in [APP_REVIEW.md](./APP_REVIEW.md); phases 6 and 7 let different
+app versions live side by side; phases 11 to 14 are backend operations. Each topic is one phase: documented first, then built and tested on every platform before the next starts. The
 documents are written for the next reader, human or AI, who will add code here: a spec (what must hold), an ADR (why),
 and one short playbook in `docs/` (what the topic is, why it matters, the rules to follow), plus a one-line rule in
 `AGENTS.md`. Keep them short: only what changes how code is written.
@@ -91,26 +91,26 @@ and one short playbook in `docs/` (what the topic is, why it matters, the rules 
 5. [ ] **Push notifications and device registration** ([spec 027](./specs/027-push-and-devices.md), ADR-0044,
        [playbook](./PUSH.md)): optional push, the device token registered to the signed-in
        user on the API, replaced when it changes, removed on sign-out and account deletion.
-6. [ ] **Sign-in providers**: a provider seam with Google and Sign in with Apple, the rule that Apple is offered
+6. [ ] **API versioning and compatibility**: a versioned base path, additive-change rules checked against contract
+       snapshots (REQ-API-011), deprecation headers, and a minimum supported client version that old apps obey.
+7. [ ] **Feature flags and remote configuration**: typed flags with safe defaults, evaluated in one place, a kill
+       switch, and stale flags removed by a check.
+8. [ ] **Sign-in providers**: a provider seam with Google and Sign in with Apple, the rule that Apple is offered
        whenever a third-party provider is (guideline 4.8) as a check, the system Apple button and Google's branded
        button used as their guidelines require, identity tokens verified on the API, cancellation and provider errors
        through the error catalogue, and provider tokens revoked on deletion.
-7. [ ] **In-app purchases**: StoreKit 2 and Play Billing behind one seam; a paywall that shows the localized price,
+9. [ ] **In-app purchases**: StoreKit 2 and Play Billing behind one seam; a paywall that shows the localized price,
        the billing period, the renewal and cancellation terms and links to terms and privacy before the purchase
        button; restore purchases; entitlements verified and synced on the API; pending, cancelled, failed, refunded
        and already-owned outcomes each with a catalogue presentation.
-8. [ ] **Onboarding**: a short first-run flow that can be skipped, leads into sign-in, and never asks for an account or
-       a permission before the feature that needs it.
-9. [ ] **Observability** ([spec 023](./specs/023-observability.md), ADR-0040, [runbook](./OBSERVABILITY.md)): trace
-       context, log schema, RED metrics, readiness and graceful shutdown.
-10. [ ] **API versioning and compatibility**: a versioned base path, additive-change rules checked against contract
-        snapshots (REQ-API-011), deprecation headers, and a minimum supported client version that old apps obey.
-11. [ ] **Persistence and migrations**: a durable `SessionStore`, forward-only schema migrations run and verified at
+10. [ ] **Onboarding**: a short first-run flow that can be skipped, leads into sign-in, and never asks for an account or
+        a permission before the feature that needs it.
+11. [ ] **Observability** ([spec 023](./specs/023-observability.md), ADR-0040, [runbook](./OBSERVABILITY.md)): trace
+        context, log schema, RED metrics, readiness and graceful shutdown.
+12. [ ] **Persistence and migrations**: a durable `SessionStore`, forward-only schema migrations run and verified at
         start-up, and versioned client-side stored records.
-12. [ ] **Rate limiting and abuse protection**: limits per client and per route as policy data, `429` with
+13. [ ] **Rate limiting and abuse protection**: limits per client and per route as policy data, `429` with
         `Retry-After` (the clients already honour it), tighter limits on the auth routes.
-13. [ ] **Feature flags and remote configuration**: typed flags with safe defaults, evaluated in one place, a kill
-        switch, and stale flags removed by a check.
 14. [ ] **Container image and deploy pipeline**: a small reproducible image, configuration by environment, health-gated
         rollout and rollback, and release artefacts built once and promoted.
 
