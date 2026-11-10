@@ -54,7 +54,7 @@ print `[redacted]`, which does not implement `Serialize`, and whose value is rea
 
 ## The API session
 
-### REQ-SEC-005 [planned] Session policy is Rust data
+### REQ-SEC-005 [verified] Session policy is Rust data
 
 `crates/rust-core/src/session.rs` MUST define `SESSION_POLICY`: access-token lifetime `900` s, refresh-token lifetime
 `2 592 000` s (30 days) and token entropy `32` bytes. The API MUST read these numbers from it; TypeScript MUST receive
@@ -122,7 +122,7 @@ and `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'`. When 
 response MUST carry `Cache-Control: no-store`.
 **Verified by:** `apps/api/tests/security_headers_test.rs`.
 
-### REQ-SEC-014 [planned] Tokens never reach a log, an error body or a report
+### REQ-SEC-014 [verified] Tokens never reach a log, an error body or a report
 
 No log line and no error envelope the API writes may contain an access or refresh token, an `Authorization` value or a
 cookie value, in success or in failure. Client log events and reporter events (REQ-ERR-012) are held to the same rule
@@ -132,7 +132,7 @@ the session-client tests on each platform assert the captured log events.
 
 ## The client session
 
-### REQ-SEC-015 [planned] What to do after an auth failure is one Rust decision
+### REQ-SEC-015 [verified] What to do after an auth failure is one Rust decision
 
 `crates/rust-core/src/session.rs` MUST define `session_recovery(event) -> action`, pinned by the `recovery` section of
 `fixtures/session.json`, and `refresh_event(status)`, which names the outcome of a refresh call (`refreshResponses`
@@ -149,26 +149,26 @@ iOS and Android MUST call it through UniFFI; the TypeScript mirror MUST pass the
 **Verified by:** `crates/rust-core/tests/session_fixtures.rs`, `crates/tran-uniffi/tests/session_fixtures.rs`,
 `packages/core-ts/tests/session.test.ts`, `SessionParityTests.swift`, `SessionParityTest.kt`.
 
-### REQ-SEC-016 [planned] One refresh at a time
+### REQ-SEC-016 [verified] One refresh at a time
 
 When several API calls fail with `401` at once, a client MUST send one refresh request, and each call MUST repeat once
 with the token that request returned. (Two parallel refreshes would trip REQ-SEC-010 and end the session.)
 **Verified by:** `packages/api/tests/session-client.test.ts`, `SessionClientTests.swift`, `SessionClientTest.kt`.
 
-### REQ-SEC-017 [planned] The access token lives in memory only
+### REQ-SEC-017 [verified] The access token lives in memory only
 
 No platform may persist the access token (disk, Web Storage, Keychain, preferences) or put any token in a URL. After a
 restart a client obtains a new one by refreshing.
 **Verified by:** the session-client tests on each platform; the storage guards of REQ-SEC-018 to REQ-SEC-020.
 
-### REQ-SEC-018 [planned] The web app holds no credential a script can read
+### REQ-SEC-018 [verified] The web app holds no credential a script can read
 
 The web app MUST request `transport: "cookie"`, MUST send `credentials: 'include'` only on `/api/auth/*` requests and
 `credentials: 'omit'` on every other one, and MUST NOT write a token or a session to `localStorage`, `sessionStorage`,
 IndexedDB or `document.cookie`. A guard test MUST fail when Web Storage is used outside the theme preference module.
 **Verified by:** `packages/api/tests/session-client.test.ts`, `apps/web/tests/web-storage-guard.test.ts`.
 
-### REQ-SEC-019 [planned] iOS keeps the session in the Keychain
+### REQ-SEC-019 [verified] iOS keeps the session in the Keychain
 
 iOS MUST persist the refresh token with the user id and role as one generic-password Keychain item, accessible
 `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` and not synchronizable, behind a `SessionVault` protocol with an
@@ -176,7 +176,7 @@ in-memory double for tests. `UserDefaults` MUST NOT hold any of it. Because Keyc
 first launch after an install MUST delete any item left by a previous install.
 **Verified by:** `KeychainSessionVaultTests.swift`, `SessionVaultGuardTests.swift`.
 
-### REQ-SEC-020 [planned] Android keeps the session under a Keystore key
+### REQ-SEC-020 [verified] Android keeps the session under a Keystore key
 
 Android MUST encrypt the same record with AES-256-GCM under a non-exportable key in the Android Keystore, with a new IV
 for every write, and store only ciphertext in app-private preferences, behind a `SessionVault` interface with an
@@ -186,7 +186,7 @@ transfer.
 **Verified by:** `KeystoreSessionVaultTest.kt` (instrumented), `SessionVaultGuardTest.kt`, `native-networking.test.ts`
 (manifest).
 
-### REQ-SEC-021 [planned] Launch restores the stored session
+### REQ-SEC-021 [verified] Launch restores the stored session
 
 On launch the native Splash MUST read the vault and route with `resolve_destination` without waiting for the network,
 then validate the session against `GET /api/auth/session` in the background and act per REQ-SEC-015. The web app MUST
@@ -194,20 +194,21 @@ call `POST /api/auth/refresh` on boot: success restores the session and its dest
 Welcome. An unreachable API MUST NOT sign a native user out.
 **Verified by:** `SessionRestoreTests.swift`, `SessionRestoreTest.kt`, `apps/web/tests/session-restore.test.tsx`.
 
-### REQ-SEC-022 [planned] Sign-out clears the device first
+### REQ-SEC-022 [verified] Sign-out clears the device first
 
 Signing out MUST clear the vault and the in-memory access token before, and regardless of, the call to
 `POST /api/auth/sign-out`; a failed or unreachable server call MUST NOT keep the user signed in.
 **Verified by:** the session-client tests on each platform.
 
-### REQ-SEC-023 [planned] The app switcher shows no user data
+### REQ-SEC-023 [verified] The app switcher shows no user data
 
 While a signed-in screen is on display, iOS MUST cover the window whenever the scene is not active, and Android MUST
 keep the content out of the recents thumbnail (`setRecentsScreenshotEnabled(false)` on API 33 and later, `FLAG_SECURE`
 before that). Debug screenshot runs MAY switch the Android measure off by a launch flag that a release build ignores.
-**Verified by:** `PrivacyCoverTests.swift`, `PrivacyShieldTest.kt`.
+**Verified by:** `PrivacyCoverTests.swift`, `PrivacyShieldTest.kt` (the decision and its wiring; the system app switcher
+itself cannot be captured by a UI test).
 
-### REQ-SEC-024 [planned] The built web app declares a Content Security Policy
+### REQ-SEC-024 [verified] The built web app declares a Content Security Policy
 
 The production `index.html` MUST carry a CSP `<meta>` equivalent to: `default-src 'self'`; `script-src 'self'` plus the
 SHA-256 hash of each inline script; `connect-src 'self'` plus the configured API origin; `object-src 'none'`;

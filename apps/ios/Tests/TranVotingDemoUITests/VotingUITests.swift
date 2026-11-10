@@ -12,8 +12,10 @@ final class VotingUITests: XCTestCase {
         app = XCUIApplication()
     }
 
+    /// Opens the voter dashboard through the debug session preset, which bypasses the Keychain:
+    /// without it the app routes from whatever the simulator's vault holds (REQ-SEC-021).
     private func launch(_ arguments: [String] = []) {
-        app.launchArguments += arguments
+        app.launchArguments += ["-TranSession", "citizen_voter"] + arguments
         app.launch()
     }
 

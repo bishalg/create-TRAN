@@ -69,7 +69,10 @@ final class ScreenshotTests: XCTestCase {
 
     private func launch(theme: String, locale: String, extra: [String]) -> XCUIApplication {
         let app = XCUIApplication()
+        // The debug session preset bypasses the Keychain, so every walk starts on the voter
+        // dashboard whatever the simulator's vault holds (REQ-SEC-021).
         app.launchArguments += [
+            "-TranSession", "citizen_voter",
             "-TranTheme", theme,
             "-AppleLanguages", "(\(locale))",
             "-AppleLocale", locale,

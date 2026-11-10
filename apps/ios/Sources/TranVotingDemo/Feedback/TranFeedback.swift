@@ -40,7 +40,7 @@ final class TranFeedback {
     /// The newest toast, if any.
     var toast: Toast? { toasts.last }
 
-    private static let logger = Logger(subsystem: "com.tran.voting", category: "feedback")
+    private nonisolated static let logger = Logger(subsystem: "com.tran.voting", category: "feedback")
 
     /// Shows an action's acknowledgement when the catalogue makes it a toast (REQ-ERR-008).
     func acknowledge(_ action: TranUserAction) {
@@ -103,12 +103,18 @@ final class TranFeedback {
     /// Logs at the catalogue level — for background calls the user did not start — and hands
     /// `error`-level failures to the reporter (REQ-ERR-014).
     func log(_ failure: TranRequestFailure) {
-        let message = Self.logLine(failure)
+        Self.write(failure)
+    }
+
+    /// `log` for code off the main actor, such as the session client (REQ-SEC-014).
+    @Sendable
+    nonisolated static func write(_ failure: TranRequestFailure) {
+        let message = logLine(failure)
         switch failure.spec.logLevel {
-        case .debug: Self.logger.debug("\(message, privacy: .public)")
-        case .info: Self.logger.info("\(message, privacy: .public)")
-        case .warn: Self.logger.warning("\(message, privacy: .public)")
-        case .error: Self.logger.error("\(message, privacy: .public)")
+        case .debug: logger.debug("\(message, privacy: .public)")
+        case .info: logger.info("\(message, privacy: .public)")
+        case .warn: logger.warning("\(message, privacy: .public)")
+        case .error: logger.error("\(message, privacy: .public)")
         }
         TranReporting.report(failure)
     }

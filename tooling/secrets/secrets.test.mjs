@@ -176,7 +176,7 @@ describe('env contract (REQ-SEC-002)', () => {
     assert.deepEqual(example.problems, []);
     const code = codeEnvNames({
       'apps/api/src/config.rs': read('apps/api/src/config.rs'),
-      'apps/web/src/shared/api/useTranApi.ts': read('apps/web/src/shared/api/useTranApi.ts'),
+      'apps/web/src/shared/api/apiUrl.ts': read('apps/web/src/shared/api/apiUrl.ts'),
     });
     assert.deepEqual(compareEnv(code, example.keys), []);
   });

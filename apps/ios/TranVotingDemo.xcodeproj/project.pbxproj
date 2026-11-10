@@ -10,10 +10,13 @@
 		0193673A6C08727A073B5508 /* Eligibility.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B5575124847CD87F66535AE5 /* Eligibility.xcstrings */; };
 		033C5EFE87867769BC85393E /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47217D862BDF4F5BACE65574 /* L10n.swift */; };
 		0826DFF6755A336094EC46D2 /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47217D862BDF4F5BACE65574 /* L10n.swift */; };
+		09D2CF17D4E662407FCDFFB8 /* PrivacyCoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5E111CB3FF688FED915A22 /* PrivacyCoverView.swift */; };
+		0D7CC9267C8C25EF5BA73A99 /* KeychainSessionVault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ABB2F2DE67F5DE2910E8717 /* KeychainSessionVault.swift */; };
 		0E674F768E949C57D92B5456 /* Common.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = D69AA90B4D08AF2C8F3EECEC /* Common.xcstrings */; };
 		13A67E2C80FD4C70DE81D7F9 /* VotingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B85C1ED9728B5EF5BE132CA8 /* VotingUITests.swift */; };
 		17034A4EEF322B292273DBFF /* AuditorHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C6A6C2C513D02BF5CA544BA /* AuditorHomeView.swift */; };
 		19CA24A80BCFC281901579BA /* TranField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A926F22DCF183846E1B15619 /* TranField.swift */; };
+		1E28F4F956B14CEC7F48991E /* TranSessionClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7202D41D6320055C4D3B9F58 /* TranSessionClient.swift */; };
 		27DEDD293229E5EF1D04131E /* FeedbackPressureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3B914E98DFB9B3F53DC79BD /* FeedbackPressureTests.swift */; };
 		2BC0881F6DD845E68232CF34 /* AuthSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A96B8BC4B8BA52D4C42F94 /* AuthSession.swift */; };
 		2CB2ACAC69F7FE66BFDE7E9C /* Common.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = D69AA90B4D08AF2C8F3EECEC /* Common.xcstrings */; };
@@ -37,13 +40,16 @@
 		4CB4C37D325D68249243B486 /* TranDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2004B2EEC44B7971ED61E9C /* TranDialog.swift */; };
 		4EAFAE5AA275A7340ECDE885 /* TranGap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 909818B002EAE3A6B7CF3660 /* TranGap.swift */; };
 		4FEF69E87E2281A47A026A3C /* TranApiClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A659AC166910DCC044847A5 /* TranApiClientTests.swift */; };
+		50EFFD7D6F1F411AF303321C /* SessionClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EE47502DDA80CCCE1201A9E /* SessionClientTests.swift */; };
 		59599D9590A3408C2E33F4FE /* TranPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42977EDB13DB5E5A2C6BA2B6 /* TranPalette.swift */; };
 		5A7CF5D7CED509DAF33FA2F4 /* Shell.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 4F832E35AE5EDE8C70E518BF /* Shell.xcstrings */; };
+		5ADA586A58BE535CFD79BB3C /* SessionParityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90C58467B34F8EBFDDD6B2B3 /* SessionParityTests.swift */; };
 		5B0A9DE77B72D8EFB8F5C063 /* Eligibility.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B5575124847CD87F66535AE5 /* Eligibility.xcstrings */; };
 		5B2A7551A748CF4934519148 /* TranVotingDemoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50205EBE0EB7A80BE144F622 /* TranVotingDemoApp.swift */; };
 		5DD2E1C9E78542434F8F0DDC /* BrandTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6884D38FE0697CF8F8DE543A /* BrandTokens.swift */; };
 		5E315F6D96D583BEF20BF325 /* TranToast.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09F8AAB93ABBDAC99C3C2F0A /* TranToast.swift */; };
 		62FC87D780405E09F801828D /* TranReferenceDateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E98C1BAC2E5E0E9359B1C94E /* TranReferenceDateTests.swift */; };
+		66DFBBEB8A3DA360C0379341 /* SessionTestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57C2A059FD8EE2CC127B2CC1 /* SessionTestSupport.swift */; };
 		671618319C87AF8BBD872989 /* Errors.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B390E496B5F1AF4FB4F92F21 /* Errors.xcstrings */; };
 		6827C36C2D602502459FC38F /* BrandTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6884D38FE0697CF8F8DE543A /* BrandTokens.swift */; };
 		694938D5D406B1D1673EF152 /* TranText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDDB6781B9D06EEBF5A4459 /* TranText.swift */; };
@@ -51,6 +57,7 @@
 		6FE3541F44F7EAD42246B0D6 /* VotingHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D67D27EB3D5D770789B21FDF /* VotingHomeView.swift */; };
 		716AB97BB83BAFE29808C866 /* Auth.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F8C57904C226928C1009850D /* Auth.xcstrings */; };
 		7409C5E1434A0DCFF70A07B9 /* RecoveryProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1071C7642F75C8DD53627A2 /* RecoveryProbe.swift */; };
+		7470EB204FFB751DAB9D7F17 /* TranSessionLaunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24A3BBFCBFE2D6F96DF2259B /* TranSessionLaunch.swift */; };
 		788C5A5986A24F49A9B574D0 /* TranSegmented.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80AD0CC17ECB82BFFFD53D53 /* TranSegmented.swift */; };
 		79A802B80645147C7D970211 /* TranMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10BA7AEEF263598B8C38A9B8 /* TranMotion.swift */; };
 		79F2B36FDEF094305B3AB009 /* Errors.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B390E496B5F1AF4FB4F92F21 /* Errors.xcstrings */; };
@@ -66,13 +73,21 @@
 		A2C4F0EA863E5390237329B3 /* Auth.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F8C57904C226928C1009850D /* Auth.xcstrings */; };
 		A66AE7803D01184F5D6894EB /* TranReferenceDate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B83934E01F2D9C881B1710ED /* TranReferenceDate.swift */; };
 		A7D7682FF87B6131E4D7B724 /* NavigationParityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843D7B0C3D41329248AA92A8 /* NavigationParityTests.swift */; };
+		A823D66932990903547033C6 /* KeychainSessionVault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ABB2F2DE67F5DE2910E8717 /* KeychainSessionVault.swift */; };
+		AD05498BBD69E97FDC5B6E5F /* KeychainSessionVaultTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F8E3ACB9D8AC5B72946B98 /* KeychainSessionVaultTests.swift */; };
+		AEA37EC7631E2AA9AF5C5BEB /* TranSessionRestore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFC267A98176DD7F1781C31B /* TranSessionRestore.swift */; };
 		AFEB6F75711555ECA349D6D0 /* TranApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 644FEE3DC9747F2D704B4936 /* TranApiClient.swift */; };
 		B06350C8F7A5C89C4422167F /* ScreenContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EFEA7EA26DE0979DBA5AD6F /* ScreenContract.swift */; };
+		B065E6803B588E9D76D5F874 /* TranSessionClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7202D41D6320055C4D3B9F58 /* TranSessionClient.swift */; };
 		B1D21E554DD10C015C1A16F5 /* BrandTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6884D38FE0697CF8F8DE543A /* BrandTokens.swift */; };
+		B83A1B669DB52EA209C921EC /* SessionVault.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E12B106C5CDB7BBB32C6FB /* SessionVault.swift */; };
 		BB3FAB605282C50DE528EFD1 /* RecoveryProbeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBBC0CB4657353B14FD31B78 /* RecoveryProbeTests.swift */; };
 		BC74160BB1E1B371BB4D663B /* Auditor.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = F12124FF6470EDFA0A353BF5 /* Auditor.xcstrings */; };
+		C0138A42A2925F3962194EEC /* SessionVaultGuardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58584CC876AB7849FB07325D /* SessionVaultGuardTests.swift */; };
 		C24F90FAE953CE4226588639 /* RecoveryProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1071C7642F75C8DD53627A2 /* RecoveryProbe.swift */; };
+		C3B16AAE36C09CB0AAF56265 /* SessionVault.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E12B106C5CDB7BBB32C6FB /* SessionVault.swift */; };
 		C52F1FC2C50EF718E0AD42AA /* TranApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 644FEE3DC9747F2D704B4936 /* TranApiClient.swift */; };
+		C65A64C124B8AA8FEDFA6E3D /* TranSessionLaunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24A3BBFCBFE2D6F96DF2259B /* TranSessionLaunch.swift */; };
 		C83569453B5EA47472AEC7CE /* TranFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E84A220EB4D0FDE8F0F9ED3 /* TranFeedback.swift */; };
 		C85B94757DD630DBC497EC52 /* TranMotionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67E4D3E701D250552E7DA222 /* TranMotionTests.swift */; };
 		C8ECBCAD26D969E38514F026 /* Screen.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = DABEEB333A8AAFC44BD09475 /* Screen.xcstrings */; };
@@ -82,9 +97,12 @@
 		D93E76FC13AEFA3757426F41 /* ServerConfirmationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFE247D65740ECEBEA9ED8C /* ServerConfirmationTests.swift */; };
 		DCED7FF96DAF77F43564EB88 /* tran_uniffi.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2AF051840CF2BCD45F86C7 /* tran_uniffi.swift */; };
 		E06715EB17C0CF5EC9358484 /* NavigationCoordinatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E48F532295512AFE483F2438 /* NavigationCoordinatorView.swift */; };
+		E28F45A19D14F616B0736166 /* TranSessionRestore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFC267A98176DD7F1781C31B /* TranSessionRestore.swift */; };
 		E351E28BA0FBDC110B73F48A /* ServerConfirmation.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCCE0CE297BF291A83E2AF8B /* ServerConfirmation.swift */; };
 		E4BA77E76149B437B4CA861A /* TranReporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = C034730D3B05B84233E15C80 /* TranReporting.swift */; };
 		E6E4B0DD5D7970AF02B9341D /* ScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 734EFE5F216B96F7A6FCBD99 /* ScreenshotTests.swift */; };
+		E719DC0C033D7F12A8B1B32B /* SessionRestoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F9A85B277AE7C4D1833B9C /* SessionRestoreTests.swift */; };
+		E896B84AFBA2FB3079204EC5 /* PrivacyCoverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC8B194574B8DBB324921E44 /* PrivacyCoverTests.swift */; };
 		F11ADDB7E97690CB7467B05C /* TranApiStub.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB6DC8233A9ED541C7A22F7D /* TranApiStub.swift */; };
 		F23C19D070B4D46967F1F757 /* AuthWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E88174C22C857E2C4A32A1C /* AuthWelcomeView.swift */; };
 		FF5D8649083D8DA80DE2A533 /* TranConnectivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DBF97D18A77AA990F3F2B0D /* TranConnectivity.swift */; };
@@ -118,9 +136,11 @@
 		03B9BA7A9AF77630313E2D4C /* TranVotingDemoTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TranVotingDemoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		09F8AAB93ABBDAC99C3C2F0A /* TranToast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranToast.swift; sourceTree = "<group>"; };
 		10BA7AEEF263598B8C38A9B8 /* TranMotion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranMotion.swift; sourceTree = "<group>"; };
+		10F9A85B277AE7C4D1833B9C /* SessionRestoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRestoreTests.swift; sourceTree = "<group>"; };
 		13296B1C87BC71AF04BF997B /* TranButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranButton.swift; sourceTree = "<group>"; };
 		1A659AC166910DCC044847A5 /* TranApiClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranApiClientTests.swift; sourceTree = "<group>"; };
 		2416105BFC37987133B79587 /* VoteEligibilityParityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoteEligibilityParityTests.swift; sourceTree = "<group>"; };
+		24A3BBFCBFE2D6F96DF2259B /* TranSessionLaunch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranSessionLaunch.swift; sourceTree = "<group>"; };
 		2DBF97D18A77AA990F3F2B0D /* TranConnectivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranConnectivity.swift; sourceTree = "<group>"; };
 		2E8F27573FD6099022CFD8FE /* TranBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranBanner.swift; sourceTree = "<group>"; };
 		3540F3A0BA2FD3D74BC4C9E0 /* tran_uniffiFFI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tran_uniffiFFI.h; sourceTree = "<group>"; };
@@ -129,21 +149,27 @@
 		42977EDB13DB5E5A2C6BA2B6 /* TranPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranPalette.swift; sourceTree = "<group>"; };
 		47217D862BDF4F5BACE65574 /* L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = L10n.swift; sourceTree = "<group>"; };
 		47C76ED62E3611F59F70019A /* TranEligibilityCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranEligibilityCopy.swift; sourceTree = "<group>"; };
+		4EE47502DDA80CCCE1201A9E /* SessionClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionClientTests.swift; sourceTree = "<group>"; };
 		4F832E35AE5EDE8C70E518BF /* Shell.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Shell.xcstrings; sourceTree = "<group>"; };
 		50205EBE0EB7A80BE144F622 /* TranVotingDemoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranVotingDemoApp.swift; sourceTree = "<group>"; };
+		57C2A059FD8EE2CC127B2CC1 /* SessionTestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionTestSupport.swift; sourceTree = "<group>"; };
+		58584CC876AB7849FB07325D /* SessionVaultGuardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionVaultGuardTests.swift; sourceTree = "<group>"; };
 		5E4659EA6E104B7DE5BD1147 /* ScreenContractUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenContractUITests.swift; sourceTree = "<group>"; };
 		644FEE3DC9747F2D704B4936 /* TranApiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranApiClient.swift; sourceTree = "<group>"; };
 		67E4D3E701D250552E7DA222 /* TranMotionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranMotionTests.swift; sourceTree = "<group>"; };
 		6884D38FE0697CF8F8DE543A /* BrandTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandTokens.swift; sourceTree = "<group>"; };
 		6E84A220EB4D0FDE8F0F9ED3 /* TranFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranFeedback.swift; sourceTree = "<group>"; };
 		6FDDB6781B9D06EEBF5A4459 /* TranText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranText.swift; sourceTree = "<group>"; };
+		7202D41D6320055C4D3B9F58 /* TranSessionClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranSessionClient.swift; sourceTree = "<group>"; };
 		734EFE5F216B96F7A6FCBD99 /* ScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotTests.swift; sourceTree = "<group>"; };
 		79E54F32F5773040253B0D8B /* ScreenCatalogue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCatalogue.swift; sourceTree = "<group>"; };
+		7ABB2F2DE67F5DE2910E8717 /* KeychainSessionVault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainSessionVault.swift; sourceTree = "<group>"; };
 		7C6A6C2C513D02BF5CA544BA /* AuditorHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuditorHomeView.swift; sourceTree = "<group>"; };
 		80AD0CC17ECB82BFFFD53D53 /* TranSegmented.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranSegmented.swift; sourceTree = "<group>"; };
 		843D7B0C3D41329248AA92A8 /* NavigationParityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationParityTests.swift; sourceTree = "<group>"; };
 		8E88174C22C857E2C4A32A1C /* AuthWelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthWelcomeView.swift; sourceTree = "<group>"; };
 		909818B002EAE3A6B7CF3660 /* TranGap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranGap.swift; sourceTree = "<group>"; };
+		90C58467B34F8EBFDDD6B2B3 /* SessionParityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionParityTests.swift; sourceTree = "<group>"; };
 		9C81897D258076C9D6DAA915 /* FeedbackParityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackParityTests.swift; sourceTree = "<group>"; };
 		A11501118A23965A69E81723 /* screens.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = screens.json; sourceTree = "<group>"; };
 		A926F22DCF183846E1B15619 /* TranField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranField.swift; sourceTree = "<group>"; };
@@ -153,10 +179,12 @@
 		B83934E01F2D9C881B1710ED /* TranReferenceDate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranReferenceDate.swift; sourceTree = "<group>"; };
 		B85C1ED9728B5EF5BE132CA8 /* VotingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VotingUITests.swift; sourceTree = "<group>"; };
 		BA06632C9F25E413CBC9A505 /* ConformanceManifest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConformanceManifest.swift; sourceTree = "<group>"; };
+		BA5E111CB3FF688FED915A22 /* PrivacyCoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyCoverView.swift; sourceTree = "<group>"; };
 		BBBC0CB4657353B14FD31B78 /* RecoveryProbeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecoveryProbeTests.swift; sourceTree = "<group>"; };
 		BCCE0CE297BF291A83E2AF8B /* ServerConfirmation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerConfirmation.swift; sourceTree = "<group>"; };
 		C034730D3B05B84233E15C80 /* TranReporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranReporting.swift; sourceTree = "<group>"; };
 		CE6F7FB11DBE49C89653F1A4 /* TranEligibilityCopyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranEligibilityCopyTests.swift; sourceTree = "<group>"; };
+		CFC267A98176DD7F1781C31B /* TranSessionRestore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranSessionRestore.swift; sourceTree = "<group>"; };
 		D0E7F38C960C8BE5BD7556E5 /* ContractScreenDriver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContractScreenDriver.swift; sourceTree = "<group>"; };
 		D3B914E98DFB9B3F53DC79BD /* FeedbackPressureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackPressureTests.swift; sourceTree = "<group>"; };
 		D67D27EB3D5D770789B21FDF /* VotingHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VotingHomeView.swift; sourceTree = "<group>"; };
@@ -165,10 +193,13 @@
 		DABDD20CECDFABD9AD5AAA49 /* TranLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranLayout.swift; sourceTree = "<group>"; };
 		DABEEB333A8AAFC44BD09475 /* Screen.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Screen.xcstrings; sourceTree = "<group>"; };
 		DB6DC8233A9ED541C7A22F7D /* TranApiStub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranApiStub.swift; sourceTree = "<group>"; };
+		E2F8E3ACB9D8AC5B72946B98 /* KeychainSessionVaultTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainSessionVaultTests.swift; sourceTree = "<group>"; };
 		E48F532295512AFE483F2438 /* NavigationCoordinatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationCoordinatorView.swift; sourceTree = "<group>"; };
 		E98C1BAC2E5E0E9359B1C94E /* TranReferenceDateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranReferenceDateTests.swift; sourceTree = "<group>"; };
+		EC8B194574B8DBB324921E44 /* PrivacyCoverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyCoverTests.swift; sourceTree = "<group>"; };
 		ECA1515D07C3D2B19C4269EC /* TranApiStubTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranApiStubTests.swift; sourceTree = "<group>"; };
 		EF2AF051840CF2BCD45F86C7 /* tran_uniffi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = tran_uniffi.swift; sourceTree = "<group>"; };
+		F0E12B106C5CDB7BBB32C6FB /* SessionVault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionVault.swift; sourceTree = "<group>"; };
 		F1071C7642F75C8DD53627A2 /* RecoveryProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecoveryProbe.swift; sourceTree = "<group>"; };
 		F12124FF6470EDFA0A353BF5 /* Auditor.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Auditor.xcstrings; sourceTree = "<group>"; };
 		F21974D5F6A0ED5EE34F605E /* TranVotingDemo.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TranVotingDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -231,9 +262,16 @@
 			children = (
 				9C81897D258076C9D6DAA915 /* FeedbackParityTests.swift */,
 				D3B914E98DFB9B3F53DC79BD /* FeedbackPressureTests.swift */,
+				E2F8E3ACB9D8AC5B72946B98 /* KeychainSessionVaultTests.swift */,
 				843D7B0C3D41329248AA92A8 /* NavigationParityTests.swift */,
+				EC8B194574B8DBB324921E44 /* PrivacyCoverTests.swift */,
 				BBBC0CB4657353B14FD31B78 /* RecoveryProbeTests.swift */,
 				FBFE247D65740ECEBEA9ED8C /* ServerConfirmationTests.swift */,
+				4EE47502DDA80CCCE1201A9E /* SessionClientTests.swift */,
+				90C58467B34F8EBFDDD6B2B3 /* SessionParityTests.swift */,
+				10F9A85B277AE7C4D1833B9C /* SessionRestoreTests.swift */,
+				57C2A059FD8EE2CC127B2CC1 /* SessionTestSupport.swift */,
+				58584CC876AB7849FB07325D /* SessionVaultGuardTests.swift */,
 				1A659AC166910DCC044847A5 /* TranApiClientTests.swift */,
 				ECA1515D07C3D2B19C4269EC /* TranApiStubTests.swift */,
 				CE6F7FB11DBE49C89653F1A4 /* TranEligibilityCopyTests.swift */,
@@ -270,6 +308,18 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
+		9EE12E35AF6D6D307D2F5981 /* Session */ = {
+			isa = PBXGroup;
+			children = (
+				7ABB2F2DE67F5DE2910E8717 /* KeychainSessionVault.swift */,
+				F0E12B106C5CDB7BBB32C6FB /* SessionVault.swift */,
+				7202D41D6320055C4D3B9F58 /* TranSessionClient.swift */,
+				24A3BBFCBFE2D6F96DF2259B /* TranSessionLaunch.swift */,
+				CFC267A98176DD7F1781C31B /* TranSessionRestore.swift */,
+			);
+			path = Session;
+			sourceTree = "<group>";
+		};
 		AB32CD1BAF24E68C58430743 /* Api */ = {
 			isa = PBXGroup;
 			children = (
@@ -289,6 +339,7 @@
 				F3A96B8BC4B8BA52D4C42F94 /* AuthSession.swift */,
 				8E88174C22C857E2C4A32A1C /* AuthWelcomeView.swift */,
 				E48F532295512AFE483F2438 /* NavigationCoordinatorView.swift */,
+				BA5E111CB3FF688FED915A22 /* PrivacyCoverView.swift */,
 				10BA7AEEF263598B8C38A9B8 /* TranMotion.swift */,
 				50205EBE0EB7A80BE144F622 /* TranVotingDemoApp.swift */,
 				D67D27EB3D5D770789B21FDF /* VotingHomeView.swift */,
@@ -297,6 +348,7 @@
 				DA759C368A9414A50A28E6CC /* Extensions */,
 				3C382555278D65B50CFEDE18 /* Feedback */,
 				37B7EEEBFF5C7E739EF2F07D /* Generated */,
+				9EE12E35AF6D6D307D2F5981 /* Session */,
 			);
 			path = TranVotingDemo;
 			sourceTree = "<group>";
@@ -583,12 +635,21 @@
 				CD2B4681BCD8C9AEE8303A9D /* BrandTokens.swift in Sources */,
 				97F3F73EE97A02DD04AF51B1 /* FeedbackParityTests.swift in Sources */,
 				27DEDD293229E5EF1D04131E /* FeedbackPressureTests.swift in Sources */,
+				0D7CC9267C8C25EF5BA73A99 /* KeychainSessionVault.swift in Sources */,
+				AD05498BBD69E97FDC5B6E5F /* KeychainSessionVaultTests.swift in Sources */,
 				0826DFF6755A336094EC46D2 /* L10n.swift in Sources */,
 				A7D7682FF87B6131E4D7B724 /* NavigationParityTests.swift in Sources */,
+				E896B84AFBA2FB3079204EC5 /* PrivacyCoverTests.swift in Sources */,
 				7409C5E1434A0DCFF70A07B9 /* RecoveryProbe.swift in Sources */,
 				BB3FAB605282C50DE528EFD1 /* RecoveryProbeTests.swift in Sources */,
 				3A8B39AC561AF19A119D6CED /* ServerConfirmation.swift in Sources */,
 				D93E76FC13AEFA3757426F41 /* ServerConfirmationTests.swift in Sources */,
+				50EFFD7D6F1F411AF303321C /* SessionClientTests.swift in Sources */,
+				5ADA586A58BE535CFD79BB3C /* SessionParityTests.swift in Sources */,
+				E719DC0C033D7F12A8B1B32B /* SessionRestoreTests.swift in Sources */,
+				66DFBBEB8A3DA360C0379341 /* SessionTestSupport.swift in Sources */,
+				B83A1B669DB52EA209C921EC /* SessionVault.swift in Sources */,
+				C0138A42A2925F3962194EEC /* SessionVaultGuardTests.swift in Sources */,
 				C52F1FC2C50EF718E0AD42AA /* TranApiClient.swift in Sources */,
 				4FEF69E87E2281A47A026A3C /* TranApiClientTests.swift in Sources */,
 				F11ADDB7E97690CB7467B05C /* TranApiStub.swift in Sources */,
@@ -602,6 +663,9 @@
 				A66AE7803D01184F5D6894EB /* TranReferenceDate.swift in Sources */,
 				62FC87D780405E09F801828D /* TranReferenceDateTests.swift in Sources */,
 				9DE149D15E74C7A9A1AB9379 /* TranReporting.swift in Sources */,
+				B065E6803B588E9D76D5F874 /* TranSessionClient.swift in Sources */,
+				C65A64C124B8AA8FEDFA6E3D /* TranSessionLaunch.swift in Sources */,
+				AEA37EC7631E2AA9AF5C5BEB /* TranSessionRestore.swift in Sources */,
 				3D08EBFB3CBC04C780A05C6C /* VoteEligibilityParityTests.swift in Sources */,
 				4064B4A0E18C8AA31EE28915 /* tran_uniffi.swift in Sources */,
 			);
@@ -615,11 +679,14 @@
 				2BC0881F6DD845E68232CF34 /* AuthSession.swift in Sources */,
 				F23C19D070B4D46967F1F757 /* AuthWelcomeView.swift in Sources */,
 				5DD2E1C9E78542434F8F0DDC /* BrandTokens.swift in Sources */,
+				A823D66932990903547033C6 /* KeychainSessionVault.swift in Sources */,
 				033C5EFE87867769BC85393E /* L10n.swift in Sources */,
 				E06715EB17C0CF5EC9358484 /* NavigationCoordinatorView.swift in Sources */,
+				09D2CF17D4E662407FCDFFB8 /* PrivacyCoverView.swift in Sources */,
 				C24F90FAE953CE4226588639 /* RecoveryProbe.swift in Sources */,
 				B06350C8F7A5C89C4422167F /* ScreenContract.swift in Sources */,
 				E351E28BA0FBDC110B73F48A /* ServerConfirmation.swift in Sources */,
+				C3B16AAE36C09CB0AAF56265 /* SessionVault.swift in Sources */,
 				AFEB6F75711555ECA349D6D0 /* TranApiClient.swift in Sources */,
 				3C5A80F935B5ADEDDB2895E2 /* TranApiStub.swift in Sources */,
 				986C167775B3BAD191B31F7E /* TranBanner.swift in Sources */,
@@ -637,6 +704,9 @@
 				4BB5334E4B2D08172421A102 /* TranReferenceDate.swift in Sources */,
 				E4BA77E76149B437B4CA861A /* TranReporting.swift in Sources */,
 				788C5A5986A24F49A9B574D0 /* TranSegmented.swift in Sources */,
+				1E28F4F956B14CEC7F48991E /* TranSessionClient.swift in Sources */,
+				7470EB204FFB751DAB9D7F17 /* TranSessionLaunch.swift in Sources */,
+				E28F45A19D14F616B0736166 /* TranSessionRestore.swift in Sources */,
 				694938D5D406B1D1673EF152 /* TranText.swift in Sources */,
 				5E315F6D96D583BEF20BF325 /* TranToast.swift in Sources */,
 				5B2A7551A748CF4934519148 /* TranVotingDemoApp.swift in Sources */,

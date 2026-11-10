@@ -66,6 +66,7 @@ targets:
       - Sources/TranVotingDemo/Generated/L10n.swift
       - Sources/TranVotingDemo/Generated/BrandTokens.swift
       - Sources/TranVotingDemo/Api
+      - Sources/TranVotingDemo/Session
       - Sources/TranVotingDemo/Extensions
       - Sources/TranVotingDemo/TranMotion.swift
       - Sources/TranVotingDemo/AuthSession.swift

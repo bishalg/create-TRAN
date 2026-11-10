@@ -22,7 +22,7 @@
     "ios:project": "xcodegen generate --spec apps/ios/project.yml --project apps/ios",
     "ios:build": "xcodebuild -project apps/ios/TranVotingDemo.xcodeproj -scheme TranVotingDemo -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO",
     "android:build": "cd apps/android && ./gradlew assembleDebug",
-    "ios:test": "xcodebuild test -project apps/ios/TranVotingDemo.xcodeproj -scheme TranVotingDemo -destination \"platform=iOS Simulator,name=$(xcrun simctl list devices available | grep -m1 -oE 'iPhone [A-Za-z0-9 ]+' | sed 's/ *$//')\" CODE_SIGNING_ALLOWED=NO",
+    "ios:test": "xcodebuild test -project apps/ios/TranVotingDemo.xcodeproj -scheme TranVotingDemo -destination \"platform=iOS Simulator,name=$(xcrun simctl list devices available | grep -m1 -oE 'iPhone [A-Za-z0-9 ]+' | sed 's/ *$//')\" CODE_SIGN_IDENTITY=- CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=NO",
     "android:test": "cd apps/android && rm -rf app/build/outputs/connected_android_test_additional_output && ./gradlew testDebugUnitTest connectedDebugAndroidTest && bash scripts/conformance.sh",
     "android:screenshots": "bash apps/android/scripts/screenshots.sh",
     "ios:screenshots": "bash apps/ios/scripts/screenshots.sh",

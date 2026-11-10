@@ -73,7 +73,7 @@ documents are written for the next reader, human or AI, who will add code here: 
 and one short playbook in `docs/` (what the topic is, why it matters, the rules to follow), plus a one-line rule in
 `AGENTS.md`. Keep them short: only what changes how code is written.
 
-1. [ ] **Security** ([spec 022](./specs/022-security.md), ADR-0039, [playbook](./SECURITY.md)): secrets, rotating
+1. [x] **Security** ([spec 022](./specs/022-security.md), ADR-0039, [playbook](./SECURITY.md)): secrets, rotating
        sessions, Keychain and Keystore storage, sensitive data.
 2. [ ] **Account deletion** ([spec 024](./specs/024-account-deletion.md), ADR-0041,
        [playbook](./ACCOUNT_DELETION.md)): delete the account from inside the app (App Store guideline 5.1.1(v)) and from a public

@@ -4,13 +4,18 @@ Platform-native **N** in TRAN: Swift + SwiftUI, sharing brand tokens and **offli
 
 ## What works today
 
-| Feature                             | Status                                                                                                                                           |
-| :---------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Design tokens (`BrandTokens.swift`) | `pnpm tokens:sync` from `crates/rust-core/src/tokens.rs`                                                                                         |
-| Offline vote eligibility            | `evaluateVoteEligibilityOffline` via `crates/tran-uniffi` → `TranEngine`                                                                         |
-| Golden parity tests                 | `Tests/TranVotingDemoTests` reads `fixtures/vote-eligibility.json`                                                                               |
-| Accessibility tests                 | `pnpm ios:test` — XCUITest journeys + `performAccessibilityAudit` on every theme (`Tests/TranVotingDemoUITests`)                                 |
-| HTTP API client                     | `TranApiClient` — `GET /api/health` + `POST /api/vote/eligibility`; base URL from `TRAN_API_BASE_URL`, loopback-only ATS exception (REQ-NAT-011) |
+| Feature                             | Status                                                                                                                                            |
+| :---------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Design tokens (`BrandTokens.swift`) | `pnpm tokens:sync` from `crates/rust-core/src/tokens.rs`                                                                                          |
+| Offline vote eligibility            | `evaluateVoteEligibilityOffline` via `crates/tran-uniffi` → `TranEngine`                                                                          |
+| Golden parity tests                 | `Tests/TranVotingDemoTests` reads `fixtures/vote-eligibility.json`                                                                                |
+| Accessibility tests                 | `pnpm ios:test` — XCUITest journeys + `performAccessibilityAudit` on every theme (`Tests/TranVotingDemoUITests`)                                  |
+| HTTP API client                     | `TranApiClient` — `GET /api/health` + `POST /api/vote/eligibility`; base URL from `TRAN_API_BASE_URL`, loopback-only ATS exception (REQ-NAT-011)  |
+| API session (spec 022)              | `Session/`: `TranSessionClient` (access token in memory, one shared refresh), `KeychainSessionVault`, restore on launch, privacy cover (ADR-0039) |
+
+`KeychainSessionVaultTests` needs a signed test host: under `pnpm ios:test` (`CODE_SIGNING_ALLOWED=NO`) the simulator
+denies Keychain access and the suite reports itself skipped. Run it against the real Keychain with ad-hoc signing:
+`xcodebuild test … -only-testing:TranVotingDemoTests/KeychainSessionVaultTests CODE_SIGN_IDENTITY=- CODE_SIGNING_ALLOWED=YES`.
 
 ## Layout
 

@@ -95,5 +95,9 @@ pinning, and a device that is rooted or jailbroken with the attacker present at 
 - A CSP delivered by `<meta>` cannot say `frame-ancestors`; the host must send that header. The guide says where.
 - Certificate pinning is not shipped. It protects against a mis-issued certificate at the cost of an app that stops
   working when a certificate rotates before the app updates; that trade belongs to a fork with an operations plan.
+- A sign-in made while the API is unreachable lasts for that run only: there is no refresh token to put in the vault,
+  so the next launch shows role selection. Nothing retries the API sign-in later; a fork with a real credential check
+  cannot sign in offline at all, so the case does not arise there.
+- A launch with no stored session now opens on role selection on every platform. The sample used to start signed in.
 - The debug-only launch presets for a session (ADR-0038) bypass the vault. They are compiled out of release builds, as
   before.
