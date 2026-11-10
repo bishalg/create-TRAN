@@ -6,13 +6,9 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
-import android.location.LocationListener
 import android.location.LocationManager
 import android.net.Uri
-import android.os.Build
-import android.os.Bundle
 import android.os.CancellationSignal
-import android.os.Looper
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
@@ -35,7 +31,8 @@ import kotlin.coroutines.resume
  * app records in its own preferences that it has asked. That is not a credential, so it lives in plain
  * `SharedPreferences`, not the session vault.
  *
- * - granted → `GRANTED_APPROXIMATE`: the app only ever asks for coarse location (REQ-PRV-006);
+ * - granted → `GRANTED_APPROXIMATE` for location, which the app only ever asks coarsely (REQ-PRV-006),
+ *   and `GRANTED` for notifications (`POST_NOTIFICATIONS`, REQ-PSH-008);
  * - never asked → `NOT_DETERMINED`;
  * - asked, rationale shown → `DENIED` (the system can ask again);
  * - asked, no rationale → `DENIED_PERMANENTLY` (only Settings can change it).
@@ -60,8 +57,10 @@ class SystemPermissionGateway(
     override fun status(id: TranPermissionId): TranPermissionStatus {
         val permission = manifestPermission(id)
         return when {
-            activity.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED ->
-                TranPermissionStatus.GRANTED_APPROXIMATE
+            activity.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED -> when (id) {
+                TranPermissionId.LOCATION_APPROXIMATE -> TranPermissionStatus.GRANTED_APPROXIMATE
+                TranPermissionId.NOTIFICATIONS -> TranPermissionStatus.GRANTED
+            }
             !asked.getBoolean(askedKey(id), false) -> TranPermissionStatus.NOT_DETERMINED
             activity.shouldShowRequestPermissionRationale(permission) -> TranPermissionStatus.DENIED
             else -> TranPermissionStatus.DENIED_PERMANENTLY
@@ -84,19 +83,12 @@ class SystemPermissionGateway(
     }
 
     /**
-     * One reading from the first enabled provider. With coarse permission only the network provider
-     * is open below API 31; from API 31 the fused and GPS providers answer coarse callers too, with
-     * the position blurred by the system.
+     * One reading from the first enabled provider. A coarse caller may use each of them; the system
+     * blurs the position it hands back.
      */
     override suspend fun locationFix(): LocationFix? {
         val manager = activity.getSystemService(LocationManager::class.java) ?: return null
-        val providers = buildList {
-            add(LocationManager.NETWORK_PROVIDER)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                add(LocationManager.FUSED_PROVIDER)
-                add(LocationManager.GPS_PROVIDER)
-            }
-        }
+        val providers = listOf(LocationManager.NETWORK_PROVIDER, LocationManager.FUSED_PROVIDER, LocationManager.GPS_PROVIDER)
         val provider = providers.firstOrNull { runCatching { manager.isProviderEnabled(it) }.getOrDefault(false) }
             ?: return null
         val location = try {
@@ -107,40 +99,27 @@ class SystemPermissionGateway(
         return location?.let { LocationFix(it.latitude, it.longitude) }
     }
 
-    override fun openSettings() {
-        activity.startActivity(
-            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", activity.packageName, null))
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        )
+    /** Notifications open the app's notification page; anything else the app's details page. */
+    override fun openSettings(id: TranPermissionId) {
+        val intent = when (id) {
+            TranPermissionId.NOTIFICATIONS ->
+                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, activity.packageName)
+            TranPermissionId.LOCATION_APPROXIMATE ->
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", activity.packageName, null))
+        }
+        activity.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 
     private suspend fun currentLocation(manager: LocationManager, provider: String): Location? =
         suspendCancellableCoroutine { continuation ->
             val signal = CancellationSignal()
             continuation.invokeOnCancellation { signal.cancel() }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                manager.getCurrentLocation(provider, signal, activity.mainExecutor) { continuation.resume(it) }
-            } else {
-                val listener = object : LocationListener {
-                    override fun onLocationChanged(location: Location) {
-                        if (continuation.isActive) continuation.resume(location)
-                    }
-
-                    @Deprecated("Deprecated in API 29; required below it")
-                    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) = Unit
-
-                    override fun onProviderDisabled(provider: String) {
-                        if (continuation.isActive) continuation.resume(null)
-                    }
-                }
-                signal.setOnCancelListener { manager.removeUpdates(listener) }
-                @Suppress("DEPRECATION") // the single-update call API 30 replaced with getCurrentLocation
-                manager.requestSingleUpdate(provider, listener, Looper.getMainLooper())
-            }
+            manager.getCurrentLocation(provider, signal, activity.mainExecutor) { continuation.resume(it) }
         }
 
     private fun manifestPermission(id: TranPermissionId): String = when (id) {
         TranPermissionId.LOCATION_APPROXIMATE -> Manifest.permission.ACCESS_COARSE_LOCATION
+        TranPermissionId.NOTIFICATIONS -> Manifest.permission.POST_NOTIFICATIONS
     }
 
     private fun askedKey(id: TranPermissionId) = "asked.${id.code}"

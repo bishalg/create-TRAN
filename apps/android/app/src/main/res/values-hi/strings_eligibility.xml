@@ -21,6 +21,14 @@
     <string name="eligibility_mode_legend">जाँच कहाँ चलानी है?</string>
     <string name="eligibility_mode_server">सर्वर से पूछें</string>
     <string name="eligibility_mode_server_hint">API के पीछे Rust नियम</string>
+    <string name="eligibility_notification_reached_body">अपनी पात्रता फिर से जाँचने के लिए TRAN खोलें।</string>
+    <string name="eligibility_notification_reached_title">अब आप मतदान कर सकते हैं</string>
+    <string name="eligibility_notify_label">मतदान कर सकने पर मुझे सूचित करें</string>
+    <string name="eligibility_notify_priming_body">जब आप मतदान की आयु के हो जाएँगे, TRAN आपको एक सूचना भेज सकता है। उसमें केवल यह लिखा होगा कि अब आप मतदान कर सकते हैं; अधिक जानने के लिए TRAN खोलें। यह वैकल्पिक है, और आप इसे कभी भी सेटिंग्स में बंद कर सकते हैं।</string>
+    <string name="eligibility_notify_priming_title">मतदान कर सकने पर एक सूचना पाएँ?</string>
+    <string name="eligibility_notify_purpose">TRAN केवल तब सूचना भेजता है जब आप मतदान की आयु के हो जाते हैं, आपके बारे में कभी कुछ नहीं। यह वैकल्पिक है।</string>
+    <string name="eligibility_notify_received">आपकी पात्रता के बारे में TRAN के पास नई जानकारी है। देखने के लिए फिर से जाँचें।</string>
+    <string name="eligibility_notify_settings_note">TRAN के लिए सूचनाएँ बंद हैं। मतदान कर सकने पर पता चलने के लिए सेटिंग्स में सूचनाएँ चालू करें।</string>
     <string name="eligibility_offline_notice">API उपलब्ध नहीं — Rust Core से मेल खाते ऑफ़लाइन नियम।</string>
     <string name="eligibility_result_country">देश</string>
     <string name="eligibility_result_label">परिणाम</string>

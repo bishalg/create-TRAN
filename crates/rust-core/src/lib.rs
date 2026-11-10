@@ -10,6 +10,7 @@ pub mod models;
 pub mod navigation;
 pub mod permissions;
 pub mod personal_questions;
+pub mod push;
 pub mod screens;
 pub mod services;
 pub mod session;

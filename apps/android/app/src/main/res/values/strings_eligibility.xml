@@ -21,6 +21,14 @@
     <string name="eligibility_mode_legend">Where should the check run?</string>
     <string name="eligibility_mode_server">Ask the server</string>
     <string name="eligibility_mode_server_hint">Rust rules behind the API</string>
+    <string name="eligibility_notification_reached_body">Open TRAN to check your eligibility again.</string>
+    <string name="eligibility_notification_reached_title">You can vote now</string>
+    <string name="eligibility_notify_label">Notify me when I can vote</string>
+    <string name="eligibility_notify_priming_body">TRAN can send you one notification when you become old enough to vote. It says only that you can vote now; open TRAN to see more. This is optional, and you can turn it off at any time in Settings.</string>
+    <string name="eligibility_notify_priming_title">Get one notification when you can vote?</string>
+    <string name="eligibility_notify_purpose">TRAN sends a notification only when you become old enough to vote, never anything about you. It is optional.</string>
+    <string name="eligibility_notify_received">TRAN has news about your eligibility. Check again to see it.</string>
+    <string name="eligibility_notify_settings_note">Notifications are off for TRAN. Turn them on in Settings to hear when you can vote.</string>
     <string name="eligibility_offline_notice">API unreachable — using offline rules mirrored from Rust Core.</string>
     <string name="eligibility_result_country">Country</string>
     <string name="eligibility_result_label">Result</string>

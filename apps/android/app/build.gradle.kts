@@ -18,6 +18,22 @@ val uploadSigning =
     listOf(uploadKeystoreBase64, uploadKeystorePassword, uploadKeyAlias, uploadKeyPassword)
         .all { !it.isNullOrBlank() }
 
+// REQ-PSH-012, ADR-0044 decision 9: Firebase Cloud Messaging is initialised by hand from these four
+// public project values (no google-services.json, no google-services plugin). No defaults: with any
+// of them unset the app builds without push, its gateway reports push unavailable and Firebase never
+// starts. They identify the Firebase project and are not secrets (the "API key" included).
+val fcmValues: Map<String, String> = mapOf(
+    "TRAN_FCM_PROJECT_ID" to System.getenv("TRAN_FCM_PROJECT_ID"),
+    "TRAN_FCM_APP_ID" to System.getenv("TRAN_FCM_APP_ID"),
+    "TRAN_FCM_API_KEY" to System.getenv("TRAN_FCM_API_KEY"),
+    "TRAN_FCM_SENDER_ID" to System.getenv("TRAN_FCM_SENDER_ID"),
+).mapValues { (name, value) ->
+    val trimmed = value.orEmpty().trim()
+    // Compiled into a Java string literal: only the characters Firebase values use.
+    require(Regex("[A-Za-z0-9:._-]*").matches(trimmed)) { "$name has characters a Firebase value never has" }
+    trimmed
+}
+
 fun decodeUploadKeystore(base64: String): File {
     val file = File.createTempFile("tran-upload-", ".jks")
     file.deleteOnExit()
@@ -38,11 +54,16 @@ android {
         // REQ-MOB-004: the same variable and placeholder default as fastlane/Appfile, so a fork that
         // sets only the variable builds and uploads one id; the scaffolder rewrites the placeholder.
         applicationId = System.getenv("TRAN_ANDROID_APPLICATION_ID") ?: "com.tran.voting"
-        minSdk = 26
+        // ADR-0045: the latest platforms only. Android 13 is the floor; nothing below it is written or tested.
+        minSdk = 33
         targetSdk = 36
         versionCode = 1000
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "TRAN_FCM_PROJECT_ID", "\"${fcmValues.getValue("TRAN_FCM_PROJECT_ID")}\"")
+        buildConfigField("String", "TRAN_FCM_APP_ID", "\"${fcmValues.getValue("TRAN_FCM_APP_ID")}\"")
+        buildConfigField("String", "TRAN_FCM_API_KEY", "\"${fcmValues.getValue("TRAN_FCM_API_KEY")}\"")
+        buildConfigField("String", "TRAN_FCM_SENDER_ID", "\"${fcmValues.getValue("TRAN_FCM_SENDER_ID")}\"")
     }
 
     buildFeatures {
@@ -114,6 +135,18 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("net.java.dev.jna:jna:5.19.1@aar")
     implementation("com.squareup.okhttp3:okhttp:5.5.0")
+    // Push (spec 027): FCM, the one third-party SDK the app allows (ADR-0044 decision 9), used only by
+    // push/SystemPushGateway.kt and initialised from the build values above. Pinned; Dependabot's gradle
+    // entry keeps it current.
+    implementation("com.google.firebase:firebase-messaging:26.0.1")
+    constraints {
+        // Play services (under FCM) still pulls fragment 1.1.0, whose result handling breaks the
+        // permission launcher (lint InvalidFragmentVersionForActivityResult). The app has no fragments;
+        // this only lifts the transitive version.
+        implementation("androidx.fragment:fragment:1.8.9") {
+            because("registerForActivityResult needs fragment 1.3.0 or later on the classpath")
+        }
+    }
     testImplementation("junit:junit:4.13.2")
     testImplementation("net.java.dev.jna:jna:5.19.1")
     testImplementation("org.json:json:20240303")
@@ -134,7 +167,7 @@ dependencies {
 }
 
 // Stage the Rust core for the device ABIs before packaging (mirrors the iOS Xcode pre-build script).
-val stageRustLib by tasks.registering(Exec::class) {
+val stageRustLib = tasks.register<Exec>("stageRustLib") {
     description = "Builds libtran_uniffi.so for arm64-v8a and x86_64 into src/main/jniLibs"
     group = "build"
     commandLine("bash", rootProject.file("scripts/build-rust-lib.sh").absolutePath)
@@ -147,7 +180,7 @@ tasks.named("preBuild") {
 
 // JVM tests (parity, screenshots) load the host build of the Rust core through JNA; build it so a clean
 // clone or CI runner does not depend on an earlier manual `cargo build`.
-val buildHostRustLib by tasks.registering(Exec::class) {
+val buildHostRustLib = tasks.register<Exec>("buildHostRustLib") {
     description = "Builds libtran_uniffi for the host into target/release for JVM tests"
     group = "build"
     commandLine("cargo", "build", "-p", "tran-uniffi", "--release", "--lib")

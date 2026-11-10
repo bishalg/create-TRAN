@@ -1,9 +1,9 @@
-// Verifies: REQ-SEC-017 REQ-SEC-019
+// Verifies: REQ-SEC-017 REQ-SEC-019 REQ-PSH-010
 import XCTest
 
 /// A source guard over the hand-written app code: a token or a session reaches storage only
-/// through the Keychain vault. `UserDefaults` is written in one allowlisted place (a launch flag),
-/// nothing writes files, and only the vault and the session client handle a token.
+/// through the Keychain vault. `UserDefaults` is written in two allowlisted places (a launch flag;
+/// the push store), nothing writes files, and only the vault and the session client handle a token.
 final class SessionVaultGuardTests: XCTestCase {
     private static let sources = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
@@ -39,12 +39,37 @@ final class SessionVaultGuardTests: XCTestCase {
         Set(lines.map { String($0.prefix { $0 != ":" }) })
     }
 
-    func testUserDefaultsIsWrittenOnlyForTheLaunchFlag() throws {
+    /// The writes allowed, each with its reason. The launch flag is only a flag. The push store
+    /// keeps the installation id, the token it is bound to and the last registration (spec 027):
+    /// none of them is a credential (the id is random and only tells installs apart, a push token
+    /// is an address, not a secret), so they belong in ordinary app storage, not the Keychain
+    /// (REQ-PSH-010). No session, refresh or access token may join this list.
+    private static let allowedWrites: [String: [String]] = [
+        "Session/TranSessionLaunch.swift": ["defaults.set(true, forKey: launchedKey)"],
+        "Push/TranPushStore.swift": [
+            "defaults.set(created, forKey: Self.installationKey)",
+            "defaults.set(token, forKey: Self.boundTokenKey)",
+            "defaults.set(UUID().uuidString.lowercased(), forKey: Self.installationKey)",
+            "defaults.set(registration.token, forKey: Self.tokenKey)",
+            "defaults.set(NSNumber(value: registration.registeredAtUnixS), forKey: Self.registeredAtKey)",
+        ],
+    ]
+
+    func testUserDefaultsIsWrittenOnlyForTheLaunchFlagAndThePushStore() throws {
         let writes = try matches(
             #"(\.set\(|\.setValue\([^)]*forKey:|\.register\(defaults|@AppStorage|@SceneStorage|NSUbiquitousKeyValueStore)"#)
-        XCTAssertEqual(writes.count, 1, "UserDefaults writes: \(writes)")
-        XCTAssertEqual(files(of: writes), ["Session/TranSessionLaunch.swift"])
-        XCTAssertTrue(writes.allSatisfy { $0.contains("defaults.set(true, forKey: launchedKey)") }, "\(writes)")
+        XCTAssertEqual(files(of: writes), Set(Self.allowedWrites.keys), "UserDefaults writes: \(writes)")
+        let found = writes.map { line in String(line.split(separator: ":", maxSplits: 2)[2]).trimmingCharacters(in: .whitespaces) }
+        XCTAssertEqual(found.sorted(), Self.allowedWrites.values.flatMap { $0 }.sorted(), "\(writes)")
+    }
+
+    /// The push store never holds the session: no vault, refresh or access token passes through it.
+    func testThePushStoreKeepsNoSessionCredential() throws {
+        let store = try String(
+            contentsOf: Self.sources.appendingPathComponent("Push/TranPushStore.swift"), encoding: .utf8)
+        for credential in ["refresh", "TranStoredSession", "SessionVault", "Bearer"] {
+            XCTAssertFalse(store.contains(credential), "the push store mentions \(credential)")
+        }
     }
 
     func testNothingWritesAFile() throws {

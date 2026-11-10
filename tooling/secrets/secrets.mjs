@@ -178,14 +178,28 @@ export function codeEnvNames(files) {
   return [...names].sort();
 }
 
-/** Both directions: read but not listed, listed but not read. */
-export function compareEnv(codeNames, keys) {
+/**
+ * Variables only a switched-off test reads (a real device's token for a live push test), from the
+ * `TODO(credentials): <VARIABLES> - …` markers in `{ path: text }` (REQ-CODE-005, `pnpm todos:check`).
+ */
+export function credentialTestNames(files) {
+  const names = new Set();
+  for (const text of Object.values(files))
+    for (const m of text.matchAll(
+      /TODO\(credentials\):\s*([A-Z][A-Z0-9_]*(?:\s*,\s*[A-Z][A-Z0-9_]*)*)\s+-/g
+    ))
+      for (const name of m[1].split(',')) names.add(name.trim());
+  return [...names].sort();
+}
+
+/** Both directions: read but not listed, listed but not read (by code, or by a switched-off test). */
+export function compareEnv(codeNames, keys, testNames = []) {
   const problems = [];
   for (const name of codeNames)
     if (!keys.includes(name))
       problems.push(`${name} is read by code but missing from .env.example`);
   for (const key of keys)
-    if (!codeNames.includes(key) && !READ_BY_DEPENDENCY.includes(key))
+    if (!codeNames.includes(key) && !READ_BY_DEPENDENCY.includes(key) && !testNames.includes(key))
       problems.push(`${key} is in .env.example but no code reads it`);
   return problems;
 }
@@ -193,9 +207,15 @@ export function compareEnv(codeNames, keys) {
 const SECRET_LIKE = /SECRET|TOKEN|PASSWORD|PRIVATE|CREDENTIAL|API_?KEY/i;
 const APPLE_STANDARD = /^(CF|NS|UI|LS)/;
 
+/**
+ * Client-visible names that match SECRET_LIKE but hold public identifiers. Firebase's Android "API key"
+ * names the project to Google and ships in every Firebase app by design; it grants nothing (ADR-0044).
+ */
+export const PUBLIC_BY_DESIGN = ['TRAN_FCM_API_KEY'];
+
 /** Secret-like names among client-visible ones, `[{ source, name }]`. */
 export function secretLikeNames(names) {
-  return names.filter(({ name }) => SECRET_LIKE.test(name));
+  return names.filter(({ name }) => SECRET_LIKE.test(name) && !PUBLIC_BY_DESIGN.includes(name));
 }
 
 /** Names of every kind of client-visible variable, from `{ path: text }`. */
@@ -259,9 +279,12 @@ function main(argv) {
     const code = codeEnvNames(
       Object.fromEntries(Object.entries(files).map(([p, b]) => [p, b.toString('utf8')]))
     );
-    problems.push(...example.problems, ...compareEnv(code, example.keys));
     const textFiles = Object.fromEntries(
       Object.entries(files).map(([p, b]) => [p, b.toString('utf8')])
+    );
+    problems.push(
+      ...example.problems,
+      ...compareEnv(code, example.keys, credentialTestNames(textFiles))
     );
     for (const { source, name } of secretLikeNames(clientNames(textFiles, code, example.keys)))
       problems.push(`${source}: ${name} is compiled into a client and looks like a secret`);

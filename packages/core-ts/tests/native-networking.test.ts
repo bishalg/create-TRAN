@@ -53,17 +53,25 @@ describe('native API clients (dialect: config, cleartext, debug header)', () => 
     const manifest = read('apps/android/app/src/main/AndroidManifest.xml');
     expect(manifest).toMatch(/android:allowBackup="false"/);
     expect(manifest).toMatch(/android:dataExtractionRules="@xml\/data_extraction_rules"/);
-    // minSdk 26 predates data-extraction rules (API 31): the older full-backup rules apply there.
-    expect(manifest).toMatch(/android:fullBackupContent="@xml\/backup_rules"/);
-    expect(read('apps/android/app/build.gradle.kts')).toMatch(/minSdk = 26/);
+    // Data-extraction rules (API 31) govern every level from minSdk 33 (ADR-0045), so the older
+    // full-backup rules, which only API 30 and below read, are gone rather than kept unread.
+    expect(manifest).not.toMatch(/fullBackupContent/);
+    const minSdk = Number(
+      /^\s*minSdk\s*=\s*(\d+)/m.exec(read('apps/android/app/build.gradle.kts'))?.[1]
+    );
+    expect(minSdk).toBeGreaterThanOrEqual(31);
 
     const vault = /<exclude domain="sharedpref" path="tran_session_vault\.xml" \/>/;
     const extraction = read('apps/android/app/src/main/res/xml/data_extraction_rules.xml');
     for (const section of ['cloud-backup', 'device-transfer']) {
       const body = extraction.match(new RegExp(`<${section}>([\\s\\S]*?)</${section}>`))?.[1] ?? '';
       expect(body, section).toMatch(vault);
+      // Verifies: REQ-PSH-010 — the installation id stays on this device, so two never share one.
+      expect(body, section).toMatch(/<exclude domain="sharedpref" path="tran\.push\.xml" \/>/);
     }
-    expect(read('apps/android/app/src/main/res/xml/backup_rules.xml')).toMatch(vault);
+    expect(
+      read('apps/android/app/src/main/kotlin/com/tran/voting/push/PushPreferences.kt')
+    ).toContain('const val PREFERENCES = "tran.push"');
 
     // The file name is the vault's own preferences name.
     expect(

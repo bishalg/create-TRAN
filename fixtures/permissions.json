@@ -1,5 +1,5 @@
 {
-  "$comment": "Permission catalogue, the next-step table and the personal-question catalogue (spec 026, REQ-PRV-001, REQ-PRV-002, REQ-PRV-008, ADR-0043) shared by Rust (crates/rust-core/tests/permission_fixtures.rs), UniFFI (crates/tran-uniffi/tests/permission_fixtures.rs), TypeScript (packages/core-ts/tests/permissions.test.ts), iOS and Android parity tests. `permissions`: every permission the apps may ask for, its copy as locale keys and what each platform declares for it. `steps`: every (status, primed) pair and what the app does next after a tap on the control; `primed` means the person has just chosen Continue on the priming. `personalQuestions`: optional questions about the person; `required: null` means skippable.",
+  "$comment": "Permission catalogue, the next-step table and the personal-question catalogue (spec 026, REQ-PRV-001, REQ-PRV-002, REQ-PRV-008, ADR-0043) shared by Rust (crates/rust-core/tests/permission_fixtures.rs), UniFFI (crates/tran-uniffi/tests/permission_fixtures.rs), TypeScript (packages/core-ts/tests/permissions.test.ts), iOS and Android parity tests. `permissions`: every permission the apps may ask for, its copy as locale keys and what each platform declares for it (`iosUsageDescriptions` is empty for a permission iOS asks without a usage description, such as notifications). `steps`: every (status, primed) pair and what the app does next after a tap on the control; `primed` means the person has just chosen Continue on the priming. `personalQuestions`: optional questions about the person; `required: null` means skippable.",
   "permissions": [
     {
       "id": "location_approximate",
@@ -12,6 +12,18 @@
       "fallback": "keep_manual_entry",
       "androidPermissions": ["android.permission.ACCESS_COARSE_LOCATION"],
       "iosUsageDescriptions": ["NSLocationWhenInUseUsageDescription"]
+    },
+    {
+      "id": "notifications",
+      "feature": "eligibility_reminder",
+      "control": "notify-me-button",
+      "primingTitle": "eligibility.notify.primingTitle",
+      "primingBody": "eligibility.notify.primingBody",
+      "purpose": "eligibility.notify.purpose",
+      "settingsNote": "eligibility.notify.settingsNote",
+      "fallback": "no_reminder",
+      "androidPermissions": ["android.permission.POST_NOTIFICATIONS"],
+      "iosUsageDescriptions": []
     }
   ],
   "steps": [

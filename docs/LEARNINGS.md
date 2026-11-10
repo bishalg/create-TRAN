@@ -9,6 +9,36 @@ when you learned something that is not obvious from the code, the specs or the A
 - Format, checked by `pnpm agents:check`: a `## YYYY-MM-DD - Title` heading, then a `**Learning:**` and an
   `**Action:**` line. Newest first. Delete an entry when the code makes it obsolete.
 
+## 2026-11-10 - An async fn is only covered if one test binary takes every branch
+
+**Learning:** `cargo llvm-cov` showed `apps/api/src/push/mod.rs` at one missed region although the line view had no
+zero anywhere. `Push::notify` is compiled into each integration-test binary separately, and the file summary counts
+the best single copy, not their union: `push_test` never saw `not configured`, `push_providers_test` never saw a
+marketing skip, so no copy reached 100%.
+**Action:** When the summary and the line view disagree, read `cargo llvm-cov report --json` per function. Make one
+test binary take every branch of a shared async fn (here `provider_not_configured_keeps_the_registration` in
+`push_test.rs`); `#[ignore]`d tests in `tests/` are not counted, because `tests/` files are outside the report.
+
+## 2026-11-10 - Only the release build runs the lint that guards the permission launcher
+
+**Learning:** Adding `firebase-messaging` brought `androidx.fragment:fragment:1.1.0` in through Play services.
+Debug builds and every test passed; `assembleRelease` failed in `lintVitalRelease` with
+`InvalidFragmentVersionForActivityResult`, because a fragment below 1.3.0 breaks `registerForActivityResult`, which
+the permission gateway uses. The same change tripled the raw release APK (10 → 26 MB): at `minSdk` 28 and above AGP
+stores dex uncompressed, so the file grows while the download does not.
+**Action:** After adding an Android dependency, run `./gradlew :app:assembleRelease`, not only the tests; lift a stale
+transitive with a `constraints` entry. Compare APK sizes by compressed content, not by file size, across a floor change.
+
+## 2026-11-10 - A log test loses events while other tests in its binary run
+
+**Learning:** `tracing` caches per call site whether it is enabled. In `apps/api/tests/devices_test.rs` the log test
+captured with `Captured::install` (a thread-scoped subscriber) while sibling tests hit the same `info!` call sites on
+threads without one; it lost `device registered` events, and the request span's fields, on every run. Older suites passed
+by luck of timing.
+**Action:** When a log test shares call sites with other tests in the same binary, make those tests take turns (the
+`SERIAL` lock in `apps/api/tests/support/devices.rs`), and evaluate log field values before the macro so coverage does
+not depend on a subscriber.
+
 ## 2026-11-10 - A caught `new Function` still breaks a strict CSP
 
 **Learning:** Zod 4 compiles object parsers with `new Function` and probes whether it may, inside a `try`. Under the

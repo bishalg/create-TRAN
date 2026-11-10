@@ -629,7 +629,9 @@ fn scenarios_run_only_where_their_elements_and_givens_are() {
         native_only,
         [
             "Using my location explains first and Not now changes nothing",
-            "Using my location without permission keeps the chosen country"
+            "Using my location without permission keeps the chosen country",
+            "Asking to be notified explains first",
+            "Asking to be notified without permission keeps the verdict"
         ]
     );
     let staged = Scenario::new(
@@ -682,4 +684,64 @@ fn the_location_control_is_native_and_its_states_are_reached() {
         .collect();
     assert!(tapped.contains("location-priming-dismiss"));
     assert!(expected.contains("location-settings-note"));
+}
+
+// Verifies: REQ-PSH-008 REQ-PSH-012 — the notification control exists only natively, only beside a
+// "not yet eligible" verdict (never because push is unavailable), and its priming and settings
+// states are reached by a scenario that stages the `notifications` permission.
+#[test]
+fn the_notify_control_is_native_gated_by_the_verdict_and_its_states_are_reached() {
+    use super::catalogue::state;
+    let eligibility = SCREENS
+        .iter()
+        .find(|screen| screen.id == "eligibility")
+        .unwrap();
+    let presence = |id: &str| {
+        let element = eligibility.elements.iter().find(|e| e.id == id).unwrap();
+        assert_eq!(
+            element.platforms,
+            [Platform::Ios, Platform::Android],
+            "{id}"
+        );
+        element.presence
+    };
+    assert_eq!(
+        presence("notify-me-button"),
+        Presence::When(state::NOT_YET_ELIGIBLE)
+    );
+    for id in ["notify-priming-continue", "notify-priming-dismiss"] {
+        assert_eq!(presence(id), Presence::When(state::NOTIFY_PRIMING));
+    }
+    for id in ["notify-settings-note", "notify-open-settings"] {
+        assert_eq!(presence(id), Presence::When(state::NOTIFY_SETTINGS_OFFERED));
+    }
+    assert!(unique_elements()
+        .iter()
+        .all(|e| e.presence != Presence::When(state::PUSH_UNAVAILABLE)));
+
+    let staging: Vec<&Scenario> = all_scenarios()
+        .filter(|s| s.when.contains(&When::Tap("notify-me-button")))
+        .collect();
+    assert_eq!(staging.len(), 2);
+    for scenario in &staging {
+        assert!(
+            scenario.given.iter().any(|given| matches!(
+                given,
+                Given::Permission {
+                    id: PermissionId::Notifications,
+                    ..
+                }
+            )),
+            "\"{}\" must stage push through the notifications permission",
+            scenario.name
+        );
+    }
+    let expected: BTreeSet<&str> = staging
+        .iter()
+        .flat_map(|s| s.then)
+        .filter(|then| matches!(then, Then::Exists(_)))
+        .map(|then| then.element())
+        .collect();
+    assert!(expected.contains("notify-priming-continue"));
+    assert!(expected.contains("notify-settings-note"));
 }

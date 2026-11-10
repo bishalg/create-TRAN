@@ -15,6 +15,8 @@ final class SessionStubProtocol: URLProtocol {
         let path: String
         let authorization: String?
         let body: [String: String]
+        /// The body as sent, for one whose values are not all strings.
+        let raw: Data
     }
 
     private static let lock = NSLock()
@@ -42,14 +44,14 @@ final class SessionStubProtocol: URLProtocol {
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
     override func startLoading() {
-        let body = request.streamedBody.flatMap {
-            try? JSONSerialization.jsonObject(with: $0) as? [String: String]
-        }
+        let raw = request.streamedBody ?? Data()
+        let body = try? JSONSerialization.jsonObject(with: raw) as? [String: String]
         let entry = Recorded(
             method: request.httpMethod ?? "GET",
             path: request.url?.path ?? "",
             authorization: request.value(forHTTPHeaderField: "Authorization"),
-            body: body ?? [:]
+            body: body ?? [:],
+            raw: raw
         )
         let handler = Self.lock.withLock { () -> (@Sendable (Recorded) -> Reply)? in
             Self.recorded.append(entry)

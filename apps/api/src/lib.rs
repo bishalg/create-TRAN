@@ -1,9 +1,12 @@
 pub mod account;
 pub mod clock;
 pub mod config;
+pub mod device_store;
+pub mod devices;
 pub mod error;
 pub mod geo;
 pub mod middleware;
+pub mod push;
 pub mod routes;
 pub mod secret;
 pub mod session_store;
@@ -36,7 +39,8 @@ impl Default for Limits {
     fn default() -> Self {
         Self {
             deadline: Duration::from_millis(SERVER_DEADLINE_MS),
-            // The largest valid request is under 100 bytes.
+            // The largest valid request, a device registration with the longest FCM token, is
+            // under 1.5 KiB.
             max_body_bytes: 16 * 1024,
         }
     }
@@ -70,12 +74,24 @@ pub fn with_layers(router: Router, limits: Limits, edge: &EdgePolicy) -> Router 
         ))
 }
 
-/// Binds the configured address and serves until the process stops.
+/// Switches on the configured push senders, binds the configured address and serves until the
+/// process stops. Push configuration that does not parse fails here, naming the variable.
 pub async fn run_server(config: AppConfig) -> std::io::Result<()> {
+    let providers = push::providers::PushProviders::from_settings(
+        &config.push,
+        push::providers::Endpoints::real(),
+        std::sync::Arc::new(clock::SystemClock),
+    )
+    .map_err(|error| std::io::Error::new(std::io::ErrorKind::InvalidInput, error.to_string()))?;
+    providers.log_state();
     let addr = config.socket_addr();
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     tracing::info!(%addr, "Server listening");
-    serve(listener, build_app(AppState::from_config(&config))).await
+    let state = AppState {
+        push_providers: std::sync::Arc::new(providers),
+        ..AppState::from_config(&config)
+    };
+    serve(listener, build_app(state)).await
 }
 
 /// Serves `app` on an already-bound listener (tests bind port 0 and read the address back).

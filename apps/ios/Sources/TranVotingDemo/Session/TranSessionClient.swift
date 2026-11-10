@@ -1,4 +1,5 @@
 // Verifies: REQ-SEC-014 REQ-SEC-015 REQ-SEC-016 REQ-SEC-017 REQ-SEC-021 REQ-SEC-022 REQ-ACC-006 REQ-ROB-007
+// Verifies: REQ-PSH-009
 import Foundation
 import os
 
@@ -117,6 +118,12 @@ actor TranSessionClient {
 
     // MARK: - Authorised calls
 
+    /// Whether there is an API session to authenticate a call with: an access token in memory or
+    /// a refresh credential in the vault. The device registration needs one (REQ-PSH-009).
+    func hasApiSession() -> Bool {
+        accessToken != nil || vault.load() != nil
+    }
+
     /// Checks a restored session in the background (REQ-SEC-021). Only a dead credential signs
     /// the user out; an unreachable API keeps them signed in. A kept failure is shown nowhere, so
     /// this client logs it; `.signedOut` is the caller's to log, as it presents it.
@@ -203,7 +210,7 @@ actor TranSessionClient {
             }
         }
         // A 2xx we cannot use keeps the credential, like any other failed refresh.
-        try adopt(data, epoch: started)
+        _ = try adopt(data, epoch: started)
     }
 
     // MARK: - Plumbing

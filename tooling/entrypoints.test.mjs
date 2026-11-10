@@ -33,6 +33,7 @@ const TOOLS = [
   ['supply-chain/supply-chain.mjs', [], /supply-chain: actions pinned/],
   ['secrets/secrets.mjs', [], /secrets: ok/],
   ['mobile-release/mobile-release.mjs', ['check'], /mobile-release: ok/],
+  ['todos/todos.mjs', [], /todos: ok \(\d+ test\(s\) switched off/],
   ['release/release.mjs', ['check'], /release: every version agrees/],
 ];
 

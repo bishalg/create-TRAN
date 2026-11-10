@@ -14,7 +14,7 @@ All non-test TypeScript source files modified in a changeset must maintain 100% 
 
 Counts of `as unknown as`, `eslint-disable`, and `#[allow(` must never increase relative to the recorded baseline. When occurrences are removed, the baseline auto-shrinks. Enforced by `tooling/debt/debt.mjs`.
 
-### REQ-CODE-004 [planned] One platform floor, and no code below it
+### REQ-CODE-004 [verified] One platform floor, and no code below it
 
 iOS MUST declare one deployment target, the previous major release (`26.0` while iOS 27 is current), and Android one
 `minSdk` (`33`), with `compileSdk` and `targetSdk` at the newest stable level the stores accept. A guard MUST fail on
@@ -23,7 +23,7 @@ on a compatibility shim kept only for a version below it, and on a deprecated AP
 Rationale: [ADR-0045](../adr/0045-latest-platforms-only.md).
 **Verified by:** `packages/core-ts/tests/platform-floor.test.ts`.
 
-### REQ-CODE-005 [planned] Code that needs real credentials ships complete, switched off, and marked
+### REQ-CODE-005 [verified] Code that needs real credentials ships complete, switched off, and marked
 
 Code that cannot run without a project's own accounts (store uploads, push senders, provider sign-in, purchases) MUST
 be implemented in full and disabled by the absence of its configuration, never stubbed or left out. Each test that

@@ -406,6 +406,66 @@
           ]
         },
         {
+          "id": "notify-me-button",
+          "kind": "button",
+          "label": "eligibility.notify.label",
+          "touch": "control",
+          "presence": "when",
+          "state": "not_yet_eligible",
+          "platforms": [
+            "ios",
+            "android"
+          ]
+        },
+        {
+          "id": "notify-priming-continue",
+          "kind": "button",
+          "label": "common.continueAction",
+          "touch": "control",
+          "presence": "when",
+          "state": "notify_priming",
+          "platforms": [
+            "ios",
+            "android"
+          ]
+        },
+        {
+          "id": "notify-priming-dismiss",
+          "kind": "button",
+          "label": "common.notNow",
+          "touch": "control",
+          "presence": "when",
+          "state": "notify_priming",
+          "platforms": [
+            "ios",
+            "android"
+          ]
+        },
+        {
+          "id": "notify-settings-note",
+          "kind": "text",
+          "label": "eligibility.notify.settingsNote",
+          "touch": "none",
+          "presence": "when",
+          "state": "notify_settings_offered",
+          "platforms": [
+            "ios",
+            "android"
+          ]
+        },
+        {
+          "id": "notify-open-settings",
+          "kind": "button",
+          "label": "common.openSettings",
+          "touch": "control",
+          "presence": "when",
+          "state": "notify_settings_offered",
+          "platforms": [
+            "ios",
+            "android"
+          ]
+        },
+        {
           "id": "theme-picker",
           "kind": "segmented",
           "label": "shell.theme.label",
@@ -1422,6 +1482,166 @@
                 {
                   "name": "country",
                   "value": "NP"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Asking to be notified explains first",
+          "verifies": [
+            "REQ-PSH-008",
+            "REQ-PRV-003"
+          ],
+          "within_ms": 4300,
+          "platforms": [
+            "ios",
+            "android"
+          ],
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            },
+            {
+              "verb": "permission",
+              "value": "not_determined",
+              "permission": "notifications"
+            }
+          ],
+          "when": [
+            {
+              "verb": "type",
+              "id": "age-field",
+              "text": "17"
+            },
+            {
+              "verb": "type",
+              "id": "country-field",
+              "text": "US"
+            },
+            {
+              "verb": "tap",
+              "id": "check-button"
+            },
+            {
+              "verb": "tap",
+              "id": "notify-me-button"
+            }
+          ],
+          "then": [
+            {
+              "verb": "exists",
+              "id": "notify-priming-continue"
+            },
+            {
+              "verb": "exists",
+              "id": "notify-priming-dismiss"
+            },
+            {
+              "verb": "missing",
+              "id": "notify-settings-note"
+            },
+            {
+              "verb": "text_is",
+              "id": "offline-result",
+              "key": "eligibility.result.reasonBelow",
+              "args": [
+                {
+                  "name": "age",
+                  "value": "17"
+                },
+                {
+                  "name": "minimumAge",
+                  "value": "18"
+                },
+                {
+                  "name": "country",
+                  "value": "US"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Asking to be notified without permission keeps the verdict",
+          "verifies": [
+            "REQ-PSH-008",
+            "REQ-PRV-004"
+          ],
+          "within_ms": 4300,
+          "platforms": [
+            "ios",
+            "android"
+          ],
+          "given": [
+            {
+              "verb": "session",
+              "value": "citizen_voter"
+            },
+            {
+              "verb": "permission",
+              "value": "denied_permanently",
+              "permission": "notifications"
+            }
+          ],
+          "when": [
+            {
+              "verb": "type",
+              "id": "age-field",
+              "text": "17"
+            },
+            {
+              "verb": "type",
+              "id": "country-field",
+              "text": "US"
+            },
+            {
+              "verb": "tap",
+              "id": "check-button"
+            },
+            {
+              "verb": "tap",
+              "id": "notify-me-button"
+            }
+          ],
+          "then": [
+            {
+              "verb": "exists",
+              "id": "notify-settings-note"
+            },
+            {
+              "verb": "exists",
+              "id": "notify-open-settings"
+            },
+            {
+              "verb": "missing",
+              "id": "notify-priming-continue"
+            },
+            {
+              "verb": "missing",
+              "id": "validation-message"
+            },
+            {
+              "verb": "missing",
+              "id": "toast"
+            },
+            {
+              "verb": "text_is",
+              "id": "offline-result",
+              "key": "eligibility.result.reasonBelow",
+              "args": [
+                {
+                  "name": "age",
+                  "value": "17"
+                },
+                {
+                  "name": "minimumAge",
+                  "value": "18"
+                },
+                {
+                  "name": "country",
+                  "value": "US"
                 }
               ]
             }

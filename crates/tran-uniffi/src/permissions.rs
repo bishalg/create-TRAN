@@ -16,6 +16,8 @@ use rust_core::personal_questions::{AnswerKind, PersonalQuestion, PERSONAL_QUEST
 pub enum TranPermissionId {
     /// Approximate location while in use, read once to fill the country (REQ-PRV-006).
     LocationApproximate,
+    /// Showing notifications, asked only from "Notify me when I can vote" (REQ-PSH-008).
+    Notifications,
 }
 
 /// What the platform reports for a permission, mapped by the app's gateway.
@@ -53,6 +55,8 @@ pub enum TranPermissionStep {
 pub enum TranPermissionFallback {
     /// The value stays entered by hand (the country stays hand-picked).
     KeepManualEntry,
+    /// No notification is sent; the verdict and every other feature stay as they are.
+    NoReminder,
 }
 
 /// One catalogue entry: copy as locale keys, and what each platform declares for it.
@@ -68,7 +72,8 @@ pub struct TranPermission {
     pub priming_title_key: String,
     /// Locale key of the priming body.
     pub priming_body_key: String,
-    /// Locale key of the purpose string the system prompt shows.
+    /// Locale key of the purpose string: the system prompt's on iOS where it has one, otherwise the
+    /// app's own rationale.
     pub purpose_key: String,
     /// Locale key of the inline note after a permanent refusal.
     pub settings_note_key: String,
@@ -76,7 +81,7 @@ pub struct TranPermission {
     pub fallback: TranPermissionFallback,
     /// `uses-permission` names the Android manifest declares for it.
     pub android_permissions: Vec<String>,
-    /// Usage-description keys the iOS `Info.plist` declares for it.
+    /// Usage-description keys the iOS `Info.plist` declares for it; empty for notifications.
     pub ios_usage_descriptions: Vec<String>,
 }
 
@@ -121,6 +126,7 @@ impl From<PermissionId> for TranPermissionId {
     fn from(id: PermissionId) -> Self {
         match id {
             PermissionId::LocationApproximate => Self::LocationApproximate,
+            PermissionId::Notifications => Self::Notifications,
         }
     }
 }
@@ -129,6 +135,7 @@ impl From<TranPermissionId> for PermissionId {
     fn from(id: TranPermissionId) -> Self {
         match id {
             TranPermissionId::LocationApproximate => Self::LocationApproximate,
+            TranPermissionId::Notifications => Self::Notifications,
         }
     }
 }
@@ -170,6 +177,7 @@ impl From<Permission> for TranPermission {
             settings_note_key: permission.settings_note.into(),
             fallback: match permission.fallback {
                 PermissionFallback::KeepManualEntry => TranPermissionFallback::KeepManualEntry,
+                PermissionFallback::NoReminder => TranPermissionFallback::NoReminder,
             },
             android_permissions: strings(permission.android_permissions),
             ios_usage_descriptions: strings(permission.ios_usage_descriptions),

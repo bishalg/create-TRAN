@@ -1,4 +1,4 @@
-// Verifies: REQ-SEC-014 REQ-SEC-015 REQ-SEC-016 REQ-SEC-017 REQ-SEC-022 REQ-ACC-006
+// Verifies: REQ-SEC-014 REQ-SEC-015 REQ-SEC-016 REQ-SEC-017 REQ-SEC-022 REQ-ACC-006 REQ-PSH-011
 package com.tran.voting.session
 
 import com.tran.voting.api.TranApiClient
@@ -25,6 +25,14 @@ import uniffi.tran_uniffi.TranSessionEvent
 import uniffi.tran_uniffi.TranUserRole
 import uniffi.tran_uniffi.sessionRecovery
 import uniffi.tran_uniffi.sessionRefreshEvent
+
+/**
+ * A session this device has already forgotten, held only for the sign-out's last calls. It prints
+ * no credential (REQ-SEC-014).
+ */
+class EndedSession(val refreshToken: String?, internal val accessToken: String?) {
+    override fun toString(): String = "EndedSession(redacted)"
+}
 
 /** Who the API says is signed in. */
 data class SessionUser(val userId: String, val role: TranUserRole)
@@ -58,6 +66,35 @@ class SessionClient(
 
     /** Whether an access token is held in memory (never exposed itself). */
     val hasAccessToken: Boolean get() = accessToken != null
+
+    /** Whether there is an API session to authenticate a call with: an access token, or a stored refresh token. */
+    val hasSession: Boolean get() = accessToken != null || vault.read() != null
+
+    /**
+     * `PUT /api/devices/{installation_id}` (spec 027): registers this installation's push token to
+     * the signed-in user and this session, refreshing once if needed. [body] is the documented
+     * registration; the caller logs a failure.
+     */
+    suspend fun registerDevice(installationId: String, body: JSONObject) {
+        authorized { Request.Builder().url(url(devicePath(installationId))).put(body.toString().toRequestBody(JSON)) }
+    }
+
+    /** `DELETE /api/devices/{installation_id}` with the live session, refreshing once if needed. */
+    suspend fun unregisterDevice(installationId: String) {
+        authorized { Request.Builder().url(url(devicePath(installationId))).delete() }
+    }
+
+    /**
+     * `DELETE /api/devices/{installation_id}` for a session [end] already forgot (REQ-PSH-011): one
+     * attempt with the access token it held, never a refresh. Without one nothing is sent; the
+     * server removes the session's registrations when it is revoked anyway (REQ-PSH-003).
+     */
+    suspend fun unregisterDevice(installationId: String, ended: EndedSession) {
+        val token = ended.accessToken ?: return
+        val request = Request.Builder().url(url(devicePath(installationId))).delete()
+            .header("Authorization", "Bearer $token").build()
+        send(request).failure?.let { throw it }
+    }
 
     /**
      * `POST /api/auth/session` with the body transport (ADR-0039 decision 7: the device session is
@@ -130,11 +167,17 @@ class SessionClient(
     }
 
     /** Forgets the session on this device at once; returns the refresh token to revoke, if any. */
-    fun endLocally(): String? {
-        val refreshToken = vault.read()?.refreshToken
+    fun endLocally(): String? = end().refreshToken
+
+    /**
+     * Forgets the session on this device at once and hands back what the last calls of a sign-out
+     * need: the access token for the device's own unregister, the refresh token to revoke.
+     */
+    fun end(): EndedSession {
+        val ended = EndedSession(refreshToken = vault.read()?.refreshToken, accessToken = accessToken)
         vault.clear()
         accessToken = null
-        return refreshToken
+        return ended
     }
 
     /**
@@ -250,6 +293,8 @@ class SessionClient(
     private fun expired() = TranRequestFailure(TranErrorCode.AUTH_SESSION_EXPIRED, status = UNAUTHORIZED)
 
     private fun url(path: String) = baseUrl.trimEnd('/') + path
+
+    private fun devicePath(installationId: String) = "/api/devices/$installationId"
 
     private fun post(path: String, body: JSONObject): Request =
         Request.Builder().url(url(path)).post(body.toString().toRequestBody(JSON)).build()

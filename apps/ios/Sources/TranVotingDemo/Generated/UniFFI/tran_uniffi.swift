@@ -513,6 +513,22 @@ fileprivate struct FfiConverterUInt64: FfiConverterPrimitive {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterInt64: FfiConverterPrimitive {
+    typealias FfiType = Int64
+    typealias SwiftType = Int64
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Int64 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: Int64, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterDouble: FfiConverterPrimitive {
     typealias FfiType = Double
     typealias SwiftType = Double
@@ -756,6 +772,75 @@ public func FfiConverterTypeTranCountryVotingAge_lower(_ value: TranCountryVotin
 
 
 /**
+ * How long the API keeps a registration nobody refreshed, and how often the app refreshes it.
+ */
+public struct TranDevicePolicy: Equatable, Hashable {
+    /**
+     * The API removes a registration not refreshed for this many days (60).
+     */
+    public var staleAfterDays: UInt32
+    /**
+     * The app registers an unchanged token again once its registration is this many days old (7).
+     */
+    public var refreshAfterDays: UInt32
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * The API removes a registration not refreshed for this many days (60).
+         */staleAfterDays: UInt32, 
+        /**
+         * The app registers an unchanged token again once its registration is this many days old (7).
+         */refreshAfterDays: UInt32) {
+        self.staleAfterDays = staleAfterDays
+        self.refreshAfterDays = refreshAfterDays
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranDevicePolicy: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranDevicePolicy: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranDevicePolicy {
+        return
+            try TranDevicePolicy(
+                staleAfterDays: FfiConverterUInt32.read(from: &buf), 
+                refreshAfterDays: FfiConverterUInt32.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranDevicePolicy, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.staleAfterDays, into: &buf)
+        FfiConverterUInt32.write(value.refreshAfterDays, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranDevicePolicy_lift(_ buf: RustBuffer) throws -> TranDevicePolicy {
+    return try FfiConverterTypeTranDevicePolicy.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranDevicePolicy_lower(_ value: TranDevicePolicy) -> RustBuffer {
+    return FfiConverterTypeTranDevicePolicy.lower(value)
+}
+
+
+/**
  * Everything a native app needs to know about one [`TranErrorCode`].
  */
 public struct TranErrorSpec: Equatable, Hashable {
@@ -875,6 +960,75 @@ public func FfiConverterTypeTranErrorSpec_lower(_ value: TranErrorSpec) -> RustB
 
 
 /**
+ * The registration the app last made and keeps in ordinary app storage.
+ */
+public struct TranLastRegistration: Equatable, Hashable {
+    /**
+     * The push token it registered.
+     */
+    public var token: String
+    /**
+     * When the API answered `204`, in Unix seconds on the device clock.
+     */
+    public var registeredAtUnixS: Int64
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * The push token it registered.
+         */token: String, 
+        /**
+         * When the API answered `204`, in Unix seconds on the device clock.
+         */registeredAtUnixS: Int64) {
+        self.token = token
+        self.registeredAtUnixS = registeredAtUnixS
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranLastRegistration: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranLastRegistration: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranLastRegistration {
+        return
+            try TranLastRegistration(
+                token: FfiConverterString.read(from: &buf), 
+                registeredAtUnixS: FfiConverterInt64.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranLastRegistration, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.token, into: &buf)
+        FfiConverterInt64.write(value.registeredAtUnixS, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranLastRegistration_lift(_ buf: RustBuffer) throws -> TranLastRegistration {
+    return try FfiConverterTypeTranLastRegistration.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranLastRegistration_lower(_ value: TranLastRegistration) -> RustBuffer {
+    return FfiConverterTypeTranLastRegistration.lower(value)
+}
+
+
+/**
  * How long a check may run before the screen says it is waiting, and what it says (REQ-LOAD-002).
  */
 public struct TranLoadingPolicy: Equatable, Hashable {
@@ -968,7 +1122,8 @@ public struct TranPermission: Equatable, Hashable {
      */
     public var primingBodyKey: String
     /**
-     * Locale key of the purpose string the system prompt shows.
+     * Locale key of the purpose string: the system prompt's on iOS where it has one, otherwise the
+     * app's own rationale.
      */
     public var purposeKey: String
     /**
@@ -984,7 +1139,7 @@ public struct TranPermission: Equatable, Hashable {
      */
     public var androidPermissions: [String]
     /**
-     * Usage-description keys the iOS `Info.plist` declares for it.
+     * Usage-description keys the iOS `Info.plist` declares for it; empty for notifications.
      */
     public var iosUsageDescriptions: [String]
 
@@ -1007,7 +1162,8 @@ public struct TranPermission: Equatable, Hashable {
          * Locale key of the priming body.
          */primingBodyKey: String, 
         /**
-         * Locale key of the purpose string the system prompt shows.
+         * Locale key of the purpose string: the system prompt's on iOS where it has one, otherwise the
+         * app's own rationale.
          */purposeKey: String, 
         /**
          * Locale key of the inline note after a permanent refusal.
@@ -1019,7 +1175,7 @@ public struct TranPermission: Equatable, Hashable {
          * `uses-permission` names the Android manifest declares for it.
          */androidPermissions: [String], 
         /**
-         * Usage-description keys the iOS `Info.plist` declares for it.
+         * Usage-description keys the iOS `Info.plist` declares for it; empty for notifications.
          */iosUsageDescriptions: [String]) {
         self.id = id
         self.feature = feature
@@ -1267,6 +1423,117 @@ public func FfiConverterTypeTranPersonalQuestion_lift(_ buf: RustBuffer) throws 
 #endif
 public func FfiConverterTypeTranPersonalQuestion_lower(_ value: TranPersonalQuestion) -> RustBuffer {
     return FfiConverterTypeTranPersonalQuestion.lower(value)
+}
+
+
+/**
+ * What the app knows when it runs the sync.
+ */
+public struct TranPushState: Equatable, Hashable {
+    /**
+     * The push gateway found the build's push configuration (APNs entitlement, FCM values).
+     */
+    public var pushAvailable: Bool
+    /**
+     * The platform lets the app show notifications (iOS authorized, provisional or ephemeral;
+     * Android `POST_NOTIFICATIONS` granted, or not needed below API 33).
+     */
+    public var permissionGranted: Bool
+    /**
+     * The app holds an API session to authenticate the call with.
+     */
+    public var hasSession: Bool
+    /**
+     * The token the platform last delivered; `None` until it delivers one.
+     */
+    public var currentToken: String?
+    /**
+     * The registration the app recorded; `None` when it has none.
+     */
+    public var lastRegistration: TranLastRegistration?
+    /**
+     * Now, in Unix seconds on the device clock.
+     */
+    public var nowUnixS: Int64
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * The push gateway found the build's push configuration (APNs entitlement, FCM values).
+         */pushAvailable: Bool, 
+        /**
+         * The platform lets the app show notifications (iOS authorized, provisional or ephemeral;
+         * Android `POST_NOTIFICATIONS` granted, or not needed below API 33).
+         */permissionGranted: Bool, 
+        /**
+         * The app holds an API session to authenticate the call with.
+         */hasSession: Bool, 
+        /**
+         * The token the platform last delivered; `None` until it delivers one.
+         */currentToken: String?, 
+        /**
+         * The registration the app recorded; `None` when it has none.
+         */lastRegistration: TranLastRegistration?, 
+        /**
+         * Now, in Unix seconds on the device clock.
+         */nowUnixS: Int64) {
+        self.pushAvailable = pushAvailable
+        self.permissionGranted = permissionGranted
+        self.hasSession = hasSession
+        self.currentToken = currentToken
+        self.lastRegistration = lastRegistration
+        self.nowUnixS = nowUnixS
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranPushState: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranPushState: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranPushState {
+        return
+            try TranPushState(
+                pushAvailable: FfiConverterBool.read(from: &buf), 
+                permissionGranted: FfiConverterBool.read(from: &buf), 
+                hasSession: FfiConverterBool.read(from: &buf), 
+                currentToken: FfiConverterOptionString.read(from: &buf), 
+                lastRegistration: FfiConverterOptionTypeTranLastRegistration.read(from: &buf), 
+                nowUnixS: FfiConverterInt64.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranPushState, into buf: inout [UInt8]) {
+        FfiConverterBool.write(value.pushAvailable, into: &buf)
+        FfiConverterBool.write(value.permissionGranted, into: &buf)
+        FfiConverterBool.write(value.hasSession, into: &buf)
+        FfiConverterOptionString.write(value.currentToken, into: &buf)
+        FfiConverterOptionTypeTranLastRegistration.write(value.lastRegistration, into: &buf)
+        FfiConverterInt64.write(value.nowUnixS, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPushState_lift(_ buf: RustBuffer) throws -> TranPushState {
+    return try FfiConverterTypeTranPushState.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPushState_lower(_ value: TranPushState) -> RustBuffer {
+    return FfiConverterTypeTranPushState.lower(value)
 }
 
 
@@ -2433,6 +2700,10 @@ public enum TranPermissionFallback: Equatable, Hashable {
      * The value stays entered by hand (the country stays hand-picked).
      */
     case keepManualEntry
+    /**
+     * No notification is sent; the verdict and every other feature stay as they are.
+     */
+    case noReminder
 
 
 
@@ -2456,6 +2727,8 @@ public struct FfiConverterTypeTranPermissionFallback: FfiConverterRustBuffer {
         
         case 1: return .keepManualEntry
         
+        case 2: return .noReminder
+        
         default: throw UniffiInternalError.unexpectedEnumCase
         }
     }
@@ -2466,6 +2739,10 @@ public struct FfiConverterTypeTranPermissionFallback: FfiConverterRustBuffer {
         
         case .keepManualEntry:
             writeInt(&buf, Int32(1))
+        
+        
+        case .noReminder:
+            writeInt(&buf, Int32(2))
         
         }
     }
@@ -2498,6 +2775,10 @@ public enum TranPermissionId: Equatable, Hashable {
      * Approximate location while in use, read once to fill the country (REQ-PRV-006).
      */
     case locationApproximate
+    /**
+     * Showing notifications, asked only from "Notify me when I can vote" (REQ-PSH-008).
+     */
+    case notifications
 
 
 
@@ -2521,6 +2802,8 @@ public struct FfiConverterTypeTranPermissionId: FfiConverterRustBuffer {
         
         case 1: return .locationApproximate
         
+        case 2: return .notifications
+        
         default: throw UniffiInternalError.unexpectedEnumCase
         }
     }
@@ -2531,6 +2814,10 @@ public struct FfiConverterTypeTranPermissionId: FfiConverterRustBuffer {
         
         case .locationApproximate:
             writeInt(&buf, Int32(1))
+        
+        
+        case .notifications:
+            writeInt(&buf, Int32(2))
         
         }
     }
@@ -2890,6 +3177,93 @@ public func FfiConverterTypeTranPresentation_lift(_ buf: RustBuffer) throws -> T
 #endif
 public func FfiConverterTypeTranPresentation_lower(_ value: TranPresentation) -> RustBuffer {
     return FfiConverterTypeTranPresentation.lower(value)
+}
+
+
+
+/**
+ * What the app does after the sync.
+ */
+
+public enum TranPushAction: Equatable, Hashable {
+    
+    /**
+     * `PUT /api/devices/{installation_id}` with the current token; on `204` record the token and
+     * the time.
+     */
+    case register
+    /**
+     * Clear the recorded registration first, then a best-effort
+     * `DELETE /api/devices/{installation_id}` whose failure changes nothing.
+     */
+    case unregister
+    /**
+     * Leave everything as it is.
+     */
+    case nothing
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranPushAction: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranPushAction: FfiConverterRustBuffer {
+    typealias SwiftType = TranPushAction
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranPushAction {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .register
+        
+        case 2: return .unregister
+        
+        case 3: return .nothing
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranPushAction, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .register:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .unregister:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .nothing:
+            writeInt(&buf, Int32(3))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPushAction_lift(_ buf: RustBuffer) throws -> TranPushAction {
+    return try FfiConverterTypeTranPushAction.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranPushAction_lower(_ value: TranPushAction) -> RustBuffer {
+    return FfiConverterTypeTranPushAction.lower(value)
 }
 
 
@@ -3363,6 +3737,11 @@ public enum TranUserAction: Equatable, Hashable {
      * The server confirmed a deletion (REQ-ACC-006).
      */
     case accountDeleted
+    /**
+     * A push notification arrived in the foreground: show the toast, not a system banner
+     * (REQ-PSH-013).
+     */
+    case notificationReceived
 
 
 
@@ -3392,6 +3771,8 @@ public struct FfiConverterTypeTranUserAction: FfiConverterRustBuffer {
         
         case 4: return .accountDeleted
         
+        case 5: return .notificationReceived
+        
         default: throw UniffiInternalError.unexpectedEnumCase
         }
     }
@@ -3414,6 +3795,10 @@ public struct FfiConverterTypeTranUserAction: FfiConverterRustBuffer {
         
         case .accountDeleted:
             writeInt(&buf, Int32(4))
+        
+        
+        case .notificationReceived:
+            writeInt(&buf, Int32(5))
         
         }
     }
@@ -3778,6 +4163,30 @@ fileprivate struct FfiConverterOptionString: FfiConverterRustBuffer {
         switch try readInt(&buf) as Int8 {
         case 0: return nil
         case 1: return try FfiConverterString.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionTypeTranLastRegistration: FfiConverterRustBuffer {
+    typealias SwiftType = TranLastRegistration?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeTranLastRegistration.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeTranLastRegistration.read(from: &buf)
         default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }
@@ -4455,6 +4864,43 @@ public func personalQuestions() -> [TranPersonalQuestion]  {
 })
 }
 /**
+ * The device policy from `rust-core`.
+ *
+ * # Returns
+ *
+ * The stale and refresh windows in days; pinned by the `policy` section of `fixtures/push.json`.
+ */
+public func devicePolicy() -> TranDevicePolicy  {
+    return try!  FfiConverterTypeTranDevicePolicy_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_device_policy(uniffiCallStatus
+    )
+})
+}
+/**
+ * What to do with the push token now (REQ-PSH-009).
+ *
+ * # Arguments
+ *
+ * * `state` — push availability, permission, session, the current token and the recorded
+ * registration, with the device's current time.
+ *
+ * # Returns
+ *
+ * [`TranPushAction::Register`] for a new or changed token, or an unchanged one whose registration
+ * is at least `refresh_after_days` old (or dated in the future); [`TranPushAction::Unregister`]
+ * when push, permission or the session is gone while a registration is recorded;
+ * [`TranPushAction::Nothing`] otherwise, including before the platform delivers a token.
+ */
+public func pushSync(state: TranPushState) -> TranPushAction  {
+    return try!  FfiConverterTypeTranPushAction_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_push_sync(
+        FfiConverterTypeTranPushState_lower(state),uniffiCallStatus
+    )
+})
+}
+/**
  * The session policy from `rust-core`.
  *
  * # Returns
@@ -4608,6 +5054,12 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_personal_questions() != 36547) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_device_policy() != 1244) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_push_sync() != 22137) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_session_policy() != 15140) {

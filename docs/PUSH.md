@@ -34,15 +34,16 @@ provider says dead  → the server drops that registration
 
 ## Where it lives
 
-| Part                                   | Place                                                         |
-| :------------------------------------- | :------------------------------------------------------------ |
-| Registry routes, `DeviceStore`         | `apps/api` (`/api/devices/{installation_id}`)                 |
-| `PushSender` seam and payload builders | `apps/api/src/push/`                                          |
-| `push_sync` and `DEVICE_POLICY`        | `crates/rust-core/src/push.rs`, `fixtures/push.json`          |
-| Permission entry and priming copy      | the permission catalogue ([PERMISSIONS.md](./PERMISSIONS.md)) |
-| The only code that asks for a token    | `Push/SystemPushGateway.swift`, `push/SystemPushGateway.kt`   |
-| The notification permission prompt     | `Permissions/SystemPermissionGateway` on each platform        |
-| Notification text                      | `eligibility.notification.*` in `locales/`, chosen by the API |
+| Part                                   | Place                                                             |
+| :------------------------------------- | :---------------------------------------------------------------- |
+| Registry routes, `DeviceStore`         | `apps/api` (`/api/devices/{installation_id}`)                     |
+| `PushSender` seam and payload builders | `apps/api/src/push/`                                              |
+| The real APNs and FCM senders          | `apps/api/src/push/{apns,fcm,providers}.rs`, off until configured |
+| `push_sync` and `DEVICE_POLICY`        | `crates/rust-core/src/push.rs`, `fixtures/push.json`              |
+| Permission entry and priming copy      | the permission catalogue ([PERMISSIONS.md](./PERMISSIONS.md))     |
+| The only code that asks for a token    | `Push/SystemPushGateway.swift`, `push/SystemPushGateway.kt`       |
+| The notification permission prompt     | `Permissions/SystemPermissionGateway` on each platform            |
+| Notification text                      | `eligibility.notification.*` in `locales/`, chosen by the API     |
 
 ## Testing without a real token
 
@@ -50,15 +51,51 @@ The debug apps never reach APNs or FCM under a test preset. A screen scenario st
 `permission` given that names `notifications` (iOS `-TranPermission notifications=<status>`; Android
 `stagedPermission("notifications=<status>")`): the interpreter then also hands the app a fake push gateway that reports
 push available and, once permission is granted, a fixed fake token. Without that given the fake reports push
-unavailable, so `notify-me-button` is absent and every other scenario sees the screen it always saw. The API side is
-tested with `FakeSender` (`apps/api/src/push/sender.rs`).
+unavailable, so `notify-me-button` is absent and every other scenario sees the screen it always saw. The API's registry
+is tested with `FakeSender` (`apps/api/src/push/sender.rs`); the real senders are tested against a local fake APNs,
+Google token endpoint and FCM, with keys the test makes (`apps/api/tests/push_senders_test.rs`). Nothing in the suite
+reaches Apple or Google.
+
+## The API's senders
+
+`ApnsSender` posts over HTTP/2 to `api.push.apple.com` (or `api.sandbox.push.apple.com` for a registration from a
+development build) with an ES256 provider token it reuses for 50 minutes, inside Apple's 20 to 60 minute window.
+`FcmSender` posts to FCM v1 with an access token it gets from Google for the service account and reuses until five
+minutes before it expires. Each is on only when all its variables are set ([CREDENTIALS.md](./CREDENTIALS.md)); the
+API logs one `push providers` line at start-up with `apns` and `fcm` each `on` or `off`. With a provider off, a send to
+its platform answers `not configured` and the registration stays. Half a provider's variables, or a key that does not
+parse, stops start-up with a message that names the variable.
+
+To ring one device by hand once a provider is configured, with the same variables in the environment:
+
+```sh
+cargo run -p api -- send-test-push --platform ios --token <hex token>            # sandbox by default
+cargo run -p api -- send-test-push --platform ios --environment production --token <hex token>
+cargo run -p api -- send-test-push --platform android --token <FCM token> --locale ne
+```
+
+It sends the `eligibility.reached` doorbell (`--id` sets its opaque id) and exits `0` when the provider accepted it,
+`1` with its answer otherwise, `2` for bad arguments or configuration. It addresses a token, not a user: the sample's
+registry lives in the running server's memory. Code inside the API rings a user with
+`state.push().eligibility_reached(user_id, &id)`, which also removes a registration whose token the provider calls dead.
+
+## The Android token API
+
+firebase-messaging 26 deprecates the registration token (`getToken`, `onNewToken`) in favour of an opt-in
+installation-id registration (`register()`, `onRegistered`, behind the `firebase_messaging_installation_id_enabled`
+manifest flag). The API's FCM sender addresses `message.token`, the registration token, so the Android gateway stays
+on the token, with the deprecation suppressed in `push/SystemPushGateway.kt` only. Moving means changing the sender
+and the gateway together.
 
 ## What a fork must add
 
-- **Apple:** the Push Notifications capability and an APNs auth key (`.p8`, key id, team id) on the server.
+- **Apple:** the Push Notifications capability and an APNs auth key (`.p8`, key id, team id) on the server; build the
+  app with `TRAN_PUSH_ENABLED=YES` and the team, which adds the `aps-environment` entitlement (`apps/ios/project.yml`).
 - **Google:** a Firebase project; its public values in the Android build; a service account on the server.
 - **The credentials for the two real senders** (already implemented and switched off): see
-  [CREDENTIALS.md](./CREDENTIALS.md). Then delete the `TODO(credentials)` skips on their live tests.
+  [CREDENTIALS.md](./CREDENTIALS.md). Then delete the `TODO(credentials)` skips on their live tests
+  (`apps/api/tests/push_live_test.rs`) and run them with `cargo test -p api --test push_live_test`.
+- **A caller:** the job that decides a person can now vote calls `eligibility_reached`; the sample has no such job.
 - **A durable `DeviceStore`** and a scheduled prune.
 - **Content fetch:** the route the app calls when a doorbell rings.
 - **A marketing opt-in screen** if marketing messages are sent, and a way to turn them off.

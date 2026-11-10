@@ -13,12 +13,19 @@ a fork must be able to switch each feature on without reading the code first. Ru
 
 ## The list
 
-| Feature                          | Variables                                                                                                                                                 | Spec                                 | State without them                    |
-| :------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------- | :------------------------------------ |
-| iOS upload to TestFlight / store | `TRAN_APPLE_TEAM_ID`, `TRAN_ASC_APP_ID`, `TRAN_ASC_KEY_ID`, `TRAN_ASC_ISSUER_ID`, `TRAN_ASC_KEY_P8`                                                       | [025](./specs/025-mobile-release.md) | `doctor` fails; lanes refuse to start |
-| Android upload to Google Play    | `TRAN_ANDROID_KEYSTORE_BASE64`, `TRAN_ANDROID_KEYSTORE_PASSWORD`, `TRAN_ANDROID_KEY_ALIAS`, `TRAN_ANDROID_KEY_PASSWORD`, `TRAN_PLAY_SERVICE_ACCOUNT_JSON` | [025](./specs/025-mobile-release.md) | unsigned release build; lanes refuse  |
+| Feature                          | Variables                                                                                                                                                 | Spec                                   | State without them                             | Gate                                                                                               |
+| :------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------- | :--------------------------------------------- | :------------------------------------------------------------------------------------------------- |
+| iOS upload to TestFlight / store | `TRAN_APPLE_TEAM_ID`, `TRAN_ASC_APP_ID`, `TRAN_ASC_KEY_ID`, `TRAN_ASC_ISSUER_ID`, `TRAN_ASC_KEY_P8`                                                       | [025](./specs/025-mobile-release.md)   | `doctor` fails; lanes refuse to start          | `pnpm ios:lane doctor`                                                                             |
+| Android upload to Google Play    | `TRAN_ANDROID_KEYSTORE_BASE64`, `TRAN_ANDROID_KEYSTORE_PASSWORD`, `TRAN_ANDROID_KEY_ALIAS`, `TRAN_ANDROID_KEY_PASSWORD`, `TRAN_PLAY_SERVICE_ACCOUNT_JSON` | [025](./specs/025-mobile-release.md)   | unsigned release build; lanes refuse           | `pnpm android:lane doctor`                                                                         |
+| Push delivery to iOS (APNs)      | `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_KEY_P8`, `APNS_TOPIC`, `APNS_TEST_DEVICE_TOKEN`                                                                      | [027](./specs/027-push-and-devices.md) | APNs sender off; sends answer "not configured" | skipped test `apps/api/tests/push_live_test.rs`                                                    |
+| Push delivery to Android (FCM)   | `FCM_SERVICE_ACCOUNT_JSON`, `FCM_TEST_DEVICE_TOKEN`                                                                                                       | [027](./specs/027-push-and-devices.md) | FCM sender off; sends answer "not configured"  | skipped test `apps/api/tests/push_live_test.rs`                                                    |
+| Android push registration        | `TRAN_FCM_PROJECT_ID`, `TRAN_FCM_APP_ID`, `TRAN_FCM_API_KEY`, `TRAN_FCM_SENDER_ID` (build values, public)                                                 | [027](./specs/027-push-and-devices.md) | push unavailable; no "Notify me"               | skipped test `apps/android/app/src/androidTest/kotlin/com/tran/voting/push/FcmRegistrationTest.kt` |
+| iOS push registration            | `TRAN_PUSH_ENABLED` (an Xcode build setting), `TRAN_APPLE_TEAM_ID`                                                                                        | [027](./specs/027-push-and-devices.md) | push unavailable; no "Notify me"               | skipped test `apps/ios/Tests/TranVotingDemoTests/ApnsRegistrationLiveTests.swift`                  |
 
-Rows for push delivery, sign-in providers and purchases are added by the phases that build them.
+The Gate says what keeps a row honest (`pnpm todos:check`): its skipped tests, each carrying a `TODO(credentials)`
+marker that names the row's variables, or, for a store upload, the platform's `doctor` lane, which must check every
+variable of the row. No test uploads a build: an upload is a release, not something to repeat, so the doctor and the
+lanes' refusal to start are its gate. Rows for sign-in providers and purchases are added by the phases that build them.
 
 ## Rules for a change
 

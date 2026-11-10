@@ -20,8 +20,8 @@ interface PermissionGateway {
     /** One approximate reading, or `null` when there is none (location off, no provider, timeout). */
     suspend fun locationFix(): LocationFix?
 
-    /** Opens this app's page in Settings, where a refused permission can be turned on. */
-    fun openSettings()
+    /** Opens this app's page in Settings where [id], once refused, can be turned on. */
+    fun openSettings(id: TranPermissionId)
 }
 
 /**
@@ -62,9 +62,13 @@ class StagedPermissionGateway(
     /** Every system request, in order. */
     val requests: List<TranPermissionId> get() = asked.toList()
 
+    private val opened = mutableListOf<TranPermissionId>()
+
+    /** Which permission each opening of Settings was for, in order. */
+    val settingsFor: List<TranPermissionId> get() = opened.toList()
+
     /** How many times Settings was opened. */
-    var settingsOpened: Int = 0
-        private set
+    val settingsOpened: Int get() = opened.size
 
     /** How many readings were taken. */
     var fixesTaken: Int = 0
@@ -83,8 +87,8 @@ class StagedPermissionGateway(
         return fix
     }
 
-    override fun openSettings() {
-        settingsOpened += 1
+    override fun openSettings(id: TranPermissionId) {
+        opened += id
     }
 }
 
@@ -122,6 +126,10 @@ object PermissionCopy {
         "eligibility.location.primingBody" to TranStrings.Eligibility.locationPrimingBody,
         "eligibility.location.purpose" to TranStrings.Eligibility.locationPurpose,
         "eligibility.location.settingsNote" to TranStrings.Eligibility.locationSettingsNote,
+        "eligibility.notify.primingTitle" to TranStrings.Eligibility.notifyPrimingTitle,
+        "eligibility.notify.primingBody" to TranStrings.Eligibility.notifyPrimingBody,
+        "eligibility.notify.purpose" to TranStrings.Eligibility.notifyPurpose,
+        "eligibility.notify.settingsNote" to TranStrings.Eligibility.notifySettingsNote,
     )
 
     fun res(key: String): Int? = byKey[key]

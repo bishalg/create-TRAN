@@ -335,6 +335,49 @@ pub const ELIGIBILITY: &[Scenario] = &[
             verdict!(MEETS, "20", "18", "NP"),
         ],
     ),
+    // Decision (REQ-PSH-008, REQ-PSH-012): native only, because the web has no push. The
+    // `permission` given naming `notifications` is also what makes the debug apps stage push as
+    // available, with a fake gateway that never reaches APNs or FCM; without it push is
+    // unavailable and the control is absent. A 17-year-old in the US is "not yet eligible", so the
+    // control appears beside the verdict; neither scenario reaches a system prompt.
+    Scenario::new(
+        "Asking to be notified explains first",
+        &["REQ-PSH-008", "REQ-PRV-003"],
+        &[
+            VOTER,
+            Given::Permission {
+                id: PermissionId::Notifications,
+                status: PermissionStatus::NotDetermined,
+            },
+        ],
+        &[age!("17"), country!("US"), CHECK, Tap("notify-me-button")],
+        &[
+            Exists("notify-priming-continue"),
+            Exists("notify-priming-dismiss"),
+            Missing("notify-settings-note"),
+            verdict!(BELOW, "17", "18", "US"),
+        ],
+    ),
+    Scenario::new(
+        "Asking to be notified without permission keeps the verdict",
+        &["REQ-PSH-008", "REQ-PRV-004"],
+        &[
+            VOTER,
+            Given::Permission {
+                id: PermissionId::Notifications,
+                status: PermissionStatus::DeniedPermanently,
+            },
+        ],
+        &[age!("17"), country!("US"), CHECK, Tap("notify-me-button")],
+        &[
+            Exists("notify-settings-note"),
+            Exists("notify-open-settings"),
+            Missing("notify-priming-continue"),
+            Missing("validation-message"),
+            Missing("toast"),
+            verdict!(BELOW, "17", "18", "US"),
+        ],
+    ),
     theme!("The light theme is selectable", "light"),
     theme!("The dark theme is selectable", "dark"),
     theme!("The black theme is selectable", "black"),

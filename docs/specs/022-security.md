@@ -204,8 +204,7 @@ Signing out MUST clear the vault and the in-memory access token before, and rega
 ### REQ-SEC-023 [verified] The app switcher shows no user data
 
 While a signed-in screen is on display, iOS MUST cover the window whenever the scene is not active, and Android MUST
-keep the content out of the recents thumbnail (`setRecentsScreenshotEnabled(false)` on API 33 and later, `FLAG_SECURE`
-before that). Debug screenshot runs MAY switch the Android measure off by a launch flag that a release build ignores.
+keep the content out of the recents thumbnail (`setRecentsScreenshotEnabled(false)`; the floor is API 33, ADR-0045). Debug screenshot runs MAY switch the Android measure off by a launch flag that a release build ignores.
 **Verified by:** `PrivacyCoverTests.swift`, `PrivacyShieldTest.kt` (the decision and its wiring; the system app switcher
 itself cannot be captured by a UI test).
 

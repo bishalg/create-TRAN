@@ -346,11 +346,13 @@ mod tests {
                 }
             }
         }
-        assert_eq!(left_out.len(), 2, "{left_out:?}");
+        // The location and notification scenarios: the web has neither (REQ-PRV-007, ADR-0044).
+        assert_eq!(left_out.len(), 4, "{left_out:?}");
         assert!(!SCREENS
             .iter()
             .map(render_screen_feature)
             .any(|feature| feature.contains("use-location-button")
+                || feature.contains("notify-me-button")
                 || feature.contains("the permission ")));
     }
 }

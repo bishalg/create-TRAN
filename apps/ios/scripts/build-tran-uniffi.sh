@@ -3,6 +3,9 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 export CARGO_TARGET_DIR="$ROOT/target"
+# The Rust library is built for the app's platform floor (REQ-CODE-004): Xcode passes the target's
+# IPHONEOS_DEPLOYMENT_TARGET; a manual run uses the one in project.yml.
+export IPHONEOS_DEPLOYMENT_TARGET="${IPHONEOS_DEPLOYMENT_TARGET:-26.0}"
 cd "$ROOT"
 
 PLATFORM="${PLATFORM_NAME:-iphonesimulator}"

@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, it } from 'node:test';
 import {
+  ANDROID_OPTIONAL_BUILD_VALUES,
   DEFAULTED,
   DELIVERY_LANES,
   LANES,
@@ -178,7 +179,7 @@ describe('identifiers and credentials come from the environment (REQ-MOB-004)', 
       if (platform === 'android')
         reads.push(
           ...gradleEnvReads(read('apps/android/app/build.gradle.kts')).filter(
-            (r) => r.name !== 'TRAN_API_BASE_URL'
+            (r) => !ANDROID_OPTIONAL_BUILD_VALUES.includes(r.name)
           )
         );
       assert.deepEqual(contractProblems(platform, reads), []);
@@ -186,6 +187,20 @@ describe('identifiers and credentials come from the environment (REQ-MOB-004)', 
         `${platform}: TRAN_NEW is read but doctor does not check it`,
       ]);
     });
+
+  it('REQ-MOB-004 Gradle reads only delivery variables or named optional build values, never both', () => {
+    const delivery = [...REQUIRED.android, ...DEFAULTED.android];
+    assert.deepEqual(
+      ANDROID_OPTIONAL_BUILD_VALUES.filter((name) => delivery.includes(name)),
+      [],
+      'an optional build value is never required for delivery'
+    );
+    const unclassified = gradleEnvReads(read('apps/android/app/build.gradle.kts'))
+      .map((r) => r.name)
+      .filter((name) => !delivery.includes(name) && !ANDROID_OPTIONAL_BUILD_VALUES.includes(name));
+    assert.deepEqual(unclassified, [], 'classify a new Gradle variable: delivery or optional');
+    assert.ok(ANDROID_OPTIONAL_BUILD_VALUES.includes('TRAN_FCM_API_KEY'));
+  });
 
   it('REQ-MOB-004 Gradle builds the application id fastlane uploads: one variable, one default', () => {
     const name = DEFAULTED.android[0];

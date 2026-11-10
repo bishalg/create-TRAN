@@ -1,5 +1,5 @@
 #if DEBUG
-    // Verifies: REQ-PRV-003 REQ-PRV-007
+    // Verifies: REQ-PRV-003 REQ-PRV-007 REQ-PSH-008
     import CoreLocation
     import Foundation
 

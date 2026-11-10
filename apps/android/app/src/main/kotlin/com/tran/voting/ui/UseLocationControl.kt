@@ -10,7 +10,7 @@ import androidx.compose.ui.res.stringResource
 import com.tran.voting.generated.ScreenContract
 import com.tran.voting.generated.TranStrings
 import com.tran.voting.permissions.LocationCountry
-import com.tran.voting.permissions.LocationPrompt
+import com.tran.voting.permissions.PermissionPrompt
 import com.tran.voting.permissions.PermissionCopy
 import com.tran.voting.ui.atoms.TranButton
 import com.tran.voting.ui.atoms.TranButtonSize
@@ -42,7 +42,7 @@ fun UseLocationControl(location: LocationCountry, onCountry: (String) -> Unit) {
             modifier = Modifier.testTag(ScreenContract.Eligibility.useLocationButton),
         )
         when (location.prompt) {
-            LocationPrompt.PRIMING -> TranDialog(
+            PermissionPrompt.PRIMING -> TranDialog(
                 title = stringResource(copy(entry.primingTitleKey)),
                 message = stringResource(copy(entry.primingBodyKey)),
                 confirmLabel = stringResource(TranStrings.Common.continueAction),
@@ -53,7 +53,7 @@ fun UseLocationControl(location: LocationCountry, onCountry: (String) -> Unit) {
                 confirmTag = ScreenContract.Eligibility.locationPrimingContinue,
                 cancelTag = ScreenContract.Eligibility.locationPrimingDismiss,
             )
-            LocationPrompt.SETTINGS_NOTE -> {
+            PermissionPrompt.SETTINGS_NOTE -> {
                 TranText(
                     text = stringResource(copy(entry.settingsNoteKey)),
                     variant = TranTextVariant.MUTED,
@@ -67,7 +67,7 @@ fun UseLocationControl(location: LocationCountry, onCountry: (String) -> Unit) {
                     modifier = Modifier.testTag(ScreenContract.Eligibility.locationOpenSettings),
                 )
             }
-            LocationPrompt.NONE -> Unit
+            PermissionPrompt.NONE -> Unit
         }
     }
 }

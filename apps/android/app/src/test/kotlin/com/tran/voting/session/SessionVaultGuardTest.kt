@@ -1,4 +1,4 @@
-// Verifies: REQ-SEC-017 REQ-SEC-020 REQ-PRV-006
+// Verifies: REQ-SEC-017 REQ-SEC-020 REQ-PRV-006 REQ-PSH-010
 package com.tran.voting.session
 
 import java.io.File
@@ -23,6 +23,14 @@ class SessionVaultGuardTest {
      */
     private val gatewayFile = "src/main/kotlin/com/tran/voting/permissions/SystemPermissionGateway.kt"
 
+    /**
+     * The push preferences (spec 027): the installation id, a random UUID that only names this
+     * install, and the last registration's token and time, which the weekly refresh needs. A push
+     * token addresses a device and is not a credential (spec 027), so plain preferences, not the
+     * vault; [thePushPreferencesStoreOnlyTheInstallationAndItsRegistration] keeps it to that.
+     */
+    private val pushFile = "src/main/kotlin/com/tran/voting/push/PushPreferences.kt"
+
     /** Hand-written main sources (generated bindings and tokens are exempt). */
     private val sources: Map<String, String> =
         listOf("src/main/kotlin", "src/debug/kotlin", "src/release/kotlin")
@@ -43,13 +51,28 @@ class SessionVaultGuardTest {
     fun onlyTheKeystoreVaultTouchesStorage() {
         assertTrue("the guard sees the sources", sources.size > 5)
         val writers = sources.filterValues { storage.containsMatchIn(it) }.keys
-        assertEquals(setOf(vaultFile, gatewayFile), writers)
+        assertEquals(setOf(vaultFile, gatewayFile, pushFile), writers)
+    }
+
+    @Test
+    fun thePushPreferencesStoreOnlyTheInstallationAndItsRegistration() {
+        val push = sources.getValue(pushFile)
+        val puts = Regex("""\bput\w*\((\w+),\s*([\w.]+)\)""").findAll(push).map { it.groupValues[1] to it.groupValues[2] }.toSet()
+        assertEquals(
+            setOf("KEY_INSTALLATION_ID" to "it", "KEY_TOKEN" to "value.token", "KEY_REGISTERED_AT" to "value.registeredAtUnixS"),
+            puts,
+        )
+        assertEquals("nothing else is put", 3, Regex("""\bput\w*\(""").findAll(push).count())
+        assertTrue(push.contains("newInstallationId()"))
+        assertTrue(push.contains("Context.MODE_PRIVATE"))
+        assertFalse("no session reaches it", Regex("""StoredSession|\bSessionVault\b|refreshToken|accessToken""").containsMatchIn(push))
     }
 
     @Test
     fun thePermissionGatewayStoresOnlyWhetherItAsked() {
         val gateway = sources.getValue(gatewayFile)
-        val puts = Regex("""\.put\w*\(""").findAll(gateway).map { it.value }.toList()
+        // Preferences writes only (`putExtra` builds the Settings intent).
+        val puts = Regex("""\.put(?:Boolean|String|StringSet|Int|Long|Float)\(""").findAll(gateway).map { it.value }.toList()
         assertEquals(listOf(".putBoolean("), puts)
         assertTrue(gateway.contains("putBoolean(askedKey(id), true)"))
         assertTrue(gateway.contains("Context.MODE_PRIVATE"))

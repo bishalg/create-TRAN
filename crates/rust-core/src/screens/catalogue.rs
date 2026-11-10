@@ -44,10 +44,23 @@ pub mod state {
     pub const LOCATION_PRIMING: &str = "location_priming";
     /// Location was refused for good; the control says once where to change it (REQ-PRV-004).
     pub const LOCATION_SETTINGS_OFFERED: &str = "location_settings_offered";
+    /// A "not yet eligible" verdict (the age is below the country's minimum) is on screen, in a
+    /// build that can receive push (REQ-PSH-008). It never holds under [`PUSH_UNAVAILABLE`].
+    pub const NOT_YET_ELIGIBLE: &str = "not_yet_eligible";
+    /// The push gateway reports push unavailable: the build has no APNs entitlement or no FCM
+    /// values (REQ-PSH-012). The notification control and its states are then absent whatever
+    /// the verdict, and no element is shown because of it. The debug apps stage push as available
+    /// only when a scenario's `permission` given names `notifications`.
+    pub const PUSH_UNAVAILABLE: &str = "push_unavailable";
+    /// The app explains notifications before the system prompt (REQ-PSH-008, REQ-PRV-003).
+    pub const NOTIFY_PRIMING: &str = "notify_priming";
+    /// Notifications were refused for good; the control says once where to change it (REQ-PRV-004).
+    pub const NOTIFY_SETTINGS_OFFERED: &str = "notify_settings_offered";
 }
 
 /// iOS and Android: the platforms that ask the system for a permission. The web has no location
-/// control, because the API resolves the country from the request (REQ-API-005, REQ-PRV-007).
+/// control, because the API resolves the country from the request (REQ-API-005, REQ-PRV-007), and
+/// no push (ADR-0044).
 const NATIVE: &[Platform] = &[Platform::Ios, Platform::Android];
 
 /// States no scenario reaches yet. `pnpm screens:check` lists them instead of failing "never
@@ -295,6 +308,53 @@ pub const LOCATION_OPEN_SETTINGS: Element = element(
 )
 .only(NATIVE);
 
+/// "Notify me when I can vote": asks for the notification permission after priming, only beside a
+/// "not yet eligible" verdict and only in a build with push (REQ-PSH-008, REQ-PSH-012). Native
+/// only: see [`NATIVE`]; the web has no push (ADR-0044).
+pub const NOTIFY_ME_BUTTON: Element = element(
+    "notify-me-button",
+    Kind::Button,
+    "eligibility.notify.label",
+    Touch::Control,
+    Presence::When(state::NOT_YET_ELIGIBLE),
+)
+.only(NATIVE);
+/// Priming's "Continue": only this shows the system prompt.
+pub const NOTIFY_PRIMING_CONTINUE: Element = element(
+    "notify-priming-continue",
+    Kind::Button,
+    "common.continueAction",
+    Touch::Control,
+    Presence::When(state::NOTIFY_PRIMING),
+)
+.only(NATIVE);
+/// Priming's "Not now": closes it; no system prompt, not a refusal.
+pub const NOTIFY_PRIMING_DISMISS: Element = element(
+    "notify-priming-dismiss",
+    Kind::Button,
+    "common.notNow",
+    Touch::Control,
+    Presence::When(state::NOTIFY_PRIMING),
+)
+.only(NATIVE);
+/// The one inline note after a permanent refusal: not an error, not a banner.
+pub const NOTIFY_SETTINGS_NOTE: Element = element(
+    "notify-settings-note",
+    Kind::Text,
+    "eligibility.notify.settingsNote",
+    Touch::None,
+    Presence::When(state::NOTIFY_SETTINGS_OFFERED),
+)
+.only(NATIVE);
+pub const NOTIFY_OPEN_SETTINGS: Element = element(
+    "notify-open-settings",
+    Kind::Button,
+    "common.openSettings",
+    Touch::Control,
+    Presence::When(state::NOTIFY_SETTINGS_OFFERED),
+)
+.only(NATIVE);
+
 /// Every screen, in navigation order. Codegen and the guards follow this order.
 pub const SCREENS: [Screen; 4] = [
     Screen {
@@ -335,6 +395,11 @@ pub const SCREENS: [Screen; 4] = [
             OFFLINE_RESULT,
             VALIDATION_MESSAGE,
             VERDICT_SOURCE,
+            NOTIFY_ME_BUTTON,
+            NOTIFY_PRIMING_CONTINUE,
+            NOTIFY_PRIMING_DISMISS,
+            NOTIFY_SETTINGS_NOTE,
+            NOTIFY_OPEN_SETTINGS,
             THEME_PICKER,
             API_STATUS,
             OFFLINE_NOTICE,

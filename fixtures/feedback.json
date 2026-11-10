@@ -572,6 +572,15 @@
         "duration": "medium"
       },
       "messageKey": "auth.accountDeleted"
+    },
+    {
+      "action": "notification_received",
+      "presentation": {
+        "kind": "toast",
+        "tone": "info",
+        "duration": "medium"
+      },
+      "messageKey": "eligibility.notify.received"
     }
   ]
 }

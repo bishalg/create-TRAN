@@ -38,6 +38,11 @@ export type ElementId =
   | 'offline-result'
   | 'validation-message'
   | 'verdict-source'
+  | 'notify-me-button'
+  | 'notify-priming-continue'
+  | 'notify-priming-dismiss'
+  | 'notify-settings-note'
+  | 'notify-open-settings'
   | 'theme-picker'
   | 'api-status'
   | 'offline-notice'
@@ -489,6 +494,71 @@ export const SCREENS: readonly Screen[] = [
         },
         "platforms": [
           "web",
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "id": "notify-me-button",
+        "kind": "button",
+        "label": "eligibility.notify.label",
+        "touch": "control",
+        "presence": {
+          "when": "not_yet_eligible"
+        },
+        "platforms": [
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "id": "notify-priming-continue",
+        "kind": "button",
+        "label": "common.continueAction",
+        "touch": "control",
+        "presence": {
+          "when": "notify_priming"
+        },
+        "platforms": [
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "id": "notify-priming-dismiss",
+        "kind": "button",
+        "label": "common.notNow",
+        "touch": "control",
+        "presence": {
+          "when": "notify_priming"
+        },
+        "platforms": [
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "id": "notify-settings-note",
+        "kind": "text",
+        "label": "eligibility.notify.settingsNote",
+        "touch": "none",
+        "presence": {
+          "when": "notify_settings_offered"
+        },
+        "platforms": [
+          "ios",
+          "android"
+        ]
+      },
+      {
+        "id": "notify-open-settings",
+        "kind": "button",
+        "label": "common.openSettings",
+        "touch": "control",
+        "presence": {
+          "when": "notify_settings_offered"
+        },
+        "platforms": [
           "ios",
           "android"
         ]
@@ -1419,6 +1489,152 @@ export const SCREENS: readonly Screen[] = [
         "within_ms": 4300
       },
       {
+        "name": "Asking to be notified explains first",
+        "verifies": [
+          "REQ-PSH-008",
+          "REQ-PRV-003"
+        ],
+        "given": [
+          {
+            "session": "citizen_voter"
+          },
+          {
+            "permission": {
+              "id": "notifications",
+              "status": "not_determined"
+            }
+          }
+        ],
+        "when": [
+          {
+            "type": {
+              "id": "age-field",
+              "text": "17"
+            }
+          },
+          {
+            "type": {
+              "id": "country-field",
+              "text": "US"
+            }
+          },
+          {
+            "tap": "check-button"
+          },
+          {
+            "tap": "notify-me-button"
+          }
+        ],
+        "then": [
+          {
+            "exists": "notify-priming-continue"
+          },
+          {
+            "exists": "notify-priming-dismiss"
+          },
+          {
+            "missing": "notify-settings-note"
+          },
+          {
+            "text_is": {
+              "id": "offline-result",
+              "key": "eligibility.result.reasonBelow",
+              "args": [
+                {
+                  "name": "age",
+                  "value": "17"
+                },
+                {
+                  "name": "minimumAge",
+                  "value": "18"
+                },
+                {
+                  "name": "country",
+                  "value": "US"
+                }
+              ]
+            }
+          }
+        ],
+        "within_ms": 4300
+      },
+      {
+        "name": "Asking to be notified without permission keeps the verdict",
+        "verifies": [
+          "REQ-PSH-008",
+          "REQ-PRV-004"
+        ],
+        "given": [
+          {
+            "session": "citizen_voter"
+          },
+          {
+            "permission": {
+              "id": "notifications",
+              "status": "denied_permanently"
+            }
+          }
+        ],
+        "when": [
+          {
+            "type": {
+              "id": "age-field",
+              "text": "17"
+            }
+          },
+          {
+            "type": {
+              "id": "country-field",
+              "text": "US"
+            }
+          },
+          {
+            "tap": "check-button"
+          },
+          {
+            "tap": "notify-me-button"
+          }
+        ],
+        "then": [
+          {
+            "exists": "notify-settings-note"
+          },
+          {
+            "exists": "notify-open-settings"
+          },
+          {
+            "missing": "notify-priming-continue"
+          },
+          {
+            "missing": "validation-message"
+          },
+          {
+            "missing": "toast"
+          },
+          {
+            "text_is": {
+              "id": "offline-result",
+              "key": "eligibility.result.reasonBelow",
+              "args": [
+                {
+                  "name": "age",
+                  "value": "17"
+                },
+                {
+                  "name": "minimumAge",
+                  "value": "18"
+                },
+                {
+                  "name": "country",
+                  "value": "US"
+                }
+              ]
+            }
+          }
+        ],
+        "within_ms": 4300
+      },
+      {
         "name": "The light theme is selectable",
         "verifies": [
           "REQ-NAT-007",
@@ -1776,6 +1992,11 @@ export const ScreenIds = {
     offlineResult: 'offline-result',
     validationMessage: 'validation-message',
     verdictSource: 'verdict-source',
+    notifyMeButton: 'notify-me-button',
+    notifyPrimingContinue: 'notify-priming-continue',
+    notifyPrimingDismiss: 'notify-priming-dismiss',
+    notifySettingsNote: 'notify-settings-note',
+    notifyOpenSettings: 'notify-open-settings',
     themePicker: 'theme-picker',
     apiStatus: 'api-status',
     offlineNotice: 'offline-notice',

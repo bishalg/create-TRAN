@@ -3,36 +3,29 @@ import CoreLocation
 import Foundation
 import Observation
 
-/// "Use my location" on the eligibility screen (spec 026, ADR-0043): every move follows
-/// `permissionStep`, the Rust decision, from the status the gateway reports. Nothing asks the
-/// system before the person taps the control and then chooses "Continue" on the priming; a refusal
-/// leaves the country as typed and shows no error; after a permanent refusal the control says once,
+/// "Use my location" on the eligibility screen (spec 026, ADR-0043). `TranPermissionFlow` takes
+/// each step: nothing asks the system before a tap and "Continue" on the priming; a refusal leaves
+/// the country as typed and shows no error; after a permanent refusal the control says once,
 /// inline, where the setting is. The one reading becomes a country code on the device and is then
 /// dropped: this type keeps no location, and logs and sends nothing (REQ-PRV-006).
 @MainActor
 @Observable
 final class TranLocationPermission {
-    enum Phase: Equatable {
-        /// The control alone.
-        case idle
-        /// The app's own explanation, with "Continue" and "Not now".
-        case priming
-        /// Waiting for the system prompt's answer or the reading; the control is disabled.
-        case working
-        /// The inline note that the setting lives in Settings, with "Open Settings".
-        case settingsOffered
-    }
+    typealias Phase = TranPermissionFlow.Phase
 
     static let permission = TranPermissionId.locationApproximate
 
-    private(set) var phase: Phase = .idle
+    let flow: TranPermissionFlow
     @ObservationIgnored private let gateway: PermissionGateway
     @ObservationIgnored private let resolver: CountryResolver
 
     init(gateway: PermissionGateway, resolver: CountryResolver = DeviceCountryResolver()) {
+        self.flow = TranPermissionFlow(Self.permission, gateway: gateway)
         self.gateway = gateway
         self.resolver = resolver
     }
+
+    var phase: Phase { flow.phase }
 
     /// The catalogue's entry: its copy keys and its fallback (REQ-PRV-001).
     static var entry: TranPermission { permissionEntry(id: permission) }
@@ -62,60 +55,34 @@ final class TranLocationPermission {
     /// The tap on the "Use my location" control. Returns the country found, or `nil` when the country
     /// stays as typed: the priming or the Settings note is showing, or there was no answer.
     func use() async -> String? {
-        guard phase != .working else { return nil }
-        return await follow(permissionStep(status: gateway.status(of: Self.permission), primed: false))
+        guard await flow.tap() else { return nil }
+        return await locate()
     }
 
     /// "Continue" on the priming: now, and only now, the system may ask.
     func continueAfterPriming() async -> String? {
-        guard phase == .priming else { return nil }
-        phase = .idle
-        return await follow(permissionStep(status: gateway.status(of: Self.permission), primed: true))
+        guard await flow.continueAfterPriming() else { return nil }
+        return await locate()
     }
 
     /// "Not now" on the priming: nothing was asked, so nothing was refused.
     func notNow() {
-        if phase == .priming { phase = .idle }
+        flow.notNow()
     }
 
     /// "Open Settings" under the note.
     func openSettings() {
-        gateway.openSettings()
-    }
-
-    // MARK: - The steps
-
-    private func follow(_ step: TranPermissionStep) async -> String? {
-        switch step {
-        case .showPriming:
-            phase = .priming
-            return nil
-        case .offerSettings:
-            phase = .settingsOffered
-            return nil
-        case .useFeature:
-            return await locate()
-        case .requestSystem:
-            phase = .working
-            let answer = await gateway.request(Self.permission)
-            // A fresh refusal falls back quietly (`keep_manual_entry`): the person has just said
-            // no, so the Settings note waits for their next tap rather than nagging now.
-            guard permissionStep(status: answer, primed: true) == .useFeature else {
-                phase = .idle
-                return nil
-            }
-            return await locate()
-        }
+        flow.openSettings()
     }
 
     /// One reading, turned into a country code and dropped. No reading or no country: the
     /// catalogue's fallback, the country stays as typed.
     private func locate() async -> String? {
-        phase = .working
-        defer { phase = .idle }
-        guard let fix = await gateway.oneApproximateFix() else { return nil }
-        guard let code = await resolver.countryCode(at: fix), !code.isEmpty else { return nil }
-        return code.uppercased()
+        await flow.working {
+            guard let fix = await gateway.oneApproximateFix() else { return nil }
+            guard let code = await resolver.countryCode(at: fix), !code.isEmpty else { return nil }
+            return code.uppercased()
+        }
     }
 }
 

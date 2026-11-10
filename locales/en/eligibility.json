@@ -29,6 +29,20 @@
     "purpose": "TRAN uses your approximate location once to find your country and pick the right voting age. It is optional; you can type the country instead.",
     "settingsNote": "Location is off for TRAN. Type your country, or turn location on in Settings."
   },
+  "notify": {
+    "label": "Notify me when I can vote",
+    "primingTitle": "Get one notification when you can vote?",
+    "primingBody": "TRAN can send you one notification when you become old enough to vote. It says only that you can vote now; open TRAN to see more. This is optional, and you can turn it off at any time in Settings.",
+    "purpose": "TRAN sends a notification only when you become old enough to vote, never anything about you. It is optional.",
+    "settingsNote": "Notifications are off for TRAN. Turn them on in Settings to hear when you can vote.",
+    "received": "TRAN has news about your eligibility. Check again to see it."
+  },
+  "notification": {
+    "reached": {
+      "title": "You can vote now",
+      "body": "Open TRAN to check your eligibility again."
+    }
+  },
   "submit": "Check eligibility",
   "submitting": "Checking…",
   "checkOffline": "Check offline",

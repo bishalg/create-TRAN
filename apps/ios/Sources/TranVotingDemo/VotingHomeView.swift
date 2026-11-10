@@ -20,6 +20,11 @@ struct VotingHomeView: View {
     @State private var recovery = RecoveryProbe()
     /// "Use my location", asked only on a tap and after the priming (spec 026).
     @State private var location = TranLocationPermission(gateway: TranPermissionLaunch.shared)
+    /// "Notify me when I can vote", offered with a below-minimum verdict in a build with push
+    /// (spec 027, REQ-PSH-008).
+    @State private var notify = TranNotifyPermission(gateway: TranPermissionLaunch.shared, push: TranPushLaunch.shared)
+    /// Whether the verdict on screen is "not yet eligible" (the screen contract's `not_yet_eligible`).
+    @State private var belowMinimum = false
     @Environment(TranFeedback.self) private var feedback
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -83,6 +88,10 @@ struct VotingHomeView: View {
                             }
                         }
                         .animation(TranMotion.animation(reduceMotion: reduceMotion), value: confirmation.caption)
+
+                        if belowMinimum, notify.isOffered {
+                            NotifyMeControl(notify: notify)
+                        }
 
                         // Theme choices come from the rust-core registry: every case renders here,
                         // with its label from the shared dictionaries (`shell.theme.<mode>`).
@@ -216,6 +225,7 @@ struct VotingHomeView: View {
             resultText = res.localizedReason
             validationMessage = nil
             hasVerdict = true
+            belowMinimum = !res.eligible
             confirmWithApi(age: age)
         } catch let error as TranValidationError {
             // Map the typed Rust variant to shared copy instead of Rust prose.
@@ -230,6 +240,7 @@ struct VotingHomeView: View {
     private func showProblem(_ message: String) {
         confirmation.cancel()
         hasVerdict = false
+        belowMinimum = false
         resultText = L10n.Eligibility.resultPlaceholder
         validationMessage = message
     }

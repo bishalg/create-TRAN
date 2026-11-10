@@ -40,8 +40,17 @@ export const SESSION_POLICY = {
   tokenBytes: 32,
 } as const;
 
+/** Days before the API prunes an unrefreshed registration, and the apps' refresh (REQ-PSH-005). */
+export const DEVICE_POLICY = {
+  staleAfterDays: 60,
+  refreshAfterDays: 7,
+} as const;
+
+/** What an app does after `push_sync` (REQ-PSH-009). */
+export type PushAction = 'register' | 'unregister' | 'nothing';
+
 /** A permission the apps may ask for (REQ-PRV-001). */
-export type PermissionId = 'location_approximate';
+export type PermissionId = 'location_approximate' | 'notifications';
 
 /** What the platform reports for a permission (REQ-PRV-002). */
 export type PermissionStatus = 'not_determined' | 'granted' | 'granted_approximate' | 'denied' | 'denied_permanently' | 'restricted';
@@ -50,7 +59,7 @@ export type PermissionStatus = 'not_determined' | 'granted' | 'granted_approxima
 export type PermissionStep = 'show_priming' | 'request_system' | 'use_feature' | 'offer_settings';
 
 /** What the feature does without the permission; never an error (REQ-PRV-004). */
-export type PermissionFallback = 'keep_manual_entry';
+export type PermissionFallback = 'keep_manual_entry' | 'no_reminder';
 
 export const PERMISSION_STATUSES: readonly PermissionStatus[] = ['not_determined', 'granted', 'granted_approximate', 'denied', 'denied_permanently', 'restricted'];
 
@@ -86,6 +95,20 @@ export const PERMISSIONS: readonly PermissionEntry[] = [
     "primingTitle": "eligibility.location.primingTitle",
     "purpose": "eligibility.location.purpose",
     "settingsNote": "eligibility.location.settingsNote"
+  },
+  {
+    "androidPermissions": [
+      "android.permission.POST_NOTIFICATIONS"
+    ],
+    "control": "notify-me-button",
+    "fallback": "no_reminder",
+    "feature": "eligibility_reminder",
+    "id": "notifications",
+    "iosUsageDescriptions": [],
+    "primingBody": "eligibility.notify.primingBody",
+    "primingTitle": "eligibility.notify.primingTitle",
+    "purpose": "eligibility.notify.purpose",
+    "settingsNote": "eligibility.notify.settingsNote"
   }
 ];
 

@@ -391,6 +391,17 @@ RustBuffer uniffi_tran_uniffi_fn_func_personal_questions(RustCallStatus *_Nonnul
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_DEVICE_POLICY
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_DEVICE_POLICY
+RustBuffer uniffi_tran_uniffi_fn_func_device_policy(RustCallStatus *_Nonnull out_status
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_PUSH_SYNC
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_PUSH_SYNC
+RustBuffer uniffi_tran_uniffi_fn_func_push_sync(RustBuffer state, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_SESSION_POLICY
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_SESSION_POLICY
 RustBuffer uniffi_tran_uniffi_fn_func_session_policy(RustCallStatus *_Nonnull out_status
@@ -832,6 +843,18 @@ uint16_t uniffi_tran_uniffi_checksum_func_permission_step(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_PERSONAL_QUESTIONS
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_PERSONAL_QUESTIONS
 uint16_t uniffi_tran_uniffi_checksum_func_personal_questions(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_DEVICE_POLICY
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_DEVICE_POLICY
+uint16_t uniffi_tran_uniffi_checksum_func_device_policy(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_PUSH_SYNC
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_PUSH_SYNC
+uint16_t uniffi_tran_uniffi_checksum_func_push_sync(void
     
 );
 #endif

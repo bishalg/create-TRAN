@@ -26,7 +26,7 @@ fi
 
 TOOLCHAIN="$NDK/toolchains/llvm/prebuilt/$(ls "$NDK/toolchains/llvm/prebuilt" | head -1)"
 
-# Rust target → Android ABI → NDK clang prefix. API 26 matches minSdk.
+# Rust target → Android ABI → NDK clang prefix. API 33 matches minSdk (ADR-0045).
 build_abi() {
   local rust_target="$1" abi="$2" clang_prefix="$3"
   local upper linker_var
@@ -41,5 +41,5 @@ build_abi() {
   echo "build-rust-lib: staged $stage/libtran_uniffi.so"
 }
 
-build_abi aarch64-linux-android arm64-v8a aarch64-linux-android26
-build_abi x86_64-linux-android x86_64 x86_64-linux-android26
+build_abi aarch64-linux-android arm64-v8a aarch64-linux-android33
+build_abi x86_64-linux-android x86_64 x86_64-linux-android33

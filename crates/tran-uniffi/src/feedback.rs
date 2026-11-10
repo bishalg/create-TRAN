@@ -173,6 +173,9 @@ pub enum TranUserAction {
     DeleteAccount,
     /// The server confirmed a deletion (REQ-ACC-006).
     AccountDeleted,
+    /// A push notification arrived in the foreground: show the toast, not a system banner
+    /// (REQ-PSH-013).
+    NotificationReceived,
 }
 
 /// How a [`TranUserAction`] is presented.
@@ -292,6 +295,7 @@ pub fn action_spec(action: TranUserAction) -> TranActionSpec {
         TranUserAction::ServerCheckSucceeded => UserAction::ServerCheckSucceeded,
         TranUserAction::DeleteAccount => UserAction::DeleteAccount,
         TranUserAction::AccountDeleted => UserAction::AccountDeleted,
+        TranUserAction::NotificationReceived => UserAction::NotificationReceived,
     };
     let spec = core.spec();
     TranActionSpec {

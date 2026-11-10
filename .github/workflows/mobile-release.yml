@@ -32,7 +32,7 @@ permissions:
 jobs:
   lane:
     name: ${{ inputs.platform }} / ${{ inputs.lane }}
-    runs-on: ${{ inputs.platform == 'ios' && 'macos-15' || 'ubuntu-latest' }}
+    runs-on: ${{ inputs.platform == 'ios' && 'macos-26' || 'ubuntu-latest' }}
     timeout-minutes: 90
     steps:
       - name: Check the release secrets

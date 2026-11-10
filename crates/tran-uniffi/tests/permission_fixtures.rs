@@ -63,12 +63,14 @@ fn fixtures() -> Fixtures {
 fn id_name(id: TranPermissionId) -> &'static str {
     match id {
         TranPermissionId::LocationApproximate => "location_approximate",
+        TranPermissionId::Notifications => "notifications",
     }
 }
 
 fn fallback_name(fallback: TranPermissionFallback) -> &'static str {
     match fallback {
         TranPermissionFallback::KeepManualEntry => "keep_manual_entry",
+        TranPermissionFallback::NoReminder => "no_reminder",
     }
 }
 

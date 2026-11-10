@@ -46,6 +46,19 @@ export const REQUIRED = {
   ],
 };
 
+/**
+ * App configuration Gradle reads that store delivery does not need, so the doctor never requires it:
+ * the API base URL (REQ-NAT-011; a default per build type) and Firebase's four public project values
+ * (spec 027, ADR-0044; all absent means push is switched off, REQ-PSH-012).
+ */
+export const ANDROID_OPTIONAL_BUILD_VALUES = [
+  'TRAN_API_BASE_URL',
+  'TRAN_FCM_PROJECT_ID',
+  'TRAN_FCM_APP_ID',
+  'TRAN_FCM_API_KEY',
+  'TRAN_FCM_SENDER_ID',
+];
+
 /** Gradle signing reads these four; when any is absent the release build stays unsigned (REQ-MOB-008). */
 export const ANDROID_SIGNING = REQUIRED.android.filter((name) => name.startsWith('TRAN_ANDROID_'));
 

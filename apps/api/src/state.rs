@@ -5,6 +5,8 @@ use rust_core::TranEngine;
 
 use crate::account::{AccountEraser, SessionsOnly};
 use crate::config::{AppConfig, LOCAL_DEV_ORIGINS};
+use crate::push::providers::PushProviders;
+use crate::push::Push;
 use crate::sessions::Sessions;
 
 /// What the HTTP edge enforces before any route runs.
@@ -26,6 +28,8 @@ pub struct AppState {
     pub sessions: Sessions,
     /// What `DELETE /api/account` erases (REQ-ACC-001); a fork puts its own tables here.
     pub eraser: Arc<dyn AccountEraser>,
+    /// The real push senders that are configured; none by default (ADR-0046).
+    pub push_providers: Arc<PushProviders>,
 }
 
 impl AppState {
@@ -42,6 +46,7 @@ impl AppState {
             },
             sessions: Sessions::in_memory(),
             eraser: Arc::new(SessionsOnly),
+            push_providers: Arc::new(PushProviders::off()),
         }
     }
 
@@ -54,6 +59,15 @@ impl AppState {
             },
             ..Self::new()
         }
+    }
+
+    /// Sends to this state's registry through its configured senders.
+    pub fn push(&self) -> Push {
+        Push::new(
+            &self.sessions,
+            self.push_providers.clone(),
+            self.push_providers.apns_topic(),
+        )
     }
 
     pub fn uptime_seconds(&self) -> u64 {

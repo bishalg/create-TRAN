@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- REQ-SEC-020 (API 26 to 30, minSdk 26): the session vault is excluded from full backup. -->
-<full-backup-content>
-    <exclude domain="sharedpref" path="tran_session_vault.xml" />
-</full-backup-content>

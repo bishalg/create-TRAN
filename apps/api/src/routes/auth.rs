@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::ApiError;
 use crate::secret::Secret;
-use crate::session_store::{SessionUser, StoredSession, Transport};
+use crate::session_store::{LiveSession, SessionUser, StoredSession, Transport};
 use crate::sessions::IssuedTokens;
 use crate::state::AppState;
 
@@ -191,9 +191,9 @@ pub async fn sign_in(
     ))
 }
 
-/// The session behind `Authorization: Bearer <access token>` (REQ-SEC-008).
+/// The session behind `Authorization: Bearer <access token>` (REQ-SEC-008), with its id.
 #[derive(Debug)]
-pub struct Authenticated(pub StoredSession);
+pub struct Authenticated(pub LiveSession);
 
 /// Every bad token gets this one answer: `401 auth.session_expired` with `WWW-Authenticate`.
 #[derive(Debug)]
@@ -229,8 +229,8 @@ impl FromRequestParts<AppState> for Authenticated {
 }
 
 /// `GET /api/auth/session` — who the access token belongs to.
-pub async fn current_session(Authenticated(session): Authenticated) -> Json<UserBody> {
-    Json(UserBody::from(&session.user))
+pub async fn current_session(Authenticated(live): Authenticated) -> Json<UserBody> {
+    Json(UserBody::from(&live.session.user))
 }
 
 /// `POST /api/auth/refresh` — spend the refresh token for a new pair (REQ-SEC-009, REQ-SEC-010).

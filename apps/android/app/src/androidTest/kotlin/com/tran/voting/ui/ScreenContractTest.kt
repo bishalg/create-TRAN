@@ -4,6 +4,7 @@
 // Verifies: REQ-NAV-004 REQ-NAV-005 REQ-WEB-001 REQ-WEB-002 REQ-WEB-004 REQ-WEB-014
 // Verifies: REQ-ACC-004 REQ-ACC-005 REQ-ACC-006
 // Verifies: REQ-PRV-003 REQ-PRV-004 REQ-PRV-007
+// Verifies: REQ-PSH-008
 package com.tran.voting.ui
 
 import android.content.res.Configuration
@@ -25,6 +26,7 @@ import com.tran.voting.generated.ScreenContract
 import com.tran.voting.generated.TranTheme
 import com.tran.voting.permissions.StagedPermissionGateway
 import com.tran.voting.permissions.stagedPermission
+import com.tran.voting.push.stagedPushGateway
 import com.tran.voting.ui.atoms.optionTag
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -77,6 +79,8 @@ class ScreenContractTest(private val name: String) {
     private var largestText = false
     // No system dialog can appear: without a `permission` given the gateway is staged at "never asked".
     private var permissions = StagedPermissionGateway()
+    // Push is unavailable unless a `permission` given names notifications (docs/PUSH.md).
+    private var push = stagedPushGateway(null)
     private var launched = false
     private var checkedReach = false
 
@@ -126,9 +130,12 @@ class ScreenContractTest(private val name: String) {
                 ?: throw AssertionError("${driver.place(step)}: unknown theme")
             "largest_text_scale" -> largestText = true
             // The debug launch extra's spelling, `location_approximate=denied_permanently` (spec 026).
-            "permission" -> permissions = stagedPermission("${step.permission}=${step.value}")
-                ?.let { (_, status) -> StagedPermissionGateway(status) }
-                ?: throw AssertionError("${driver.place(step)}: unknown permission or status")
+            "permission" -> {
+                val (id, status) = stagedPermission("${step.permission}=${step.value}")
+                    ?: throw AssertionError("${driver.place(step)}: unknown permission or status")
+                permissions = StagedPermissionGateway(status)
+                push = stagedPushGateway(id)
+            }
             else -> fail("${driver.place(step)}: unknown given")
         }
     }
@@ -152,7 +159,7 @@ class ScreenContractTest(private val name: String) {
                 LocalConfiguration provides configuration,
                 LocalDensity provides Density(density.density, fontScale ?: density.fontScale),
             ) {
-                NavigationCoordinator(initialTheme = theme, api = api, initialSession = session, permissions = permissions)
+                NavigationCoordinator(initialTheme = theme, api = api, initialSession = session, permissions = permissions, push = push)
             }
         }
         record("given")

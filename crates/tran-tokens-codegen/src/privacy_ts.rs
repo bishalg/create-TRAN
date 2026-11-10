@@ -95,7 +95,7 @@ mod tests {
     #[test]
     fn the_catalogues_reach_typescript_typed() {
         let ts = render_privacy_ts();
-        assert!(ts.contains("export type PermissionId = 'location_approximate';"));
+        assert!(ts.contains("export type PermissionId = 'location_approximate' | 'notifications';"));
         assert!(ts.contains("export type PermissionStep = 'show_priming' | 'request_system' | 'use_feature' | 'offer_settings';"));
         assert!(ts.contains("\"purpose\": \"eligibility.location.purpose\""));
         assert!(ts.contains("readonly control: ElementId;"));

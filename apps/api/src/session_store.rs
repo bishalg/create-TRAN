@@ -6,6 +6,11 @@
 //! keeping [`SessionStore::rotate`] atomic (one transaction), because two concurrent rotations of
 //! the same token must not both succeed. [`SessionStore::revoke_user`] is what account deletion
 //! calls (REQ-ACC-002): it forgets the user's sessions instead of marking them.
+//!
+//! Each session has a [`SessionId`], so what was made in it (a device registration, REQ-PSH-003)
+//! can end with it: [`SessionStore::revoke`] and a replay in [`SessionStore::rotate`] name the
+//! session they ended, and [`crate::sessions::Sessions`] removes its registrations in the same
+//! call.
 
 use std::collections::HashMap;
 use std::sync::{Mutex, PoisonError};
@@ -15,6 +20,17 @@ use rust_core::UserRole;
 
 /// SHA-256 of a token.
 pub type TokenDigest = [u8; 32];
+
+/// One sign-in (one token family), named by the store. Never sent to a client or logged.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct SessionId(pub u64);
+
+/// A session behind a live access token, with its id.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LiveSession {
+    pub id: SessionId,
+    pub session: StoredSession,
+}
 
 /// Who a session belongs to.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -57,24 +73,27 @@ pub enum Rotation {
     Unknown,
     /// Issued but past its lifetime.
     Expired,
-    /// Already rotated once: the whole session is now revoked (REQ-SEC-010).
-    Replayed,
+    /// Already rotated once: the whole session, named here, is now revoked (REQ-SEC-010).
+    Replayed(SessionId),
 }
 
 pub trait SessionStore: Send + Sync {
     /// Starts a new session with its first pair.
-    fn start(&self, session: StoredSession, pair: PairDigests);
+    fn start(&self, session: StoredSession, pair: PairDigests) -> SessionId;
 
     /// The session of a live access token: issued, unexpired at `now`, session not revoked.
-    fn session_for_access(&self, access: &TokenDigest, now: DateTime<Utc>)
-        -> Option<StoredSession>;
+    fn session_for_access(&self, access: &TokenDigest, now: DateTime<Utc>) -> Option<LiveSession>;
+
+    /// Whether the session exists and is not revoked; its tokens may still have expired.
+    fn is_live(&self, id: SessionId) -> bool;
 
     /// Atomically spends `refresh` and attaches `next` to its session, or says why not. Presenting
     /// a spent token revokes the session.
     fn rotate(&self, refresh: &TokenDigest, next: PairDigests, now: DateTime<Utc>) -> Rotation;
 
-    /// Revokes the session a refresh token (spent or not) belongs to; unknown tokens are ignored.
-    fn revoke(&self, refresh: &TokenDigest);
+    /// Revokes the session a refresh token (spent or not) belongs to and names it; unknown tokens
+    /// are ignored.
+    fn revoke(&self, refresh: &TokenDigest) -> Option<SessionId>;
 
     /// Removes every session of `user_id`, on every device and either transport, with all their
     /// tokens, so nothing of the user remains (REQ-ACC-002, REQ-ACC-003). Other users keep theirs.
@@ -87,8 +106,8 @@ pub struct InMemorySessionStore(Mutex<Tables>);
 #[derive(Debug, Default)]
 struct Tables {
     /// By family id; a removed family's grants are removed with it.
-    families: HashMap<usize, Family>,
-    next_family: usize,
+    families: HashMap<u64, Family>,
+    next_family: u64,
     access: HashMap<TokenDigest, Grant>,
     refresh: HashMap<TokenDigest, Grant>,
 }
@@ -101,13 +120,13 @@ struct Family {
 
 #[derive(Debug)]
 struct Grant {
-    family: usize,
+    family: u64,
     expires_at: DateTime<Utc>,
     spent: bool,
 }
 
 impl Tables {
-    fn attach(&mut self, family: usize, pair: PairDigests) {
+    fn attach(&mut self, family: u64, pair: PairDigests) {
         let grant = |expires_at| Grant {
             family,
             expires_at,
@@ -127,7 +146,7 @@ impl InMemorySessionStore {
 }
 
 impl SessionStore for InMemorySessionStore {
-    fn start(&self, session: StoredSession, pair: PairDigests) {
+    fn start(&self, session: StoredSession, pair: PairDigests) -> SessionId {
         let mut tables = self.tables();
         let family = tables.next_family;
         tables.next_family += 1;
@@ -139,17 +158,24 @@ impl SessionStore for InMemorySessionStore {
             },
         );
         tables.attach(family, pair);
+        SessionId(family)
     }
 
-    fn session_for_access(
-        &self,
-        access: &TokenDigest,
-        now: DateTime<Utc>,
-    ) -> Option<StoredSession> {
+    fn session_for_access(&self, access: &TokenDigest, now: DateTime<Utc>) -> Option<LiveSession> {
         let tables = self.tables();
         let grant = tables.access.get(access).filter(|g| now < g.expires_at)?;
         let family = &tables.families[&grant.family];
-        (!family.revoked).then(|| family.session.clone())
+        (!family.revoked).then(|| LiveSession {
+            id: SessionId(grant.family),
+            session: family.session.clone(),
+        })
+    }
+
+    fn is_live(&self, id: SessionId) -> bool {
+        self.tables()
+            .families
+            .get(&id.0)
+            .is_some_and(|family| !family.revoked)
     }
 
     fn rotate(&self, refresh: &TokenDigest, next: PairDigests, now: DateTime<Utc>) -> Rotation {
@@ -167,7 +193,7 @@ impl SessionStore for InMemorySessionStore {
         };
         if grant.spent {
             family.revoked = true;
-            return Rotation::Replayed;
+            return Rotation::Replayed(SessionId(grant.family));
         }
         if now >= grant.expires_at {
             return Rotation::Expired;
@@ -178,19 +204,19 @@ impl SessionStore for InMemorySessionStore {
         Rotation::Rotated(session)
     }
 
-    fn revoke(&self, refresh: &TokenDigest) {
+    fn revoke(&self, refresh: &TokenDigest) -> Option<SessionId> {
         let mut tables = self.tables();
         let Tables {
             families,
             refresh: refresh_grants,
             ..
         } = &mut *tables;
-        if let Some(family) = refresh_grants
-            .get(refresh)
-            .and_then(|grant| families.get_mut(&grant.family))
-        {
-            family.revoked = true;
-        }
+        let id = refresh_grants.get(refresh)?.family;
+        // A grant's family is removed only with the grant (`revoke_user`), so it is here.
+        families
+            .entry(id)
+            .and_modify(|family| family.revoked = true);
+        Some(SessionId(id))
     }
 
     fn revoke_user(&self, user_id: &str) {
@@ -235,6 +261,18 @@ mod tests {
         }
     }
 
+    /// The session behind an access digest, without its id.
+    trait Who {
+        fn who(&self, access: &TokenDigest, now: DateTime<Utc>) -> Option<StoredSession>;
+    }
+
+    impl Who for InMemorySessionStore {
+        fn who(&self, access: &TokenDigest, now: DateTime<Utc>) -> Option<StoredSession> {
+            self.session_for_access(access, now)
+                .map(|live| live.session)
+        }
+    }
+
     fn started() -> InMemorySessionStore {
         let store = InMemorySessionStore::default();
         store.start(session(), pair(1));
@@ -245,9 +283,27 @@ mod tests {
     #[test]
     fn an_access_digest_is_live_until_it_expires() {
         let store = started();
-        assert_eq!(store.session_for_access(&[1; 32], t(899)), Some(session()));
-        assert_eq!(store.session_for_access(&[1; 32], t(900)), None);
-        assert_eq!(store.session_for_access(&[9; 32], t(0)), None);
+        assert_eq!(store.who(&[1; 32], t(899)), Some(session()));
+        assert_eq!(store.who(&[1; 32], t(900)), None);
+        assert_eq!(store.who(&[9; 32], t(0)), None);
+    }
+
+    // Verifies: REQ-SEC-006 REQ-PSH-003
+    #[test]
+    fn each_session_has_its_own_id_and_revoking_names_it() {
+        let store = InMemorySessionStore::default();
+        let first = store.start(session(), pair(1));
+        let second = store.start(session(), pair(2));
+        assert_ne!(first, second);
+        let live = store.session_for_access(&[2; 32], t(1)).unwrap();
+        assert_eq!((live.id, live.session), (second, session()));
+        assert!(store.is_live(first) && store.is_live(second));
+        assert_eq!(store.revoke(&[101; 32]), Some(first));
+        assert!(!store.is_live(first) && store.is_live(second));
+        assert_eq!(store.revoke(&[42; 32]), None);
+        assert!(!store.is_live(SessionId(99)));
+        store.revoke_user("voter-001");
+        assert!(!store.is_live(second));
     }
 
     // Verifies: REQ-SEC-009
@@ -258,9 +314,9 @@ mod tests {
             store.rotate(&[101; 32], pair(2), t(10)),
             Rotation::Rotated(session())
         );
-        assert_eq!(store.session_for_access(&[2; 32], t(10)), Some(session()));
+        assert_eq!(store.who(&[2; 32], t(10)), Some(session()));
         // The old access token stays valid until it expires; only its refresh token is spent.
-        assert_eq!(store.session_for_access(&[1; 32], t(10)), Some(session()));
+        assert_eq!(store.who(&[1; 32], t(10)), Some(session()));
         assert_eq!(
             store.rotate(&[102; 32], pair(3), t(20)),
             Rotation::Rotated(session())
@@ -283,9 +339,12 @@ mod tests {
     fn a_replayed_refresh_token_revokes_the_whole_family() {
         let store = started();
         store.rotate(&[101; 32], pair(2), t(10));
-        assert_eq!(store.rotate(&[101; 32], pair(3), t(11)), Rotation::Replayed);
-        assert_eq!(store.session_for_access(&[1; 32], t(12)), None);
-        assert_eq!(store.session_for_access(&[2; 32], t(12)), None);
+        assert_eq!(
+            store.rotate(&[101; 32], pair(3), t(11)),
+            Rotation::Replayed(SessionId(0))
+        );
+        assert_eq!(store.who(&[1; 32], t(12)), None);
+        assert_eq!(store.who(&[2; 32], t(12)), None);
         assert_eq!(store.rotate(&[102; 32], pair(4), t(12)), Rotation::Unknown);
     }
 
@@ -300,9 +359,9 @@ mod tests {
         store.start(other.clone(), pair(5));
         store.revoke(&[42; 32]);
         store.revoke(&[101; 32]);
-        assert_eq!(store.session_for_access(&[1; 32], t(1)), None);
+        assert_eq!(store.who(&[1; 32], t(1)), None);
         assert_eq!(store.rotate(&[101; 32], pair(2), t(1)), Rotation::Unknown);
-        assert_eq!(store.session_for_access(&[5; 32], t(1)), Some(other));
+        assert_eq!(store.who(&[5; 32], t(1)), Some(other));
     }
 
     fn user(user_id: &str, transport: Transport) -> StoredSession {
@@ -326,15 +385,12 @@ mod tests {
 
         store.revoke_user("voter-001");
         for access in [[1; 32], [2; 32], [3; 32]] {
-            assert_eq!(store.session_for_access(&access, t(2)), None);
+            assert_eq!(store.who(&access, t(2)), None);
         }
         for refresh in [[101; 32], [102; 32], [103; 32]] {
             assert_eq!(store.rotate(&refresh, pair(9), t(2)), Rotation::Unknown);
         }
-        assert_eq!(
-            store.session_for_access(&[4; 32], t(2)),
-            Some(other.clone())
-        );
+        assert_eq!(store.who(&[4; 32], t(2)), Some(other.clone()));
         assert_eq!(
             store.rotate(&[104; 32], pair(5), t(2)),
             Rotation::Rotated(other)

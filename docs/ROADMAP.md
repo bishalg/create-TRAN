@@ -88,7 +88,7 @@ and one short playbook in `docs/` (what the topic is, why it matters, the rules 
        [playbook](./PERMISSIONS.md)): ask in context with a purpose string, work when denied, optional personal
        questions (gender, birth date), no tracking without App Tracking Transparency (a guard: the template does not
        track).
-5. [ ] **Push notifications and device registration** ([spec 027](./specs/027-push-and-devices.md), ADR-0044,
+5. [x] **Push notifications and device registration** ([spec 027](./specs/027-push-and-devices.md), ADR-0044,
        [playbook](./PUSH.md)): optional push, the device token registered to the signed-in
        user on the API, replaced when it changes, removed on sign-out and account deletion.
 6. [ ] **API versioning and compatibility**: a versioned base path, additive-change rules checked against contract

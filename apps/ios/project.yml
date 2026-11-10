@@ -1,8 +1,10 @@
 name: TranVotingDemo
 options:
   bundleIdPrefix: com.tran
+  # The platform floor (REQ-CODE-004, ADR-0045): the previous major release while iOS 27 is
+  # current. No availability check at or below it anywhere in the app.
   deploymentTarget:
-    iOS: '17.0'
+    iOS: '26.0'
   createIntermediateGroups: true
   # Locales carried by Generated/Strings/*.xcstrings; keep in sync with locales/ (the
   # native-strings parity test fails until this list matches the locale directories).
@@ -50,6 +52,10 @@ targets:
         # Sources/TranVotingDemo/Generated/InfoPlist.xcstrings (`pnpm tokens:sync`).
         NSLocationWhenInUseUsageDescription: 'TRAN uses your approximate location once to find your country and pick the right voting age. It is optional; you can type the country instead.'
         NSLocationDefaultAccuracyReduced: true
+        # Push (spec 027, REQ-PSH-012): whether this build is configured for push, and its APNs
+        # environment. Both come from build settings below; the app reads them, never the env.
+        TranPushEnabled: $(TRAN_PUSH_ENABLED)
+        TranApsEnvironment: $(TRAN_APS_ENVIRONMENT)
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tran.voting
@@ -66,6 +72,22 @@ targets:
           - -lc++
         SWIFT_OBJC_BRIDGING_HEADER: Sources/TranVotingDemo/Generated/UniFFI/tran_uniffiFFI.h
         CLANG_ENABLE_MODULES: YES
+        # Push is a build-time switch (REQ-PSH-012, ADR-0046, docs/CREDENTIALS.md): NO by default,
+        # so the app builds, runs and is tested unsigned with push reported unavailable. YES adds
+        # the `aps-environment` entitlement (Support/TranVotingDemo.entitlements), which needs a
+        # signing team whose App ID has the Push Notifications capability:
+        #   xcodebuild … TRAN_PUSH_ENABLED=YES DEVELOPMENT_TEAM=<TRAN_APPLE_TEAM_ID>
+        TRAN_PUSH_ENABLED: NO
+        TRAN_PUSH_ENTITLEMENTS_YES: Support/TranVotingDemo.entitlements
+        TRAN_PUSH_ENTITLEMENTS_NO: ''
+        CODE_SIGN_ENTITLEMENTS: $(TRAN_PUSH_ENTITLEMENTS_$(TRAN_PUSH_ENABLED))
+      configs:
+        # The APNs environment the entitlement names and the registration sends (`sandbox` for
+        # `development`).
+        Debug:
+          TRAN_APS_ENVIRONMENT: development
+        Release:
+          TRAN_APS_ENVIRONMENT: production
     preBuildScripts:
       - name: Build tran-uniffi (Rust)
         script: |
@@ -87,6 +109,7 @@ targets:
       - Sources/TranVotingDemo/Feedback/TranFeedback.swift
       - Sources/TranVotingDemo/Feedback/TranReporting.swift
       - Sources/TranVotingDemo/Permissions
+      - Sources/TranVotingDemo/Push
     dependencies:
       - target: TranVotingDemo
     settings:

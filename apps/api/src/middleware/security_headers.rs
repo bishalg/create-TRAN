@@ -1,6 +1,6 @@
 //! Security headers on every response (REQ-SEC-013). The API serves JSON only, so the policy
-//! forbids everything a browser could do with it as a document; auth and account answers are never
-//! cached.
+//! forbids everything a browser could do with it as a document; auth, account and device answers
+//! are never cached.
 
 use axum::extract::{Request, State};
 use axum::http::{header, HeaderValue};

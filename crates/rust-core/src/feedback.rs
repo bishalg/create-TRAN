@@ -395,6 +395,9 @@ pub enum UserAction {
     DeleteAccount,
     /// The server confirmed a deletion; shown on role selection (REQ-ACC-006).
     AccountDeleted,
+    /// A push notification arrived while the app was in the foreground: an in-app toast, never a
+    /// system banner over the app (REQ-PSH-013).
+    NotificationReceived,
 }
 
 /// How a [`UserAction`] is presented, and the locale key of its headline.
@@ -405,11 +408,12 @@ pub struct ActionSpec {
 }
 
 impl UserAction {
-    pub const ALL: [Self; 4] = [
+    pub const ALL: [Self; 5] = [
         Self::SignOut,
         Self::ServerCheckSucceeded,
         Self::DeleteAccount,
         Self::AccountDeleted,
+        Self::NotificationReceived,
     ];
 
     pub fn as_str(self) -> &'static str {
@@ -418,6 +422,7 @@ impl UserAction {
             Self::ServerCheckSucceeded => "server_check_succeeded",
             Self::DeleteAccount => "delete_account",
             Self::AccountDeleted => "account_deleted",
+            Self::NotificationReceived => "notification_received",
         }
     }
 
@@ -445,6 +450,14 @@ impl UserAction {
                     duration: ToastDuration::Medium,
                 },
                 message_key: "auth.accountDeleted",
+            },
+            // Info, medium: news to read once, not the answer to something the person just did.
+            Self::NotificationReceived => ActionSpec {
+                presentation: Presentation::Toast {
+                    tone: Tone::Info,
+                    duration: ToastDuration::Medium,
+                },
+                message_key: "eligibility.notify.received",
             },
         }
     }

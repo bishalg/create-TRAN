@@ -150,7 +150,7 @@ final class TranFeedback {
         case .signOut: return (L10n.Auth.signOutConfirmBody, L10n.Common.signOut)
         // A different action from sign-out, with copy that says "permanent" (REQ-ACC-005).
         case .deleteAccount: return (L10n.Auth.deleteAccountConfirmBody, L10n.Common.deleteAccount)
-        case .serverCheckSucceeded, .accountDeleted: return nil
+        case .serverCheckSucceeded, .accountDeleted, .notificationReceived: return nil
         }
     }
 

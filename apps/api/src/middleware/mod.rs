@@ -5,7 +5,7 @@ pub mod panic;
 pub mod request_id;
 pub mod security_headers;
 
-pub use auth_origin::{auth_origin, is_session_path};
+pub use auth_origin::{auth_origin, is_session_path, loggable_path};
 pub use cors::create_cors_layer;
 pub use deadline::deadline;
 pub use panic::{install_panic_hook, panic_response};

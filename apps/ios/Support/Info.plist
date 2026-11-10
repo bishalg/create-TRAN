@@ -35,6 +35,10 @@
 	<string>TRAN uses your approximate location once to find your country and pick the right voting age. It is optional; you can type the country instead.</string>
 	<key>TranApiBaseUrl</key>
 	<string>$(TRAN_API_BASE_URL)</string>
+	<key>TranApsEnvironment</key>
+	<string>$(TRAN_APS_ENVIRONMENT)</string>
+	<key>TranPushEnabled</key>
+	<string>$(TRAN_PUSH_ENABLED)</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 </dict>

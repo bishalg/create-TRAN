@@ -224,6 +224,13 @@ function usedKeys(): Set<string> {
     for (const element of screen.elements) used.add(element.label);
   }
 
+  // The API's notification catalogue sends its title and body in the registration's locale
+  // (spec 027, REQ-PSH-006); the builder reads them by key from locales/.
+  const payloads = readText('apps', 'api', 'src', 'push', 'payload.rs');
+  for (const match of payloads.matchAll(/\b(?:title|body)_key: "([^"]+)"/g)) {
+    if (KEYS.has(match[1]!)) used.add(match[1]!);
+  }
+
   // The privacy catalogues name their copy: priming, purpose strings and the Settings note, and
   // each personal question's label and answers (spec 026, REQ-PRV-001, REQ-PRV-008).
   for (const permission of PERMISSIONS) {

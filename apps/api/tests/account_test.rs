@@ -11,6 +11,7 @@ use api::account::AccountEraser;
 use api::build_app;
 use api::clock::ManualClock;
 use api::config::AppConfig;
+use api::device_store::InMemoryDeviceStore;
 use api::error::ApiError;
 use api::session_store::{InMemorySessionStore, SessionUser};
 use api::sessions::Sessions;
@@ -73,7 +74,11 @@ impl Api {
         let start = DateTime::<Utc>::from_timestamp(1_800_000_000, 0).unwrap();
         let clock = Arc::new(ManualClock::starting_at(start));
         let state = AppState {
-            sessions: Sessions::new(Arc::new(InMemorySessionStore::default()), clock.clone()),
+            sessions: Sessions::new(
+                Arc::new(InMemorySessionStore::default()),
+                Arc::new(InMemoryDeviceStore::default()),
+                clock.clone(),
+            ),
             ..AppState::from_config(&AppConfig::from_lookup(|_| None))
         };
         Self { state, clock }

@@ -1,0 +1,1386 @@
+{
+  "$comment": "Device policy, the push_sync table and the notification payloads (spec 027, REQ-PSH-005, REQ-PSH-006, REQ-PSH-009, ADR-0044) shared by Rust (crates/rust-core/tests/push_fixtures.rs, apps/api push payload tests), UniFFI (crates/tran-uniffi/tests/push_fixtures.rs), TypeScript (packages/core-ts/tests/push.test.ts), iOS and Android parity tests. `policy`: days. `sync`: every combination of what the app knows (push available in this build, notification permission granted, an API session, the current token, the registration it recorded) and what it does next; times are Unix seconds on the device clock; `register` = PUT /api/devices/{installation_id}, `unregister` = clear the record then a best-effort DELETE. `payloads`: the exact APNs and FCM v1 bodies the API builds for a notification type, an opaque id and the registration's locale; the provider address (APNs device path, FCM message.token) is added by the sender and is never part of the body. `marketing`: who a notification reaches by its marketing flag and the registration's opt-in. `providerReplies`: what APNs (status, JSON `reason`) and FCM v1 (status, `error` with `status`, `details[].errorCode` and `fieldViolations`) answer, and the one answer the real senders turn each into (apps/api/tests/push_senders_test.rs, against a local fake provider); a reply text containing `SENTINEL` must never reach a log line.",
+  "policy": {
+    "staleAfterDays": 60,
+    "refreshAfterDays": 7
+  },
+  "sync": [
+    {
+      "name": "push available, permission granted, session, token tok-a, nothing recorded",
+      "pushAvailable": true,
+      "permissionGranted": true,
+      "hasSession": true,
+      "currentToken": "tok-a",
+      "lastRegistration": null,
+      "nowUnixS": 1800000000,
+      "action": "register"
+    },
+    {
+      "name": "push available, permission granted, session, token tok-a, the same token registered just now",
+      "pushAvailable": true,
+      "permissionGranted": true,
+      "hasSession": true,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "push available, permission granted, session, token tok-a, the same token registered 7 days ago",
+      "pushAvailable": true,
+      "permissionGranted": true,
+      "hasSession": true,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1799395200
+      },
+      "nowUnixS": 1800000000,
+      "action": "register"
+    },
+    {
+      "name": "push available, permission granted, session, token tok-a, another token registered just now",
+      "pushAvailable": true,
+      "permissionGranted": true,
+      "hasSession": true,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-b",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "register"
+    },
+    {
+      "name": "push available, permission granted, session, no token yet, nothing recorded",
+      "pushAvailable": true,
+      "permissionGranted": true,
+      "hasSession": true,
+      "currentToken": null,
+      "lastRegistration": null,
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "push available, permission granted, session, no token yet, the same token registered just now",
+      "pushAvailable": true,
+      "permissionGranted": true,
+      "hasSession": true,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "push available, permission granted, session, no token yet, the same token registered 7 days ago",
+      "pushAvailable": true,
+      "permissionGranted": true,
+      "hasSession": true,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1799395200
+      },
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "push available, permission granted, session, no token yet, another token registered just now",
+      "pushAvailable": true,
+      "permissionGranted": true,
+      "hasSession": true,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-b",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "push available, permission granted, no session, token tok-a, nothing recorded",
+      "pushAvailable": true,
+      "permissionGranted": true,
+      "hasSession": false,
+      "currentToken": "tok-a",
+      "lastRegistration": null,
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "push available, permission granted, no session, token tok-a, the same token registered just now",
+      "pushAvailable": true,
+      "permissionGranted": true,
+      "hasSession": false,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push available, permission granted, no session, token tok-a, the same token registered 7 days ago",
+      "pushAvailable": true,
+      "permissionGranted": true,
+      "hasSession": false,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1799395200
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push available, permission granted, no session, token tok-a, another token registered just now",
+      "pushAvailable": true,
+      "permissionGranted": true,
+      "hasSession": false,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-b",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push available, permission granted, no session, no token yet, nothing recorded",
+      "pushAvailable": true,
+      "permissionGranted": true,
+      "hasSession": false,
+      "currentToken": null,
+      "lastRegistration": null,
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "push available, permission granted, no session, no token yet, the same token registered just now",
+      "pushAvailable": true,
+      "permissionGranted": true,
+      "hasSession": false,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push available, permission granted, no session, no token yet, the same token registered 7 days ago",
+      "pushAvailable": true,
+      "permissionGranted": true,
+      "hasSession": false,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1799395200
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push available, permission granted, no session, no token yet, another token registered just now",
+      "pushAvailable": true,
+      "permissionGranted": true,
+      "hasSession": false,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-b",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push available, permission not granted, session, token tok-a, nothing recorded",
+      "pushAvailable": true,
+      "permissionGranted": false,
+      "hasSession": true,
+      "currentToken": "tok-a",
+      "lastRegistration": null,
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "push available, permission not granted, session, token tok-a, the same token registered just now",
+      "pushAvailable": true,
+      "permissionGranted": false,
+      "hasSession": true,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push available, permission not granted, session, token tok-a, the same token registered 7 days ago",
+      "pushAvailable": true,
+      "permissionGranted": false,
+      "hasSession": true,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1799395200
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push available, permission not granted, session, token tok-a, another token registered just now",
+      "pushAvailable": true,
+      "permissionGranted": false,
+      "hasSession": true,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-b",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push available, permission not granted, session, no token yet, nothing recorded",
+      "pushAvailable": true,
+      "permissionGranted": false,
+      "hasSession": true,
+      "currentToken": null,
+      "lastRegistration": null,
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "push available, permission not granted, session, no token yet, the same token registered just now",
+      "pushAvailable": true,
+      "permissionGranted": false,
+      "hasSession": true,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push available, permission not granted, session, no token yet, the same token registered 7 days ago",
+      "pushAvailable": true,
+      "permissionGranted": false,
+      "hasSession": true,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1799395200
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push available, permission not granted, session, no token yet, another token registered just now",
+      "pushAvailable": true,
+      "permissionGranted": false,
+      "hasSession": true,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-b",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push available, permission not granted, no session, token tok-a, nothing recorded",
+      "pushAvailable": true,
+      "permissionGranted": false,
+      "hasSession": false,
+      "currentToken": "tok-a",
+      "lastRegistration": null,
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "push available, permission not granted, no session, token tok-a, the same token registered just now",
+      "pushAvailable": true,
+      "permissionGranted": false,
+      "hasSession": false,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push available, permission not granted, no session, token tok-a, the same token registered 7 days ago",
+      "pushAvailable": true,
+      "permissionGranted": false,
+      "hasSession": false,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1799395200
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push available, permission not granted, no session, token tok-a, another token registered just now",
+      "pushAvailable": true,
+      "permissionGranted": false,
+      "hasSession": false,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-b",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push available, permission not granted, no session, no token yet, nothing recorded",
+      "pushAvailable": true,
+      "permissionGranted": false,
+      "hasSession": false,
+      "currentToken": null,
+      "lastRegistration": null,
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "push available, permission not granted, no session, no token yet, the same token registered just now",
+      "pushAvailable": true,
+      "permissionGranted": false,
+      "hasSession": false,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push available, permission not granted, no session, no token yet, the same token registered 7 days ago",
+      "pushAvailable": true,
+      "permissionGranted": false,
+      "hasSession": false,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1799395200
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push available, permission not granted, no session, no token yet, another token registered just now",
+      "pushAvailable": true,
+      "permissionGranted": false,
+      "hasSession": false,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-b",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission granted, session, token tok-a, nothing recorded",
+      "pushAvailable": false,
+      "permissionGranted": true,
+      "hasSession": true,
+      "currentToken": "tok-a",
+      "lastRegistration": null,
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "push unavailable, permission granted, session, token tok-a, the same token registered just now",
+      "pushAvailable": false,
+      "permissionGranted": true,
+      "hasSession": true,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission granted, session, token tok-a, the same token registered 7 days ago",
+      "pushAvailable": false,
+      "permissionGranted": true,
+      "hasSession": true,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1799395200
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission granted, session, token tok-a, another token registered just now",
+      "pushAvailable": false,
+      "permissionGranted": true,
+      "hasSession": true,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-b",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission granted, session, no token yet, nothing recorded",
+      "pushAvailable": false,
+      "permissionGranted": true,
+      "hasSession": true,
+      "currentToken": null,
+      "lastRegistration": null,
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "push unavailable, permission granted, session, no token yet, the same token registered just now",
+      "pushAvailable": false,
+      "permissionGranted": true,
+      "hasSession": true,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission granted, session, no token yet, the same token registered 7 days ago",
+      "pushAvailable": false,
+      "permissionGranted": true,
+      "hasSession": true,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1799395200
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission granted, session, no token yet, another token registered just now",
+      "pushAvailable": false,
+      "permissionGranted": true,
+      "hasSession": true,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-b",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission granted, no session, token tok-a, nothing recorded",
+      "pushAvailable": false,
+      "permissionGranted": true,
+      "hasSession": false,
+      "currentToken": "tok-a",
+      "lastRegistration": null,
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "push unavailable, permission granted, no session, token tok-a, the same token registered just now",
+      "pushAvailable": false,
+      "permissionGranted": true,
+      "hasSession": false,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission granted, no session, token tok-a, the same token registered 7 days ago",
+      "pushAvailable": false,
+      "permissionGranted": true,
+      "hasSession": false,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1799395200
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission granted, no session, token tok-a, another token registered just now",
+      "pushAvailable": false,
+      "permissionGranted": true,
+      "hasSession": false,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-b",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission granted, no session, no token yet, nothing recorded",
+      "pushAvailable": false,
+      "permissionGranted": true,
+      "hasSession": false,
+      "currentToken": null,
+      "lastRegistration": null,
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "push unavailable, permission granted, no session, no token yet, the same token registered just now",
+      "pushAvailable": false,
+      "permissionGranted": true,
+      "hasSession": false,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission granted, no session, no token yet, the same token registered 7 days ago",
+      "pushAvailable": false,
+      "permissionGranted": true,
+      "hasSession": false,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1799395200
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission granted, no session, no token yet, another token registered just now",
+      "pushAvailable": false,
+      "permissionGranted": true,
+      "hasSession": false,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-b",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission not granted, session, token tok-a, nothing recorded",
+      "pushAvailable": false,
+      "permissionGranted": false,
+      "hasSession": true,
+      "currentToken": "tok-a",
+      "lastRegistration": null,
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "push unavailable, permission not granted, session, token tok-a, the same token registered just now",
+      "pushAvailable": false,
+      "permissionGranted": false,
+      "hasSession": true,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission not granted, session, token tok-a, the same token registered 7 days ago",
+      "pushAvailable": false,
+      "permissionGranted": false,
+      "hasSession": true,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1799395200
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission not granted, session, token tok-a, another token registered just now",
+      "pushAvailable": false,
+      "permissionGranted": false,
+      "hasSession": true,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-b",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission not granted, session, no token yet, nothing recorded",
+      "pushAvailable": false,
+      "permissionGranted": false,
+      "hasSession": true,
+      "currentToken": null,
+      "lastRegistration": null,
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "push unavailable, permission not granted, session, no token yet, the same token registered just now",
+      "pushAvailable": false,
+      "permissionGranted": false,
+      "hasSession": true,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission not granted, session, no token yet, the same token registered 7 days ago",
+      "pushAvailable": false,
+      "permissionGranted": false,
+      "hasSession": true,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1799395200
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission not granted, session, no token yet, another token registered just now",
+      "pushAvailable": false,
+      "permissionGranted": false,
+      "hasSession": true,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-b",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission not granted, no session, token tok-a, nothing recorded",
+      "pushAvailable": false,
+      "permissionGranted": false,
+      "hasSession": false,
+      "currentToken": "tok-a",
+      "lastRegistration": null,
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "push unavailable, permission not granted, no session, token tok-a, the same token registered just now",
+      "pushAvailable": false,
+      "permissionGranted": false,
+      "hasSession": false,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission not granted, no session, token tok-a, the same token registered 7 days ago",
+      "pushAvailable": false,
+      "permissionGranted": false,
+      "hasSession": false,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1799395200
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission not granted, no session, token tok-a, another token registered just now",
+      "pushAvailable": false,
+      "permissionGranted": false,
+      "hasSession": false,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-b",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission not granted, no session, no token yet, nothing recorded",
+      "pushAvailable": false,
+      "permissionGranted": false,
+      "hasSession": false,
+      "currentToken": null,
+      "lastRegistration": null,
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "push unavailable, permission not granted, no session, no token yet, the same token registered just now",
+      "pushAvailable": false,
+      "permissionGranted": false,
+      "hasSession": false,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission not granted, no session, no token yet, the same token registered 7 days ago",
+      "pushAvailable": false,
+      "permissionGranted": false,
+      "hasSession": false,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1799395200
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "push unavailable, permission not granted, no session, no token yet, another token registered just now",
+      "pushAvailable": false,
+      "permissionGranted": false,
+      "hasSession": false,
+      "currentToken": null,
+      "lastRegistration": {
+        "token": "tok-b",
+        "registeredAtUnixS": 1800000000
+      },
+      "nowUnixS": 1800000000,
+      "action": "unregister"
+    },
+    {
+      "name": "boundary: the same token registered 1 second short of 7 days: nothing",
+      "pushAvailable": true,
+      "permissionGranted": true,
+      "hasSession": true,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1799395201
+      },
+      "nowUnixS": 1800000000,
+      "action": "nothing"
+    },
+    {
+      "name": "boundary: the same token registered 1 second in the future (clock moved back): register",
+      "pushAvailable": true,
+      "permissionGranted": true,
+      "hasSession": true,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1800000001
+      },
+      "nowUnixS": 1800000000,
+      "action": "register"
+    },
+    {
+      "name": "boundary: the same token registered 60 days ago: register",
+      "pushAvailable": true,
+      "permissionGranted": true,
+      "hasSession": true,
+      "currentToken": "tok-a",
+      "lastRegistration": {
+        "token": "tok-a",
+        "registeredAtUnixS": 1794816000
+      },
+      "nowUnixS": 1800000000,
+      "action": "register"
+    }
+  ],
+  "payloads": [
+    {
+      "name": "eligibility.reached, English",
+      "type": "eligibility.reached",
+      "id": "evt_7Hq2-x9",
+      "locale": "en",
+      "topic": "com.tran.voting",
+      "apns": {
+        "headers": {
+          "apns-collapse-id": "eligibility.reached",
+          "apns-push-type": "alert",
+          "apns-topic": "com.tran.voting"
+        },
+        "body": {
+          "aps": {
+            "alert": {
+              "body": "Open TRAN to check your eligibility again.",
+              "title": "You can vote now"
+            },
+            "sound": "default"
+          },
+          "id": "evt_7Hq2-x9",
+          "type": "eligibility.reached"
+        }
+      },
+      "fcm": {
+        "message": {
+          "android": {
+            "collapse_key": "eligibility.reached",
+            "notification": {
+              "tag": "eligibility.reached"
+            }
+          },
+          "data": {
+            "id": "evt_7Hq2-x9",
+            "type": "eligibility.reached"
+          },
+          "notification": {
+            "body": "Open TRAN to check your eligibility again.",
+            "title": "You can vote now"
+          }
+        }
+      }
+    },
+    {
+      "name": "eligibility.reached, Hindi",
+      "type": "eligibility.reached",
+      "id": "evt_7Hq2-x9",
+      "locale": "hi",
+      "topic": "com.tran.voting",
+      "apns": {
+        "headers": {
+          "apns-collapse-id": "eligibility.reached",
+          "apns-push-type": "alert",
+          "apns-topic": "com.tran.voting"
+        },
+        "body": {
+          "aps": {
+            "alert": {
+              "body": "अपनी पात्रता फिर से जाँचने के लिए TRAN खोलें।",
+              "title": "अब आप मतदान कर सकते हैं"
+            },
+            "sound": "default"
+          },
+          "id": "evt_7Hq2-x9",
+          "type": "eligibility.reached"
+        }
+      },
+      "fcm": {
+        "message": {
+          "android": {
+            "collapse_key": "eligibility.reached",
+            "notification": {
+              "tag": "eligibility.reached"
+            }
+          },
+          "data": {
+            "id": "evt_7Hq2-x9",
+            "type": "eligibility.reached"
+          },
+          "notification": {
+            "body": "अपनी पात्रता फिर से जाँचने के लिए TRAN खोलें।",
+            "title": "अब आप मतदान कर सकते हैं"
+          }
+        }
+      }
+    },
+    {
+      "name": "eligibility.reached, Nepali",
+      "type": "eligibility.reached",
+      "id": "evt_7Hq2-x9",
+      "locale": "ne",
+      "topic": "com.tran.voting",
+      "apns": {
+        "headers": {
+          "apns-collapse-id": "eligibility.reached",
+          "apns-push-type": "alert",
+          "apns-topic": "com.tran.voting"
+        },
+        "body": {
+          "aps": {
+            "alert": {
+              "body": "आफ्नो योग्यता फेरि जाँच्न TRAN खोल्नुहोस्।",
+              "title": "अब तपाईं मतदान गर्न सक्नुहुन्छ"
+            },
+            "sound": "default"
+          },
+          "id": "evt_7Hq2-x9",
+          "type": "eligibility.reached"
+        }
+      },
+      "fcm": {
+        "message": {
+          "android": {
+            "collapse_key": "eligibility.reached",
+            "notification": {
+              "tag": "eligibility.reached"
+            }
+          },
+          "data": {
+            "id": "evt_7Hq2-x9",
+            "type": "eligibility.reached"
+          },
+          "notification": {
+            "body": "आफ्नो योग्यता फेरि जाँच्न TRAN खोल्नुहोस्।",
+            "title": "अब तपाईं मतदान गर्न सक्नुहुन्छ"
+          }
+        }
+      }
+    },
+    {
+      "name": "eligibility.reached, a regional tag uses its language: ne-NP reads Nepali",
+      "type": "eligibility.reached",
+      "id": "evt_7Hq2-x9",
+      "locale": "ne-NP",
+      "topic": "com.tran.voting",
+      "apns": {
+        "headers": {
+          "apns-collapse-id": "eligibility.reached",
+          "apns-push-type": "alert",
+          "apns-topic": "com.tran.voting"
+        },
+        "body": {
+          "aps": {
+            "alert": {
+              "body": "आफ्नो योग्यता फेरि जाँच्न TRAN खोल्नुहोस्।",
+              "title": "अब तपाईं मतदान गर्न सक्नुहुन्छ"
+            },
+            "sound": "default"
+          },
+          "id": "evt_7Hq2-x9",
+          "type": "eligibility.reached"
+        }
+      },
+      "fcm": {
+        "message": {
+          "android": {
+            "collapse_key": "eligibility.reached",
+            "notification": {
+              "tag": "eligibility.reached"
+            }
+          },
+          "data": {
+            "id": "evt_7Hq2-x9",
+            "type": "eligibility.reached"
+          },
+          "notification": {
+            "body": "आफ्नो योग्यता फेरि जाँच्न TRAN खोल्नुहोस्।",
+            "title": "अब तपाईं मतदान गर्न सक्नुहुन्छ"
+          }
+        }
+      }
+    },
+    {
+      "name": "eligibility.reached, a language without a dictionary reads English: fr-FR",
+      "type": "eligibility.reached",
+      "id": "evt_7Hq2-x9",
+      "locale": "fr-FR",
+      "topic": "com.tran.voting",
+      "apns": {
+        "headers": {
+          "apns-collapse-id": "eligibility.reached",
+          "apns-push-type": "alert",
+          "apns-topic": "com.tran.voting"
+        },
+        "body": {
+          "aps": {
+            "alert": {
+              "body": "Open TRAN to check your eligibility again.",
+              "title": "You can vote now"
+            },
+            "sound": "default"
+          },
+          "id": "evt_7Hq2-x9",
+          "type": "eligibility.reached"
+        }
+      },
+      "fcm": {
+        "message": {
+          "android": {
+            "collapse_key": "eligibility.reached",
+            "notification": {
+              "tag": "eligibility.reached"
+            }
+          },
+          "data": {
+            "id": "evt_7Hq2-x9",
+            "type": "eligibility.reached"
+          },
+          "notification": {
+            "body": "Open TRAN to check your eligibility again.",
+            "title": "You can vote now"
+          }
+        }
+      }
+    }
+  ],
+  "marketing": [
+    {
+      "name": "a reminder reaches someone who did not opt in to marketing",
+      "notificationMarketing": false,
+      "registrationMarketing": false,
+      "sent": true
+    },
+    {
+      "name": "a reminder reaches someone who opted in to marketing",
+      "notificationMarketing": false,
+      "registrationMarketing": true,
+      "sent": true
+    },
+    {
+      "name": "a marketing message skips someone who did not opt in",
+      "notificationMarketing": true,
+      "registrationMarketing": false,
+      "sent": false
+    },
+    {
+      "name": "a marketing message reaches someone who opted in",
+      "notificationMarketing": true,
+      "registrationMarketing": true,
+      "sent": true
+    }
+  ],
+  "providerReplies": [
+    {
+      "name": "APNs accepts",
+      "platform": "ios",
+      "status": 200,
+      "body": null,
+      "answer": "delivered"
+    },
+    {
+      "name": "APNs: the app was removed",
+      "platform": "ios",
+      "status": 410,
+      "body": {
+        "reason": "Unregistered",
+        "timestamp": 1800000000000
+      },
+      "answer": "token_dead"
+    },
+    {
+      "name": "APNs: the token expired",
+      "platform": "ios",
+      "status": 410,
+      "body": {
+        "reason": "ExpiredToken"
+      },
+      "answer": "token_dead"
+    },
+    {
+      "name": "APNs: a token of the other environment",
+      "platform": "ios",
+      "status": 400,
+      "body": {
+        "reason": "BadDeviceToken"
+      },
+      "answer": "token_dead"
+    },
+    {
+      "name": "APNs: a token of another app",
+      "platform": "ios",
+      "status": 400,
+      "body": {
+        "reason": "DeviceTokenNotForTopic"
+      },
+      "answer": "token_dead"
+    },
+    {
+      "name": "APNs: the payload is too large",
+      "platform": "ios",
+      "status": 413,
+      "body": {
+        "reason": "PayloadTooLarge"
+      },
+      "answer": "rejected"
+    },
+    {
+      "name": "APNs: the provider token is wrong",
+      "platform": "ios",
+      "status": 403,
+      "body": {
+        "reason": "InvalidProviderToken"
+      },
+      "answer": "rejected"
+    },
+    {
+      "name": "APNs: the provider token is stale",
+      "platform": "ios",
+      "status": 403,
+      "body": {
+        "reason": "ExpiredProviderToken"
+      },
+      "answer": "rejected"
+    },
+    {
+      "name": "APNs: provider token renewed too often",
+      "platform": "ios",
+      "status": 429,
+      "body": {
+        "reason": "TooManyProviderTokenUpdates"
+      },
+      "answer": "retry_later"
+    },
+    {
+      "name": "APNs: too many pushes to one device",
+      "platform": "ios",
+      "status": 429,
+      "body": {
+        "reason": "TooManyRequests"
+      },
+      "answer": "retry_later"
+    },
+    {
+      "name": "APNs fails",
+      "platform": "ios",
+      "status": 500,
+      "body": {
+        "reason": "InternalServerError"
+      },
+      "answer": "retry_later"
+    },
+    {
+      "name": "APNs is shutting down",
+      "platform": "ios",
+      "status": 503,
+      "body": {
+        "reason": "Shutdown"
+      },
+      "answer": "retry_later"
+    },
+    {
+      "name": "APNs answers something unreadable",
+      "platform": "ios",
+      "status": 400,
+      "body": "SENTINEL_reply",
+      "answer": "rejected"
+    },
+    {
+      "name": "FCM accepts",
+      "platform": "android",
+      "status": 200,
+      "body": {
+        "name": "projects/tran-sample/messages/0:1800000000"
+      },
+      "answer": "delivered"
+    },
+    {
+      "name": "FCM: the app instance is gone",
+      "platform": "android",
+      "status": 404,
+      "body": {
+        "error": {
+          "code": 404,
+          "message": "Requested entity was not found. SENTINEL_reply",
+          "status": "NOT_FOUND",
+          "details": [
+            {
+              "@type": "type.googleapis.com/google.firebase.fcm.v1.FcmError",
+              "errorCode": "UNREGISTERED"
+            }
+          ]
+        }
+      },
+      "answer": "token_dead"
+    },
+    {
+      "name": "FCM: the token itself is invalid",
+      "platform": "android",
+      "status": 400,
+      "body": {
+        "error": {
+          "code": 400,
+          "message": "The registration token is not a valid FCM registration token: SENTINEL_reply",
+          "status": "INVALID_ARGUMENT",
+          "details": [
+            {
+              "@type": "type.googleapis.com/google.firebase.fcm.v1.FcmError",
+              "errorCode": "INVALID_ARGUMENT"
+            },
+            {
+              "@type": "type.googleapis.com/google.rpc.BadRequest",
+              "fieldViolations": [
+                {
+                  "field": "message.token",
+                  "description": "SENTINEL_reply is not valid"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "answer": "token_dead"
+    },
+    {
+      "name": "FCM: another field is invalid",
+      "platform": "android",
+      "status": 400,
+      "body": {
+        "error": {
+          "code": 400,
+          "message": "Invalid value at 'message.android.ttl' (SENTINEL_reply)",
+          "status": "INVALID_ARGUMENT",
+          "details": [
+            {
+              "@type": "type.googleapis.com/google.firebase.fcm.v1.FcmError",
+              "errorCode": "INVALID_ARGUMENT"
+            },
+            {
+              "@type": "type.googleapis.com/google.rpc.BadRequest",
+              "fieldViolations": [
+                {
+                  "field": "message.android.ttl",
+                  "description": "SENTINEL_reply is not valid"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "answer": "rejected"
+    },
+    {
+      "name": "FCM: invalid with no detail",
+      "platform": "android",
+      "status": 400,
+      "body": {
+        "error": {
+          "code": 400,
+          "message": "SENTINEL_reply",
+          "status": "INVALID_ARGUMENT",
+          "details": []
+        }
+      },
+      "answer": "rejected"
+    },
+    {
+      "name": "FCM: the token belongs to another sender",
+      "platform": "android",
+      "status": 403,
+      "body": {
+        "error": {
+          "code": 403,
+          "message": "SenderId mismatch SENTINEL_reply",
+          "status": "PERMISSION_DENIED",
+          "details": [
+            {
+              "@type": "type.googleapis.com/google.firebase.fcm.v1.FcmError",
+              "errorCode": "SENDER_ID_MISMATCH"
+            }
+          ]
+        }
+      },
+      "answer": "rejected"
+    },
+    {
+      "name": "FCM: the access token is not accepted",
+      "platform": "android",
+      "status": 401,
+      "body": {
+        "error": {
+          "code": 401,
+          "message": "Request had invalid authentication credentials. SENTINEL_reply",
+          "status": "UNAUTHENTICATED",
+          "details": []
+        }
+      },
+      "answer": "rejected"
+    },
+    {
+      "name": "FCM: over quota",
+      "platform": "android",
+      "status": 429,
+      "body": {
+        "error": {
+          "code": 429,
+          "message": "SENTINEL_reply",
+          "status": "RESOURCE_EXHAUSTED",
+          "details": [
+            {
+              "@type": "type.googleapis.com/google.firebase.fcm.v1.FcmError",
+              "errorCode": "QUOTA_EXCEEDED"
+            }
+          ]
+        }
+      },
+      "answer": "retry_later"
+    },
+    {
+      "name": "FCM is overloaded",
+      "platform": "android",
+      "status": 503,
+      "body": {
+        "error": {
+          "code": 503,
+          "message": "SENTINEL_reply",
+          "status": "UNAVAILABLE",
+          "details": [
+            {
+              "@type": "type.googleapis.com/google.firebase.fcm.v1.FcmError",
+              "errorCode": "UNAVAILABLE"
+            }
+          ]
+        }
+      },
+      "answer": "retry_later"
+    },
+    {
+      "name": "FCM fails",
+      "platform": "android",
+      "status": 500,
+      "body": {
+        "error": {
+          "code": 500,
+          "message": "SENTINEL_reply",
+          "status": "INTERNAL",
+          "details": [
+            {
+              "@type": "type.googleapis.com/google.firebase.fcm.v1.FcmError",
+              "errorCode": "INTERNAL"
+            }
+          ]
+        }
+      },
+      "answer": "retry_later"
+    },
+    {
+      "name": "a proxy in front of FCM fails",
+      "platform": "android",
+      "status": 502,
+      "body": "SENTINEL_reply",
+      "answer": "retry_later"
+    }
+  ]
+}

@@ -90,6 +90,14 @@ enum L10n {
         static var modeLegend: String { String(localized: "eligibility.mode.legend", table: "Eligibility") }
         static var modeServer: String { String(localized: "eligibility.mode.server", table: "Eligibility") }
         static var modeServerHint: String { String(localized: "eligibility.mode.serverHint", table: "Eligibility") }
+        static var notificationReachedBody: String { String(localized: "eligibility.notification.reached.body", table: "Eligibility") }
+        static var notificationReachedTitle: String { String(localized: "eligibility.notification.reached.title", table: "Eligibility") }
+        static var notifyLabel: String { String(localized: "eligibility.notify.label", table: "Eligibility") }
+        static var notifyPrimingBody: String { String(localized: "eligibility.notify.primingBody", table: "Eligibility") }
+        static var notifyPrimingTitle: String { String(localized: "eligibility.notify.primingTitle", table: "Eligibility") }
+        static var notifyPurpose: String { String(localized: "eligibility.notify.purpose", table: "Eligibility") }
+        static var notifyReceived: String { String(localized: "eligibility.notify.received", table: "Eligibility") }
+        static var notifySettingsNote: String { String(localized: "eligibility.notify.settingsNote", table: "Eligibility") }
         static var offlineNotice: String { String(localized: "eligibility.offlineNotice", table: "Eligibility") }
         static var resultCountry: String { String(localized: "eligibility.result.country", table: "Eligibility") }
         static var resultLabel: String { String(localized: "eligibility.result.label", table: "Eligibility") }
@@ -186,6 +194,7 @@ extension L10n {
         case "auth.accountDeleted": return L10n.Auth.accountDeleted
         case "auth.deleteAccountConfirm.title": return L10n.Auth.deleteAccountConfirmTitle
         case "auth.signOutConfirm.title": return L10n.Auth.signOutConfirmTitle
+        case "eligibility.notify.received": return L10n.Eligibility.notifyReceived
         case "eligibility.offlineNotice": return L10n.Eligibility.offlineNotice
         case "eligibility.result.sourceDevice": return L10n.Eligibility.resultSourceDevice
         case "eligibility.result.sourceFallback": return L10n.Eligibility.resultSourceFallback

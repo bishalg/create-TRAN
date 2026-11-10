@@ -8,10 +8,10 @@
 //! catalogue through `pnpm tokens:sync`, native code through UniFFI; `fixtures/permissions.json`
 //! pins both on every platform.
 //!
-//! Adding a permission (the push phase adds `notifications`): a [`PermissionId`] variant, its
-//! entry below, its strings in every locale, its declarations, and its gateway call.
+//! Adding a permission: a [`PermissionId`] variant, its entry below, its strings in every locale,
+//! its declarations, and its gateway call.
 //!
-//! Verifies: REQ-PRV-001 REQ-PRV-002
+//! Verifies: REQ-PRV-001 REQ-PRV-002 REQ-PSH-008
 
 use serde::Serialize;
 
@@ -21,15 +21,18 @@ use serde::Serialize;
 pub enum PermissionId {
     /// Approximate location while the app is in use, read once (REQ-PRV-006).
     LocationApproximate,
+    /// Showing notifications, asked from "Notify me when I can vote" (REQ-PSH-008).
+    Notifications,
 }
 
 impl PermissionId {
-    pub const ALL: [Self; 1] = [Self::LocationApproximate];
+    pub const ALL: [Self; 2] = [Self::LocationApproximate, Self::Notifications];
 
     /// Stable snake_case name, matching `fixtures/permissions.json`.
     pub fn as_str(self) -> &'static str {
         match self {
             Self::LocationApproximate => "location_approximate",
+            Self::Notifications => "notifications",
         }
     }
 
@@ -37,6 +40,7 @@ impl PermissionId {
     pub fn entry(self) -> Permission {
         match self {
             Self::LocationApproximate => LOCATION_APPROXIMATE,
+            Self::Notifications => NOTIFICATIONS,
         }
     }
 }
@@ -122,15 +126,19 @@ pub enum PermissionFallback {
     /// The person keeps entering the value by hand (the country stays hand-picked); nothing is
     /// presented as an error.
     KeepManualEntry,
+    /// No notification is sent; the verdict and every other feature stay as they are, and the
+    /// person checks again when they choose (REQ-PSH-008).
+    NoReminder,
 }
 
 impl PermissionFallback {
-    pub const ALL: [Self; 1] = [Self::KeepManualEntry];
+    pub const ALL: [Self; 2] = [Self::KeepManualEntry, Self::NoReminder];
 
     /// Stable snake_case name, matching `fixtures/permissions.json`.
     pub fn as_str(self) -> &'static str {
         match self {
             Self::KeepManualEntry => "keep_manual_entry",
+            Self::NoReminder => "no_reminder",
         }
     }
 }
@@ -147,7 +155,9 @@ pub struct Permission {
     pub priming_title: &'static str,
     /// Locale key of the priming body: what the feature does with it, and that it is optional.
     pub priming_body: &'static str,
-    /// Locale key of the purpose string the system prompt shows (`NS…UsageDescription` on iOS).
+    /// Locale key of the purpose string: what the system prompt shows where the platform lets the
+    /// app explain (`NS…UsageDescription` on iOS), and the rationale wherever the app explains it
+    /// itself (Android's rationale, a notification permission, which has no usage description).
     pub purpose: &'static str,
     /// Locale key of the inline note after a permanent refusal (REQ-PRV-004).
     pub settings_note: &'static str,
@@ -155,6 +165,7 @@ pub struct Permission {
     /// `uses-permission` names in `AndroidManifest.xml` (REQ-PRV-005).
     pub android_permissions: &'static [&'static str],
     /// Usage-description keys in the iOS `Info.plist`; each one's value is the purpose string.
+    /// Empty for a permission iOS asks without one (notifications).
     pub ios_usage_descriptions: &'static [&'static str],
 }
 
@@ -185,8 +196,24 @@ pub const LOCATION_APPROXIMATE: Permission = Permission {
     ios_usage_descriptions: &["NSLocationWhenInUseUsageDescription"],
 };
 
+/// "Notify me when I can vote", offered with a "not yet eligible" verdict: one notification when
+/// the person becomes old enough (REQ-PSH-008). iOS asks for it without a usage description;
+/// Android 13 and later declare `POST_NOTIFICATIONS`.
+pub const NOTIFICATIONS: Permission = Permission {
+    id: PermissionId::Notifications,
+    feature: "eligibility_reminder",
+    control: "notify-me-button",
+    priming_title: "eligibility.notify.primingTitle",
+    priming_body: "eligibility.notify.primingBody",
+    purpose: "eligibility.notify.purpose",
+    settings_note: "eligibility.notify.settingsNote",
+    fallback: PermissionFallback::NoReminder,
+    android_permissions: &["android.permission.POST_NOTIFICATIONS"],
+    ios_usage_descriptions: &[],
+};
+
 /// Every permission the apps may ask for, in [`PermissionId::ALL`] order.
-pub const PERMISSIONS: [Permission; 1] = [LOCATION_APPROXIMATE];
+pub const PERMISSIONS: [Permission; 2] = [LOCATION_APPROXIMATE, NOTIFICATIONS];
 
 /// The next step after a tap on the control that needs a permission (REQ-PRV-002).
 ///
@@ -281,6 +308,19 @@ mod tests {
     }
 
     #[test]
+    fn notifications_need_no_ios_usage_description_and_change_nothing_when_refused() {
+        // Verifies: REQ-PSH-008
+        let notifications = PermissionId::Notifications.entry();
+        assert_eq!(
+            notifications.android_permissions,
+            ["android.permission.POST_NOTIFICATIONS"]
+        );
+        assert!(notifications.ios_usage_descriptions.is_empty());
+        assert_eq!(notifications.control, "notify-me-button");
+        assert_eq!(notifications.fallback.as_str(), "no_reminder");
+    }
+
+    #[test]
     fn the_step_table_matches_the_spec() {
         // Verifies: REQ-PRV-002
         use PermissionStatus as S;
@@ -335,9 +375,8 @@ mod tests {
         for step in PermissionStep::ALL {
             assert_eq!(serde_json::to_value(step).unwrap(), step.as_str());
         }
-        assert_eq!(
-            serde_json::to_value(PermissionFallback::KeepManualEntry).unwrap(),
-            "keep_manual_entry"
-        );
+        for fallback in PermissionFallback::ALL {
+            assert_eq!(serde_json::to_value(fallback).unwrap(), fallback.as_str());
+        }
     }
 }

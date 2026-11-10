@@ -1,6 +1,7 @@
-// Verifies: REQ-PRV-003 REQ-PRV-006
+// Verifies: REQ-PRV-003 REQ-PRV-006 REQ-PSH-008
 import CoreLocation
 import Foundation
+import MapKit
 
 /// The only way the app talks to the operating system about a permission (ADR-0043 decision 6).
 /// `SystemPermissionGateway` is the one real implementation; `FakePermissionGateway` stands in for
@@ -8,11 +9,13 @@ import Foundation
 /// decided here: `permissionStep` (Rust, through UniFFI) does that from the status this reports.
 @MainActor
 protocol PermissionGateway: AnyObject {
-    /// The current answer, mapped to the shared vocabulary. Reading it never shows a prompt.
-    func status(of permission: TranPermissionId) -> TranPermissionStatus
+    /// The current answer, mapped to the shared vocabulary. Reading it never shows a prompt. It is
+    /// asynchronous because iOS reads the notification settings asynchronously.
+    func status(of permission: TranPermissionId) async -> TranPermissionStatus
 
-    /// Shows the system prompt (while-in-use, reduced accuracy for location) and returns the
-    /// person's answer. Called only after a tap and the priming's "Continue" (REQ-PRV-003).
+    /// Shows the system prompt (while-in-use, reduced accuracy for location; alerts, sounds and
+    /// badges for notifications) and returns the person's answer. Called only after a tap and the
+    /// priming's "Continue" (REQ-PRV-003, REQ-PSH-008).
     func request(_ permission: TranPermissionId) async -> TranPermissionStatus
 
     /// One approximate location reading, or `nil` when none comes (no permission, no signal).
@@ -29,24 +32,26 @@ protocol CountryResolver: Sendable {
     func countryCode(at location: CLLocation) async -> String?
 }
 
-/// `CLGeocoder` on the device. It may use Apple's geocoding service; without an answer the
-/// feature falls back like a refusal (ADR-0043, consequences). The coordinates go to no TRAN
-/// server and are not kept.
+/// MapKit's reverse geocoding (`MKReverseGeocodingRequest`, which replaced `CLGeocoder` in iOS
+/// 26). It may use Apple's geocoding service; without an answer the feature falls back like a
+/// refusal (ADR-0043, consequences). The coordinates go to no TRAN server and are not kept.
 struct DeviceCountryResolver: CountryResolver {
     func countryCode(at location: CLLocation) async -> String? {
-        let placemarks = try? await CLGeocoder().reverseGeocodeLocation(location)
-        return placemarks?.first?.isoCountryCode
+        guard let request = MKReverseGeocodingRequest(location: location) else { return nil }
+        let items = try? await request.mapItems
+        return items?.first?.addressRepresentations?.region?.identifier
     }
 }
 
 /// The snake-case names `fixtures/permissions.json` and the screen contract's `permission` given
 /// use (`location_approximate`, `denied_permanently`).
 extension TranPermissionId {
-    static let all: [TranPermissionId] = [.locationApproximate]
+    static let all: [TranPermissionId] = [.locationApproximate, .notifications]
 
     var wire: String {
         switch self {
         case .locationApproximate: return "location_approximate"
+        case .notifications: return "notifications"
         }
     }
 

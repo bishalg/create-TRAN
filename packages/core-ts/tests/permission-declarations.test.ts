@@ -44,9 +44,13 @@ const PERMISSION_GATEWAYS = {
     'apps/android/app/src/main/kotlin/com/tran/voting/permissions/SystemPermissionGateway.kt',
 } as const;
 
-/** Calls that ask the system or read its answer; only a gateway may contain them. */
+/**
+ * Calls that ask the system or read its answer; only a gateway may contain them. On iOS the
+ * notification permission is `requestAuthorization` and the settings read, not the notification
+ * center itself: the push gateway also uses the center, for its delegate (push-guards.test.ts).
+ */
 const PLATFORM_PERMISSION_APIS = {
-  ios: /\bCLLocationManager\b|\brequest(?:WhenInUse|Always|TemporaryFullAccuracy)Authorization\b|\bUNUserNotificationCenter\b/,
+  ios: /\bCLLocationManager\b|\brequest(?:WhenInUse|Always|TemporaryFullAccuracy)?Authorization\b|\b(?:get)?[nN]otificationSettings\b/,
   android:
     /\brequestPermissions\s*\(|\bActivityResultContracts\.Request(?:Multiple)?Permissions?\b|\b(?:check|request)SelfPermission\b|\bshouldShowRequestPermissionRationale\b|\bLocationManager\b/,
 } as const;
@@ -142,8 +146,9 @@ describe('declared permissions and the catalogue agree (REQ-PRV-005)', () => {
     ).toEqual([]);
   });
 
-  // Red until the iOS and Android permission packages declare location (spec 026): the shared
-  // core adds the catalogue entry first, and this names the declaration still missing.
+  // Red until the platform packages declare each entry: the shared core adds the catalogue entry
+  // first, and this names the declaration still missing. Expected red after spec 027's shared
+  // core: `POST_NOTIFICATIONS` in the Android manifest, which the Android push package adds.
   it('declares every catalogue entry on the platforms it names', () => {
     const missing = [
       ...catalogueAndroid
@@ -222,9 +227,13 @@ describe('only the permission gateway asks the operating system (REQ-PRV-003)', 
       'a/View.swift': 'let manager = CLLocationManager()\nmanager.requestWhenInUseAuthorization()',
       'a/Note.swift': '// CLLocationManager lives in the gateway',
       [PERMISSION_GATEWAYS.ios]: 'manager.requestWhenInUseAuthorization()',
+      'a/Ask.swift':
+        'try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert])',
+      'a/Read.swift': 'let settings = await center.notificationSettings()',
+      'a/Delegate.swift': 'UNUserNotificationCenter.current().delegate = self',
     };
     expect(permissionCallers(swift, PLATFORM_PERMISSION_APIS.ios, PERMISSION_GATEWAYS.ios)).toEqual(
-      ['a/View.swift']
+      ['a/View.swift', 'a/Ask.swift', 'a/Read.swift']
     );
     const kotlin = {
       'b/Screen.kt':

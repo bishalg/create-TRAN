@@ -23,10 +23,16 @@ uuid = { workspace = true }
 sha2 = { workspace = true }
 base64 = { workspace = true }
 getrandom = { workspace = true }
+hyper = { workspace = true }
+hyper-util = { workspace = true }
+hyper-rustls = { workspace = true }
+http-body-util = { workspace = true }
+aws-lc-rs = { workspace = true }
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }
-http-body-util = "0.1"
+# The fake APNs server speaks HTTP/2 without TLS, as the sender's client does (prior knowledge).
+axum = { workspace = true, features = ["http2"] }
 tracing-subscriber = { workspace = true, features = ["registry"] }
 
 [lints]

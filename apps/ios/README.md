@@ -13,6 +13,7 @@ Platform-native **N** in TRAN: Swift + SwiftUI, sharing brand tokens and **offli
 | HTTP API client                     | `TranApiClient` — `GET /api/health` + `POST /api/vote/eligibility`; base URL from `TRAN_API_BASE_URL`, loopback-only ATS exception (REQ-NAT-011)  |
 | API session (spec 022)              | `Session/`: `TranSessionClient` (access token in memory, one shared refresh), `KeychainSessionVault`, restore on launch, privacy cover (ADR-0039) |
 | Permissions (spec 026)              | `Permissions/`: "Use my location" asks only after a tap and the priming; `SystemPermissionGateway` is the only caller of `CLLocationManager`      |
+| Push (spec 027)                     | `Push/`: `pushSync` keeps the registration; off unless built with `TRAN_PUSH_ENABLED=YES` (docs/CREDENTIALS.md)                                   |
 | Store readiness (REQ-MOB-010)       | `Support/PrivacyInfo.xcprivacy` (no tracking, required-reason APIs), `ITSAppUsesNonExemptEncryption: false`; guarded by `store-readiness.test.ts` |
 
 `KeychainSessionVaultTests` needs a signed test host: under `pnpm ios:test` (`CODE_SIGNING_ALLOWED=NO`) the simulator
@@ -37,7 +38,7 @@ apps/ios/
 
 ## Prerequisites
 
-- Xcode 16+ with an iOS simulator
+- Xcode 26 or newer with an iOS simulator; the app targets iOS 26.0, the previous major release (ADR-0045)
 - Rust stable + `rustup target add aarch64-apple-ios-sim` (script adds this automatically)
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen): `brew install xcodegen`
 

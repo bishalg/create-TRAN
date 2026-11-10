@@ -1,7 +1,7 @@
 package com.tran.voting
 
 import android.app.Activity
-import android.os.Build
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,13 +9,18 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.core.view.WindowCompat
 import com.tran.voting.api.TranApiClient
 import com.tran.voting.api.TranRequestFailure
@@ -30,6 +35,19 @@ import com.tran.voting.permissions.StagedPermissionGateway
 import com.tran.voting.permissions.SystemCountryGeocoder
 import com.tran.voting.permissions.SystemPermissionGateway
 import com.tran.voting.permissions.permissionGatewayFor
+import com.tran.voting.push.InMemoryPushStore
+import com.tran.voting.push.NotificationOpens
+import com.tran.voting.push.NotificationReminder
+import com.tran.voting.push.PushEvents
+import com.tran.voting.push.PushGateway
+import com.tran.voting.push.PushPreferences
+import com.tran.voting.push.PushRegistration
+import com.tran.voting.push.PushStore
+import com.tran.voting.push.PushTrigger
+import com.tran.voting.push.StagedPushGateway
+import com.tran.voting.push.SystemPushGateway
+import com.tran.voting.push.isNotificationOpen
+import com.tran.voting.push.pushGatewayFor
 import com.tran.voting.ui.AuditorScreen
 import com.tran.voting.ui.AuthSession
 import com.tran.voting.ui.AuthWelcomeScreen
@@ -40,6 +58,7 @@ import com.tran.voting.ui.feedback.LocalTranFeedback
 import com.tran.voting.ui.feedback.TranFeedback
 import com.tran.voting.ui.feedback.TranFeedbackHost
 import com.tran.voting.ui.feedback.TranReporting
+import com.tran.voting.ui.feedback.tranLogcat
 import com.tran.voting.session.ActivityPrivacyShieldTarget
 import com.tran.voting.session.EXTRA_DISABLE_PRIVACY_SHIELD
 import com.tran.voting.session.KeystoreSessionVault
@@ -52,11 +71,15 @@ import com.tran.voting.session.validateRestoredSession
 import kotlinx.coroutines.launch
 import uniffi.tran_uniffi.TranAppDestination
 import uniffi.tran_uniffi.TranErrorCode
+import uniffi.tran_uniffi.TranLogLevel
 import uniffi.tran_uniffi.TranPresentation
 import uniffi.tran_uniffi.TranUserAction
 import uniffi.tran_uniffi.TranUserRole
 
 class MainActivity : ComponentActivity() {
+    // Notification taps while the activity lives (REQ-PSH-013); a cold start reads the vault anyway.
+    private val notificationOpens = NotificationOpens()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Uncaught exceptions are reported, then end the app as before (REQ-ERR-011).
@@ -76,18 +99,32 @@ class MainActivity : ComponentActivity() {
             SystemPermissionGateway(this)
         }
         val geocoder = SystemCountryGeocoder(this)
+        // Spec 027: FCM only in a build with its four values; a staged `notifications` permission
+        // stages push too, so a debug run never reaches FCM. Without either, push is unavailable.
+        val push = pushGatewayFor(BuildConfig.DEBUG, intent?.getStringExtra(EXTRA_PERMISSION)) { SystemPushGateway(this) }
+        val pushStore = PushPreferences(this)
         setContent {
             NavigationCoordinator(
                 initialSession = initialSession,
                 sessions = sessions,
                 permissions = permissions,
                 geocoder = geocoder,
+                push = push,
+                pushStore = pushStore,
+                notificationOpens = notificationOpens,
+                // A tap on a notification goes through the director with the stored session (REQ-PSH-013).
+                storedSession = { restoredSession(vault) },
                 onSignedInChange = { signedIn ->
-                    val sdk = Build.VERSION.SDK_INT
-                    applyPrivacyMeasure(shield, privacyMeasure(signedIn, sdk, BuildConfig.DEBUG, shieldOffRequested), sdk)
+                    applyPrivacyMeasure(shield, privacyMeasure(signedIn, BuildConfig.DEBUG, shieldOffRequested))
                 },
             )
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (isNotificationOpen(intent)) notificationOpens.opened()
     }
 }
 
@@ -95,6 +132,7 @@ class MainActivity : ComponentActivity() {
  * Root Navigation Coordinator implementing the central director and role branching.
  *
  * Verifies: REQ-NAV-001 REQ-NAV-002 REQ-NAV-003 REQ-NAV-004 REQ-NAV-005 REQ-ACC-004 REQ-ACC-006
+ * Verifies: REQ-PSH-009 REQ-PSH-011 REQ-PSH-013
  */
 @Composable
 fun NavigationCoordinator(
@@ -112,6 +150,13 @@ fun NavigationCoordinator(
     // activity passes the system's, so no test can raise a system dialog.
     permissions: PermissionGateway = remember { StagedPermissionGateway() },
     geocoder: CountryGeocoder = NoCountryGeocoder,
+    // Push (spec 027). Unavailable unless the app passes FCM or a scenario stages it.
+    push: PushGateway = remember { StagedPushGateway() },
+    pushStore: PushStore = remember { InMemoryPushStore() },
+    notificationOpens: NotificationOpens = remember { NotificationOpens() },
+    // Where a notification tap leads: the stored session, through the director. The app reads the
+    // vault; without one, the session in memory is the stored one.
+    storedSession: (() -> AuthSession)? = null,
 ) {
     var session by remember { mutableStateOf(initialSession) }
     val scope = rememberCoroutineScope()
@@ -120,6 +165,49 @@ fun NavigationCoordinator(
     val palette = TranBrandTokens.palette(theme)
     // One feedback center for the app: toasts and confirmations render above every screen.
     val feedback = remember { TranFeedback() }
+    val context = LocalContext.current
+    val registration = remember(push, permissions, sessions, pushStore) {
+        PushRegistration(push, permissions, sessions, pushStore, locale = { context.resources.configuration.locales[0] })
+    }
+    val reminder = remember(push, permissions, registration) {
+        if (push.available) NotificationReminder(permissions, onGranted = { registration.sync(PushTrigger.PERMISSION_GRANTED) }) else null
+    }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    // The sync runs at launch (the first start) and on every return to the foreground (REQ-PSH-009).
+    DisposableEffect(lifecycle, registration) {
+        var launched = false
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) {
+                val trigger = if (launched) PushTrigger.FOREGROUND else PushTrigger.LAUNCH
+                launched = true
+                scope.launch { registration.sync(trigger) }
+            }
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
+    }
+    // A new token syncs; a notification in the foreground is the catalogue's toast, never a system
+    // notification over the app (REQ-PSH-013).
+    DisposableEffect(push, registration, feedback) {
+        push.listen(object : PushEvents {
+            override fun tokenChanged() {
+                scope.launch { registration.sync(PushTrigger.NEW_TOKEN) }
+            }
+
+            override fun messageInForeground() {
+                if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+                    feedback.acknowledge(TranUserAction.NOTIFICATION_RECEIVED)
+                }
+            }
+        })
+        onDispose { push.listen(null) }
+    }
+    LaunchedEffect(notificationOpens.count) {
+        if (notificationOpens.count > 0) {
+            tranLogcat(TranLogLevel.DEBUG, "notification opened")
+            storedSession?.let { session = it() }
+        }
+    }
     // An expired session asks first; "Sign in again" ends it (REQ-ERR-010).
     LaunchedEffect(feedback) {
         feedback.onErrorConfirmed(TranErrorCode.AUTH_SESSION_EXPIRED) {
@@ -140,9 +228,17 @@ fun NavigationCoordinator(
     // the server is asked to revoke it, and whatever the server says (REQ-SEC-022).
     val signOut = {
         feedback.confirm(TranUserAction.SIGN_OUT) {
-            val refreshToken = sessions?.endLocally()
+            // REQ-PSH-011: the recorded registration goes with the session, before it ends.
+            val registered = registration.forget()
+            val ended = sessions?.end()
             session = AuthSession.Unauthenticated
-            if (sessions != null) scope.launch { sessions.revoke(refreshToken) }
+            if (sessions != null && ended != null) {
+                scope.launch {
+                    // The device's own DELETE needs the session, so it goes before the revoke.
+                    if (registered) registration.unregisterAfterSignOut(ended)
+                    sessions.revoke(ended.refreshToken)
+                }
+            }
         }
     }
     // Deleting is the opposite of signing out (ADR-0041 decision 4): it asks first, and the device
@@ -161,6 +257,8 @@ fun NavigationCoordinator(
                 scope.launch {
                     try {
                         accountClient.deleteAccount()
+                        // The server removed every registration of the user (REQ-PSH-003).
+                        registration.forget()
                         session = AuthSession.Unauthenticated
                         feedback.acknowledge(TranUserAction.ACCOUNT_DELETED)
                     } catch (failure: TranRequestFailure) {
@@ -202,6 +300,7 @@ fun NavigationCoordinator(
                             scope.launch {
                                 try {
                                     sessions.signIn(role)
+                                    registration.sync(PushTrigger.SIGN_IN)
                                 } catch (failure: TranRequestFailure) {
                                     // Not the user's call to hear about: log it, never toast.
                                     feedback.log(failure)
@@ -221,6 +320,7 @@ fun NavigationCoordinator(
                         accountFailure = accountFailure,
                         permissions = permissions,
                         geocoder = geocoder,
+                        notifications = reminder,
                     )
                 }
                 TranAppDestination.AUDITOR_DASHBOARD -> {

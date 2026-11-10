@@ -38,6 +38,7 @@ import com.tran.voting.permissions.LocationCountry
 import com.tran.voting.permissions.NoCountryGeocoder
 import com.tran.voting.permissions.PermissionGateway
 import com.tran.voting.permissions.StagedPermissionGateway
+import com.tran.voting.push.NotificationReminder
 import com.tran.voting.ui.atoms.TranBanner
 import com.tran.voting.ui.atoms.TranButton
 import com.tran.voting.ui.atoms.TranButtonSize
@@ -78,6 +79,8 @@ fun VotingHomeScreen(
     // real gateway, so no test can raise a system dialog.
     permissions: PermissionGateway = remember { StagedPermissionGateway() },
     geocoder: CountryGeocoder = NoCountryGeocoder,
+    // "Notify me when I can vote" (spec 027); `null` when push is unavailable, which hides it (REQ-PSH-012).
+    notifications: NotificationReminder? = null,
 ) {
     var ageText by remember { mutableStateOf("20") }
     var countryCode by remember { mutableStateOf("NP") }
@@ -97,6 +100,8 @@ fun VotingHomeScreen(
     DisposableEffect(confirmation) { onDispose { confirmation.cancel() } }
     // The source caption belongs to a verdict; an input error has none.
     var hasVerdict by remember { mutableStateOf(false) }
+    // A below-minimum verdict offers the reminder (REQ-PSH-008).
+    var notYetEligible by remember { mutableStateOf(false) }
     val reduceMotion = rememberReduceMotion()
     val location = remember(permissions, geocoder) { LocationCountry(permissions, geocoder) }
 
@@ -205,6 +210,7 @@ fun VotingHomeScreen(
                     resultText = check.verdict ?: resultPlaceholder
                     validationMessage = check.problem
                     hasVerdict = check.age != null
+                    notYetEligible = check.eligible == false
                     // REQ-NAT-011: the verdict is already on screen; the API call only moves the status pill
                     // and the source caption. The server confirms in the background, retrying transient
                     // failures; the catalogue decides how the outcome is shown.
@@ -252,6 +258,7 @@ fun VotingHomeScreen(
                         .testTag(ScreenContract.Eligibility.verdictSource),
                 )
             }
+            if (notYetEligible && notifications != null) NotifyMeControl(notifications)
             // Theme choices come from the rust-core registry: every palette renders here after
             // `pnpm tokens:sync`, with its label from the shared dictionaries (`shell.theme.*`).
             TranSegmented(
@@ -292,7 +299,7 @@ fun VotingHomeScreen(
  * The verdict sentence or the reason it was refused, plus the validated age when the input was
  * good enough for the API call.
  */
-private data class OfflineCheck(val verdict: String?, val problem: String?, val age: Int?)
+private data class OfflineCheck(val verdict: String?, val problem: String?, val age: Int?, val eligible: Boolean? = null)
 
 /** Runs a call; returns its classified failure, or `null` on success. Cancellation still propagates. */
 private suspend fun attempt(block: suspend () -> Unit): TranRequestFailure? = try {
@@ -320,7 +327,7 @@ private fun runOfflineCheck(
     val reference = tranReferenceDate()
     return try {
         val result = evaluateVoteEligibilityOffline(age, null, countryCode, reference)
-        OfflineCheck(verdict = result.localizedReason(context), problem = null, age = age.toInt())
+        OfflineCheck(verdict = result.localizedReason(context), problem = null, age = age.toInt(), eligible = result.eligible)
     } catch (e: TranValidationException) {
         OfflineCheck(verdict = null, problem = context.getString(e.localizedMessageRes()), age = null)
     }

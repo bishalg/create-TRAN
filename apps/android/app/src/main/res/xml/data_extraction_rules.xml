@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- REQ-SEC-020 (API 31+): the session vault is excluded from cloud backup and from device transfer. -->
+<!-- REQ-SEC-020 (every supported level, minSdk 33): the session vault is excluded from cloud backup and from device transfer.
+     REQ-PSH-010: so are the push preferences, so two devices never share one installation id. -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="sharedpref" path="tran_session_vault.xml" />
+        <exclude domain="sharedpref" path="tran.push.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="sharedpref" path="tran_session_vault.xml" />
+        <exclude domain="sharedpref" path="tran.push.xml" />
     </device-transfer>
 </data-extraction-rules>

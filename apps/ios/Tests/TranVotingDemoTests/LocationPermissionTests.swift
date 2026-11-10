@@ -260,7 +260,7 @@ final class LocationPermissionTests: XCTestCase {
         XCTAssertEqual(Gateway.status(.authorizedAlways, accuracy: .reducedAccuracy), .grantedApproximate)
     }
 
-    func testUITestPresetsUseTheFakeAndStageAStatus() throws {
+    func testUITestPresetsUseTheFakeAndStageAStatus() async throws {
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "LocationPermissionTests"))
         defer { defaults.removePersistentDomain(forName: "LocationPermissionTests") }
 
@@ -269,12 +269,20 @@ final class LocationPermissionTests: XCTestCase {
         defaults.set("citizen_voter", forKey: AuthSession.launchPresetKey)
         let plain = TranPermissionLaunch.gateway(defaults: defaults)
         XCTAssertTrue(plain is FakePermissionGateway, "a UI test preset never reaches the system prompt")
-        XCTAssertEqual(plain.status(of: .locationApproximate), .notDetermined)
+        let unstaged = await plain.status(of: .locationApproximate)
+        XCTAssertEqual(unstaged, .notDetermined)
 
         defaults.set("location_approximate=denied_permanently", forKey: TranPermissionLaunch.presetKey)
-        XCTAssertEqual(TranPermissionLaunch.gateway(defaults: defaults).status(of: .locationApproximate), .deniedPermanently)
+        let staged = await TranPermissionLaunch.gateway(defaults: defaults).status(of: .locationApproximate)
+        XCTAssertEqual(staged, .deniedPermanently)
+        defaults.set("notifications=denied_permanently", forKey: TranPermissionLaunch.presetKey)
+        let notifications = await TranPermissionLaunch.gateway(defaults: defaults).status(of: .notifications)
+        XCTAssertEqual(notifications, .deniedPermanently)
 
         XCTAssertEqual(TranPermissionLaunch.statuses("camera=granted, location_approximate = restricted"), [.locationApproximate: .restricted])
+        XCTAssertEqual(
+            TranPermissionLaunch.statuses("location_approximate=granted,notifications=not_determined"),
+            [.locationApproximate: .granted, .notifications: .notDetermined])
         XCTAssertEqual(TranPermissionLaunch.statuses("location_approximate=maybe"), [:])
     }
 }

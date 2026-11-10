@@ -1,6 +1,9 @@
 //! Shared by the API integration tests: capture every `tracing` event a request produces.
 #![allow(dead_code, clippy::unwrap_used, clippy::expect_used)]
 
+pub mod devices;
+pub mod providers;
+
 use std::collections::BTreeMap;
 use std::fmt::Debug;
 use std::sync::{Arc, Mutex};

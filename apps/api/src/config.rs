@@ -1,5 +1,7 @@
 use std::env;
 
+use crate::push::providers::PushSettings;
+
 /// How the API writes its logs (REQ-ROB-007).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LogFormat {
@@ -24,6 +26,8 @@ pub struct AppConfig {
     pub environment: String,
     /// `CORS_ALLOWED_ORIGINS`, split on commas; `None` when unset or blank.
     pub cors_allowed_origins: Option<Vec<String>>,
+    /// The APNs and FCM credentials; a provider without them is off (ADR-0046).
+    pub push: PushSettings,
 }
 
 impl AppConfig {
@@ -49,6 +53,7 @@ impl AppConfig {
                         .collect::<Vec<_>>()
                 })
                 .filter(|origins| !origins.is_empty()),
+            push: PushSettings::from_lookup(&lookup),
         }
     }
 

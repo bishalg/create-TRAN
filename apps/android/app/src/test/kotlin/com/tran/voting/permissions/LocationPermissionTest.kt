@@ -47,7 +47,7 @@ class LocationPermissionTest {
     fun `REQ-PRV-003 nothing is asked before a tap`() {
         val gateway = staged(NOT_DETERMINED)
         val location = flow(gateway)
-        assertEquals(LocationPrompt.NONE, location.prompt)
+        assertEquals(PermissionPrompt.NONE, location.prompt)
         assertEquals(emptyList<TranPermissionId>(), gateway.requests)
         assertEquals(0, gateway.fixesTaken)
     }
@@ -57,7 +57,7 @@ class LocationPermissionTest {
         val gateway = staged(NOT_DETERMINED)
         val location = flow(gateway)
         assertNull(location.use())
-        assertEquals(LocationPrompt.PRIMING, location.prompt)
+        assertEquals(PermissionPrompt.PRIMING, location.prompt)
         assertEquals("no system request before priming", emptyList<TranPermissionId>(), gateway.requests)
         assertEquals(0, gateway.fixesTaken)
     }
@@ -68,12 +68,12 @@ class LocationPermissionTest {
         val location = flow(gateway)
         location.use()
         location.dismiss()
-        assertEquals(LocationPrompt.NONE, location.prompt)
+        assertEquals(PermissionPrompt.NONE, location.prompt)
         assertEquals(emptyList<TranPermissionId>(), gateway.requests)
         assertEquals(NOT_DETERMINED, gateway.status(TranPermissionId.LOCATION_APPROXIMATE))
         // The next tap explains again rather than offering Settings.
         location.use()
-        assertEquals(LocationPrompt.PRIMING, location.prompt)
+        assertEquals(PermissionPrompt.PRIMING, location.prompt)
         assertEquals(emptyList<TranPermissionId>(), gateway.requests)
     }
 
@@ -85,7 +85,7 @@ class LocationPermissionTest {
         assertEquals("NP", location.proceed())
         assertEquals(listOf(TranPermissionId.LOCATION_APPROXIMATE), gateway.requests)
         assertEquals(1, gateway.fixesTaken)
-        assertEquals(LocationPrompt.NONE, location.prompt)
+        assertEquals(PermissionPrompt.NONE, location.prompt)
     }
 
     @Test
@@ -94,11 +94,11 @@ class LocationPermissionTest {
         val location = flow(gateway)
         location.use()
         assertNull("the typed country stays", location.proceed())
-        assertEquals(LocationPrompt.NONE, location.prompt)
+        assertEquals(PermissionPrompt.NONE, location.prompt)
         assertEquals(0, gateway.fixesTaken)
         // Android can still ask: priming again, and the system prompt only after Continue.
         location.use()
-        assertEquals(LocationPrompt.PRIMING, location.prompt)
+        assertEquals(PermissionPrompt.PRIMING, location.prompt)
         assertEquals(1, gateway.requests.size)
     }
 
@@ -108,11 +108,11 @@ class LocationPermissionTest {
             val gateway = staged(DENIED, answer = DENIED_PERMANENTLY)
             val location = flow(gateway)
             location.use()
-            assertEquals(LocationPrompt.PRIMING, location.prompt)
+            assertEquals(PermissionPrompt.PRIMING, location.prompt)
             assertNull(location.proceed())
-            assertEquals("no note straight after the refusal", LocationPrompt.NONE, location.prompt)
+            assertEquals("no note straight after the refusal", PermissionPrompt.NONE, location.prompt)
             location.use()
-            assertEquals(LocationPrompt.SETTINGS_NOTE, location.prompt)
+            assertEquals(PermissionPrompt.SETTINGS_NOTE, location.prompt)
             location.use()
             assertEquals("asked only once", 1, gateway.requests.size)
             assertEquals(0, gateway.fixesTaken)
@@ -124,7 +124,7 @@ class LocationPermissionTest {
             val gateway = staged(status)
             val location = flow(gateway)
             assertNull(location.use())
-            assertEquals("$status", LocationPrompt.SETTINGS_NOTE, location.prompt)
+            assertEquals("$status", PermissionPrompt.SETTINGS_NOTE, location.prompt)
             location.openSettings()
             assertEquals("$status", 1, gateway.settingsOpened)
             assertEquals("$status", emptyList<TranPermissionId>(), gateway.requests)
@@ -138,7 +138,7 @@ class LocationPermissionTest {
             val gateway = staged(status)
             val location = flow(gateway, geocoder = { "np" })
             assertEquals("$status", "NP", location.use())
-            assertEquals("$status", LocationPrompt.NONE, location.prompt)
+            assertEquals("$status", PermissionPrompt.NONE, location.prompt)
             assertEquals("$status", emptyList<TranPermissionId>(), gateway.requests)
         }
     }

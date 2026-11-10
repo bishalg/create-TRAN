@@ -1,0 +1,32 @@
+[
+  {
+    "file": "apps/android/app/src/androidTest/kotlin/com/tran/voting/ui/ScreenContractTest.kt",
+    "count": 1,
+    "reason": "A generated screen scenario that needs something this platform's interpreter cannot stage is skipped with the scenario's name and the missing capability (ADR-0038); pnpm screens:check reports every such gap."
+  },
+  {
+    "file": "apps/ios/Tests/TranVotingDemoUITests/ScreenContractUITests.swift",
+    "count": 1,
+    "reason": "A generated screen scenario that needs something this platform's interpreter cannot stage is skipped with the scenario's name and the missing capability (ADR-0038); pnpm screens:check reports every such gap."
+  },
+  {
+    "file": "apps/ios/Tests/TranVotingDemoTests/KeychainSessionVaultTests.swift",
+    "count": 1,
+    "reason": "A test host without the Keychain entitlement (errSecMissingEntitlement, an unsigned simulator run) cannot store a Keychain item; the machine, not a credential."
+  },
+  {
+    "file": "e2e/smoke/release.spec.ts",
+    "count": 6,
+    "reason": "The release smoke suite needs the release builds pnpm smoke makes, macOS for iOS, and an attached Android device or an available iPhone simulator; each skip names what the machine lacks."
+  },
+  {
+    "file": "packages/create-tran/tests/agents.test.ts",
+    "count": 1,
+    "reason": "A project scaffolded with --agents none has no .agents/ setup for these tests to read; the template itself always has it, so they run here."
+  },
+  {
+    "file": "packages/create-tran/tests/scaffold-smoke.test.ts",
+    "count": 1,
+    "reason": "A project scaffolded with --agents none has no .agents/ setup to scaffold from; the template itself always has it, so they run here."
+  }
+]

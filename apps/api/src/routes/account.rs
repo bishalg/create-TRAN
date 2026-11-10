@@ -17,8 +17,9 @@ use crate::state::AppState;
 /// The log says that a deletion happened, never whose: the request id is the whole audit trail.
 pub async fn delete_account(
     State(state): State<AppState>,
-    Authenticated(session): Authenticated,
+    Authenticated(live): Authenticated,
 ) -> Result<Response, ApiError> {
+    let session = live.session;
     state.eraser.erase(&session.user, &state.sessions)?;
     tracing::info!("account deleted");
     let mut response = StatusCode::NO_CONTENT.into_response();

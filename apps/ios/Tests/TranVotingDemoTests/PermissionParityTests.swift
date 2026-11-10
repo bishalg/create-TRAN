@@ -28,6 +28,7 @@ final class PermissionParityTests: XCTestCase {
     private func name(_ fallback: TranPermissionFallback) -> String {
         switch fallback {
         case .keepManualEntry: return "keep_manual_entry"
+        case .noReminder: return "no_reminder"
         }
     }
 

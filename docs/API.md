@@ -261,7 +261,60 @@ A missing, unknown, revoked or expired access token answers `401 auth.session_ex
 and erases nothing; so does a second delete with the same token. If the eraser fails (a fork's database), the answer is
 `500 server.internal` and nothing was revoked, so the client keeps its session. A deletion logs one `info` event,
 `account deleted`, carrying the request id and nothing about the user. The demo accounts are shared per role, so
-deleting one signs out everyone using that role; signing in again creates it anew.
+deleting one signs out everyone using that role; signing in again creates it anew. Deletion also removes every push
+registration of the user (REQ-PSH-003).
+
+---
+
+## Devices: `/api/devices/{installation_id}`
+
+The push registry ([spec 027](./specs/027-push-and-devices.md), [ADR-0044](./adr/0044-push-is-a-server-owned-registry.md),
+playbook [PUSH.md](./PUSH.md)). Both routes need the access token, fall under the same `Origin` check and
+`Cache-Control: no-store` as `/api/auth/*`, and answer failures with the envelope below. `installation_id` is the random
+version-4 UUID the app created on first launch, hyphenated, either case.
+
+### `PUT /api/devices/{installation_id}` — register this installation's token
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' -X PUT \
+  http://127.0.0.1:3001/api/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c \
+  -H "Authorization: Bearer $ACCESS_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"platform": "ios", "push_token": "a1b2…(64 hex)", "environment": "sandbox",
+       "locale": "ne-NP", "app_version": "1.4.0", "marketing": false}'
+```
+
+`204`, no body. It creates or replaces the installation's registration, bound to the caller and to **this session**;
+sending it again is harmless and refreshes it. Any older registration of the same token, of any installation or user, is
+removed first (REQ-PSH-002).
+
+| Field         | Rule                                                                                                |
+| :------------ | :-------------------------------------------------------------------------------------------------- |
+| `platform`    | `ios` or `android`                                                                                  |
+| `push_token`  | iOS: even-length hex, 64–200 characters (held lowercase). Android: 32–1024 of `[A-Za-z0-9_:-]`      |
+| `environment` | `sandbox` or `production`; Android is always `production` (FCM has one)                             |
+| `locale`      | a language tag (`en`, `ne-NP`, `zh-Hant-TW`): 2–3 letters, up to three `-` subtags, ≤ 35 characters |
+| `app_version` | a digit, then up to 31 of `[0-9A-Za-z.+-]` (`1.4.0+12`)                                             |
+| `marketing`   | optional boolean, `false` unless the person opted in to marketing messages                          |
+
+Unknown fields, a bad id or any rule broken answers `400 request.malformed` naming the field, never its value. A
+missing, unknown or expired access token answers `401 auth.session_expired` and stores nothing.
+
+### `DELETE /api/devices/{installation_id}` — unregister
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' -X DELETE \
+  http://127.0.0.1:3001/api/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+`204` whether or not a registration existed; another user's registration of that id stays. The call is a courtesy: the
+server already removes a session's registrations when the session ends (sign-out, a replayed refresh token) and all of a
+user's on account deletion (REQ-PSH-003).
+
+Registry events log fixed fields only: `device registered` (`platform`, `environment`, `replaced`), `device
+unregistered` (`removed`), and from the sender `push token dead; registration removed`, `push rejected by the provider`
+(`platform`) and `stale device registrations pruned` (`removed`). The request span logs the path as
+`/api/devices/{installation_id}`, so no installation id or token reaches a log (REQ-PSH-007).
 
 ---
 
@@ -413,8 +466,9 @@ try {
 | `/api/vote/eligibility` | `apps/api/src/routes/vote.rs`    |
 | `/api/auth/*`           | `apps/api/src/routes/auth.rs`    |
 | `/api/account`          | `apps/api/src/routes/account.rs` |
+| `/api/devices/*`        | `apps/api/src/routes/devices.rs` |
 
 Router wiring: `apps/api/src/routes/mod.rs`.
 
 Integration tests: `apps/api/tests/api_test.rs`, `apps/api/tests/auth_test.rs`, `apps/api/tests/account_test.rs`,
-`apps/api/tests/security_headers_test.rs`.
+`apps/api/tests/devices_test.rs`, `apps/api/tests/push_test.rs`, `apps/api/tests/security_headers_test.rs`.

@@ -1,5 +1,5 @@
 {
-  "$comment": "Failure modes every implementation must handle (REQ-ROB-010, ADR-0029). `server`: requests the Axum API must reject with the envelope and exactly one `request failed` log event — consumed by apps/api/tests/failure_modes.rs. `responses`: HTTP answers every client must classify the same way — consumed by packages/core-ts/tests/failure-modes.test.ts, TranApiClientTests.swift and TranApiClientTests.kt. `mustNotLeak` strings may appear in neither the response nor any log line. Add a row first (red), then fix every platform (green). `auth`: like `server`, but `setup` first signs in (`transport` `body` or `cookie`; `rotate: true` also refreshes once, so the pair is spent) and `{access_token}` / `{refresh_token}` in the request and in `mustNotLeak` stand for that real pair (REQ-SEC-014); consumed by apps/api/tests/failure_modes.rs only.",
+  "$comment": "Failure modes every implementation must handle (REQ-ROB-010, ADR-0029). `server`: requests the Axum API must reject with the envelope and exactly one `request failed` log event — consumed by apps/api/tests/failure_modes.rs. `responses`: HTTP answers every client must classify the same way — consumed by packages/core-ts/tests/failure-modes.test.ts, TranApiClientTests.swift and TranApiClientTests.kt. `mustNotLeak` strings may appear in neither the response nor any log line. Add a row first (red), then fix every platform (green). `auth`: like `server`, but `setup` first signs in (`transport` `body` or `cookie`; `rotate: true` also refreshes once, so the pair is spent) and `{access_token}` / `{refresh_token}` in the request and in `mustNotLeak` stand for that real pair (REQ-SEC-014); consumed by apps/api/tests/failure_modes.rs only. The device rows (REQ-PSH-007) add the push token and the installation id to `mustNotLeak`.",
   "server": [
     {
       "id": "FM-S01",
@@ -289,6 +289,152 @@
       },
       "expect": { "status": 401, "code": "auth.session_expired", "logLevel": "info" },
       "mustNotLeak": ["{refresh_token}", "{access_token}", "voter-001"]
+    },
+    {
+      "id": "FM-A09",
+      "name": "a device registration with a bad locale never echoes the token or the installation id",
+      "setup": {
+        "transport": "body"
+      },
+      "request": {
+        "method": "PUT",
+        "path": "/api/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
+        "headers": {
+          "authorization": "Bearer {access_token}"
+        },
+        "body": "{\"platform\": \"ios\", \"push_token\": \"5e4f1d2c3b4a59687706f5e4d3c2b1a05e4f1d2c3b4a59687706f5e4d3c2b1a0\", \"environment\": \"production\", \"locale\": \"SENTINEL_locale\", \"app_version\": \"1.4.0\"}"
+      },
+      "expect": {
+        "status": 400,
+        "code": "request.malformed",
+        "logLevel": "warn"
+      },
+      "mustNotLeak": [
+        "5e4f1d2c3b4a59687706f5e4d3c2b1a05e4f1d2c3b4a59687706f5e4d3c2b1a0",
+        "2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
+        "SENTINEL_locale",
+        "{access_token}"
+      ]
+    },
+    {
+      "id": "FM-A10",
+      "name": "a device route with an installation id that is not a UUID",
+      "setup": {
+        "transport": "body"
+      },
+      "request": {
+        "method": "DELETE",
+        "path": "/api/devices/SENTINEL-installation",
+        "headers": {
+          "authorization": "Bearer {access_token}"
+        },
+        "contentType": null
+      },
+      "expect": {
+        "status": 400,
+        "code": "request.malformed",
+        "logLevel": "warn"
+      },
+      "mustNotLeak": ["SENTINEL-installation", "{access_token}"]
+    },
+    {
+      "id": "FM-A11",
+      "name": "a device registration that claims another user",
+      "setup": {
+        "transport": "body"
+      },
+      "request": {
+        "method": "PUT",
+        "path": "/api/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
+        "headers": {
+          "authorization": "Bearer {access_token}"
+        },
+        "body": "{\"platform\": \"ios\", \"push_token\": \"5e4f1d2c3b4a59687706f5e4d3c2b1a05e4f1d2c3b4a59687706f5e4d3c2b1a0\", \"environment\": \"production\", \"locale\": \"en\", \"app_version\": \"1.4.0\", \"user_id\": \"SENTINEL-user\"}"
+      },
+      "expect": {
+        "status": 400,
+        "code": "request.malformed",
+        "logLevel": "warn"
+      },
+      "mustNotLeak": [
+        "5e4f1d2c3b4a59687706f5e4d3c2b1a05e4f1d2c3b4a59687706f5e4d3c2b1a0",
+        "2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
+        "SENTINEL-user",
+        "{access_token}"
+      ]
+    },
+    {
+      "id": "FM-A12",
+      "name": "a device registration without a bearer token",
+      "setup": {
+        "transport": "body"
+      },
+      "request": {
+        "method": "PUT",
+        "path": "/api/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
+        "body": "{\"platform\": \"ios\", \"push_token\": \"5e4f1d2c3b4a59687706f5e4d3c2b1a05e4f1d2c3b4a59687706f5e4d3c2b1a0\", \"environment\": \"production\", \"locale\": \"en\", \"app_version\": \"1.4.0\"}"
+      },
+      "expect": {
+        "status": 401,
+        "code": "auth.session_expired",
+        "logLevel": "info"
+      },
+      "mustNotLeak": [
+        "5e4f1d2c3b4a59687706f5e4d3c2b1a05e4f1d2c3b4a59687706f5e4d3c2b1a0",
+        "2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
+        "{access_token}",
+        "{refresh_token}"
+      ]
+    },
+    {
+      "id": "FM-A13",
+      "name": "a device registration from a foreign origin",
+      "setup": {
+        "transport": "cookie"
+      },
+      "request": {
+        "method": "PUT",
+        "path": "/api/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
+        "headers": {
+          "authorization": "Bearer {access_token}",
+          "cookie": "tran_refresh={refresh_token}",
+          "origin": "https://SENTINEL-origin.example"
+        },
+        "body": "{\"platform\": \"ios\", \"push_token\": \"5e4f1d2c3b4a59687706f5e4d3c2b1a05e4f1d2c3b4a59687706f5e4d3c2b1a0\", \"environment\": \"production\", \"locale\": \"en\", \"app_version\": \"1.4.0\"}"
+      },
+      "expect": {
+        "status": 403,
+        "code": "auth.forbidden",
+        "logLevel": "warn"
+      },
+      "mustNotLeak": [
+        "5e4f1d2c3b4a59687706f5e4d3c2b1a05e4f1d2c3b4a59687706f5e4d3c2b1a0",
+        "2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
+        "SENTINEL-origin",
+        "{access_token}",
+        "{refresh_token}"
+      ]
+    },
+    {
+      "id": "FM-A14",
+      "name": "unregistering a device with the refresh token as the bearer",
+      "setup": {
+        "transport": "body"
+      },
+      "request": {
+        "method": "DELETE",
+        "path": "/api/devices/2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
+        "headers": {
+          "authorization": "Bearer {refresh_token}"
+        },
+        "contentType": null
+      },
+      "expect": {
+        "status": 401,
+        "code": "auth.session_expired",
+        "logLevel": "info"
+      },
+      "mustNotLeak": ["2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c", "{refresh_token}", "voter-001"]
     }
   ],
   "responses": [

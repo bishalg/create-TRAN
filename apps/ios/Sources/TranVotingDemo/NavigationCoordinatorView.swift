@@ -4,6 +4,7 @@ import SwiftUI
 ///
 /// Verifies: REQ-NAV-001 REQ-NAV-002 REQ-NAV-003 REQ-NAV-004 REQ-NAV-005 REQ-SEC-021 REQ-SEC-023
 /// Verifies: REQ-ACC-004 REQ-ACC-005 REQ-ACC-006
+/// Verifies: REQ-PSH-009 REQ-PSH-011 REQ-PSH-013
 struct NavigationCoordinatorView: View {
     @State private var session: AuthSession
     @State private var isBootstrapping: Bool
@@ -20,22 +21,25 @@ struct NavigationCoordinatorView: View {
     @State private var feedback = TranFeedback()
     /// The one account deletion; the "Delete account" control reads whether it is in flight.
     @State private var deletion = TranAccountDeletion()
+    /// This installation's push registration, kept right by `pushSync` (spec 027).
+    @State private var push: TranPushRegistration
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var palette: TranPalette { TranBrandTokens.palette(for: theme) }
 
     init(initialSession: AuthSession? = nil) {
+        let client: TranSessionClient
         if let initialSession {
             _session = State(initialValue: initialSession)
             _isBootstrapping = State(initialValue: false)
-            _sessionClient = State(initialValue: TranSessionClient(vault: InMemorySessionVault()))
+            client = TranSessionClient(vault: InMemorySessionVault())
             validatesRestoredSession = false
         } else if let preset = AuthSession.launchPreset() {
             // Debug-only presets bypass the Keychain (ADR-0039). No stored session boots through
             // the splash; a stored one opens its screen at once.
             _session = State(initialValue: preset ?? .unauthenticated)
             _isBootstrapping = State(initialValue: preset == nil)
-            _sessionClient = State(initialValue: TranSessionClient(vault: InMemorySessionVault()))
+            client = TranSessionClient(vault: InMemorySessionVault())
             validatesRestoredSession = false
         } else {
             // The Splash routes from the vault without waiting for the network (REQ-SEC-021).
@@ -43,9 +47,13 @@ struct NavigationCoordinatorView: View {
             let restored = TranSessionLaunch.restore(vault: vault)
             _session = State(initialValue: restored.session)
             _isBootstrapping = State(initialValue: true)
-            _sessionClient = State(initialValue: TranSessionClient(vault: vault))
+            client = TranSessionClient(vault: vault)
             validatesRestoredSession = restored.stored != nil
         }
+        _sessionClient = State(initialValue: client)
+        _push = State(
+            initialValue: TranPushRegistration(
+                gateway: TranPushLaunch.shared, permissions: TranPermissionLaunch.shared, client: client))
     }
 
     var body: some View {
@@ -87,7 +95,10 @@ struct NavigationCoordinatorView: View {
                                 try await client.signIn(role: selectedRole)
                             } catch {
                                 feedback.log(TranRequestFailure.classify(error))
+                                return
                             }
+                            // After sign-in: register this installation to the new session.
+                            await push.sync()
                         }
                     }
                 case .voterDashboard:
@@ -113,14 +124,24 @@ struct NavigationCoordinatorView: View {
                 withAnimation(TranMotion.animation(reduceMotion: reduceMotion)) {
                     session = .unauthenticated
                 }
-                let client = sessionClient
-                Task { await client.signOut() }
+                endSession()
             }
         }
         // Launch, background half: a dead credential opens the dialog above (REQ-SEC-021).
         .task {
             guard validatesRestoredSession else { return }
             await TranSessionRestore.validate(sessionClient, feedback: feedback)
+        }
+        // Push (spec 027): sync at launch and whenever the system delivers a token; a tap opens
+        // what the navigation director says, and a foreground notification is a toast.
+        .task {
+            await push.start(
+                onOpened: openedFromNotification,
+                onForeground: { TranNotificationHandling.arrivedInForeground(feedback) })
+        }
+        // Back in the foreground: the permission may have changed in Settings (REQ-PSH-009).
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await push.sync() } }
         }
         .environment(feedback)
         .environment(deletion)
@@ -136,9 +157,29 @@ struct NavigationCoordinatorView: View {
             withAnimation(TranMotion.animation(reduceMotion: reduceMotion)) {
                 session = .unauthenticated
             }
-            // The client clears the vault and the token before it calls the server (REQ-SEC-022).
-            let client = sessionClient
-            Task { await client.signOut() }
+            endSession()
+        }
+    }
+
+    /// Forgets the push registration and asks the server to drop it while the session can still
+    /// authenticate the call (REQ-PSH-011), then ends the session: the client clears the vault and
+    /// the token before it calls the server (REQ-SEC-022). Neither waits on the screen, which has
+    /// already changed, and neither failure keeps anyone signed in.
+    private func endSession() {
+        let client = sessionClient
+        let push = push
+        Task {
+            await push.signOut()
+            await client.signOut()
+        }
+    }
+
+    /// A tap on a notification (REQ-PSH-013): the screen is the one the Rust navigation director
+    /// resolves for the stored session (signed out: Auth Welcome), never one the payload names.
+    private func openedFromNotification() {
+        withAnimation(TranMotion.animation(reduceMotion: reduceMotion)) {
+            // The body renders `session.destination`, which is this same answer.
+            isBootstrapping = false
         }
     }
 
@@ -152,6 +193,9 @@ struct NavigationCoordinatorView: View {
                 withAnimation(TranMotion.animation(reduceMotion: reduceMotion)) {
                     session = .unauthenticated
                 }
+                // The server dropped every registration; the sync forgets the local record.
+                let push = push
+                Task { await push.sync() }
             },
             onFailed: onFailed
         )

@@ -2,11 +2,12 @@
 
 pub mod account;
 pub mod auth;
+pub mod devices;
 pub mod health;
 pub mod tran;
 pub mod vote;
 
-use axum::routing::{delete, get, post};
+use axum::routing::{delete, get, post, put};
 use axum::Router;
 
 use rust_core::feedback::ErrorCode;
@@ -28,6 +29,10 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/auth/refresh", post(auth::refresh))
         .route("/api/auth/sign-out", post(auth::sign_out))
         .route("/api/account", delete(account::delete_account))
+        .route(
+            "/api/devices/{installation_id}",
+            put(devices::register).delete(devices::unregister),
+        )
         .fallback(not_found)
         .method_not_allowed_fallback(method_not_allowed)
         .with_state(state)

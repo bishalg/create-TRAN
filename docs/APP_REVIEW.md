@@ -31,11 +31,11 @@ shown without a project's own accounts or content; the row says what to do).
 
 ## Notifications
 
-| Rule                                                                                           | Guideline | Status  | Where      |
-| :--------------------------------------------------------------------------------------------- | :-------- | :------ | :--------- |
-| Push is optional: the app works without it, and marketing pushes need explicit opt-in          | 4.5.4     | planned | Push phase |
-| The device token is registered to the signed-in user, replaced when it changes, and removed on | 4.5.4     | planned | Push phase |
-| sign-out and on account deletion, so a signed-out device gets nothing                          |           |         |            |
+| Rule                                                                                           | Guideline | Status | Where                                       |
+| :--------------------------------------------------------------------------------------------- | :-------- | :----- | :------------------------------------------ |
+| Push is optional: the app works without it, and marketing pushes need explicit opt-in          | 4.5.4     | done   | [spec 027](./specs/027-push-and-devices.md) |
+| The device token is registered to the signed-in user, replaced when it changes, and removed on | 4.5.4     | done   | [spec 027](./specs/027-push-and-devices.md) |
+| sign-out and on account deletion, so a signed-out device gets nothing                          |           |        |                                             |
 
 ## Payments
 

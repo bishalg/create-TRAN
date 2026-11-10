@@ -9,6 +9,7 @@ use std::sync::Arc;
 use api::build_app;
 use api::clock::ManualClock;
 use api::config::AppConfig;
+use api::device_store::InMemoryDeviceStore;
 use api::session_store::InMemorySessionStore;
 use api::sessions::Sessions;
 use api::state::AppState;
@@ -67,7 +68,11 @@ impl Api {
         let start = DateTime::<Utc>::from_timestamp(1_800_000_000, 0).unwrap();
         let clock = Arc::new(ManualClock::starting_at(start));
         let state = AppState {
-            sessions: Sessions::new(Arc::new(InMemorySessionStore::default()), clock.clone()),
+            sessions: Sessions::new(
+                Arc::new(InMemorySessionStore::default()),
+                Arc::new(InMemoryDeviceStore::default()),
+                clock.clone(),
+            ),
             ..AppState::from_config(&config)
         };
         Self { state, clock }

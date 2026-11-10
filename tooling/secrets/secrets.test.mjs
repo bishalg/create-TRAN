@@ -9,9 +9,11 @@ import {
   clientNames,
   codeEnvNames,
   compareEnv,
+  credentialTestNames,
   exampleKeys,
   isBinary,
   isLockfile,
+  PUBLIC_BY_DESIGN,
   redact,
   scanByPath,
   scanFiles,
@@ -184,6 +186,16 @@ describe('env contract (REQ-SEC-002)', () => {
       'B is read by code but missing from .env.example',
     ]);
     assert.deepEqual(compareEnv(['A'], ['A', 'Z']), ['Z is in .env.example but no code reads it']);
+    // A variable only a switched-off live test reads is read (REQ-CODE-005).
+    assert.deepEqual(compareEnv(['A'], ['A', 'Z'], ['Z']), []);
+    assert.deepEqual(
+      credentialTestNames({
+        'apps/api/tests/live.rs':
+          '#[ignore = "TODO(credentials): APNS_KEY_ID, Z_TOKEN - it sends"]',
+        'b.ts': '// TODO(credentials): lower - not a marker',
+      }),
+      ['APNS_KEY_ID', 'Z_TOKEN']
+    );
   });
 
   it('REQ-SEC-002 the real repo agrees with .env.example', () => {
@@ -193,6 +205,7 @@ describe('env contract (REQ-SEC-002)', () => {
       Object.fromEntries(
         [
           'apps/api/src/config.rs',
+          'apps/api/src/push/providers.rs',
           'apps/web/src/shared/api/apiUrl.ts',
           'apps/ios/fastlane/Fastfile',
           'apps/ios/fastlane/Appfile',
@@ -202,7 +215,11 @@ describe('env contract (REQ-SEC-002)', () => {
         ].map((path) => [path, read(path)])
       )
     );
-    assert.deepEqual(compareEnv(code, example.keys), []);
+    const live = credentialTestNames({
+      api: read('apps/api/tests/push_live_test.rs'),
+      ios: read('apps/ios/Tests/TranVotingDemoTests/ApnsRegistrationLiveTests.swift'),
+    });
+    assert.deepEqual(compareEnv(code, example.keys, live), []);
   });
 });
 
@@ -224,6 +241,21 @@ describe('client-visible names (REQ-SEC-003)', () => {
     assert.deepEqual(
       found.map((f) => f.name),
       bad
+    );
+  });
+
+  it('REQ-SEC-003 allows exactly the public Firebase API key name, nothing like it', () => {
+    assert.deepEqual(PUBLIC_BY_DESIGN, ['TRAN_FCM_API_KEY']);
+    const names = [
+      'TRAN_FCM_API_KEY',
+      'TRAN_FCM_API_KEY_2',
+      'FCM_API_KEY',
+      'tran_fcm_api_key',
+      'TRAN_FCM_TOKEN',
+    ];
+    assert.deepEqual(
+      secretLikeNames(names.map((name) => ({ source: 's', name }))).map((f) => f.name),
+      names.slice(1)
     );
   });
 

@@ -730,6 +730,10 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_personal_questions(
     ): Int
+    external fun uniffi_tran_uniffi_checksum_func_device_policy(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_push_sync(
+    ): Int
     external fun uniffi_tran_uniffi_checksum_func_session_policy(
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_session_recovery(
@@ -806,6 +810,10 @@ internal object UniffiLib {
     external fun uniffi_tran_uniffi_fn_func_permission_step(`status`: RustBuffer.ByValue,`primed`: Byte,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_personal_questions(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_device_policy(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_push_sync(`state`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_session_policy(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -1016,6 +1024,12 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_tran_uniffi_checksum_func_personal_questions() and 0xFFFF) != 36547) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_tran_uniffi_checksum_func_device_policy() and 0xFFFF) != 1244) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_push_sync() and 0xFFFF) != 22137) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if ((lib.uniffi_tran_uniffi_checksum_func_session_policy() and 0xFFFF) != 15140) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1188,6 +1202,29 @@ public object FfiConverterULong: FfiConverter<ULong, Long> {
 
     override fun write(value: ULong, buf: ByteBuffer) {
         buf.putLong(value.toLong())
+    }
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterLong: FfiConverter<Long, Long> {
+    override fun lift(value: Long): Long {
+        return value
+    }
+
+    override fun read(buf: ByteBuffer): Long {
+        return buf.getLong()
+    }
+
+    override fun lower(value: Long): Long {
+        return value
+    }
+
+    override fun allocationSize(value: Long) = 8UL
+
+    override fun write(value: Long, buf: ByteBuffer) {
+        buf.putLong(value)
     }
 }
 
@@ -1407,6 +1444,53 @@ public object FfiConverterTypeTranCountryVotingAge: FfiConverterRustBuffer<TranC
 
 
 /**
+ * How long the API keeps a registration nobody refreshed, and how often the app refreshes it.
+ */
+data class TranDevicePolicy (
+    /**
+     * The API removes a registration not refreshed for this many days (60).
+     */
+    var `staleAfterDays`: kotlin.UInt
+    , 
+    /**
+     * The app registers an unchanged token again once its registration is this many days old (7).
+     */
+    var `refreshAfterDays`: kotlin.UInt
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranDevicePolicy: FfiConverterRustBuffer<TranDevicePolicy> {
+    override fun read(buf: ByteBuffer): TranDevicePolicy {
+        return TranDevicePolicy(
+            FfiConverterUInt.read(buf),
+            FfiConverterUInt.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranDevicePolicy) = (
+            FfiConverterUInt.allocationSize(value.`staleAfterDays`) +
+            FfiConverterUInt.allocationSize(value.`refreshAfterDays`)
+    )
+
+    override fun write(value: TranDevicePolicy, buf: ByteBuffer) {
+            FfiConverterUInt.write(value.`staleAfterDays`, buf)
+            FfiConverterUInt.write(value.`refreshAfterDays`, buf)
+    }
+}
+
+
+
+/**
  * Everything a native app needs to know about one [`TranErrorCode`].
  */
 data class TranErrorSpec (
@@ -1494,6 +1578,53 @@ public object FfiConverterTypeTranErrorSpec: FfiConverterRustBuffer<TranErrorSpe
 
 
 /**
+ * The registration the app last made and keeps in ordinary app storage.
+ */
+data class TranLastRegistration (
+    /**
+     * The push token it registered.
+     */
+    var `token`: kotlin.String
+    , 
+    /**
+     * When the API answered `204`, in Unix seconds on the device clock.
+     */
+    var `registeredAtUnixS`: kotlin.Long
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranLastRegistration: FfiConverterRustBuffer<TranLastRegistration> {
+    override fun read(buf: ByteBuffer): TranLastRegistration {
+        return TranLastRegistration(
+            FfiConverterString.read(buf),
+            FfiConverterLong.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranLastRegistration) = (
+            FfiConverterString.allocationSize(value.`token`) +
+            FfiConverterLong.allocationSize(value.`registeredAtUnixS`)
+    )
+
+    override fun write(value: TranLastRegistration, buf: ByteBuffer) {
+            FfiConverterString.write(value.`token`, buf)
+            FfiConverterLong.write(value.`registeredAtUnixS`, buf)
+    }
+}
+
+
+
+/**
  * How long a check may run before the screen says it is waiting, and what it says (REQ-LOAD-002).
  */
 data class TranLoadingPolicy (
@@ -1570,7 +1701,8 @@ data class TranPermission (
     var `primingBodyKey`: kotlin.String
     , 
     /**
-     * Locale key of the purpose string the system prompt shows.
+     * Locale key of the purpose string: the system prompt's on iOS where it has one, otherwise the
+     * app's own rationale.
      */
     var `purposeKey`: kotlin.String
     , 
@@ -1590,7 +1722,7 @@ data class TranPermission (
     var `androidPermissions`: List<kotlin.String>
     , 
     /**
-     * Usage-description keys the iOS `Info.plist` declares for it.
+     * Usage-description keys the iOS `Info.plist` declares for it; empty for notifications.
      */
     var `iosUsageDescriptions`: List<kotlin.String>
     
@@ -1772,6 +1904,86 @@ public object FfiConverterTypeTranPersonalQuestion: FfiConverterRustBuffer<TranP
             FfiConverterString.write(value.`labelKey`, buf)
             FfiConverterSequenceTypeTranPersonalAnswer.write(value.`answers`, buf)
             FfiConverterOptionalString.write(value.`requiredBy`, buf)
+    }
+}
+
+
+
+/**
+ * What the app knows when it runs the sync.
+ */
+data class TranPushState (
+    /**
+     * The push gateway found the build's push configuration (APNs entitlement, FCM values).
+     */
+    var `pushAvailable`: kotlin.Boolean
+    , 
+    /**
+     * The platform lets the app show notifications (iOS authorized, provisional or ephemeral;
+     * Android `POST_NOTIFICATIONS` granted, or not needed below API 33).
+     */
+    var `permissionGranted`: kotlin.Boolean
+    , 
+    /**
+     * The app holds an API session to authenticate the call with.
+     */
+    var `hasSession`: kotlin.Boolean
+    , 
+    /**
+     * The token the platform last delivered; `None` until it delivers one.
+     */
+    var `currentToken`: kotlin.String?
+    , 
+    /**
+     * The registration the app recorded; `None` when it has none.
+     */
+    var `lastRegistration`: TranLastRegistration?
+    , 
+    /**
+     * Now, in Unix seconds on the device clock.
+     */
+    var `nowUnixS`: kotlin.Long
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranPushState: FfiConverterRustBuffer<TranPushState> {
+    override fun read(buf: ByteBuffer): TranPushState {
+        return TranPushState(
+            FfiConverterBoolean.read(buf),
+            FfiConverterBoolean.read(buf),
+            FfiConverterBoolean.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalTypeTranLastRegistration.read(buf),
+            FfiConverterLong.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranPushState) = (
+            FfiConverterBoolean.allocationSize(value.`pushAvailable`) +
+            FfiConverterBoolean.allocationSize(value.`permissionGranted`) +
+            FfiConverterBoolean.allocationSize(value.`hasSession`) +
+            FfiConverterOptionalString.allocationSize(value.`currentToken`) +
+            FfiConverterOptionalTypeTranLastRegistration.allocationSize(value.`lastRegistration`) +
+            FfiConverterLong.allocationSize(value.`nowUnixS`)
+    )
+
+    override fun write(value: TranPushState, buf: ByteBuffer) {
+            FfiConverterBoolean.write(value.`pushAvailable`, buf)
+            FfiConverterBoolean.write(value.`permissionGranted`, buf)
+            FfiConverterBoolean.write(value.`hasSession`, buf)
+            FfiConverterOptionalString.write(value.`currentToken`, buf)
+            FfiConverterOptionalTypeTranLastRegistration.write(value.`lastRegistration`, buf)
+            FfiConverterLong.write(value.`nowUnixS`, buf)
     }
 }
 
@@ -2475,7 +2687,11 @@ enum class TranPermissionFallback {
     /**
      * The value stays entered by hand (the country stays hand-picked).
      */
-    KEEP_MANUAL_ENTRY;
+    KEEP_MANUAL_ENTRY,
+    /**
+     * No notification is sent; the verdict and every other feature stay as they are.
+     */
+    NO_REMINDER;
 
     
 
@@ -2514,7 +2730,11 @@ enum class TranPermissionId {
     /**
      * Approximate location while in use, read once to fill the country (REQ-PRV-006).
      */
-    LOCATION_APPROXIMATE;
+    LOCATION_APPROXIMATE,
+    /**
+     * Showing notifications, asked only from "Notify me when I can vote" (REQ-PSH-008).
+     */
+    NOTIFICATIONS;
 
     
 
@@ -2820,6 +3040,55 @@ public object FfiConverterTypeTranPresentation : FfiConverterRustBuffer<TranPres
                 Unit
             }
         }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+/**
+ * What the app does after the sync.
+ */
+
+enum class TranPushAction {
+    
+    /**
+     * `PUT /api/devices/{installation_id}` with the current token; on `204` record the token and
+     * the time.
+     */
+    REGISTER,
+    /**
+     * Clear the recorded registration first, then a best-effort
+     * `DELETE /api/devices/{installation_id}` whose failure changes nothing.
+     */
+    UNREGISTER,
+    /**
+     * Leave everything as it is.
+     */
+    NOTHING;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranPushAction: FfiConverterRustBuffer<TranPushAction> {
+    override fun read(buf: ByteBuffer) = try {
+        TranPushAction.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TranPushAction) = 4UL
+
+    override fun write(value: TranPushAction, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
     }
 }
 
@@ -3200,7 +3469,12 @@ enum class TranUserAction {
     /**
      * The server confirmed a deletion (REQ-ACC-006).
      */
-    ACCOUNT_DELETED;
+    ACCOUNT_DELETED,
+    /**
+     * A push notification arrived in the foreground: show the toast, not a system banner
+     * (REQ-PSH-013).
+     */
+    NOTIFICATION_RECEIVED;
 
     
 
@@ -3547,6 +3821,38 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
         } else {
             buf.put(1)
             FfiConverterString.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeTranLastRegistration: FfiConverterRustBuffer<TranLastRegistration?> {
+    override fun read(buf: ByteBuffer): TranLastRegistration? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeTranLastRegistration.read(buf)
+    }
+
+    override fun allocationSize(value: TranLastRegistration?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeTranLastRegistration.allocationSize(value)
+        }
+    }
+
+    override fun write(value: TranLastRegistration?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeTranLastRegistration.write(value, buf)
         }
     }
 }
@@ -4348,6 +4654,49 @@ public object FfiConverterSequenceTypeTranToastKey: FfiConverterRustBuffer<List<
     UniffiLib.uniffi_tran_uniffi_fn_func_personal_questions(
     
         _status)
+}
+    )
+    }
+    
+
+        /**
+         * The device policy from `rust-core`.
+         *
+         * # Returns
+         *
+         * The stale and refresh windows in days; pinned by the `policy` section of `fixtures/push.json`.
+         */ fun `devicePolicy`(): TranDevicePolicy {
+            return FfiConverterTypeTranDevicePolicy.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_device_policy(
+    
+        _status)
+}
+    )
+    }
+    
+
+        /**
+         * What to do with the push token now (REQ-PSH-009).
+         *
+         * # Arguments
+         *
+         * * `state` — push availability, permission, session, the current token and the recorded
+         * registration, with the device's current time.
+         *
+         * # Returns
+         *
+         * [`TranPushAction::Register`] for a new or changed token, or an unchanged one whose registration
+         * is at least `refresh_after_days` old (or dated in the future); [`TranPushAction::Unregister`]
+         * when push, permission or the session is gone while a registration is recorded;
+         * [`TranPushAction::Nothing`] otherwise, including before the platform delivers a token.
+         */ fun `pushSync`(`state`: TranPushState): TranPushAction {
+            return FfiConverterTypeTranPushAction.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_push_sync(
+    
+        
+        FfiConverterTypeTranPushState.lower(`state`),_status)
 }
     )
     }

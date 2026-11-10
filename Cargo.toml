@@ -49,5 +49,14 @@ sha2 = "0.11"
 base64 = "0.23"
 getrandom = "0.4"
 
+# Push senders (ADR-0046): hyper's client (hyper already serves axum) over rustls with Mozilla's
+# roots, and aws-lc-rs, the crypto rustls runs on, to sign the APNs ES256 and Google RS256 JWTs, so
+# signing adds no second crypto library.
+hyper = { version = "1", features = ["client", "http1", "http2"] }
+hyper-util = { version = "0.1", features = ["client-legacy", "http1", "http2", "tokio"] }
+hyper-rustls = { version = "0.27", default-features = false, features = ["aws-lc-rs", "http1", "http2", "tls12", "webpki-tokio"] }
+http-body-util = "0.1"
+aws-lc-rs = "1"
+
 # Internal Workspace Crates
 rust-core = { path = "crates/rust-core" }

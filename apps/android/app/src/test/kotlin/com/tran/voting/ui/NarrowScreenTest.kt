@@ -1,4 +1,4 @@
-// Verifies: REQ-NAT-013 REQ-ACC-004 REQ-PRV-007
+// Verifies: REQ-NAT-013 REQ-ACC-004 REQ-PRV-007 REQ-PSH-008
 package com.tran.voting.ui
 
 import androidx.compose.runtime.Composable
@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
@@ -23,6 +24,7 @@ import com.tran.voting.generated.TranTheme
 import com.tran.voting.generated.labelRes
 import com.tran.voting.parity.VoteEligibilityParityTest
 import com.tran.voting.permissions.StagedPermissionGateway
+import com.tran.voting.push.stagedPushGateway
 import com.tran.voting.testing.FakeApis
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -34,6 +36,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import uniffi.tran_uniffi.TranPermissionId
 import uniffi.tran_uniffi.TranPermissionStatus
 
 /**
@@ -138,6 +141,36 @@ class NarrowScreenTest {
         val settings = ScreenContract.Eligibility.locationOpenSettings
         compose.waitUntil(5_000) { compose.onAllNodes(hasTestTag(settings)).fetchSemanticsNodes().isNotEmpty() }
         val note = compose.onNodeWithTag(ScreenContract.Eligibility.locationSettingsNote).performScrollTo()
+        val noteBounds = note.getUnclippedBoundsInRoot()
+        val screen = compose.onRoot().getUnclippedBoundsInRoot()
+        assertTrue("the note ends at ${noteBounds.right}, past the ${screen.right} screen", noteBounds.right <= screen.right)
+        assertWhollyOnScreen(compose.onNodeWithTag(settings).performScrollTo(), "open settings")
+    }
+
+    /** "Notify me when I can vote", its Settings note and "Open Settings", whole and on screen (spec 027). */
+    @Test
+    fun `REQ-PSH-008 the notify control and its Settings note fit at the largest text scale`() {
+        largestText {
+            NavigationCoordinator(
+                api = FakeApis.healthy(),
+                permissions = StagedPermissionGateway(TranPermissionStatus.DENIED_PERMANENTLY),
+                push = stagedPushGateway(TranPermissionId.NOTIFICATIONS),
+            )
+        }
+        compose.waitUntil(5_000) { compose.onAllNodes(hasTestTag(ScreenContract.Eligibility.checkButton)).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag(ScreenContract.Eligibility.ageField).performTextReplacement("17")
+        compose.onNodeWithTag(ScreenContract.Eligibility.countryField).performTextReplacement("US")
+        compose.onNodeWithTag(ScreenContract.Eligibility.checkButton).performScrollTo().performClick()
+        val button = ScreenContract.Eligibility.notifyMeButton
+        compose.waitUntil(5_000) { compose.onAllNodes(hasTestTag(button)).fetchSemanticsNodes().isNotEmpty() }
+        // The server check's toast sits over the foot of the screen: dismiss it, as a person would.
+        compose.waitUntil(5_000) { compose.onAllNodes(hasTestTag(ScreenContract.Eligibility.toastDismiss)).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag(ScreenContract.Eligibility.toastDismiss).performClick()
+        assertWhollyOnScreen(compose.onNodeWithTag(button).performScrollTo(), "notify me")
+        compose.onNodeWithTag(button).performClick()
+        val settings = ScreenContract.Eligibility.notifyOpenSettings
+        compose.waitUntil(5_000) { compose.onAllNodes(hasTestTag(settings)).fetchSemanticsNodes().isNotEmpty() }
+        val note = compose.onNodeWithTag(ScreenContract.Eligibility.notifySettingsNote).performScrollTo()
         val noteBounds = note.getUnclippedBoundsInRoot()
         val screen = compose.onRoot().getUnclippedBoundsInRoot()
         assertTrue("the note ends at ${noteBounds.right}, past the ${screen.right} screen", noteBounds.right <= screen.right)

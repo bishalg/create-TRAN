@@ -1,4 +1,4 @@
-// Verifies: REQ-PRV-001 REQ-PRV-002 REQ-PRV-008
+// Verifies: REQ-PRV-001 REQ-PRV-002 REQ-PRV-008 REQ-PSH-008
 package com.tran.voting.parity
 
 import com.tran.voting.generated.ScreenContract
@@ -10,6 +10,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.BeforeClass
 import org.junit.Test
+import uniffi.tran_uniffi.TranPermissionFallback
+import uniffi.tran_uniffi.TranPermissionId
 import uniffi.tran_uniffi.TranPermissionStatus
 import uniffi.tran_uniffi.permissionCatalogue
 import uniffi.tran_uniffi.permissionEntry
@@ -66,6 +68,18 @@ class PermissionParityTest {
             }
         }
         assertEquals(listOf("android.permission.ACCESS_COARSE_LOCATION"), location.androidPermissions)
+    }
+
+    @Test
+    fun `REQ-PSH-008 notifications are a catalogue entry asked from the notify control`() {
+        val row = fixture.getJSONArray("permissions").objects().single { it.getString("id") == "notifications" }
+        val entry = permissionEntry(TranPermissionId.NOTIFICATIONS)
+        assertEquals(row.getString("control"), entry.control)
+        assertEquals(ScreenContract.Eligibility.notifyMeButton, entry.control)
+        assertEquals("no_reminder", entry.fallback.snake())
+        assertEquals(TranPermissionFallback.NO_REMINDER, entry.fallback)
+        assertEquals(listOf("android.permission.POST_NOTIFICATIONS"), entry.androidPermissions)
+        assertEquals("iOS asks without a usage description", emptyList<String>(), entry.iosUsageDescriptions)
     }
 
     @Test

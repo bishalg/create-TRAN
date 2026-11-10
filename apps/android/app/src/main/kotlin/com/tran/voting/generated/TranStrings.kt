@@ -159,6 +159,22 @@ object TranStrings {
         @StringRes
         val modeServerHint: Int = R.string.eligibility_mode_server_hint // eligibility.mode.serverHint
         @StringRes
+        val notificationReachedBody: Int = R.string.eligibility_notification_reached_body // eligibility.notification.reached.body
+        @StringRes
+        val notificationReachedTitle: Int = R.string.eligibility_notification_reached_title // eligibility.notification.reached.title
+        @StringRes
+        val notifyLabel: Int = R.string.eligibility_notify_label // eligibility.notify.label
+        @StringRes
+        val notifyPrimingBody: Int = R.string.eligibility_notify_priming_body // eligibility.notify.primingBody
+        @StringRes
+        val notifyPrimingTitle: Int = R.string.eligibility_notify_priming_title // eligibility.notify.primingTitle
+        @StringRes
+        val notifyPurpose: Int = R.string.eligibility_notify_purpose // eligibility.notify.purpose
+        @StringRes
+        val notifyReceived: Int = R.string.eligibility_notify_received // eligibility.notify.received
+        @StringRes
+        val notifySettingsNote: Int = R.string.eligibility_notify_settings_note // eligibility.notify.settingsNote
+        @StringRes
         val offlineNotice: Int = R.string.eligibility_offline_notice // eligibility.offlineNotice
         @StringRes
         val resultCountry: Int = R.string.eligibility_result_country // eligibility.result.country
@@ -297,6 +313,7 @@ val feedbackMessageRes: Map<String, Int> = mapOf(
     "auth.accountDeleted" to R.string.auth_account_deleted,
     "auth.deleteAccountConfirm.title" to R.string.auth_delete_account_confirm_title,
     "auth.signOutConfirm.title" to R.string.auth_sign_out_confirm_title,
+    "eligibility.notify.received" to R.string.eligibility_notify_received,
     "eligibility.offlineNotice" to R.string.eligibility_offline_notice,
     "eligibility.result.sourceDevice" to R.string.eligibility_result_source_device,
     "eligibility.result.sourceFallback" to R.string.eligibility_result_source_fallback,

@@ -210,7 +210,8 @@ class TranFeedback(
                 confirm = TranStrings.Common.deleteAccount,
                 tags = DialogTags(ScreenContract.Eligibility.deleteAccountConfirm, ScreenContract.Eligibility.deleteAccountCancel),
             )
-            TranUserAction.SERVER_CHECK_SUCCEEDED, TranUserAction.ACCOUNT_DELETED -> null
+            // Acknowledgements and the foreground notification (REQ-PSH-013) are toasts: no dialog.
+            TranUserAction.SERVER_CHECK_SUCCEEDED, TranUserAction.ACCOUNT_DELETED, TranUserAction.NOTIFICATION_RECEIVED -> null
         }
 
         /** Dialog copy for failures the catalogue presents as a dialog; a parity test keeps it complete. */

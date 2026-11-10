@@ -67,6 +67,8 @@ export const DIALOG_COPY: Record<UserAction, DialogCopy | null> = {
     cancelId: ScreenIds.eligibility.deleteAccountCancel,
   },
   account_deleted: null,
+  // A toast the native apps show for a push received in the foreground; the web has no push.
+  notification_received: null,
 };
 
 /** Dialog copy for failures the catalogue presents as a dialog; a test keeps it complete. */

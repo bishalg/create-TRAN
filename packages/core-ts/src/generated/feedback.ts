@@ -31,7 +31,8 @@ export type UserAction =
   | 'sign_out'
   | 'server_check_succeeded'
   | 'delete_account'
-  | 'account_deleted';
+  | 'account_deleted'
+  | 'notification_received';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -247,6 +248,11 @@ export const ACTION_CATALOGUE: readonly ActionSpec[] = [
     action: 'account_deleted',
     presentation: { kind: 'toast', tone: 'success', duration: 'medium' },
     messageKey: 'auth.accountDeleted',
+  },
+  {
+    action: 'notification_received',
+    presentation: { kind: 'toast', tone: 'info', duration: 'medium' },
+    messageKey: 'eligibility.notify.received',
   },
 ];
 

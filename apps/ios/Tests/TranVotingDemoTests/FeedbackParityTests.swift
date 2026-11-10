@@ -147,6 +147,7 @@ final class FeedbackParityTests: XCTestCase {
         "server_check_succeeded": .serverCheckSucceeded,
         "delete_account": .deleteAccount,
         "account_deleted": .accountDeleted,
+        "notification_received": .notificationReceived,
     ]
 
     func testActionsMatchTheGoldenFixtureAndEveryMessageIsLocalized() throws {

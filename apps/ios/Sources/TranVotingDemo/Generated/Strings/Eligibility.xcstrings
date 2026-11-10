@@ -441,6 +441,182 @@
         }
       }
     },
+    "eligibility.notification.reached.body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open TRAN to check your eligibility again."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अपनी पात्रता फिर से जाँचने के लिए TRAN खोलें।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आफ्नो योग्यता फेरि जाँच्न TRAN खोल्नुहोस्।"
+          }
+        }
+      }
+    },
+    "eligibility.notification.reached.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can vote now"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अब आप मतदान कर सकते हैं"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "अब तपाईं मतदान गर्न सक्नुहुन्छ"
+          }
+        }
+      }
+    },
+    "eligibility.notify.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notify me when I can vote"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मतदान कर सकने पर मुझे सूचित करें"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मतदान गर्न सक्ने भएपछि मलाई सूचना दिनुहोस्"
+          }
+        }
+      }
+    },
+    "eligibility.notify.primingBody": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRAN can send you one notification when you become old enough to vote. It says only that you can vote now; open TRAN to see more. This is optional, and you can turn it off at any time in Settings."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जब आप मतदान की आयु के हो जाएँगे, TRAN आपको एक सूचना भेज सकता है। उसमें केवल यह लिखा होगा कि अब आप मतदान कर सकते हैं; अधिक जानने के लिए TRAN खोलें। यह वैकल्पिक है, और आप इसे कभी भी सेटिंग्स में बंद कर सकते हैं।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "तपाईं मतदान गर्ने उमेर पुगेपछि TRAN ले तपाईंलाई एउटा सूचना पठाउन सक्छ। त्यसमा अब तपाईं मतदान गर्न सक्नुहुन्छ भन्ने मात्र हुन्छ; थप हेर्न TRAN खोल्नुहोस्। यो ऐच्छिक हो, र तपाईं यसलाई जुनसुकै बेला सेटिङमा बन्द गर्न सक्नुहुन्छ।"
+          }
+        }
+      }
+    },
+    "eligibility.notify.primingTitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get one notification when you can vote?"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मतदान कर सकने पर एक सूचना पाएँ?"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मतदान गर्न सक्ने भएपछि एउटा सूचना पाउने?"
+          }
+        }
+      }
+    },
+    "eligibility.notify.purpose": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRAN sends a notification only when you become old enough to vote, never anything about you. It is optional."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRAN केवल तब सूचना भेजता है जब आप मतदान की आयु के हो जाते हैं, आपके बारे में कभी कुछ नहीं। यह वैकल्पिक है।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRAN ले तपाईं मतदान गर्ने उमेर पुगेपछि मात्र सूचना पठाउँछ, तपाईंबारे कहिल्यै केही होइन। यो ऐच्छिक हो।"
+          }
+        }
+      }
+    },
+    "eligibility.notify.received": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRAN has news about your eligibility. Check again to see it."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "आपकी पात्रता के बारे में TRAN के पास नई जानकारी है। देखने के लिए फिर से जाँचें।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "तपाईंको योग्यताबारे TRAN सँग नयाँ जानकारी छ। हेर्न फेरि जाँच्नुहोस्।"
+          }
+        }
+      }
+    },
+    "eligibility.notify.settingsNote": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications are off for TRAN. Turn them on in Settings to hear when you can vote."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRAN के लिए सूचनाएँ बंद हैं। मतदान कर सकने पर पता चलने के लिए सेटिंग्स में सूचनाएँ चालू करें।"
+          }
+        },
+        "ne": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRAN का लागि सूचनाहरू बन्द छन्। मतदान गर्न सक्ने भएपछि थाहा पाउन सेटिङमा सूचनाहरू खोल्नुहोस्।"
+          }
+        }
+      }
+    },
     "eligibility.offlineNotice": {
       "localizations": {
         "en": {
