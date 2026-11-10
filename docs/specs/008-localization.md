@@ -7,7 +7,7 @@ layout described in [ADR-0019](../adr/0019-native-strings-from-dictionaries.md))
 ### REQ-I18N-001 [verified] One module-segmented source of truth
 
 Every user-visible string MUST live in `locales/<locale>/<module>.json` (modules: `common`,
-`shell`, `auth`, `eligibility`, `auditor`, `errors`, and `screen` for screen intents, ADR-0038); keys MUST be `<module>.<group>.<name>`
+`shell`, `auth`, `eligibility`, `auditor`, `errors`, `screen` for screen intents, ADR-0038, and `store` for the store listing, which only the fastlane metadata receives, REQ-MOB-011); keys MUST be `<module>.<group>.<name>`
 camelCase; two modules MUST NOT duplicate the same English value (share it via `common`);
 generated artifacts MUST NOT be edited by hand.
 **Verified by:** [`i18n.test.ts`](../../packages/core-ts/tests/i18n.test.ts),

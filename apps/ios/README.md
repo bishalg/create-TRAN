@@ -12,6 +12,7 @@ Platform-native **N** in TRAN: Swift + SwiftUI, sharing brand tokens and **offli
 | Accessibility tests                 | `pnpm ios:test` — XCUITest journeys + `performAccessibilityAudit` on every theme (`Tests/TranVotingDemoUITests`)                                  |
 | HTTP API client                     | `TranApiClient` — `GET /api/health` + `POST /api/vote/eligibility`; base URL from `TRAN_API_BASE_URL`, loopback-only ATS exception (REQ-NAT-011)  |
 | API session (spec 022)              | `Session/`: `TranSessionClient` (access token in memory, one shared refresh), `KeychainSessionVault`, restore on launch, privacy cover (ADR-0039) |
+| Store readiness (REQ-MOB-010)       | `Support/PrivacyInfo.xcprivacy` (no tracking, required-reason APIs), `ITSAppUsesNonExemptEncryption: false`; guarded by `store-readiness.test.ts` |
 
 `KeychainSessionVaultTests` needs a signed test host: under `pnpm ios:test` (`CODE_SIGNING_ALLOWED=NO`) the simulator
 denies Keychain access and the suite reports itself skipped. Run it against the real Keychain with ad-hoc signing:

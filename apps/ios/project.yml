@@ -18,6 +18,9 @@ targets:
     platform: iOS
     sources:
       - Sources/TranVotingDemo
+      # Apple's privacy manifest, copied into the app bundle (REQ-MOB-010, store-readiness.test.ts).
+      - path: Support/PrivacyInfo.xcprivacy
+        buildPhase: resources
     # Explicit Info.plist (XcodeGen generates it): ATS exempts loopback only, and the API base URL
     # comes from the TRAN_API_BASE_URL build setting, so builds stay configurable (REQ-NAT-011).
     info:
@@ -36,6 +39,11 @@ targets:
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         TranApiBaseUrl: $(TRAN_API_BASE_URL)
+        # Export compliance (REQ-MOB-010): the app's only encryption is HTTPS through URLSession and the
+        # system Keychain, which Apple exempts, so App Store Connect asks nothing per upload. A fork
+        # that adds its own or a third-party cryptography (end-to-end messages, a VPN, a crypto
+        # library) must answer Apple's export questions and change this to true.
+        ITSAppUsesNonExemptEncryption: false
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tran.voting

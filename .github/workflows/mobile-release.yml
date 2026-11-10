@@ -1,0 +1,127 @@
+name: Mobile release
+
+# Runs one fastlane lane for one platform (spec 025, ADR-0042, docs/MOBILE_RELEASE.md):
+#   Actions → Mobile release → Run workflow → platform: ios | android, lane: doctor | test | metadata | beta | release
+#   gh workflow run mobile-release.yml -f platform=ios -f lane=beta
+#
+# Manual dispatch only: a pull request or a fork can never publish (REQ-MOB-009). Credentials come only from
+# repository secrets named like the variables in .env.example ("Mobile release"); when one the platform needs is
+# absent, the first step says which and every other step is skipped, so the run is green and does nothing.
+# Lanes never bump a version: run `pnpm release` and push the tag first (ADR-0034). Every action is pinned by
+# commit SHA (REQ-SUP-003).
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Which app
+        type: choice
+        options: [ios, android]
+      lane:
+        description: Which fastlane lane
+        type: choice
+        options: [doctor, test, metadata, beta, release]
+
+concurrency:
+  group: mobile-release-${{ inputs.platform }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  lane:
+    name: ${{ inputs.platform }} / ${{ inputs.lane }}
+    runs-on: ${{ inputs.platform == 'ios' && 'macos-15' || 'ubuntu-latest' }}
+    timeout-minutes: 90
+    steps:
+      - name: Check the release secrets
+        id: secrets
+        env:
+          PLATFORM: ${{ inputs.platform }}
+          TRAN_APPLE_TEAM_ID: ${{ secrets.TRAN_APPLE_TEAM_ID }}
+          TRAN_ASC_APP_ID: ${{ secrets.TRAN_ASC_APP_ID }}
+          TRAN_ASC_KEY_ID: ${{ secrets.TRAN_ASC_KEY_ID }}
+          TRAN_ASC_ISSUER_ID: ${{ secrets.TRAN_ASC_ISSUER_ID }}
+          TRAN_ASC_KEY_P8: ${{ secrets.TRAN_ASC_KEY_P8 }}
+          TRAN_ANDROID_KEYSTORE_BASE64: ${{ secrets.TRAN_ANDROID_KEYSTORE_BASE64 }}
+          TRAN_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.TRAN_ANDROID_KEYSTORE_PASSWORD }}
+          TRAN_ANDROID_KEY_ALIAS: ${{ secrets.TRAN_ANDROID_KEY_ALIAS }}
+          TRAN_ANDROID_KEY_PASSWORD: ${{ secrets.TRAN_ANDROID_KEY_PASSWORD }}
+          TRAN_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.TRAN_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          case "$PLATFORM" in
+            ios) names="TRAN_APPLE_TEAM_ID TRAN_ASC_APP_ID TRAN_ASC_KEY_ID TRAN_ASC_ISSUER_ID TRAN_ASC_KEY_P8" ;;
+            *) names="TRAN_ANDROID_KEYSTORE_BASE64 TRAN_ANDROID_KEYSTORE_PASSWORD TRAN_ANDROID_KEY_ALIAS TRAN_ANDROID_KEY_PASSWORD TRAN_PLAY_SERVICE_ACCOUNT_JSON" ;;
+          esac
+          missing=""
+          for name in $names; do [ -n "${!name}" ] || missing="$missing $name"; done
+          if [ -n "$missing" ]; then
+            echo "::notice::No $PLATFORM release secrets (missing:$missing); skipping. See docs/MOBILE_RELEASE.md."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.secrets.outputs.skip != 'true'
+      - name: Set up Ruby and the locked fastlane (Gemfile.lock)
+        if: steps.secrets.outputs.skip != 'true'
+        uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
+        with:
+          ruby-version: '4.0'
+          bundler-cache: true
+      - name: Install Rust toolchain (iOS)
+        if: steps.secrets.outputs.skip != 'true' && inputs.platform == 'ios'
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
+          targets: aarch64-apple-ios, aarch64-apple-ios-sim
+      - name: Set up JDK 17 (Android)
+        if: steps.secrets.outputs.skip != 'true' && inputs.platform == 'android'
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Gradle (Android)
+        if: steps.secrets.outputs.skip != 'true' && inputs.platform == 'android'
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - name: Install Rust toolchain (Android)
+        if: steps.secrets.outputs.skip != 'true' && inputs.platform == 'android'
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
+          targets: aarch64-linux-android, x86_64-linux-android
+      - name: Rust cache
+        if: steps.secrets.outputs.skip != 'true'
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+      - name: Install pnpm
+        if: steps.secrets.outputs.skip != 'true'
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - name: Set up Node.js
+        if: steps.secrets.outputs.skip != 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace dependencies
+        if: steps.secrets.outputs.skip != 'true'
+        run: pnpm install --frozen-lockfile
+      - name: Generate the Xcode project (iOS)
+        if: steps.secrets.outputs.skip != 'true' && inputs.platform == 'ios'
+        run: brew install xcodegen && pnpm ios:project
+      - name: Run the lane
+        if: steps.secrets.outputs.skip != 'true'
+        env:
+          PLATFORM: ${{ inputs.platform }}
+          LANE: ${{ inputs.lane }}
+          TRAN_IOS_BUNDLE_ID: ${{ secrets.TRAN_IOS_BUNDLE_ID }}
+          TRAN_ANDROID_APPLICATION_ID: ${{ secrets.TRAN_ANDROID_APPLICATION_ID }}
+          TRAN_APPLE_TEAM_ID: ${{ secrets.TRAN_APPLE_TEAM_ID }}
+          TRAN_ASC_APP_ID: ${{ secrets.TRAN_ASC_APP_ID }}
+          TRAN_ASC_KEY_ID: ${{ secrets.TRAN_ASC_KEY_ID }}
+          TRAN_ASC_ISSUER_ID: ${{ secrets.TRAN_ASC_ISSUER_ID }}
+          TRAN_ASC_KEY_P8: ${{ secrets.TRAN_ASC_KEY_P8 }}
+          TRAN_ANDROID_KEYSTORE_BASE64: ${{ secrets.TRAN_ANDROID_KEYSTORE_BASE64 }}
+          TRAN_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.TRAN_ANDROID_KEYSTORE_PASSWORD }}
+          TRAN_ANDROID_KEY_ALIAS: ${{ secrets.TRAN_ANDROID_KEY_ALIAS }}
+          TRAN_ANDROID_KEY_PASSWORD: ${{ secrets.TRAN_ANDROID_KEY_PASSWORD }}
+          TRAN_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.TRAN_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: pnpm "$PLATFORM:lane" "$LANE"

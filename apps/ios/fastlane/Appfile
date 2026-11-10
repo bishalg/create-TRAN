@@ -1,0 +1,4 @@
+# Identifiers come from the environment (REQ-MOB-004). The bundle id falls back to the template's
+# placeholder, which the scaffolder rewrites; the team id has no default anywhere.
+app_identifier(ENV.fetch("TRAN_IOS_BUNDLE_ID", "com.tran.voting"))
+team_id(ENV["TRAN_APPLE_TEAM_ID"])

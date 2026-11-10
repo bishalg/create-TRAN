@@ -1,0 +1,54 @@
+# Android delivery lanes (spec 025, ADR-0042, docs/MOBILE_RELEASE.md). Run them from the repo root with
+# `pnpm android:lane <lane>`. The same five lanes exist for iOS in apps/ios/fastlane/Fastfile.
+#
+# - Identifiers and credentials come only from the environment (.env.example, "Mobile release"); none has a
+#   default except the application id placeholder the scaffolder rewrites. `doctor` lists what is missing.
+# - The upload keystore is read by Gradle (app/build.gradle.kts) from the same environment, so
+#   `bundleRelease` is signed here and stays unsigned in a clone or CI without the variables.
+# - No lane changes a version or build number: `pnpm release` owns them (ADR-0034), and every lane that
+#   talks to Google Play runs `pnpm release:check` first.
+# - `beta` builds and uploads once; `release` promotes that build and never builds again.
+#
+# Lane code runs inside this fastlane folder; actions resolve paths from apps/android.
+default_platform(:android)
+
+def application_id
+  ENV.fetch("TRAN_ANDROID_APPLICATION_ID", "com.tran.voting")
+end
+
+def play_key
+  ENV["TRAN_PLAY_SERVICE_ACCOUNT_JSON"]
+end
+
+desc "List the variables delivery needs as set or missing, without values; fails when one is missing"
+lane :doctor do
+  sh("pnpm", "--silent", "mobile:doctor", "android")
+end
+
+desc "Run the JVM and instrumentation tests, the same command as pnpm android:test"
+lane :test do
+  sh("pnpm", "android:test")
+end
+
+desc "Upload the store listing text and changelogs in fastlane/metadata/android, without a binary"
+lane :metadata do
+  sh("pnpm", "release:check")
+  sh("pnpm", "--silent", "mobile:doctor", "android")
+  upload_to_play_store(package_name: application_id, json_key_data: play_key, metadata_path: "fastlane/metadata/android", skip_upload_apk: true, skip_upload_aab: true, skip_upload_images: true, skip_upload_screenshots: true)
+end
+
+desc "Build a signed .aab (bundleRelease) and upload it to the Play internal track"
+lane :beta do
+  sh("pnpm", "release:check")
+  sh("pnpm", "--silent", "mobile:doctor", "android")
+  # No daemon: Gradle deletes the decoded keystore when its JVM exits, which is now.
+  gradle(task: "bundle", build_type: "Release", project_dir: ".", flags: "--no-daemon")
+  upload_to_play_store(package_name: application_id, json_key_data: play_key, track: "internal", aab: lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH], skip_upload_apk: true, skip_upload_metadata: true, skip_upload_changelogs: true, skip_upload_images: true, skip_upload_screenshots: true)
+end
+
+desc "Promote the build on the internal track to production; never builds"
+lane :release do
+  sh("pnpm", "release:check")
+  sh("pnpm", "--silent", "mobile:doctor", "android")
+  upload_to_play_store(package_name: application_id, json_key_data: play_key, track: "internal", track_promote_to: "production", skip_upload_apk: true, skip_upload_aab: true, skip_upload_metadata: true, skip_upload_changelogs: true, skip_upload_images: true, skip_upload_screenshots: true)
+end

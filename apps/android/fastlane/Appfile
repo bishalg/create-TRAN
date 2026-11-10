@@ -1,0 +1,3 @@
+# Identifiers come from the environment (REQ-MOB-004). The application id falls back to the template's
+# placeholder, which the scaffolder rewrites. The Play service-account key is passed by the lanes.
+package_name(ENV.fetch("TRAN_ANDROID_APPLICATION_ID", "com.tran.voting"))

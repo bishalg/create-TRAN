@@ -1,0 +1,7 @@
+{
+  "subtitle": "Minimum voting age, anywhere",
+  "shortDescription": "Check whether you are old enough to vote in a country, even offline.",
+  "promotionalText": "Check a country's voting age on your device, with no connection, or ask the server. The same rules answer on iPhone, Android and the web.",
+  "keywords": "voting age,election,eligibility,vote,voter,democracy,offline,citizen,auditor,minimum age",
+  "description": "TRAN Voting tells you whether you are old enough to vote in a country, and why.\n\nEnter your age and a two-letter country code, then choose where the check runs:\n• On this device: instant, and it works with no connection.\n• Ask the server: the same rules, answered by the TRAN API.\n\nBoth answers come from one set of rules, so iPhone, Android and the web always agree. The result explains itself in your language: English, Hindi or Nepali.\n\nSign in as a citizen voter to check your eligibility, or as an election auditor to review every country's minimum voting age as the rules apply it.\n\nPrivacy: the app does not track you and shows no ads. Your age and country are used only to answer the check.\n\nYou can delete your account in the app at any time: choose Delete account, next to Sign out. The steps are also at {accountDeletionUrl}\n\nLight, dark, black and sepia themes, text that scales with your settings, and full screen-reader support."
+}

@@ -10,5 +10,10 @@
   "design_md_path": "DESIGN.md",
   "screen_features_dir": "e2e/features/screens",
   "ios_ui_test_resources_dir": "apps/ios/Tests/TranVotingDemoUITests/Resources",
-  "android_test_assets_dir": "apps/android/app/src/androidTest/assets"
+  "android_test_assets_dir": "apps/android/app/src/androidTest/assets",
+  "store_listing_path": "tooling/mobile-release/store-listing.json",
+  "version_path": "package.json",
+  "changelog_path": "CHANGELOG.md",
+  "ios_metadata_dir": "apps/ios/fastlane/metadata",
+  "android_metadata_dir": "apps/android/fastlane/metadata/android"
 }

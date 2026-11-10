@@ -1,0 +1,1 @@
+voting age,election,eligibility,vote,voter,democracy,offline,citizen,auditor,minimum age

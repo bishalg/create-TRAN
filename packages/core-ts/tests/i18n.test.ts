@@ -26,10 +26,13 @@ const MODULES = readdirSync(path.join(localesDir, 'en'))
   .map((file) => file.replace(/\.json$/, ''))
   .sort();
 
+/** `store` is store listing copy: the codegen renders it into fastlane metadata, never into an app (REQ-MOB-011). */
+const STORE_MODULE = 'store';
+
 /** `locales/<locale>/<module>.json` files flattened to `<module>.<path>` keys. */
-function sourceDictionary(locale: string): Record<string, string> {
+function sourceDictionary(locale: string, modules: string[] = MODULES): Record<string, string> {
   const flat: Record<string, string> = {};
-  for (const module of MODULES) {
+  for (const module of modules) {
     const raw: unknown = JSON.parse(
       readFileSync(path.join(localesDir, locale, `${module}.json`), 'utf8')
     );
@@ -98,7 +101,10 @@ describe('dictionaries in locales/', () => {
   });
 
   it.each(LOCALE_IDS)('generated strings.json matches %s exactly', (locale) => {
-    expect(locales[locale as (typeof TRAN_LOCALES)[number]]).toEqual(sourceDictionary(locale));
+    const appModules = MODULES.filter((module) => module !== STORE_MODULE);
+    expect(locales[locale as (typeof TRAN_LOCALES)[number]]).toEqual(
+      sourceDictionary(locale, appModules)
+    );
   });
 });
 

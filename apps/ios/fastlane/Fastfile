@@ -1,0 +1,81 @@
+# iOS delivery lanes (spec 025, ADR-0042, docs/MOBILE_RELEASE.md). Run them from the repo root with
+# `pnpm ios:lane <lane>`. The same five lanes exist for Android in apps/android/fastlane/Fastfile.
+#
+# - Identifiers and credentials come only from the environment (.env.example, "Mobile release"); none has a
+#   default except the bundle id placeholder the scaffolder rewrites. `doctor` lists what is missing.
+# - No lane changes a version or build number: `pnpm release` owns them (ADR-0034), and every lane that
+#   talks to App Store Connect runs `pnpm release:check` first.
+# - `beta` builds and uploads once; `release` submits that build and never builds again.
+#
+# Lane code runs inside this fastlane folder; actions resolve paths from apps/ios.
+require "json"
+require "shellwords"
+require "tempfile"
+
+default_platform(:ios)
+
+def bundle_id
+  ENV.fetch("TRAN_IOS_BUNDLE_ID", "com.tran.voting")
+end
+
+def current_version
+  root = sh("git", "rev-parse", "--show-toplevel", log: false).strip
+  JSON.parse(File.read(File.join(root, "package.json"))).fetch("version")
+end
+
+# The App Store Connect API key, for fastlane (Spaceship) and for xcodebuild's cloud-managed signing.
+def asc_api_key
+  app_store_connect_api_key(
+    key_id: ENV["TRAN_ASC_KEY_ID"],
+    issuer_id: ENV["TRAN_ASC_ISSUER_ID"],
+    key_content: ENV["TRAN_ASC_KEY_P8"]
+  )
+end
+
+# xcodebuild reads the key from a file: write it outside the repo, owner-only, and delete it afterwards.
+def with_asc_key_file
+  file = Tempfile.new(["tran-asc-", ".p8"])
+  File.chmod(0o600, file.path)
+  file.write(ENV["TRAN_ASC_KEY_P8"].gsub('\n', "\n"))
+  file.close
+  yield file.path
+ensure
+  file&.close!
+end
+
+desc "List the variables delivery needs as set or missing, without values; fails when one is missing"
+lane :doctor do
+  sh("pnpm", "--silent", "mobile:doctor", "ios")
+end
+
+desc "Run the unit and UI tests, the same command as pnpm ios:test"
+lane :test do
+  sh("pnpm", "ios:test")
+end
+
+desc "Upload the store listing text in fastlane/metadata, without a binary and without submitting"
+lane :metadata do
+  sh("pnpm", "release:check")
+  sh("pnpm", "--silent", "mobile:doctor", "ios")
+  deliver(api_key: asc_api_key, app_identifier: bundle_id, app_version: current_version, metadata_path: "fastlane/metadata", skip_binary_upload: true, skip_screenshots: true, submit_for_review: false, run_precheck_before_submit: false, force: true)
+end
+
+desc "Build a signed .ipa with cloud-managed signing and upload it to TestFlight"
+lane :beta do
+  sh("pnpm", "release:check")
+  sh("pnpm", "--silent", "mobile:doctor", "ios")
+  api_key = asc_api_key
+  with_asc_key_file do |key_path|
+    auth = ["-allowProvisioningUpdates", "-authenticationKeyPath", key_path, "-authenticationKeyID", ENV["TRAN_ASC_KEY_ID"], "-authenticationKeyIssuerID", ENV["TRAN_ASC_ISSUER_ID"]].shelljoin
+    signing = ["CODE_SIGN_STYLE=Automatic", "DEVELOPMENT_TEAM=#{ENV["TRAN_APPLE_TEAM_ID"]}", "PRODUCT_BUNDLE_IDENTIFIER=#{bundle_id}"].shelljoin
+    build_app(project: "TranVotingDemo.xcodeproj", scheme: "TranVotingDemo", configuration: "Release", export_method: "app-store", export_team_id: ENV["TRAN_APPLE_TEAM_ID"], export_xcargs: auth, xcargs: "#{auth} #{signing}", output_directory: "build/fastlane", clean: true)
+  end
+  upload_to_testflight(api_key: api_key, app_identifier: bundle_id, apple_id: ENV["TRAN_ASC_APP_ID"], skip_waiting_for_build_processing: true)
+end
+
+desc "Submit the TestFlight build of the current version for App Store review; never builds"
+lane :release do
+  sh("pnpm", "release:check")
+  sh("pnpm", "--silent", "mobile:doctor", "ios")
+  deliver(api_key: asc_api_key, app_identifier: bundle_id, app_version: current_version, submit_for_review: true, skip_binary_upload: true, skip_metadata: true, skip_screenshots: true, precheck_include_in_app_purchases: false, submission_information: { add_id_info_uses_idfa: false }, force: true)
+end

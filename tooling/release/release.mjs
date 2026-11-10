@@ -374,7 +374,8 @@ function main(root, argv) {
         [
           `release: ${current} -> ${version} (${commits.length} commits since ${tag ?? 'the start'})`,
           'Read the diff, then:',
-          `  git commit -am "chore(release): v${version}"`,
+          '  pnpm tokens:sync   # the store release notes come from this CHANGELOG section (REQ-MOB-011)',
+          `  git add apps/*/fastlane/metadata && git commit -am "chore(release): v${version}"`,
           `  git tag v${version}`,
           `  git push origin HEAD v${version}`,
         ].join('\n')

@@ -59,11 +59,41 @@ export function scanText(file, text) {
   return findings;
 }
 
-/** Scan `{ path: Buffer }`, skipping binaries and lockfiles. */
+/** Signing material is never tracked, whatever its content (REQ-MOB-005); `.gitignore` lists the same. */
+export const SIGNING_FILE = /\.(p8|p12|mobileprovision|jks|keystore)$/i;
+
+/** Where a literal Apple team id or App Store Connect key id must never be assigned (REQ-MOB-005). */
+const APPLE_ID_FILE = /(^|\/)fastlane\/(Fastfile|Appfile)$|^apps\/ios\/project\.yml$/;
+const APPLE_ID_ASSIGNMENT =
+  /\b(?:team_id|itc_team_id|export_team_id|dev_portal_team_id|key_id|DEVELOPMENT_TEAM|teamID)\b["']?(?:\s*[:=,(]\s*|\s+)+["']?([A-Z0-9]{10})\b/;
+
+/** Findings that depend on the kind of file: service-account keys, literal Apple ids. */
+export function scanByPath(file, text) {
+  const findings = [];
+  text.split('\n').forEach((content, index) => {
+    const add = (rule, value) =>
+      findings.push({ file, line: index + 1, rule, redacted: redact(value) });
+    if (file.endsWith('.json')) {
+      const key = /"type"\s*:\s*"service_account"/.exec(content);
+      if (key) add('google-service-account', key[0]);
+    }
+    if (APPLE_ID_FILE.test(file)) {
+      const id = APPLE_ID_ASSIGNMENT.exec(content);
+      if (id && /\d/.test(id[1]) && /[A-Z]/.test(id[1])) add('apple-identifier', id[1]);
+    }
+  });
+  return findings;
+}
+
+/** Scan `{ path: Buffer }`: signing files by name, then text, skipping binaries and lockfiles. */
 export function scanFiles(files) {
-  return Object.entries(files).flatMap(([path, buffer]) =>
-    isLockfile(path) || isBinary(buffer) ? [] : scanText(path, buffer.toString('utf8'))
-  );
+  return Object.entries(files).flatMap(([path, buffer]) => {
+    if (SIGNING_FILE.test(path))
+      return [{ file: path, line: 1, rule: 'signing-file', redacted: '(file not read)' }];
+    if (isLockfile(path) || isBinary(buffer)) return [];
+    const text = buffer.toString('utf8');
+    return [...scanText(path, text), ...scanByPath(path, text)];
+  });
 }
 
 /**
@@ -120,8 +150,10 @@ export const READ_BY_DEPENDENCY = ['RUST_LOG'];
 /**
  * Names read by application code, from `{ path: text }`. The boundary: `apps/api/src` (Rust config
  * lookup), `apps/web/src` and `packages/*\/src` (`import.meta.env.VITE_*`, or `env.VITE_*` on the object a function receives from it), and `process.env.*` in
- * `apps/web/src`. Tooling, CI scripts and the `create-tran` generator CLI (its `process.env` is the
- * developer's shell, not deployment configuration) are not application configuration.
+ * `apps/web/src`; the release configuration of the native apps (REQ-MOB-004): fastlane's Fastfiles and
+ * Appfiles (`ENV["X"]`, `ENV.fetch("X")`) and Android Gradle scripts (`System.getenv("X")`,
+ * `providers.environmentVariable("X")`). Tooling, CI scripts and the `create-tran` generator CLI (its
+ * `process.env` is the developer's shell, not deployment configuration) are not application configuration.
  */
 export function codeEnvNames(files) {
   const names = new Set();
@@ -134,6 +166,14 @@ export function codeEnvNames(files) {
       for (const m of text.matchAll(/\benv\.(VITE_[A-Z0-9_]+)/g)) names.add(m[1]);
     if (path.startsWith('apps/web/src/'))
       for (const m of text.matchAll(/process\.env\.([A-Z][A-Z0-9_]*)/g)) names.add(m[1]);
+    if (/^apps\/(ios|android)\/fastlane\/(Fastfile|Appfile)$/.test(path))
+      for (const m of text.matchAll(/\bENV(?:\[|\.fetch\()\s*["']([A-Z][A-Z0-9_]*)["']/g))
+        names.add(m[1]);
+    if (/^apps\/android\/.*\.gradle\.kts$/.test(path))
+      for (const m of text.matchAll(
+        /\b(?:System\.getenv|providers\.environmentVariable)\(\s*"([A-Z][A-Z0-9_]*)"/g
+      ))
+        names.add(m[1]);
   }
   return [...names].sort();
 }

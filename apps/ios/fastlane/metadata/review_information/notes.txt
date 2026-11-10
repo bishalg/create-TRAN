@@ -1,0 +1,5 @@
+No account or password is needed: choose a role on the first screen (Citizen Voter or Election Auditor) to sign in.
+
+Account deletion (guideline 5.1.1(v)): once signed in, choose "Delete account", next to "Sign out", and confirm. The same steps are published at https://tran.example/account-deletion.html.
+
+The eligibility check can run on the device with no network connection, or on the server.

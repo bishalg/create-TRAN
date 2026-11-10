@@ -1,0 +1,21 @@
+{
+  "$comment": "Store listing configuration (REQ-MOB-011). The listing text lives in locales/<locale>/store.json; `pnpm tokens:sync` renders both into apps/ios/fastlane/metadata and apps/android/fastlane/metadata/android. A fork replaces the tran.example addresses (a reserved placeholder domain) and maps each new locale here, or skips a store with {\"skip\": \"<why>\"}.",
+  "urls": {
+    "supportUrl": "https://tran.example/support",
+    "marketingUrl": "https://tran.example/",
+    "privacyPolicyUrl": "https://tran.example/privacy.html",
+    "accountDeletionUrl": "https://tran.example/account-deletion.html"
+  },
+  "appReviewNotes": "No account or password is needed: choose a role on the first screen (Citizen Voter or Election Auditor) to sign in.\n\nAccount deletion (guideline 5.1.1(v)): once signed in, choose \"Delete account\", next to \"Sign out\", and confirm. The same steps are published at {accountDeletionUrl}.\n\nThe eligibility check can run on the device with no network connection, or on the server.",
+  "locales": [
+    { "locale": "en", "appStore": "en-US", "googlePlay": "en-US" },
+    { "locale": "hi", "appStore": "hi", "googlePlay": "hi-IN" },
+    {
+      "locale": "ne",
+      "appStore": {
+        "skip": "App Store Connect has no Nepali metadata language (Apple's locale shortcode list, checked 2026-11-10); the App Store shows the en-US listing in Nepal. The app itself still ships Nepali."
+      },
+      "googlePlay": "ne-NP"
+    }
+  ]
+}

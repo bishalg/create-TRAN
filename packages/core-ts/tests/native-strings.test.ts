@@ -21,9 +21,11 @@ const LOCALES = readdirSync(localesDir, { withFileTypes: true })
   .map((entry) => entry.name)
   .sort();
 
+/** The app's modules. `store` is store listing copy, rendered only into fastlane metadata (REQ-MOB-011). */
 const MODULES = readdirSync(path.join(localesDir, 'en'))
   .filter((file) => file.endsWith('.json'))
   .map((file) => file.replace(/\.json$/, ''))
+  .filter((module) => module !== 'store')
   .sort();
 
 interface StringCatalog {

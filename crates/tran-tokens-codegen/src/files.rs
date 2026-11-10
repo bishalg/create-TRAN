@@ -2,6 +2,9 @@
 //! a run no longer writes (REQ-GEN-003). Writing is the binary's job.
 
 use crate::config::CodegenPaths;
+use crate::store_listing::{
+    APP_REVIEW_FOLDER, APP_REVIEW_NOTES, APP_STORE_FIELDS, APP_STORE_URL_FILES, GOOGLE_PLAY_FIELDS,
+};
 use std::collections::BTreeSet;
 use std::fs;
 use std::io;
@@ -35,8 +38,10 @@ pub fn read_file(path: &Path) -> Result<String, String> {
 
 /// Generated files of the kinds this tool owns that `written` does not include: String Catalogs in
 /// the iOS output (and its `Strings/` folder), `strings*.xml` in every Android `values*` folder and
-/// `*.feature` in the screen features folder (a removed screen). Anything else in those folders,
-/// and every hand-written feature beside that folder, is left alone.
+/// `*.feature` in the screen features folder (a removed screen), and the store listing files this
+/// tool writes under fastlane's metadata folders (a removed locale or an old changelog). Anything
+/// else in those folders (screenshots, a fork's own review contact details), and every
+/// hand-written feature beside that folder, is left alone.
 pub fn stale_files(
     paths: &CodegenPaths,
     written: &BTreeSet<PathBuf>,
@@ -57,10 +62,60 @@ pub fn stale_files(
     for (folder, matches) in catalogs.into_iter().chain(features).chain(android) {
         stale.extend(unwritten(&folder, written, matches)?);
     }
+    stale.extend(stale_listing_files(paths, written)?);
     Ok(stale)
 }
 
-/// Deletes `stale` files, then each folder they leave empty (a removed locale's `values-xx/`).
+/// File names `deliver` reads from an App Store language folder that this tool writes.
+fn is_app_store_file(name: &str) -> bool {
+    APP_STORE_FIELDS.iter().any(|field| field.file == name)
+        || APP_STORE_URL_FILES.iter().any(|(file, _)| *file == name)
+        || name == "release_notes.txt"
+}
+
+/// File names `supply` reads from a Google Play language folder that this tool writes.
+fn is_play_file(name: &str) -> bool {
+    GOOGLE_PLAY_FIELDS.iter().any(|field| field.file == name)
+}
+
+fn is_text(name: &str) -> bool {
+    name.ends_with(".txt")
+}
+
+fn stale_listing_files(
+    paths: &CodegenPaths,
+    written: &BTreeSet<PathBuf>,
+) -> Result<Vec<PathBuf>, String> {
+    let is_review_notes: Matcher = |name| name == APP_REVIEW_NOTES;
+    let mut folders: Vec<(PathBuf, Matcher)> = Vec::new();
+    for folder in subfolders(&paths.ios_metadata_dir)? {
+        let matches: Matcher = if file_name(&folder) == APP_REVIEW_FOLDER {
+            is_review_notes
+        } else {
+            is_app_store_file
+        };
+        folders.push((folder, matches));
+    }
+    for folder in subfolders(&paths.android_metadata_dir)? {
+        folders.push((folder.join("changelogs"), is_text));
+        folders.push((folder, is_play_file));
+    }
+    let mut stale = Vec::new();
+    for (folder, matches) in folders {
+        stale.extend(unwritten(&folder, written, matches)?);
+    }
+    Ok(stale)
+}
+
+fn subfolders(dir: &Path) -> Result<Vec<PathBuf>, String> {
+    Ok(existing(dir)?
+        .into_iter()
+        .filter(|path| path.is_dir())
+        .collect())
+}
+
+/// Deletes `stale` files, then each folder they leave empty (a removed locale's `values-xx/`),
+/// deepest first, so a listing locale whose `changelogs/` emptied goes too.
 pub fn remove_stale(stale: &[PathBuf]) -> Result<(), String> {
     stale
         .iter()
@@ -68,6 +123,7 @@ pub fn remove_stale(stale: &[PathBuf]) -> Result<(), String> {
     let folders: BTreeSet<&Path> = stale.iter().filter_map(|path| path.parent()).collect();
     folders
         .into_iter()
+        .rev()
         .filter(|folder| list_dir(folder).is_ok_and(|entries| entries.is_empty()))
         .try_for_each(|folder| remove(|p| fs::remove_dir(p), folder))
 }
@@ -181,6 +237,58 @@ pub(crate) mod tests {
         );
     }
 
+    // Verifies: REQ-MOB-011 — a removed store language or an old changelog is pruned; a fork's
+    // own listing files (screenshots, review contact details) are not.
+    #[test]
+    fn prunes_only_the_listing_files_this_tool_writes() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        let paths = CodegenConfig::sample_defaults().resolve(root);
+        let ios = "apps/ios/fastlane/metadata";
+        let play = "apps/android/fastlane/metadata/android";
+
+        let kept_name = touch(root, &format!("{ios}/en-US/name.txt"));
+        let kept_notes = touch(root, &format!("{ios}/review_information/notes.txt"));
+        let old_notes = touch(root, &format!("{ios}/en-US/release_notes.txt"));
+        let dropped_ios = touch(root, &format!("{ios}/fr-FR/subtitle.txt"));
+        let fork_contact = touch(root, &format!("{ios}/review_information/email_address.txt"));
+        let fork_copyright = touch(root, &format!("{ios}/copyright.txt"));
+        let fork_extra = touch(root, &format!("{ios}/en-US/apple_tv_privacy_policy.txt"));
+        let kept_title = touch(root, &format!("{play}/en-US/title.txt"));
+        let old_changelog = touch(root, &format!("{play}/en-US/changelogs/1000.txt"));
+        let dropped_title = touch(root, &format!("{play}/ne-NP/title.txt"));
+        let dropped_changelog = touch(root, &format!("{play}/ne-NP/changelogs/1000.txt"));
+        let screenshot = touch(root, &format!("{play}/en-US/images/icon.png"));
+
+        let written = BTreeSet::from([kept_name.clone(), kept_notes.clone(), kept_title.clone()]);
+        let stale = stale_files(&paths, &written).unwrap();
+        assert_eq!(
+            stale,
+            [
+                old_notes.clone(),
+                dropped_ios.clone(),
+                old_changelog.clone(),
+                dropped_changelog.clone(),
+                dropped_title.clone(),
+            ]
+        );
+        remove_stale(&stale).unwrap();
+        // The removed language folders go entirely, `changelogs/` first.
+        assert!(!root.join(format!("{play}/ne-NP")).exists());
+        assert!(!root.join(format!("{ios}/fr-FR")).exists());
+        for kept in [
+            &kept_name,
+            &kept_notes,
+            &fork_contact,
+            &fork_copyright,
+            &fork_extra,
+            &kept_title,
+            &screenshot,
+        ] {
+            assert!(kept.exists(), "{kept:?}");
+        }
+    }
+
     #[test]
     fn a_tree_without_outputs_has_nothing_stale() {
         let dir = tempfile::tempdir().unwrap();
@@ -203,6 +311,9 @@ pub(crate) mod tests {
         for folder in [
             "apps/android/app/src/main/res",
             "apps/ios/Sources/TranVotingDemo/Generated/Strings",
+            "apps/ios/fastlane/metadata",
+            "apps/ios/fastlane/metadata/en-US",
+            "apps/android/fastlane/metadata/android",
         ] {
             let dir = tempfile::tempdir().unwrap();
             let paths = CodegenConfig::sample_defaults().resolve(dir.path());

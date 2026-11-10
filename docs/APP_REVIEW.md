@@ -25,7 +25,7 @@ shown without a project's own accounts or content; the row says what to do).
 | Ask for a permission in context, with a purpose string that says why; the app works when denied | 5.1.1(ii)  | planned | Permissions phase                         |
 | Ask only for data the feature needs; personal questions (gender, birth date) are optional       | 5.1.1(iii) | planned | Permissions phase                         |
 | No tracking without the App Tracking Transparency prompt; the template does not track           | 5.1.2(i)   | planned | Permissions phase (a guard, not a prompt) |
-| A privacy manifest declares required-reason APIs and collected data                             | 5.1.1      | planned | [spec 025](./specs/025-mobile-release.md) |
+| A privacy manifest declares required-reason APIs and collected data                             | 5.1.1      | done    | [spec 025](./specs/025-mobile-release.md) |
 | A privacy policy link in the app and in the store listing                                       | 5.1.1(i)   | fork    | Add the project's policy URL              |
 | Credentials are stored in the Keychain / Keystore, never in plain storage                       | 5.1.1      | done    | [spec 022](./specs/022-security.md)       |
 
@@ -48,12 +48,12 @@ shown without a project's own accounts or content; the row says what to do).
 
 ## Quality and release
 
-| Rule                                                                               | Guideline | Status  | Where                                     |
-| :--------------------------------------------------------------------------------- | :-------- | :------ | :---------------------------------------- |
-| The app does not crash, has no placeholder content and every control works         | 2.1       | done    | Screen contract, smoke (specs 014, 021)   |
-| Accessibility: labels, text scaling, touch targets                                 | (HIG)     | done    | Specs 003, 005, 021                       |
-| Export compliance answered in `Info.plist`; Android targets the required API level | 2.3, Play | planned | [spec 025](./specs/025-mobile-release.md) |
-| Screenshots and description match what the app does                                | 2.3       | fork    | Store listing                             |
+| Rule                                                                               | Guideline | Status | Where                                     |
+| :--------------------------------------------------------------------------------- | :-------- | :----- | :---------------------------------------- |
+| The app does not crash, has no placeholder content and every control works         | 2.1       | done   | Screen contract, smoke (specs 014, 021)   |
+| Accessibility: labels, text scaling, touch targets                                 | (HIG)     | done   | Specs 003, 005, 021                       |
+| Export compliance answered in `Info.plist`; Android targets the required API level | 2.3, Play | done   | [spec 025](./specs/025-mobile-release.md) |
+| Screenshots and description match what the app does                                | 2.3       | fork   | Store listing                             |
 
 ## Rules for a change
 

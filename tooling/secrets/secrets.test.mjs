@@ -1,4 +1,4 @@
-// Verifies: REQ-SEC-001, REQ-SEC-002, REQ-SEC-003
+// Verifies: REQ-SEC-001, REQ-SEC-002, REQ-SEC-003, REQ-MOB-004, REQ-MOB-005
 // Sample tokens are built by concatenation so this file does not trip the scanner it tests.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -13,6 +13,7 @@ import {
   isBinary,
   isLockfile,
   redact,
+  scanByPath,
   scanFiles,
   scanText,
   secretLikeNames,
@@ -164,6 +165,20 @@ describe('env contract (REQ-SEC-002)', () => {
     ]);
   });
 
+  it('REQ-MOB-004 reads fastlane ENV and Gradle environment reads on the code side', () => {
+    const names = codeEnvNames({
+      'apps/ios/fastlane/Fastfile':
+        'ENV["TRAN_A"] ENV.fetch("TRAN_B", "x") ENV.fetch( \'TRAN_C\' )',
+      'apps/android/fastlane/Appfile': 'package_name(ENV.fetch("TRAN_D", "com.x"))',
+      'apps/android/app/build.gradle.kts':
+        'System.getenv("TRAN_E") ?: "x"; providers.environmentVariable("TRAN_F").orNull',
+      'apps/android/settings.gradle.kts': 'System.getenv("TRAN_G")',
+      'apps/ios/fastlane/README.md': 'ENV["NOT_CODE"]',
+      'tooling/x.rb': 'ENV["NOT_APP"]',
+    });
+    assert.deepEqual(names, ['TRAN_A', 'TRAN_B', 'TRAN_C', 'TRAN_D', 'TRAN_E', 'TRAN_F', 'TRAN_G']);
+  });
+
   it('REQ-SEC-002 fails in both directions, and RUST_LOG is read by a dependency', () => {
     assert.deepEqual(compareEnv(['A', 'B'], ['A', 'RUST_LOG']), [
       'B is read by code but missing from .env.example',
@@ -174,10 +189,19 @@ describe('env contract (REQ-SEC-002)', () => {
   it('REQ-SEC-002 the real repo agrees with .env.example', () => {
     const example = exampleKeys(read('.env.example'));
     assert.deepEqual(example.problems, []);
-    const code = codeEnvNames({
-      'apps/api/src/config.rs': read('apps/api/src/config.rs'),
-      'apps/web/src/shared/api/apiUrl.ts': read('apps/web/src/shared/api/apiUrl.ts'),
-    });
+    const code = codeEnvNames(
+      Object.fromEntries(
+        [
+          'apps/api/src/config.rs',
+          'apps/web/src/shared/api/apiUrl.ts',
+          'apps/ios/fastlane/Fastfile',
+          'apps/ios/fastlane/Appfile',
+          'apps/android/fastlane/Fastfile',
+          'apps/android/fastlane/Appfile',
+          'apps/android/app/build.gradle.kts',
+        ].map((path) => [path, read(path)])
+      )
+    );
     assert.deepEqual(compareEnv(code, example.keys), []);
   });
 });
@@ -264,5 +288,69 @@ describe('client-visible names (REQ-SEC-003)', () => {
     };
     const example = exampleKeys(read('.env.example')).keys;
     assert.deepEqual(secretLikeNames(clientNames(files, [], example)), []);
+  });
+});
+
+describe('signing material (REQ-MOB-005)', () => {
+  const buf = (text) => Buffer.from(text);
+  const team = 'A1B2C3' + 'D4E5';
+
+  it('REQ-MOB-005 a tracked .p8, .p12, .mobileprovision, .jks or .keystore fails, whatever it holds', () => {
+    const files = [
+      'AuthKey.p8',
+      'dist.P12',
+      'a/App.mobileprovision',
+      'upload.jks',
+      'release.keystore',
+    ];
+    const found = scanFiles(Object.fromEntries(files.map((f) => [f, Buffer.from([0, 1, 2])])));
+    assert.deepEqual(
+      found.map((f) => [f.file, f.rule]),
+      files.map((f) => [f, 'signing-file'])
+    );
+    assert.deepEqual(scanFiles({ 'p8.txt': buf('x'), 'keystore.md': buf('x') }), []);
+  });
+
+  it('REQ-MOB-005 a Google service-account key fails in any .json, never in prose', () => {
+    const key = '{\n  "type"' + ': "service_' + 'account",\n  "project_id": "x"\n}';
+    const [finding, ...rest] = scanFiles({ 'play.json': buf(key), 'notes.md': buf(key) });
+    assert.equal(rest.length, 0);
+    assert.deepEqual(
+      [finding.file, finding.line, finding.rule],
+      ['play.json', 2, 'google-service-account']
+    );
+  });
+
+  it('REQ-MOB-005 a literal team id or key id in a Fastfile, Appfile or project.yml fails', () => {
+    const cases = [
+      ['apps/ios/fastlane/Appfile', `team_id("${team}")`],
+      ['apps/ios/fastlane/Fastfile', `  app_store_connect_api_key(key_id: "${team}")`],
+      ['apps/ios/fastlane/Fastfile', `build_app(export_team_id: '${team}')`],
+      ['apps/ios/project.yml', `        DEVELOPMENT_TEAM: ${team}`],
+      ['apps/ios/project.yml', `        "DEVELOPMENT_TEAM": "${team}"`],
+      ['apps/android/fastlane/Fastfile', `itc_team_id ${team}`],
+    ];
+    for (const [file, line] of cases) {
+      const [finding] = scanByPath(file, `# ok\n${line}\n`);
+      assert.deepEqual([finding?.line, finding?.rule], [2, 'apple-identifier'], `${file}: ${line}`);
+      assert.ok(!JSON.stringify(finding).includes(team));
+    }
+  });
+
+  it('REQ-MOB-005 environment reads, placeholders and other files are not flagged', () => {
+    const ok = [
+      ['apps/ios/fastlane/Appfile', 'team_id(ENV["TRAN_APPLE_TEAM_ID"])'],
+      ['apps/ios/fastlane/Fastfile', 'key_id: ENV["TRAN_ASC_KEY_ID"], "DEVELOPMENT_TEAM=#{x}"'],
+      ['apps/ios/project.yml', '        DEVELOPMENT_TEAM: $(TRAN_TEAM)'],
+      ['apps/ios/project.yml', '        DEVELOPMENT_TEAM: ABCDEFGHIJ'],
+      ['docs/MOBILE_RELEASE.md', `team_id("${team}")`],
+    ];
+    for (const [file, line] of ok) assert.deepEqual(scanByPath(file, line), [], `${file}: ${line}`);
+  });
+
+  it('REQ-MOB-005 .gitignore lists the same signing files', () => {
+    const ignore = read('.gitignore');
+    for (const ext of ['p8', 'p12', 'mobileprovision', 'jks', 'keystore'])
+      assert.match(ignore, new RegExp(`^\\*\\.${ext}$`, 'm'), ext);
   });
 });

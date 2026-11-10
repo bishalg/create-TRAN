@@ -32,6 +32,7 @@ const TOOLS = [
   ],
   ['supply-chain/supply-chain.mjs', [], /supply-chain: actions pinned/],
   ['secrets/secrets.mjs', [], /secrets: ok/],
+  ['mobile-release/mobile-release.mjs', ['check'], /mobile-release: ok/],
   ['release/release.mjs', ['check'], /release: every version agrees/],
 ];
 

@@ -223,7 +223,50 @@ function usedKeys(): Set<string> {
     for (const element of screen.elements) used.add(element.label);
   }
 
+  // Store listing copy is consumed by the codegen: a key counts when its English text, addresses
+  // filled in, is a generated fastlane metadata file (REQ-MOB-011).
+  for (const key of storeListingKeys()) used.add(key);
+
   return used;
+}
+
+const STORE_METADATA_DIRS = [
+  'apps/ios/fastlane/metadata',
+  'apps/android/fastlane/metadata/android',
+];
+
+/** Keys whose English value (with `{placeholder}` addresses filled in) is a generated listing file. */
+function storeListingKeys(): string[] {
+  const listing = new Set(
+    STORE_METADATA_DIRS.flatMap((dir) => listFiles(path.join(root, dir), ['.txt'])).map((file) =>
+      readFileSync(file, 'utf8')
+    )
+  );
+  const urls = (
+    JSON.parse(readText('tooling', 'mobile-release', 'store-listing.json')) as {
+      urls: Record<string, string>;
+    }
+  ).urls;
+  const english = new Map<string, string>();
+  for (const module of MODULES) {
+    const raw: unknown = JSON.parse(readText('locales', 'en', `${module}.json`));
+    flattenValues(raw, module, english);
+  }
+  return [...english]
+    .filter(([, value]) =>
+      listing.has(value.replace(/\{(\w+)\}/g, (match, name: string) => urls[name] ?? match))
+    )
+    .map(([key]) => key);
+}
+
+function flattenValues(value: unknown, prefix: string, out: Map<string, string>): void {
+  if (value !== null && typeof value === 'object') {
+    for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+      flattenValues(child, `${prefix}.${key}`, out);
+    }
+    return;
+  }
+  if (typeof value === 'string') out.set(prefix, value);
 }
 
 describe('user-visible copy comes from locales/', () => {

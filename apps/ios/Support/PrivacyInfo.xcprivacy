@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Apple privacy manifest (REQ-MOB-010). Bundled as a resource through project.yml.
+  packages/core-ts/tests/store-readiness.test.ts fails when Swift code calls a required-reason API
+  category that is not declared here, or when this file declares tracking.
+
+  Categories and reason codes: Apple, "Describing use of required reason API" and the
+  NSPrivacyAccessedAPIType reference (developer.apple.com/documentation/bundleresources), checked
+  2026-11-10.
+  - UserDefaults, CA92.1: the app reads and writes its own defaults only (theme, first-launch flag,
+    UI-test launch presets); nothing is shared through an App Group.
+  - FileTimestamp, C617.1: the linked Rust library (libtran_uniffi.a, through its standard library)
+    makes the app binary import fstat (`nm -u` on a Release build; Debug adds stat, fstatat, lstat);
+    any file it inspects is inside the app container.
+  No tracking, no tracking domains, no collected data: the app has no analytics, ads or third-party
+  SDK; the age and country it sends are used to answer that one request, and the sample's accounts
+  are shared demo roles (spec 022), not people. A fork that stores personal data, or signs real
+  people in, declares those data types in NSPrivacyCollectedDataTypes and in App Store Connect.
+-->
+<plist version="1.0">
+<dict>
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

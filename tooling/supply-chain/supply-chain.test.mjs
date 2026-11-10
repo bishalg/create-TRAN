@@ -1,4 +1,4 @@
-// Verifies: REQ-SUP-001, REQ-SUP-002, REQ-SUP-003, REQ-SUP-004
+// Verifies: REQ-SUP-001, REQ-SUP-002, REQ-SUP-003, REQ-SUP-004, REQ-MOB-001
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { describe, it } from 'node:test';
@@ -42,6 +42,22 @@ describe('Dependabot covers every ecosystem (REQ-SUP-002)', () => {
     );
     files.add('apps/android/build.gradle.kts');
     assert.ok(requiredEcosystems((p) => files.has(p)).includes('gradle'));
+  });
+
+  it('REQ-MOB-001 a Gemfile (fastlane) needs the bundler ecosystem', () => {
+    const files = new Set(['package.json', 'Gemfile']);
+    assert.deepEqual(
+      requiredEcosystems((p) => files.has(p)),
+      ['npm', 'bundler']
+    );
+    const errors = checkAll(ROOT);
+    assert.deepEqual(errors, []);
+    assert.match(
+      dependabotEcosystems(
+        '  - package-ecosystem: npm\n  - package-ecosystem: bundler # fastlane\n'
+      ).join(),
+      /bundler/
+    );
   });
 
   it('reads the ecosystems a dependabot.yml names', () => {

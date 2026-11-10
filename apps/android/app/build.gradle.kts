@@ -1,7 +1,32 @@
+import java.util.Base64
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
     id("io.github.takahirom.roborazzi")
+}
+
+// REQ-MOB-008: release signing with the upload keystore from the environment (the fastlane `beta` lane, a
+// developer's untracked .env). The keystore arrives base64-encoded and is decoded to an owner-only temporary
+// file outside the repo, deleted when Gradle's JVM exits. Without every variable the release build stays
+// unsigned, as release.yml and scripts/build-release.sh expect.
+val uploadKeystoreBase64: String? = System.getenv("TRAN_ANDROID_KEYSTORE_BASE64")
+val uploadKeystorePassword: String? = System.getenv("TRAN_ANDROID_KEYSTORE_PASSWORD")
+val uploadKeyAlias: String? = System.getenv("TRAN_ANDROID_KEY_ALIAS")
+val uploadKeyPassword: String? = System.getenv("TRAN_ANDROID_KEY_PASSWORD")
+val uploadSigning =
+    listOf(uploadKeystoreBase64, uploadKeystorePassword, uploadKeyAlias, uploadKeyPassword)
+        .all { !it.isNullOrBlank() }
+
+fun decodeUploadKeystore(base64: String): File {
+    val file = File.createTempFile("tran-upload-", ".jks")
+    file.deleteOnExit()
+    file.setReadable(false, false)
+    file.setWritable(false, false)
+    file.setReadable(true, true)
+    file.setWritable(true, true)
+    file.writeBytes(Base64.getMimeDecoder().decode(base64.trim()))
+    return file
 }
 
 android {
@@ -12,7 +37,7 @@ android {
     defaultConfig {
         applicationId = "com.tran.voting"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1000
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -28,6 +53,17 @@ android {
     val configuredApiBaseUrl =
         (findProperty("tranApiBaseUrl") as String?) ?: System.getenv("TRAN_API_BASE_URL")
 
+    signingConfigs {
+        if (uploadSigning) {
+            create("upload") {
+                storeFile = decodeUploadKeystore(uploadKeystoreBase64!!)
+                storePassword = uploadKeystorePassword
+                keyAlias = uploadKeyAlias
+                keyPassword = uploadKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         debug {
             buildConfigField(
@@ -38,6 +74,7 @@ android {
         }
         release {
             isMinifyEnabled = false
+            if (uploadSigning) signingConfig = signingConfigs.getByName("upload")
             buildConfigField(
                 "String",
                 "TRAN_API_BASE_URL",

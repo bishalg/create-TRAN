@@ -2,6 +2,7 @@
 //! compares them with the committed files.
 
 use crate::config::CodegenPaths;
+use crate::files::read_file;
 use crate::files::GeneratedFile;
 use crate::kotlin::{render_kotlin_strings, render_kotlin_tokens};
 use crate::locales::{
@@ -9,10 +10,12 @@ use crate::locales::{
     verify_no_duplicate_values, verify_theme_labels,
 };
 use crate::names::pascal_case;
+use crate::release_notes::current_release;
 use crate::scale::Scale;
 use crate::screens_gherkin::render_screen_feature;
 use crate::screens_json::render_screens_json;
 use crate::screens_native::{render_screen_contract_kotlin, render_screen_contract_swift};
+use crate::store_listing::{app_locales, render_store_metadata, StoreListingConfig};
 use crate::strings::{
     android_resource_dir, render_android_module_strings, render_translations_json, render_ts_keys,
     render_xcstrings,
@@ -38,7 +41,9 @@ pub fn generate_from(
     snapshot: &TokensJsonSnapshot,
 ) -> Result<Vec<GeneratedFile>, String> {
     let scale = Scale::from_snapshot(snapshot)?;
-    let locales = load_locales(&paths.locales_dir)?;
+    // The `store` module is listing copy for fastlane, rendered last; the apps never ship it.
+    let all_locales = load_locales(&paths.locales_dir)?;
+    let locales = app_locales(&all_locales);
     let base = &locales[0];
     verify_no_duplicate_values(base)?;
     verify_generated_names(base)?;
@@ -132,6 +137,17 @@ pub fn generate_from(
             files.push(file(path, render_android_module_strings(module, keys)));
         }
     }
+    let release = current_release(
+        &read_file(&paths.version_path)?,
+        &read_file(&paths.changelog_path)?,
+    )?;
+    files.extend(render_store_metadata(
+        &StoreListingConfig::load(&paths.store_listing_path)?,
+        &all_locales,
+        &release,
+        &paths.ios_metadata_dir,
+        &paths.android_metadata_dir,
+    )?);
     Ok(files)
 }
 
@@ -263,6 +279,40 @@ mod tests {
         assert!(err.contains("screen contract names `screen."), "{err}");
     }
 
+    // Verifies: REQ-MOB-011 — the store listing is part of the run: its inputs must exist, and a
+    // listing field over its store limit fails `pnpm tokens:sync`, naming key, locale and limit.
+    #[test]
+    fn the_store_listing_inputs_are_part_of_the_run() {
+        let dir = tempfile::tempdir().unwrap();
+        let run = || generate(&CodegenConfig::sample_defaults().resolve(dir.path()));
+        copy_tree(
+            &workspace_root().join("locales"),
+            &dir.path().join("locales"),
+        );
+        assert!(run().unwrap_err().contains("package.json"));
+        fs::write(dir.path().join("package.json"), r#"{"version": "1.0.0"}"#).unwrap();
+        assert!(run().unwrap_err().contains("CHANGELOG.md"));
+        fs::write(dir.path().join("CHANGELOG.md"), "# Changelog\n").unwrap();
+        assert!(run().unwrap_err().contains("store-listing.json"));
+        let listing = "tooling/mobile-release/store-listing.json";
+        fs::create_dir_all(dir.path().join("tooling/mobile-release")).unwrap();
+        fs::copy(workspace_root().join(listing), dir.path().join(listing)).unwrap();
+        assert!(run().is_ok());
+
+        fs::write(dir.path().join("package.json"), r#"{"version": "1"}"#).unwrap();
+        assert!(run().unwrap_err().contains("is not a version"));
+        fs::write(dir.path().join("package.json"), r#"{"version": "1.0.0"}"#).unwrap();
+        let store = dir.path().join("locales/en/store.json");
+        let mut module: serde_json::Value =
+            serde_json::from_str(&fs::read_to_string(&store).unwrap()).unwrap();
+        module["subtitle"] = "x".repeat(31).into();
+        fs::write(&store, module.to_string()).unwrap();
+        assert_eq!(
+            run().unwrap_err(),
+            "`store.subtitle` in `locales/en` is 31 characters; the App Store allows 30 for `subtitle.txt`"
+        );
+    }
+
     #[test]
     fn every_path_is_under_its_configured_destination() {
         let paths = CodegenConfig::sample_defaults().resolve(workspace_root());
@@ -276,13 +326,18 @@ mod tests {
             &paths.screen_features_dir,
             &paths.ios_ui_test_resources_dir,
             &paths.android_test_assets_dir,
+            &paths.ios_metadata_dir,
+            &paths.android_metadata_dir,
         ];
         for file in &files {
             let inside = roots.iter().any(|root| file.path.starts_with(root));
+            // Store listing files are uploaded verbatim, so they end without a newline.
+            let listing = file.path.starts_with(&paths.ios_metadata_dir)
+                || file.path.starts_with(&paths.android_metadata_dir);
             assert_eq!(
                 (
                     inside || file.path == paths.design_md_path,
-                    file.contents.ends_with('\n')
+                    file.contents.ends_with('\n') != listing
                 ),
                 (true, true),
                 "{file:?}"

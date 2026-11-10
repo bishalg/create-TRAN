@@ -40,6 +40,16 @@ pub struct CodegenConfig {
     pub ios_ui_test_resources_dir: String,
     /// Android instrumentation-test assets: the same `screens.json`.
     pub android_test_assets_dir: String,
+    /// Store addresses, the app-to-store language map and App Review notes (REQ-MOB-011).
+    pub store_listing_path: String,
+    /// The root `package.json`, whose `version` names the release notes.
+    pub version_path: String,
+    /// `CHANGELOG.md`, whose section for that version becomes the release notes.
+    pub changelog_path: String,
+    /// fastlane `deliver` metadata: one folder per App Store language.
+    pub ios_metadata_dir: String,
+    /// fastlane `supply` metadata: one folder per Google Play language.
+    pub android_metadata_dir: String,
 }
 
 impl CodegenConfig {
@@ -59,6 +69,11 @@ impl CodegenConfig {
             screen_features_dir: "e2e/features/screens".into(),
             ios_ui_test_resources_dir: "apps/ios/Tests/TranVotingDemoUITests/Resources".into(),
             android_test_assets_dir: "apps/android/app/src/androidTest/assets".into(),
+            store_listing_path: "tooling/mobile-release/store-listing.json".into(),
+            version_path: "package.json".into(),
+            changelog_path: "CHANGELOG.md".into(),
+            ios_metadata_dir: "apps/ios/fastlane/metadata".into(),
+            android_metadata_dir: "apps/android/fastlane/metadata/android".into(),
         }
     }
 
@@ -89,6 +104,11 @@ impl CodegenConfig {
             screen_features_dir: workspace_root.join(&self.screen_features_dir),
             ios_ui_test_resources_dir: workspace_root.join(&self.ios_ui_test_resources_dir),
             android_test_assets_dir: workspace_root.join(&self.android_test_assets_dir),
+            store_listing_path: workspace_root.join(&self.store_listing_path),
+            version_path: workspace_root.join(&self.version_path),
+            changelog_path: workspace_root.join(&self.changelog_path),
+            ios_metadata_dir: workspace_root.join(&self.ios_metadata_dir),
+            android_metadata_dir: workspace_root.join(&self.android_metadata_dir),
         }
     }
 }
@@ -108,6 +128,11 @@ pub struct CodegenPaths {
     pub screen_features_dir: PathBuf,
     pub ios_ui_test_resources_dir: PathBuf,
     pub android_test_assets_dir: PathBuf,
+    pub store_listing_path: PathBuf,
+    pub version_path: PathBuf,
+    pub changelog_path: PathBuf,
+    pub ios_metadata_dir: PathBuf,
+    pub android_metadata_dir: PathBuf,
 }
 
 #[cfg(test)]
@@ -147,7 +172,12 @@ mod tests {
   "design_md_path": "DESIGN.md",
   "screen_features_dir": "e2e/features/screens",
   "ios_ui_test_resources_dir": "apps/ios/Tests/RenamedUITests/Resources",
-  "android_test_assets_dir": "apps/android/app/src/androidTest/assets"
+  "android_test_assets_dir": "apps/android/app/src/androidTest/assets",
+  "store_listing_path": "tooling/mobile-release/store-listing.json",
+  "version_path": "package.json",
+  "changelog_path": "CHANGELOG.md",
+  "ios_metadata_dir": "apps/ios/fastlane/metadata",
+  "android_metadata_dir": "apps/android/fastlane/metadata/android"
 }}"#
         )
         .expect("write");

@@ -35,6 +35,7 @@ renaming the iOS module, Android package, or `design_md_path`; the converter bin
 | `apps/web/src/styles/generated/theme.css` | CSS variables                                                                         |
 | iOS / Android `Generated/*`               | Swift / Kotlin brand + strings                                                        |
 | **`DESIGN.md` (repo root)**               | [Google DESIGN.md](https://github.com/google-labs-code/design.md) for agents & Stitch |
+| `apps/*/fastlane/metadata/**`             | Store listing text from `locales/*/store.json` + `tooling/mobile-release/store-listing.json` (REQ-MOB-011) |
 
 ## Voting UI semantics
 

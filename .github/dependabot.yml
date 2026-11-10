@@ -32,6 +32,15 @@ updates:
       okhttp:
         patterns: ["com.squareup.okhttp3:*"]
     open-pull-requests-limit: 5
+  - package-ecosystem: bundler # fastlane for the mobile release lanes (spec 025): root Gemfile.lock
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      bundler-minor-and-patch:
+        update-types: [minor, patch]
+    open-pull-requests-limit: 5
   - package-ecosystem: github-actions # every `uses:` is pinned by commit SHA; Dependabot bumps the SHA and the version comment
     directory: /
     schedule:

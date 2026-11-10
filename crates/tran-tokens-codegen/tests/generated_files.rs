@@ -86,6 +86,12 @@ fn every_target_is_generated() {
         "auth_welcome.feature",
         "eligibility.feature",
         "auditor.feature",
+        "subtitle.txt",
+        "keywords.txt",
+        "privacy_url.txt",
+        "notes.txt",
+        "short_description.txt",
+        "full_description.txt",
     ] {
         assert!(names.contains(expected), "{expected} is not generated");
     }

@@ -36,11 +36,22 @@ xcuserdata/
 apps/ios/RustLib/**/*
 !apps/ios/RustLib/active.xcconfig
 
+# Signing material (REQ-MOB-005; `pnpm secrets:check` fails on a tracked one). Keystores, App Store Connect
+# keys and Play service-account keys live in CI secrets or outside the repo.
 *.jks
+*.keystore
 *.p8
 *.p12
 *.key
 *.mobileprovision
+*service-account*.json
+
+# fastlane output (apps/*/fastlane): reports, previews and the README it regenerates on each run
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/README.md
+**/fastlane/test_output/
+**/fastlane/screenshots/
 *.orig.*
 web-build/
 

@@ -41,6 +41,7 @@ export function requiredEcosystems(exists) {
   if (exists('.github/workflows')) needed.push('github-actions');
   if (exists('apps/android/build.gradle.kts')) needed.push('gradle');
   if (exists('Package.swift')) needed.push('swift');
+  if (exists('Gemfile')) needed.push('bundler'); // fastlane (REQ-MOB-001)
   return needed;
 }
 
