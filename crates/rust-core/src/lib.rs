@@ -5,6 +5,7 @@
 //! WASM/Native bridges, and developer tooling.
 
 pub mod compat;
+pub mod contract;
 pub mod error;
 pub mod feedback;
 pub mod flags;
