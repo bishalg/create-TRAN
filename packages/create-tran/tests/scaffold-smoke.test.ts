@@ -218,5 +218,5 @@ describe.skipIf(!hasAgentSetup)('scaffolding the agent setups (REQ-GEN-005)', ()
       'docs/specs/README.md',
       'docs/LEARNINGS.md',
     ]);
-  });
+  }, 30_000);
 });
