@@ -411,6 +411,16 @@ RustBuffer uniffi_tran_uniffi_fn_func_toast_policy(RustCallStatus *_Nonnull out_
 RustBuffer uniffi_tran_uniffi_fn_func_verdict_source_spec(RustBuffer source, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_DERIVE_BUCKET
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_DERIVE_BUCKET
+uint8_t uniffi_tran_uniffi_fn_func_tran_derive_bucket(RustBuffer installation_id, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_EVALUATE_FLAG_BOOLEAN
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_EVALUATE_FLAG_BOOLEAN
+int8_t uniffi_tran_uniffi_fn_func_tran_evaluate_flag_boolean(RustBuffer flag_id, RustBuffer rules_json, RustBuffer platform, RustBuffer version, uint8_t bucket, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_PERMISSION_CATALOGUE
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_PERMISSION_CATALOGUE
 RustBuffer uniffi_tran_uniffi_fn_func_permission_catalogue(RustCallStatus *_Nonnull out_status
@@ -458,6 +468,39 @@ RustBuffer uniffi_tran_uniffi_fn_func_session_recovery(RustBuffer event, RustCal
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_SESSION_REFRESH_EVENT
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_SESSION_REFRESH_EVENT
 RustBuffer uniffi_tran_uniffi_fn_func_session_refresh_event(RustBuffer status, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_READ_STORED_PUSH
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_READ_STORED_PUSH
+RustBuffer uniffi_tran_uniffi_fn_func_tran_read_stored_push(RustBuffer raw_json, uint32_t current_schema, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_READ_STORED_SESSION
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_READ_STORED_SESSION
+RustBuffer uniffi_tran_uniffi_fn_func_tran_read_stored_session(RustBuffer raw_json, uint32_t current_schema, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_STORED_CONFIG_SCHEMA
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_STORED_CONFIG_SCHEMA
+uint32_t uniffi_tran_uniffi_fn_func_tran_stored_config_schema(RustCallStatus *_Nonnull out_status
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_STORED_PUSH_SCHEMA
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_STORED_PUSH_SCHEMA
+uint32_t uniffi_tran_uniffi_fn_func_tran_stored_push_schema(RustCallStatus *_Nonnull out_status
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_STORED_RECORD_DECISION
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_STORED_RECORD_DECISION
+RustBuffer uniffi_tran_uniffi_fn_func_tran_stored_record_decision(uint32_t schema, uint32_t current, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_STORED_SESSION_SCHEMA
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_STORED_SESSION_SCHEMA
+uint32_t uniffi_tran_uniffi_fn_func_tran_stored_session_schema(RustCallStatus *_Nonnull out_status
+    
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_CHILD_SPAN_OFFLINE
@@ -932,6 +975,18 @@ uint16_t uniffi_tran_uniffi_checksum_func_verdict_source_spec(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_DERIVE_BUCKET
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_DERIVE_BUCKET
+uint16_t uniffi_tran_uniffi_checksum_func_tran_derive_bucket(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_EVALUATE_FLAG_BOOLEAN
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_EVALUATE_FLAG_BOOLEAN
+uint16_t uniffi_tran_uniffi_checksum_func_tran_evaluate_flag_boolean(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_PERMISSION_CATALOGUE
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_PERMISSION_CATALOGUE
 uint16_t uniffi_tran_uniffi_checksum_func_permission_catalogue(void
@@ -983,6 +1038,42 @@ uint16_t uniffi_tran_uniffi_checksum_func_session_recovery(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_SESSION_REFRESH_EVENT
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_SESSION_REFRESH_EVENT
 uint16_t uniffi_tran_uniffi_checksum_func_session_refresh_event(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_READ_STORED_PUSH
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_READ_STORED_PUSH
+uint16_t uniffi_tran_uniffi_checksum_func_tran_read_stored_push(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_READ_STORED_SESSION
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_READ_STORED_SESSION
+uint16_t uniffi_tran_uniffi_checksum_func_tran_read_stored_session(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_STORED_CONFIG_SCHEMA
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_STORED_CONFIG_SCHEMA
+uint16_t uniffi_tran_uniffi_checksum_func_tran_stored_config_schema(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_STORED_PUSH_SCHEMA
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_STORED_PUSH_SCHEMA
+uint16_t uniffi_tran_uniffi_checksum_func_tran_stored_push_schema(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_STORED_RECORD_DECISION
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_STORED_RECORD_DECISION
+uint16_t uniffi_tran_uniffi_checksum_func_tran_stored_record_decision(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_STORED_SESSION_SCHEMA
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_STORED_SESSION_SCHEMA
+uint16_t uniffi_tran_uniffi_checksum_func_tran_stored_session_schema(void
     
 );
 #endif

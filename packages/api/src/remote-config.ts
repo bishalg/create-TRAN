@@ -11,6 +11,20 @@ export const BUCKET_HEADER = 'X-Tran-Bucket';
 
 export const STORAGE_KEY_CONFIG = 'tran:remote_config';
 export const STORAGE_KEY_ETAG = 'tran:remote_config_etag';
+export const CURRENT_CONFIG_SCHEMA = 2;
+
+/** The one decision every client makes when reading a stored record (REQ-DB-011). */
+export function storedRecordDecision(
+  schema: number,
+  current: number
+): 'use' | 'upgrade' | 'discard' {
+  if (schema <= 0 || current <= 0 || !Number.isInteger(schema) || !Number.isInteger(current)) {
+    return 'discard';
+  }
+  if (schema === current) return 'use';
+  if (schema < current) return 'upgrade';
+  return 'discard';
+}
 
 export interface ConfigStorage {
   getItem(key: string): string | null;
@@ -37,6 +51,7 @@ export interface RemoteConfigStoreOptions {
   bucket?: number;
   defaults?: Record<string, boolean | number | string>;
   liveFlags?: readonly string[];
+  recordDecision?: (schema: number, current: number) => 'use' | 'upgrade' | 'discard';
 }
 
 /**
@@ -51,6 +66,10 @@ export class RemoteConfigStore {
   private readonly bucket?: number;
   private readonly defaults: Record<string, boolean | number | string>;
   private readonly liveFlagSet: Set<string>;
+  private readonly recordDecision: (
+    schema: number,
+    current: number
+  ) => 'use' | 'upgrade' | 'discard';
 
   private launchFlags: Record<string, boolean | number | string>;
   private liveFlags: Record<string, boolean | number | string>;
@@ -67,6 +86,7 @@ export class RemoteConfigStore {
     this.bucket = options.bucket;
     this.defaults = { notify_me: false, ...options.defaults };
     this.liveFlagSet = new Set(options.liveFlags ?? ['notify_me']);
+    this.recordDecision = options.recordDecision ?? storedRecordDecision;
 
     const stored = this.loadStoredConfig();
     const initialFlags = stored ? { ...this.defaults, ...stored.flags } : { ...this.defaults };
@@ -81,7 +101,24 @@ export class RemoteConfigStore {
     try {
       const raw = this.storage.getItem(STORAGE_KEY_CONFIG);
       if (!raw) return null;
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+
+      const schema = typeof parsed.schema === 'number' ? parsed.schema : 1;
+      const decision = this.recordDecision(schema, CURRENT_CONFIG_SCHEMA);
+      if (decision === 'discard') {
+        return null;
+      }
+
+      if (!parsed.flags || typeof parsed.flags !== 'object' || Array.isArray(parsed.flags)) {
+        return null;
+      }
+
+      return {
+        flags: parsed.flags,
+        client: parsed.client ?? { minimum_version: null, recommended_version: null },
+        config_version: typeof parsed.config_version === 'number' ? parsed.config_version : 1,
+      };
     } catch {
       return null;
     }
@@ -161,7 +198,10 @@ export class RemoteConfigStore {
       const data = (await response.json()) as RemoteConfigResponse;
       const etag = response.headers.get('etag');
 
-      this.storage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(data));
+      this.storage.setItem(
+        STORAGE_KEY_CONFIG,
+        JSON.stringify({ schema: CURRENT_CONFIG_SCHEMA, ...data })
+      );
       if (etag) {
         this.storage.setItem(STORAGE_KEY_ETAG, etag);
       }

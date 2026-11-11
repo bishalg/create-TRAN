@@ -17,6 +17,7 @@ pub mod rate;
 pub mod screens;
 pub mod services;
 pub mod session;
+pub mod stored_records;
 #[cfg(test)]
 mod test_support;
 pub mod tokens;
@@ -30,6 +31,7 @@ pub use models::*;
 pub use navigation::*;
 pub use screens::screens_json_snapshot;
 pub use services::*;
+pub use stored_records::*;
 pub use tokens::{
     default_design_tokens, get_brand_tokens, tokens_json_snapshot, BrandDesignTokens,
 };

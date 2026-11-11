@@ -1,8 +1,11 @@
-// Verifies: REQ-CFG-002 REQ-CFG-005 REQ-CFG-006 REQ-CFG-007 REQ-CFG-008
+// Verifies: REQ-CFG-002 REQ-CFG-005 REQ-CFG-006 REQ-CFG-007 REQ-CFG-008 REQ-DB-011
 package com.tran.voting.api
 
 import com.tran.voting.generated.Flags
 import org.json.JSONObject
+import uniffi.tran_uniffi.TranStoredRecordAction
+import uniffi.tran_uniffi.tranStoredConfigSchema
+import uniffi.tran_uniffi.tranStoredRecordDecision
 
 interface ConfigPreferences {
     fun getString(key: String): String?
@@ -48,23 +51,27 @@ class RemoteConfigStore(
         if (raw != null) {
             try {
                 val json = JSONObject(raw)
-                if (json.has("flags")) {
-                    val flagsObj = json.getJSONObject("flags")
-                    val keys = flagsObj.keys()
-                    while (keys.hasNext()) {
-                        val k = keys.next()
-                        initial[k] = flagsObj.get(k)
+                val schema = if (json.has("schema")) json.getInt("schema") else 1
+                val decision = tranStoredRecordDecision(schema.toUInt(), tranStoredConfigSchema())
+                if (decision != TranStoredRecordAction.DISCARD) {
+                    if (json.has("flags")) {
+                        val flagsObj = json.getJSONObject("flags")
+                        val keys = flagsObj.keys()
+                        while (keys.hasNext()) {
+                            val k = keys.next()
+                            initial[k] = flagsObj.get(k)
+                        }
                     }
-                }
-                if (json.has("client")) {
-                    val client = json.getJSONObject("client")
-                    minimumVersion =
-                        if (client.isNull("minimum_version")) null else client.getString("minimum_version")
-                    recommendedVersion =
-                        if (client.isNull("recommended_version")) null else client.getString("recommended_version")
-                }
-                if (json.has("config_version")) {
-                    version = json.getInt("config_version")
+                    if (json.has("client")) {
+                        val client = json.getJSONObject("client")
+                        minimumVersion =
+                            if (client.isNull("minimum_version")) null else client.getString("minimum_version")
+                        recommendedVersion =
+                            if (client.isNull("recommended_version")) null else client.getString("recommended_version")
+                    }
+                    if (json.has("config_version")) {
+                        version = json.getInt("config_version")
+                    }
                 }
             } catch (_: Exception) {
                 // Stored configuration parse failure falls back to compiled defaults

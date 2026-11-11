@@ -465,6 +465,22 @@ fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterUInt8: FfiConverterPrimitive {
+    typealias FfiType = UInt8
+    typealias SwiftType = UInt8
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UInt8 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: UInt8, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterInt8: FfiConverterPrimitive {
     typealias FfiType = Int8
     typealias SwiftType = Int8
@@ -1947,6 +1963,174 @@ public func FfiConverterTypeTranSessionPolicy_lower(_ value: TranSessionPolicy) 
 
 
 /**
+ * Stored push notification registration record on native device (REQ-PSH-010, REQ-DB-011).
+ */
+public struct TranStoredPushRecord: Equatable, Hashable {
+    /**
+     * Record schema version.
+     */
+    public var schema: UInt32
+    /**
+     * Registered push token.
+     */
+    public var token: String
+    /**
+     * Timestamp of last registration in Unix seconds.
+     */
+    public var registeredAtUnixS: Int64
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Record schema version.
+         */schema: UInt32, 
+        /**
+         * Registered push token.
+         */token: String, 
+        /**
+         * Timestamp of last registration in Unix seconds.
+         */registeredAtUnixS: Int64) {
+        self.schema = schema
+        self.token = token
+        self.registeredAtUnixS = registeredAtUnixS
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranStoredPushRecord: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranStoredPushRecord: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranStoredPushRecord {
+        return
+            try TranStoredPushRecord(
+                schema: FfiConverterUInt32.read(from: &buf), 
+                token: FfiConverterString.read(from: &buf), 
+                registeredAtUnixS: FfiConverterInt64.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranStoredPushRecord, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.schema, into: &buf)
+        FfiConverterString.write(value.token, into: &buf)
+        FfiConverterInt64.write(value.registeredAtUnixS, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranStoredPushRecord_lift(_ buf: RustBuffer) throws -> TranStoredPushRecord {
+    return try FfiConverterTypeTranStoredPushRecord.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranStoredPushRecord_lower(_ value: TranStoredPushRecord) -> RustBuffer {
+    return FfiConverterTypeTranStoredPushRecord.lower(value)
+}
+
+
+/**
+ * Stored session vault record on native device (REQ-SEC-017, REQ-DB-011).
+ */
+public struct TranStoredSessionRecord: Equatable, Hashable {
+    /**
+     * Record schema version.
+     */
+    public var schema: UInt32
+    /**
+     * User identifier.
+     */
+    public var userId: String
+    /**
+     * User role wire string.
+     */
+    public var role: String
+    /**
+     * Refresh token credential.
+     */
+    public var refreshToken: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Record schema version.
+         */schema: UInt32, 
+        /**
+         * User identifier.
+         */userId: String, 
+        /**
+         * User role wire string.
+         */role: String, 
+        /**
+         * Refresh token credential.
+         */refreshToken: String) {
+        self.schema = schema
+        self.userId = userId
+        self.role = role
+        self.refreshToken = refreshToken
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranStoredSessionRecord: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranStoredSessionRecord: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranStoredSessionRecord {
+        return
+            try TranStoredSessionRecord(
+                schema: FfiConverterUInt32.read(from: &buf), 
+                userId: FfiConverterString.read(from: &buf), 
+                role: FfiConverterString.read(from: &buf), 
+                refreshToken: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranStoredSessionRecord, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.schema, into: &buf)
+        FfiConverterString.write(value.userId, into: &buf)
+        FfiConverterString.write(value.role, into: &buf)
+        FfiConverterString.write(value.refreshToken, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranStoredSessionRecord_lift(_ buf: RustBuffer) throws -> TranStoredSessionRecord {
+    return try FfiConverterTypeTranStoredSessionRecord.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranStoredSessionRecord_lower(_ value: TranStoredSessionRecord) -> RustBuffer {
+    return FfiConverterTypeTranStoredSessionRecord.lower(value)
+}
+
+
+/**
  * What makes two toasts "the same".
  */
 public struct TranToastKey: Equatable, Hashable {
@@ -3120,6 +3304,100 @@ public func FfiConverterTypeTranErrorCode_lower(_ value: TranErrorCode) -> RustB
 
 
 /**
+ * Errors returned by UniFFI feature flag operations.
+ */
+public 
+enum TranFlagError: Swift.Error, Equatable, Hashable, Foundation.LocalizedError {
+
+    
+    
+    /**
+     * The flag was not found in the catalogue.
+     */
+    case UnknownFlag(String
+    )
+    /**
+     * Failed to parse targeting rules JSON.
+     */
+    case InvalidRulesJson(String
+    )
+
+    
+
+    
+
+    
+    public var errorDescription: String? {
+        String(reflecting: self)
+    }
+    
+}
+
+#if compiler(>=6)
+extension TranFlagError: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranFlagError: FfiConverterRustBuffer {
+    typealias SwiftType = TranFlagError
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranFlagError {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        
+
+        
+        case 1: return .UnknownFlag(
+            try FfiConverterString.read(from: &buf)
+            )
+        case 2: return .InvalidRulesJson(
+            try FfiConverterString.read(from: &buf)
+            )
+
+         default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranFlagError, into buf: inout [UInt8]) {
+        switch value {
+
+        
+
+        
+        
+        case let .UnknownFlag(v1):
+            writeInt(&buf, Int32(1))
+            FfiConverterString.write(v1, into: &buf)
+            
+        
+        case let .InvalidRulesJson(v1):
+            writeInt(&buf, Int32(2))
+            FfiConverterString.write(v1, into: &buf)
+            
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranFlagError_lift(_ buf: RustBuffer) throws -> TranFlagError {
+    return try FfiConverterTypeTranFlagError.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranFlagError_lower(_ value: TranFlagError) -> RustBuffer {
+    return FfiConverterTypeTranFlagError.lower(value)
+}
+
+
+/**
  * How loudly to log a failure where it is handled.
  */
 
@@ -3973,6 +4251,91 @@ public func FfiConverterTypeTranSessionEvent_lower(_ value: TranSessionEvent) ->
 
 
 /**
+ * What the native app does with a stored record version (REQ-DB-011).
+ */
+
+public enum TranStoredRecordAction: Equatable, Hashable {
+    
+    /**
+     * The schema matches current; use the record as is.
+     */
+    case use
+    /**
+     * The schema is from an older release; upgrade it to the current schema.
+     */
+    case upgrade
+    /**
+     * The schema is newer than understood or invalid (0); discard and treat as absent.
+     */
+    case discard
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TranStoredRecordAction: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranStoredRecordAction: FfiConverterRustBuffer {
+    typealias SwiftType = TranStoredRecordAction
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranStoredRecordAction {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .use
+        
+        case 2: return .upgrade
+        
+        case 3: return .discard
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: TranStoredRecordAction, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .use:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .upgrade:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .discard:
+            writeInt(&buf, Int32(3))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranStoredRecordAction_lift(_ buf: RustBuffer) throws -> TranStoredRecordAction {
+    return try FfiConverterTypeTranStoredRecordAction.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranStoredRecordAction_lower(_ value: TranStoredRecordAction) -> RustBuffer {
+    return FfiConverterTypeTranStoredRecordAction.lower(value)
+}
+
+
+
+/**
  * What to do with an incoming toast.
  */
 
@@ -4723,6 +5086,54 @@ fileprivate struct FfiConverterOptionTypeTranLastRegistration: FfiConverterRustB
         switch try readInt(&buf) as Int8 {
         case 0: return nil
         case 1: return try FfiConverterTypeTranLastRegistration.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionTypeTranStoredPushRecord: FfiConverterRustBuffer {
+    typealias SwiftType = TranStoredPushRecord?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeTranStoredPushRecord.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeTranStoredPushRecord.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionTypeTranStoredSessionRecord: FfiConverterRustBuffer {
+    typealias SwiftType = TranStoredSessionRecord?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeTranStoredSessionRecord.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeTranStoredSessionRecord.read(from: &buf)
         default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }
@@ -5506,6 +5917,32 @@ public func verdictSourceSpec(source: TranVerdictSource) -> TranVerdictSourceSpe
 })
 }
 /**
+ * Derives a stable rollout bucket from 0 to 99 from an installation ID (REQ-CFG-006).
+ */
+public func tranDeriveBucket(installationId: String) -> UInt8  {
+    return try!  FfiConverterUInt8.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_tran_derive_bucket(
+        FfiConverterString.lower(installationId),uniffiCallStatus
+    )
+})
+}
+/**
+ * Evaluates a boolean feature flag against targeting rules and client context (REQ-CFG-003).
+ */
+public func tranEvaluateFlagBoolean(flagId: String, rulesJson: String, platform: TranClientPlatform, version: String?, bucket: UInt8)throws  -> Bool  {
+    return try  FfiConverterBool.lift(try rustCallWithError(FfiConverterTypeTranFlagError_lift) {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_tran_evaluate_flag_boolean(
+        FfiConverterString.lower(flagId),
+        FfiConverterString.lower(rulesJson),
+        FfiConverterTypeTranClientPlatform_lower(platform),
+        FfiConverterOptionString.lower(version),
+        FfiConverterUInt8.lower(bucket),uniffiCallStatus
+    )
+})
+}
+/**
  * Every permission the apps may ask for (REQ-PRV-001).
  *
  * # Returns
@@ -5672,6 +6109,72 @@ public func sessionRefreshEvent(status: UInt16?) -> TranSessionEvent?  {
 })
 }
 /**
+ * Reads and optionally upgrades a stored push registration record (REQ-DB-011).
+ */
+public func tranReadStoredPush(rawJson: String, currentSchema: UInt32) -> TranStoredPushRecord?  {
+    return try!  FfiConverterOptionTypeTranStoredPushRecord.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_tran_read_stored_push(
+        FfiConverterString.lower(rawJson),
+        FfiConverterUInt32.lower(currentSchema),uniffiCallStatus
+    )
+})
+}
+/**
+ * Reads and optionally upgrades a stored session vault record (REQ-DB-011, REQ-DB-012).
+ */
+public func tranReadStoredSession(rawJson: String, currentSchema: UInt32) -> TranStoredSessionRecord?  {
+    return try!  FfiConverterOptionTypeTranStoredSessionRecord.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_tran_read_stored_session(
+        FfiConverterString.lower(rawJson),
+        FfiConverterUInt32.lower(currentSchema),uniffiCallStatus
+    )
+})
+}
+/**
+ * Current remote config record schema version.
+ */
+public func tranStoredConfigSchema() -> UInt32  {
+    return try!  FfiConverterUInt32.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_tran_stored_config_schema(uniffiCallStatus
+    )
+})
+}
+/**
+ * Current push registration record schema version.
+ */
+public func tranStoredPushSchema() -> UInt32  {
+    return try!  FfiConverterUInt32.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_tran_stored_push_schema(uniffiCallStatus
+    )
+})
+}
+/**
+ * Decides whether to use, upgrade or discard a stored record version (REQ-DB-011).
+ */
+public func tranStoredRecordDecision(schema: UInt32, current: UInt32) -> TranStoredRecordAction  {
+    return try!  FfiConverterTypeTranStoredRecordAction_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_tran_stored_record_decision(
+        FfiConverterUInt32.lower(schema),
+        FfiConverterUInt32.lower(current),uniffiCallStatus
+    )
+})
+}
+/**
+ * Current session vault record schema version.
+ */
+public func tranStoredSessionSchema() -> UInt32  {
+    return try!  FfiConverterUInt32.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_tran_stored_session_schema(uniffiCallStatus
+    )
+})
+}
+/**
  * Derives a child span from a parent trace ID using injected random bytes (REQ-OBS-001).
  */
 public func childSpanOffline(traceId: String, randomBytes: Data, sampled: Bool) -> TranTraceContext?  {
@@ -5832,6 +6335,12 @@ private let initializationResult: InitializationResult = {
     if (uniffi_tran_uniffi_checksum_func_verdict_source_spec() != 18040) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_tran_uniffi_checksum_func_tran_derive_bucket() != 16818) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_tran_evaluate_flag_boolean() != 3039) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_tran_uniffi_checksum_func_permission_catalogue() != 24544) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -5857,6 +6366,24 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_session_refresh_event() != 10936) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_tran_read_stored_push() != 578) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_tran_read_stored_session() != 36305) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_tran_stored_config_schema() != 22336) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_tran_stored_push_schema() != 464) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_tran_stored_record_decision() != 471) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_tran_stored_session_schema() != 47199) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_child_span_offline() != 62045) {

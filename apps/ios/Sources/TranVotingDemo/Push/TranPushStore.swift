@@ -1,4 +1,4 @@
-// Verifies: REQ-PSH-009 REQ-PSH-010
+// Verifies: REQ-PSH-009 REQ-PSH-010 REQ-DB-011
 import Foundation
 
 /// What push keeps on the device, in ordinary app storage (`UserDefaults`): the installation id and
@@ -17,6 +17,7 @@ import Foundation
 struct TranPushStore {
     static let installationKey = "TranInstallationId"
     static let boundTokenKey = "TranInstallationToken"
+    static let schemaKey = "TranPushSchema"
     static let tokenKey = "TranPushRegisteredToken"
     static let registeredAtKey = "TranPushRegisteredAt"
 
@@ -57,15 +58,28 @@ struct TranPushStore {
         guard let token = defaults.string(forKey: Self.tokenKey),
             let at = defaults.object(forKey: Self.registeredAtKey) as? NSNumber
         else { return nil }
-        return TranLastRegistration(token: token, registeredAtUnixS: at.int64Value)
+        let schema = defaults.object(forKey: Self.schemaKey) as? Int ?? 1
+        let decision = tranStoredRecordDecision(schema: UInt32(schema), current: tranStoredPushSchema())
+        switch decision {
+        case .use:
+            return TranLastRegistration(token: token, registeredAtUnixS: at.int64Value)
+        case .upgrade:
+            defaults.set(Int(tranStoredPushSchema()), forKey: Self.schemaKey)
+            return TranLastRegistration(token: token, registeredAtUnixS: at.int64Value)
+        case .discard:
+            clear()
+            return nil
+        }
     }
 
     func record(_ registration: TranLastRegistration) {
+        defaults.set(Int(tranStoredPushSchema()), forKey: Self.schemaKey)
         defaults.set(registration.token, forKey: Self.tokenKey)
         defaults.set(NSNumber(value: registration.registeredAtUnixS), forKey: Self.registeredAtKey)
     }
 
     func clear() {
+        defaults.removeObject(forKey: Self.schemaKey)
         defaults.removeObject(forKey: Self.tokenKey)
         defaults.removeObject(forKey: Self.registeredAtKey)
     }

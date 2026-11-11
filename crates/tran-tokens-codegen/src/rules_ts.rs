@@ -10,6 +10,9 @@ use crate::privacy_ts::render_privacy_ts;
 use rust_core::push::{PushAction, DEVICE_POLICY};
 use rust_core::rate::RATE_POLICY;
 use rust_core::session::SESSION_POLICY;
+use rust_core::stored_records::{
+    CURRENT_CONFIG_SCHEMA, CURRENT_PUSH_SCHEMA, CURRENT_SESSION_SCHEMA,
+};
 use rust_core::{VoteValidationError, DEFAULT_VOTING_AGE, MAX_AGE, SUPPORTED_COUNTRIES};
 
 fn ts_string(value: &str) -> String {
@@ -80,7 +83,11 @@ export type RouteClass = 'auth' | 'write' | 'read' | 'exempt';\n\n\
 export interface ClassPolicy {{\n  readonly sustainedPerMinute: number;\n  readonly burst: number;\n}}\n\n\
 export interface RatePolicy {{\n  readonly auth: ClassPolicy;\n  readonly write: ClassPolicy;\n  readonly read: ClassPolicy;\n  readonly maxKeys: number;\n  readonly maxInFlight: number;\n}}\n\n\
 /** Rate limiting policy defaults (REQ-RL-001). */\n\
-export const RATE_POLICY: RatePolicy = {{\n{rate}}} as const;\n\n{privacy}",
+export const RATE_POLICY: RatePolicy = {{\n{rate}}} as const;\n\n\
+/** Current client stored record schema versions (REQ-DB-011). */\n\
+export const STORED_RECORD_SCHEMAS = {{\n  session: {CURRENT_SESSION_SCHEMA},\n  push: {CURRENT_PUSH_SCHEMA},\n  config: {CURRENT_CONFIG_SCHEMA},\n}} as const;\n\n\
+/** What a client does with a stored record version (REQ-DB-011). */\n\
+export type StoredRecordAction = 'use' | 'upgrade' | 'discard';\n\n{privacy}",
         push_action = push_actions.join(" | "),
         privacy = render_privacy_ts(),
     )
@@ -130,6 +137,15 @@ mod tests {
             "export const DEVICE_POLICY = {\n  staleAfterDays: 60,\n  refreshAfterDays: 7,\n} as const;"
         ));
         assert!(ts.contains("export type PushAction = 'register' | 'unregister' | 'nothing';"));
+    }
+
+    #[test]
+    fn rules_ts_carries_stored_record_schemas() {
+        // Verifies: REQ-DB-011
+        let ts = render_rules_ts();
+        assert!(ts.contains("export const STORED_RECORD_SCHEMAS = {"));
+        assert!(ts.contains("session: 2,"));
+        assert!(ts.contains("export type StoredRecordAction = 'use' | 'upgrade' | 'discard';"));
     }
 
     #[test]

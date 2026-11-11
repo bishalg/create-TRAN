@@ -32,6 +32,9 @@ pub use push::*;
 mod session;
 pub use session::*;
 
+mod stored_records;
+pub use stored_records::*;
+
 mod trace;
 pub use trace::*;
 

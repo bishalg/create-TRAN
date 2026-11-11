@@ -105,6 +105,7 @@ targets:
       - Tests/TranVotingDemoTests
       - Sources/TranVotingDemo/Generated/UniFFI
       - Sources/TranVotingDemo/Generated/ApiContract.swift
+      - Sources/TranVotingDemo/Generated/Flags.swift
       - Sources/TranVotingDemo/Generated/L10n.swift
       - Sources/TranVotingDemo/Generated/BrandTokens.swift
       - Sources/TranVotingDemo/Api

@@ -83,6 +83,16 @@ export const RATE_POLICY: RatePolicy = {
   maxInFlight: 100,
 } as const;
 
+/** Current client stored record schema versions (REQ-DB-011). */
+export const STORED_RECORD_SCHEMAS = {
+  session: 2,
+  push: 2,
+  config: 2,
+} as const;
+
+/** What a client does with a stored record version (REQ-DB-011). */
+export type StoredRecordAction = 'use' | 'upgrade' | 'discard';
+
 /** A permission the apps may ask for (REQ-PRV-001). */
 export type PermissionId = 'location_approximate' | 'notifications';
 

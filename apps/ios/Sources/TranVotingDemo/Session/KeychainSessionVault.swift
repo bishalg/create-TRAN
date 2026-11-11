@@ -1,4 +1,4 @@
-// Verifies: REQ-SEC-019
+// Verifies: REQ-SEC-019 REQ-DB-011 REQ-DB-012
 import Foundation
 import Security
 
@@ -38,11 +38,27 @@ struct KeychainSessionVault: SessionVault {
             let data = result as? Data
         else { return nil }
         guard let session = try? JSONDecoder().decode(TranStoredSession.self, from: data) else {
-            // Unreadable (an older format, a damaged item): delete it and treat as signed out.
+            // Unreadable: delete it and treat as signed out (REQ-SEC-020).
             clear()
             return nil
         }
-        return session
+        let decision = tranStoredRecordDecision(schema: UInt32(session.schema), current: tranStoredSessionSchema())
+        switch decision {
+        case .use:
+            return session
+        case .upgrade:
+            let upgraded = TranStoredSession(
+                schema: Int(tranStoredSessionSchema()),
+                refreshToken: session.refreshToken,
+                userId: session.userId,
+                roleWire: session.roleWire
+            )
+            try? save(upgraded)
+            return upgraded
+        case .discard:
+            clear()
+            return nil
+        }
     }
 
     func save(_ session: TranStoredSession) throws {

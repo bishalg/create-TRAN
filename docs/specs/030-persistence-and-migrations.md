@@ -93,7 +93,7 @@ fail when the snapshot has a column the table does not list.
 
 ## The clients
 
-### REQ-DB-011 [planned] Every stored record on a device carries a version
+### REQ-DB-011 [verified] Every stored record on a device carries a version
 
 The session vault record, the push record and any cached server answer MUST carry a `schema` number. Reading MUST go
 through one Rust decision, `stored_record(schema, current)`, pinned by `fixtures/stored-records.json`: the current
@@ -102,7 +102,7 @@ and treated as absent (signed out; defaults), never a crash.
 **Verified by:** the fixture on every platform; `StoredRecordTests.swift`, `StoredRecordTest.kt`,
 `packages/api/tests/stored-record.test.ts`.
 
-### REQ-DB-012 [planned] An app update keeps the person signed in
+### REQ-DB-012 [verified] An app update keeps the person signed in
 
 A record written by the previous released client version MUST be readable by the current one. Each release MUST add
 the records it writes to `fixtures/stored-records.json`, and the tests MUST read every kept version.

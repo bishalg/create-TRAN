@@ -1,4 +1,4 @@
-// Verifies: REQ-CFG-002 REQ-CFG-005 REQ-CFG-006 REQ-CFG-007 REQ-CFG-008
+// Verifies: REQ-CFG-002 REQ-CFG-005 REQ-CFG-006 REQ-CFG-007 REQ-CFG-008 REQ-DB-011
 import Foundation
 
 /// Remote configuration store for iOS (spec 029, ADR-0048).
@@ -33,16 +33,20 @@ public final class RemoteConfigStore: @unchecked Sendable {
 
         if let data = userDefaults.data(forKey: storageKey),
            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            if let flags = json["flags"] as? [String: Any] {
-                for (k, v) in flags {
-                    initial[k] = v
+            let schema = json["schema"] as? Int ?? 1
+            let decision = tranStoredRecordDecision(schema: UInt32(schema), current: tranStoredConfigSchema())
+            if decision != .discard {
+                if let flags = json["flags"] as? [String: Any] {
+                    for (k, v) in flags {
+                        initial[k] = v
+                    }
                 }
-            }
-            if let client = json["client"] as? [String: Any] {
-                initialThresholds = (client["minimum_version"] as? String, client["recommended_version"] as? String)
-            }
-            if let v = json["config_version"] as? Int {
-                initialVersion = v
+                if let client = json["client"] as? [String: Any] {
+                    initialThresholds = (client["minimum_version"] as? String, client["recommended_version"] as? String)
+                }
+                if let v = json["config_version"] as? Int {
+                    initialVersion = v
+                }
             }
         }
 
@@ -100,7 +104,13 @@ public final class RemoteConfigStore: @unchecked Sendable {
                 return false
             }
 
-            userDefaults.set(data, forKey: storageKey)
+            var payload = json
+            payload["schema"] = Int(tranStoredConfigSchema())
+            if let payloadData = try? JSONSerialization.data(withJSONObject: payload) {
+                userDefaults.set(payloadData, forKey: storageKey)
+            } else {
+                userDefaults.set(data, forKey: storageKey)
+            }
             if let etag = http.value(forHTTPHeaderField: "ETag") {
                 userDefaults.set(etag, forKey: etagKey)
             }

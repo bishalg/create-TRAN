@@ -1,21 +1,34 @@
-// Verifies: REQ-SEC-017 REQ-SEC-020 REQ-VER-008
+// Verifies: REQ-SEC-017 REQ-SEC-020 REQ-VER-008 REQ-DB-011 REQ-DB-012
 package com.tran.voting.session
 
 import com.tran.voting.generated.ApiContract
 import uniffi.tran_uniffi.TranUserRole
+import uniffi.tran_uniffi.tranStoredSessionSchema
 
 /**
  * The one record a device keeps for an API session (ADR-0039 decision 4): the refresh token, with
  * the user id and role it belongs to. The access token is never part of it (REQ-SEC-017).
+ * Carries a schema version; reading upgrades older records and discards newer ones (REQ-DB-011).
  */
-class StoredSession(val userId: String, val role: TranUserRole, val refreshToken: String) {
+class StoredSession(
+    val userId: String,
+    val role: TranUserRole,
+    val refreshToken: String,
+    val schema: Int = tranStoredSessionSchema().toInt()
+) {
     override fun equals(other: Any?): Boolean =
-        other is StoredSession && other.userId == userId && other.role == role && other.refreshToken == refreshToken
+        other is StoredSession &&
+            other.userId == userId &&
+            other.role == role &&
+            other.refreshToken == refreshToken &&
+            other.schema == schema
 
-    override fun hashCode(): Int = (userId.hashCode() * 31 + role.hashCode()) * 31 + refreshToken.hashCode()
+    override fun hashCode(): Int =
+        ((userId.hashCode() * 31 + role.hashCode()) * 31 + refreshToken.hashCode()) * 31 + schema.hashCode()
 
     /** A record printed by accident shows who, never the credential (REQ-SEC-014). */
-    override fun toString(): String = "StoredSession(userId=$userId, role=${role.wire}, refreshToken=[redacted])"
+    override fun toString(): String =
+        "StoredSession(schema=$schema, userId=$userId, role=${role.wire}, refreshToken=[redacted])"
 }
 
 /** The one place a platform persists the refresh token (spec 022 "vault"). */

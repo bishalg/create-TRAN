@@ -738,6 +738,10 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_verdict_source_spec(
     ): Int
+    external fun uniffi_tran_uniffi_checksum_func_tran_derive_bucket(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_tran_evaluate_flag_boolean(
+    ): Int
     external fun uniffi_tran_uniffi_checksum_func_permission_catalogue(
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_permission_entry(
@@ -755,6 +759,18 @@ internal object IntegrityCheckingUniffiLib {
     external fun uniffi_tran_uniffi_checksum_func_session_recovery(
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_session_refresh_event(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_tran_read_stored_push(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_tran_read_stored_session(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_tran_stored_config_schema(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_tran_stored_push_schema(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_tran_stored_record_decision(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_tran_stored_session_schema(
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_child_span_offline(
     ): Int
@@ -843,6 +859,10 @@ internal object UniffiLib {
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_verdict_source_spec(`source`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_tran_derive_bucket(`installationId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Int
+    external fun uniffi_tran_uniffi_fn_func_tran_evaluate_flag_boolean(`flagId`: RustBuffer.ByValue,`rulesJson`: RustBuffer.ByValue,`platform`: RustBuffer.ByValue,`version`: RustBuffer.ByValue,`bucket`: Byte,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
     external fun uniffi_tran_uniffi_fn_func_permission_catalogue(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_permission_entry(`id`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -861,6 +881,18 @@ internal object UniffiLib {
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_session_refresh_event(`status`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_tran_read_stored_push(`rawJson`: RustBuffer.ByValue,`currentSchema`: Int,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_tran_read_stored_session(`rawJson`: RustBuffer.ByValue,`currentSchema`: Int,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_tran_stored_config_schema(uniffi_out_err: UniffiRustCallStatus, 
+    ): Int
+    external fun uniffi_tran_uniffi_fn_func_tran_stored_push_schema(uniffi_out_err: UniffiRustCallStatus, 
+    ): Int
+    external fun uniffi_tran_uniffi_fn_func_tran_stored_record_decision(`schema`: Int,`current`: Int,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_tran_stored_session_schema(uniffi_out_err: UniffiRustCallStatus, 
+    ): Int
     external fun uniffi_tran_uniffi_fn_func_child_span_offline(`traceId`: RustBuffer.ByValue,`randomBytes`: RustBuffer.ByValue,`sampled`: Byte,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_format_traceparent_offline(`context`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1084,6 +1116,12 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_tran_uniffi_checksum_func_verdict_source_spec() and 0xFFFF) != 18040) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_tran_uniffi_checksum_func_tran_derive_bucket() and 0xFFFF) != 16818) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_tran_evaluate_flag_boolean() and 0xFFFF) != 3039) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if ((lib.uniffi_tran_uniffi_checksum_func_permission_catalogue() and 0xFFFF) != 24544) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1109,6 +1147,24 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_tran_uniffi_checksum_func_session_refresh_event() and 0xFFFF) != 10936) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_tran_read_stored_push() and 0xFFFF) != 578) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_tran_read_stored_session() and 0xFFFF) != 36305) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_tran_stored_config_schema() and 0xFFFF) != 22336) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_tran_stored_push_schema() and 0xFFFF) != 464) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_tran_stored_record_decision() and 0xFFFF) != 471) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_tran_stored_session_schema() and 0xFFFF) != 47199) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_tran_uniffi_checksum_func_child_span_offline() and 0xFFFF) != 62045) {
@@ -1215,6 +1271,33 @@ object UniffiWithHandle
  * @suppress
  * */
 object NoHandle
+
+/**
+ * @suppress
+ */
+public object FfiConverterUByte: FfiConverter<UByte, Byte> {
+    override fun lift(value: Byte): UByte {
+        return value.toUByte()
+    }
+
+    fun lift(value: Int): UByte {
+        return value.toUByte()
+    }
+
+    override fun read(buf: ByteBuffer): UByte {
+        return lift(buf.get())
+    }
+
+    override fun lower(value: UByte): Byte {
+        return value.toByte()
+    }
+
+    override fun allocationSize(value: UByte) = 1UL
+
+    override fun write(value: UByte, buf: ByteBuffer) {
+        buf.put(value.toByte())
+    }
+}
 
 /**
  * @suppress
@@ -2375,6 +2458,124 @@ public object FfiConverterTypeTranSessionPolicy: FfiConverterRustBuffer<TranSess
 
 
 /**
+ * Stored push notification registration record on native device (REQ-PSH-010, REQ-DB-011).
+ */
+data class TranStoredPushRecord (
+    /**
+     * Record schema version.
+     */
+    var `schema`: kotlin.UInt
+    , 
+    /**
+     * Registered push token.
+     */
+    var `token`: kotlin.String
+    , 
+    /**
+     * Timestamp of last registration in Unix seconds.
+     */
+    var `registeredAtUnixS`: kotlin.Long
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranStoredPushRecord: FfiConverterRustBuffer<TranStoredPushRecord> {
+    override fun read(buf: ByteBuffer): TranStoredPushRecord {
+        return TranStoredPushRecord(
+            FfiConverterUInt.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterLong.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranStoredPushRecord) = (
+            FfiConverterUInt.allocationSize(value.`schema`) +
+            FfiConverterString.allocationSize(value.`token`) +
+            FfiConverterLong.allocationSize(value.`registeredAtUnixS`)
+    )
+
+    override fun write(value: TranStoredPushRecord, buf: ByteBuffer) {
+            FfiConverterUInt.write(value.`schema`, buf)
+            FfiConverterString.write(value.`token`, buf)
+            FfiConverterLong.write(value.`registeredAtUnixS`, buf)
+    }
+}
+
+
+
+/**
+ * Stored session vault record on native device (REQ-SEC-017, REQ-DB-011).
+ */
+data class TranStoredSessionRecord (
+    /**
+     * Record schema version.
+     */
+    var `schema`: kotlin.UInt
+    , 
+    /**
+     * User identifier.
+     */
+    var `userId`: kotlin.String
+    , 
+    /**
+     * User role wire string.
+     */
+    var `role`: kotlin.String
+    , 
+    /**
+     * Refresh token credential.
+     */
+    var `refreshToken`: kotlin.String
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranStoredSessionRecord: FfiConverterRustBuffer<TranStoredSessionRecord> {
+    override fun read(buf: ByteBuffer): TranStoredSessionRecord {
+        return TranStoredSessionRecord(
+            FfiConverterUInt.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranStoredSessionRecord) = (
+            FfiConverterUInt.allocationSize(value.`schema`) +
+            FfiConverterString.allocationSize(value.`userId`) +
+            FfiConverterString.allocationSize(value.`role`) +
+            FfiConverterString.allocationSize(value.`refreshToken`)
+    )
+
+    override fun write(value: TranStoredSessionRecord, buf: ByteBuffer) {
+            FfiConverterUInt.write(value.`schema`, buf)
+            FfiConverterString.write(value.`userId`, buf)
+            FfiConverterString.write(value.`role`, buf)
+            FfiConverterString.write(value.`refreshToken`, buf)
+    }
+}
+
+
+
+/**
  * What makes two toasts "the same".
  */
 data class TranToastKey (
@@ -3062,6 +3263,98 @@ public object FfiConverterTypeTranErrorCode: FfiConverterRustBuffer<TranErrorCod
 
 
 
+
+
+/**
+ * Errors returned by UniFFI feature flag operations.
+ */
+sealed class TranFlagException: kotlin.Exception() {
+    
+    /**
+     * The flag was not found in the catalogue.
+     */
+    class UnknownFlag(
+        
+        val v1: kotlin.String
+        ) : TranFlagException() {
+        override val message
+            get() = "v1=${ v1 }"
+    }
+    
+    /**
+     * Failed to parse targeting rules JSON.
+     */
+    class InvalidRulesJson(
+        
+        val v1: kotlin.String
+        ) : TranFlagException() {
+        override val message
+            get() = "v1=${ v1 }"
+    }
+    
+
+    
+
+
+    companion object ErrorHandler : UniffiRustCallStatusErrorHandler<TranFlagException> {
+        override fun lift(error_buf: RustBuffer.ByValue): TranFlagException = FfiConverterTypeTranFlagError.lift(error_buf)
+    }
+
+    
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranFlagError : FfiConverterRustBuffer<TranFlagException> {
+    override fun read(buf: ByteBuffer): TranFlagException {
+        
+
+        return when(buf.getInt()) {
+            1 -> TranFlagException.UnknownFlag(
+                FfiConverterString.read(buf),
+                )
+            2 -> TranFlagException.InvalidRulesJson(
+                FfiConverterString.read(buf),
+                )
+            else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: TranFlagException): ULong {
+        return when(value) {
+            is TranFlagException.UnknownFlag -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+                + FfiConverterString.allocationSize(value.v1)
+            )
+            is TranFlagException.InvalidRulesJson -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+                + FfiConverterString.allocationSize(value.v1)
+            )
+        }
+    }
+
+    override fun write(value: TranFlagException, buf: ByteBuffer) {
+        when(value) {
+            is TranFlagException.UnknownFlag -> {
+                buf.putInt(1)
+                FfiConverterString.write(value.v1, buf)
+                Unit
+            }
+            is TranFlagException.InvalidRulesJson -> {
+                buf.putInt(2)
+                FfiConverterString.write(value.v1, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+
+}
+
+
+
 /**
  * How loudly to log a failure where it is handled.
  */
@@ -3688,6 +3981,53 @@ public object FfiConverterTypeTranSessionEvent : FfiConverterRustBuffer<TranSess
 
 
 /**
+ * What the native app does with a stored record version (REQ-DB-011).
+ */
+
+enum class TranStoredRecordAction {
+    
+    /**
+     * The schema matches current; use the record as is.
+     */
+    USE,
+    /**
+     * The schema is from an older release; upgrade it to the current schema.
+     */
+    UPGRADE,
+    /**
+     * The schema is newer than understood or invalid (0); discard and treat as absent.
+     */
+    DISCARD;
+
+    
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranStoredRecordAction: FfiConverterRustBuffer<TranStoredRecordAction> {
+    override fun read(buf: ByteBuffer) = try {
+        TranStoredRecordAction.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: TranStoredRecordAction) = 4UL
+
+    override fun write(value: TranStoredRecordAction, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+/**
  * What to do with an incoming toast.
  */
 sealed class TranToastAdmission {
@@ -4294,6 +4634,70 @@ public object FfiConverterOptionalTypeTranLastRegistration: FfiConverterRustBuff
         } else {
             buf.put(1)
             FfiConverterTypeTranLastRegistration.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeTranStoredPushRecord: FfiConverterRustBuffer<TranStoredPushRecord?> {
+    override fun read(buf: ByteBuffer): TranStoredPushRecord? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeTranStoredPushRecord.read(buf)
+    }
+
+    override fun allocationSize(value: TranStoredPushRecord?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeTranStoredPushRecord.allocationSize(value)
+        }
+    }
+
+    override fun write(value: TranStoredPushRecord?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeTranStoredPushRecord.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeTranStoredSessionRecord: FfiConverterRustBuffer<TranStoredSessionRecord?> {
+    override fun read(buf: ByteBuffer): TranStoredSessionRecord? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeTranStoredSessionRecord.read(buf)
+    }
+
+    override fun allocationSize(value: TranStoredSessionRecord?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeTranStoredSessionRecord.allocationSize(value)
+        }
+    }
+
+    override fun write(value: TranStoredSessionRecord?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeTranStoredSessionRecord.write(value, buf)
         }
     }
 }
@@ -5230,6 +5634,39 @@ public object FfiConverterSequenceTypeTranToastKey: FfiConverterRustBuffer<List<
     
 
         /**
+         * Derives a stable rollout bucket from 0 to 99 from an installation ID (REQ-CFG-006).
+         */ fun `tranDeriveBucket`(`installationId`: kotlin.String): kotlin.UByte {
+            return FfiConverterUByte.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_tran_derive_bucket(
+    
+        
+        FfiConverterString.lower(`installationId`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Evaluates a boolean feature flag against targeting rules and client context (REQ-CFG-003).
+         */
+    @Throws(TranFlagException::class) fun `tranEvaluateFlagBoolean`(`flagId`: kotlin.String, `rulesJson`: kotlin.String, `platform`: TranClientPlatform, `version`: kotlin.String?, `bucket`: kotlin.UByte): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    uniffiRustCallWithError(TranFlagException) { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_tran_evaluate_flag_boolean(
+    
+        
+        FfiConverterString.lower(`flagId`),
+        FfiConverterString.lower(`rulesJson`),
+        FfiConverterTypeTranClientPlatform.lower(`platform`),
+        FfiConverterOptionalString.lower(`version`),
+        FfiConverterUByte.lower(`bucket`),_status)
+}
+    )
+    }
+    
+
+        /**
          * Every permission the apps may ask for (REQ-PRV-001).
          *
          * # Returns
@@ -5417,6 +5854,90 @@ public object FfiConverterSequenceTypeTranToastKey: FfiConverterRustBuffer<List<
     
         
         FfiConverterOptionalUShort.lower(`status`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Reads and optionally upgrades a stored push registration record (REQ-DB-011).
+         */ fun `tranReadStoredPush`(`rawJson`: kotlin.String, `currentSchema`: kotlin.UInt): TranStoredPushRecord? {
+            return FfiConverterOptionalTypeTranStoredPushRecord.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_tran_read_stored_push(
+    
+        
+        FfiConverterString.lower(`rawJson`),
+        FfiConverterUInt.lower(`currentSchema`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Reads and optionally upgrades a stored session vault record (REQ-DB-011, REQ-DB-012).
+         */ fun `tranReadStoredSession`(`rawJson`: kotlin.String, `currentSchema`: kotlin.UInt): TranStoredSessionRecord? {
+            return FfiConverterOptionalTypeTranStoredSessionRecord.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_tran_read_stored_session(
+    
+        
+        FfiConverterString.lower(`rawJson`),
+        FfiConverterUInt.lower(`currentSchema`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Current remote config record schema version.
+         */ fun `tranStoredConfigSchema`(): kotlin.UInt {
+            return FfiConverterUInt.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_tran_stored_config_schema(
+    
+        _status)
+}
+    )
+    }
+    
+
+        /**
+         * Current push registration record schema version.
+         */ fun `tranStoredPushSchema`(): kotlin.UInt {
+            return FfiConverterUInt.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_tran_stored_push_schema(
+    
+        _status)
+}
+    )
+    }
+    
+
+        /**
+         * Decides whether to use, upgrade or discard a stored record version (REQ-DB-011).
+         */ fun `tranStoredRecordDecision`(`schema`: kotlin.UInt, `current`: kotlin.UInt): TranStoredRecordAction {
+            return FfiConverterTypeTranStoredRecordAction.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_tran_stored_record_decision(
+    
+        
+        FfiConverterUInt.lower(`schema`),
+        FfiConverterUInt.lower(`current`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Current session vault record schema version.
+         */ fun `tranStoredSessionSchema`(): kotlin.UInt {
+            return FfiConverterUInt.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_tran_stored_session_schema(
+    
+        _status)
 }
     )
     }

@@ -1,4 +1,4 @@
-// Verifies: REQ-SEC-020
+// Verifies: REQ-SEC-020 REQ-DB-011 REQ-DB-012
 package com.tran.voting.session
 
 import android.content.Context
@@ -15,6 +15,9 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import org.json.JSONException
 import org.json.JSONObject
+import uniffi.tran_uniffi.TranStoredRecordAction
+import uniffi.tran_uniffi.tranStoredRecordDecision
+import uniffi.tran_uniffi.tranStoredSessionSchema
 
 /**
  * The Android vault (ADR-0039 decision 4): the record is encrypted with AES-256-GCM under a key
@@ -43,7 +46,14 @@ class KeystoreSessionVault(
             val key = existingKey() ?: throw GeneralSecurityException("vault key missing")
             val cipher = Cipher.getInstance(TRANSFORMATION)
             cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(TAG_BITS, decode(iv)))
-            decodeRecord(String(cipher.doFinal(decode(ciphertext)), Charsets.UTF_8))
+            val decoded = decodeRecord(String(cipher.doFinal(decode(ciphertext)), Charsets.UTF_8))
+            if (decoded != null && decoded.schema != tranStoredSessionSchema().toInt()) {
+                val upgraded = StoredSession(decoded.userId, decoded.role, decoded.refreshToken, tranStoredSessionSchema().toInt())
+                write(upgraded)
+                upgraded
+            } else {
+                decoded
+            }
         } catch (_: GeneralSecurityException) {
             null
         } catch (_: ProviderException) {
@@ -106,6 +116,7 @@ class KeystoreSessionVault(
 
         private fun encodeRecord(session: StoredSession): String =
             JSONObject()
+                .put("schema", tranStoredSessionSchema().toInt())
                 .put("user_id", session.userId)
                 .put("role", session.role.wire)
                 .put("refresh_token", session.refreshToken)
@@ -113,8 +124,19 @@ class KeystoreSessionVault(
 
         private fun decodeRecord(json: String): StoredSession? {
             val record = JSONObject(json)
+            val schema = if (record.has("schema")) record.getInt("schema") else 1
+            val decision = tranStoredRecordDecision(schema.toUInt(), tranStoredSessionSchema())
+            if (decision == TranStoredRecordAction.DISCARD) {
+                return null
+            }
             val role = tranUserRoleFromWire(record.getString("role")) ?: return null
-            return StoredSession(record.getString("user_id"), role, record.getString("refresh_token"))
+            val currentSchema = tranStoredSessionSchema().toInt()
+            return StoredSession(
+                record.getString("user_id"),
+                role,
+                record.getString("refresh_token"),
+                schema = if (decision == TranStoredRecordAction.UPGRADE) currentSchema else schema
+            )
         }
     }
 }
