@@ -29,6 +29,9 @@ pub use push::*;
 mod session;
 pub use session::*;
 
+mod trace;
+pub use trace::*;
+
 /// A validation failure that native code can branch on without parsing English prose.
 ///
 /// Map these variants to localized copy in the app layer. The `Display` text is for Rust logs

@@ -1,15 +1,23 @@
-// Verifies: REQ-ERR-011 REQ-ERR-014
+// Verifies: REQ-ERR-011 REQ-ERR-014 REQ-OBS-011
 import Foundation
 
 /// The one seam for "a human must look at this" (ADR-0036): `error`-level failures and uncaught
 /// exceptions go to `sink` — Crashlytics, Sentry or an HTTP endpoint in a real app; none in the
 /// template, so nothing leaves the device. Set it once, at launch, before any other thread runs.
 enum TranReporting {
-    /// Exactly the `logEvent` fields — never a payload.
+    /// Exactly the `logEvent` fields — never a payload (REQ-OBS-002, REQ-OBS-011).
     struct Event: Equatable, Sendable {
         let code: String
         let status: Int?
         let requestId: String?
+        let traceId: String?
+
+        init(code: String, status: Int? = nil, requestId: String? = nil, traceId: String? = nil) {
+            self.code = code
+            self.status = status
+            self.requestId = requestId
+            self.traceId = traceId
+        }
     }
 
     /// Written once at launch, read afterwards; the crash handler may read it from any thread.
@@ -22,7 +30,12 @@ enum TranReporting {
         // Only client-side codes may carry a detail (a crash reason), never a payload.
         let clientSide = spec.wireCode.hasPrefix("client.")
         sink?(
-            Event(code: spec.wireCode, status: failure.status, requestId: failure.requestId),
+            Event(
+                code: spec.wireCode,
+                status: failure.status,
+                requestId: failure.requestId,
+                traceId: failure.traceId
+            ),
             clientSide ? detail : nil
         )
     }

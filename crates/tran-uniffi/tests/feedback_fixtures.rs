@@ -1,4 +1,4 @@
-// Verifies: REQ-ERR-001 REQ-ERR-004 REQ-ERR-010 REQ-ERR-011 REQ-ERR-005 REQ-ROB-010 REQ-LOAD-001
+// Verifies: REQ-ERR-001 REQ-ERR-004 REQ-ERR-010 REQ-ERR-011 REQ-ERR-005 REQ-ROB-010 REQ-LOAD-001 REQ-OBS-002
 //! The feedback catalogue through the UniFFI export surface (same fixture as rust-core).
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
@@ -26,6 +26,8 @@ struct Fixtures {
     request_ids: RequestIds,
     loading_policy: LoadingPolicyCase,
     verdict_sources: Vec<VerdictSourceCase>,
+    log_event: Value,
+    request_completed_log_event: Value,
 }
 
 #[derive(Deserialize)]
@@ -287,4 +289,21 @@ fn every_verdict_source_matches_fixture() {
         assert_eq!(spec.wire_name, case.source);
         assert_eq!(spec.message_key, case.message_key);
     }
+}
+
+// Verifies: REQ-OBS-002
+#[test]
+fn uniffi_log_event_matches_fixture() {
+    let fix = fixtures();
+    let event = tran_uniffi::log_event();
+    assert_eq!(
+        serde_json::json!({ "message": event.message, "fields": event.fields }),
+        fix.log_event
+    );
+    let events = tran_uniffi::log_events();
+    assert_eq!(events.len(), 2);
+    assert_eq!(
+        serde_json::json!({ "message": events[1].message, "fields": events[1].fields }),
+        fix.request_completed_log_event
+    );
 }

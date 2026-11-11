@@ -51,6 +51,10 @@ pub struct AppState {
     pub rate_limit_store: Arc<dyn RateLimitStore>,
     /// Active in-flight requests count for load shedding (REQ-RL-007).
     pub in_flight: Arc<AtomicUsize>,
+    /// Prometheus metrics handle (REQ-OBS-005, REQ-OBS-006).
+    pub metrics_handle: metrics_exporter_prometheus::PrometheusHandle,
+    /// Whether the server is ready to accept traffic (REQ-OBS-007, REQ-OBS-008).
+    pub ready: Arc<std::sync::atomic::AtomicBool>,
 }
 
 impl AppState {
@@ -63,6 +67,8 @@ impl AppState {
         let rate_limit_store: Arc<dyn RateLimitStore> =
             Arc::new(MemoryRateLimitStore::new(rate_policy.max_keys));
         let in_flight = Arc::new(AtomicUsize::new(0));
+        let metrics_handle = crate::metrics::init_metrics();
+        let ready = Arc::new(std::sync::atomic::AtomicBool::new(true));
 
         Self {
             engine: Arc::new(TranEngine::new()),
@@ -83,6 +89,8 @@ impl AppState {
             push_providers: Arc::new(PushProviders::off()),
             rate_limit_store,
             in_flight,
+            metrics_handle,
+            ready,
         }
     }
 
@@ -130,6 +138,21 @@ impl AppState {
 
     pub fn uptime_seconds(&self) -> u64 {
         self.start_time.elapsed().as_secs()
+    }
+
+    /// Whether the server is ready to accept traffic (REQ-OBS-007, REQ-OBS-008).
+    pub fn is_ready(&self) -> bool {
+        self.ready.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    /// Marks the server as ready or not ready (REQ-OBS-007, REQ-OBS-008).
+    pub fn set_ready(&self, ready: bool) {
+        self.ready.store(ready, std::sync::atomic::Ordering::SeqCst);
+    }
+
+    /// Renders Prometheus metrics in text exposition format (REQ-OBS-005, REQ-OBS-006).
+    pub fn render_metrics(&self) -> String {
+        self.metrics_handle.render()
     }
 }
 

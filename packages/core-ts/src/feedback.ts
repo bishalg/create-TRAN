@@ -103,6 +103,7 @@ export class TranRequestError extends Error {
   public readonly code: ErrorCode;
   public readonly spec: ErrorSpec;
   public readonly requestId?: string;
+  public readonly traceId?: string;
 
   constructor(
     code: ErrorCode,
@@ -111,7 +112,8 @@ export class TranRequestError extends Error {
     requestId?: string,
     public readonly retryAfterMs: number | null = null,
     /** The thrown value behind a client-side failure, for the reporter's stack (REQ-ERR-014). */
-    cause?: unknown
+    cause?: unknown,
+    traceId?: string
   ) {
     super(message, cause === undefined ? undefined : { cause });
     this.name = 'TranRequestError';
@@ -119,6 +121,7 @@ export class TranRequestError extends Error {
     this.code = specsByCode.has(code) ? code : 'client.unexpected';
     this.spec = errorSpec(this.code);
     this.requestId = requestId !== undefined && isValidRequestId(requestId) ? requestId : undefined;
+    this.traceId = traceId;
   }
 }
 
@@ -134,7 +137,15 @@ function classifyKnown(err: unknown): TranRequestError {
   if (err instanceof TranApiError) {
     const code = errorCodeFromWire(err.code) ?? codeForHttpStatus(err.status);
     const retryAfter = err.retryAfter === undefined ? null : retryAfterMs(err.retryAfter);
-    return new TranRequestError(code, err.message, err.status, err.requestId, retryAfter);
+    return new TranRequestError(
+      code,
+      err.message,
+      err.status,
+      err.requestId,
+      retryAfter,
+      undefined,
+      err.traceId
+    );
   }
   if (err instanceof VoteEligibilityValidationError) {
     return new TranRequestError(err.code, err.message);
@@ -158,11 +169,31 @@ function classifyKnown(err: unknown): TranRequestError {
  * values that throw when inspected (revoked proxies, prototype-less objects, throwing getters)
  * still become `client.unexpected`.
  */
-export function classifyError(err: unknown): TranRequestError {
+export function classifyError(err: unknown, traceId?: string): TranRequestError {
   try {
-    return classifyKnown(err);
+    const error = classifyKnown(err);
+    if (traceId && !error.traceId) {
+      return new TranRequestError(
+        error.code,
+        error.message,
+        error.status,
+        error.requestId,
+        error.retryAfterMs,
+        error.cause,
+        traceId
+      );
+    }
+    return error;
   } catch {
-    return new TranRequestError('client.unexpected', 'unclassifiable failure');
+    return new TranRequestError(
+      'client.unexpected',
+      'unclassifiable failure',
+      null,
+      undefined,
+      null,
+      undefined,
+      traceId
+    );
   }
 }
 
@@ -227,11 +258,17 @@ export function logFailure(error: TranRequestError, logger: FeedbackLogger = con
     code: error.code,
     status: error.status,
     request_id: error.requestId,
+    trace_id: error.traceId,
     detail: error.message,
   });
   if (isReportedLogLevel(error.spec.logLevel)) {
     reportFailure(
-      { code: error.code, status: error.status, request_id: error.requestId },
+      {
+        code: error.code,
+        status: error.status,
+        request_id: error.requestId,
+        trace_id: error.traceId,
+      },
       error.cause
     );
   }

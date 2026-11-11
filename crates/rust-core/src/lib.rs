@@ -19,6 +19,7 @@ pub mod session;
 #[cfg(test)]
 mod test_support;
 pub mod tokens;
+pub mod trace;
 pub mod validation;
 pub mod voting;
 
@@ -30,5 +31,6 @@ pub use services::*;
 pub use tokens::{
     default_design_tokens, get_brand_tokens, tokens_json_snapshot, BrandDesignTokens,
 };
+pub use trace::*;
 pub use validation::*;
 pub use voting::*;

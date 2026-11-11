@@ -32,7 +32,11 @@
   ],
   "logEvent": {
     "message": "request failed",
-    "fields": ["code", "status", "request_id"]
+    "fields": ["code", "status", "request_id", "trace_id"]
+  },
+  "requestCompletedLogEvent": {
+    "message": "request completed",
+    "fields": ["method", "route", "status", "latency_ms", "request_id", "trace_id"]
   },
   "retryDelays": [
     {

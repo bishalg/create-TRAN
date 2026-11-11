@@ -1,5 +1,5 @@
 // Verifies: REQ-SEC-014 REQ-SEC-015 REQ-SEC-016 REQ-SEC-017 REQ-SEC-021 REQ-SEC-022 REQ-ACC-006 REQ-ROB-007
-// Verifies: REQ-PSH-009 REQ-VER-001 REQ-VER-004 REQ-VER-008
+// Verifies: REQ-PSH-009 REQ-VER-001 REQ-VER-004 REQ-VER-008 REQ-OBS-010 REQ-OBS-011
 import Foundation
 import os
 
@@ -58,24 +58,30 @@ actor TranSessionClient {
     /// `POST /api/v1/auth/session` with the body transport; stores the refresh token in the vault and
     /// keeps the access token in memory. The device session does not wait for this (ADR-0039 7).
     @discardableResult
-    func signIn(role: TranUserRole) async throws -> TranStoredSession {
+    func signIn(role: TranUserRole, traceId: String? = nil) async throws -> TranStoredSession {
         let body = Self.json(["role": role.wire, "transport": "body"])
-        let data = try await send(http.request(.signIn, body: body))
+        let tid = traceId ?? TranRetry.newTraceId()
+        let span = TranRetry.newChildSpan(traceId: tid)
+        let tp = span.map { formatTraceparentOffline(context: $0) }
+        let data = try await send(http.request(.signIn, body: body, traceparent: tp))
         return try adopt(data, epoch: epoch)
     }
 
     /// Clears the vault and the access token first, then revokes on the server. The server call
     /// may fail or never answer; the device is signed out either way (REQ-SEC-022). Nobody hears
     /// of a failed revoke, so this client logs it.
-    func signOut() async {
+    func signOut(traceId: String? = nil) async {
         let stored = vault.load()
         endSession()
         guard let stored else { return }
         let body = Self.json(["refresh_token": stored.refreshToken])
+        let tid = traceId ?? TranRetry.newTraceId()
+        let span = TranRetry.newChildSpan(traceId: tid)
+        let tp = span.map { formatTraceparentOffline(context: $0) }
         do {
-            _ = try await send(http.request(.signOut, body: body))
+            _ = try await send(http.request(.signOut, body: body, traceparent: tp))
         } catch {
-            log(TranRequestFailure.classify(error))
+            log(TranRequestFailure.classify(error, traceId: tid))
         }
     }
 
@@ -85,23 +91,26 @@ actor TranSessionClient {
     /// the device is cleared only once the server answers `2xx`; any failure leaves the vault and
     /// the access token as they were and is thrown for the normal error feedback. A `401` follows
     /// `sessionRecovery` like any other call (REQ-SEC-015).
-    func deleteAccount() async throws {
+    func deleteAccount(traceId: String? = nil) async throws {
         // Single flight: a second request would answer `401` (the first revoked every session)
         // and raise a misleading session-expired dialog. Callers share the one answer.
         if let running = deletionTask { return try await running.value }
-        let task = Task { try await self.performDeletion() }
+        let task = Task { try await self.performDeletion(traceId: traceId) }
         deletionTask = task
         defer { deletionTask = nil }
         try await task.value
     }
 
-    private func performDeletion() async throws {
+    private func performDeletion(traceId: String? = nil) async throws {
         if accessToken == nil, vault.load() == nil {
             // Nothing to send and nothing to refresh with (the debug launch preset holds no
             // token). Ask the server anyway, so an unreachable API is a network failure and only
             // the server's `401` reaches the recovery table.
+            let tid = traceId ?? TranRetry.newTraceId()
+            let span = TranRetry.newChildSpan(traceId: tid)
+            let tp = span.map { formatTraceparentOffline(context: $0) }
             do {
-                _ = try await send(http.request(.deleteAccount))
+                _ = try await send(http.request(.deleteAccount, traceparent: tp))
                 endSession()
                 return
             } catch let failure as TranRequestFailure where failure.status == 401 {
@@ -112,7 +121,7 @@ actor TranSessionClient {
                 throw Self.expired
             }
         }
-        _ = try await authorized(.deleteAccount)
+        _ = try await authorized(.deleteAccount, traceId: traceId)
         endSession()
     }
 
@@ -142,16 +151,19 @@ actor TranSessionClient {
     /// Sends an API call with `Authorization: Bearer`. On `401` it follows `sessionRecovery`:
     /// one shared refresh, then the call repeats once with the new token (REQ-SEC-016).
     func authorized(
-        _ endpoint: TranEndpoint, installationId: String? = nil, body: Data? = nil
+        _ endpoint: TranEndpoint, installationId: String? = nil, body: Data? = nil, traceId: String? = nil
     ) async throws -> Data {
         var retried = false
+        let tid = traceId ?? TranRetry.newTraceId()
         while true {
             let token = accessToken
             var unauthorized: TranRequestFailure?
             if let token {
                 do {
+                    let span = TranRetry.newChildSpan(traceId: tid)
+                    let tp = span.map { formatTraceparentOffline(context: $0) }
                     return try await send(
-                        http.request(endpoint, installationId: installationId, body: body, bearer: token))
+                        http.request(endpoint, installationId: installationId, body: body, bearer: token, traceparent: tp))
                 } catch let failure as TranRequestFailure where failure.status == 401 {
                     // Falls through to the recovery table below.
                     unauthorized = failure
@@ -165,7 +177,7 @@ actor TranSessionClient {
                 // The 401 ends here, recovered by a refresh: swallowed, so this client logs it.
                 if let unauthorized { log(unauthorized) }
                 // Another call may already have refreshed since this one was sent.
-                if accessToken == token { try await refreshOnce() }
+                if accessToken == token { try await refreshOnce(traceId: tid) }
                 retried = true
             case .signOut:
                 endSession()
@@ -173,22 +185,22 @@ actor TranSessionClient {
                 throw Self.expired
             case .keep:
                 // Not a row of the table for a 401; keep the credential and fail this call.
-                throw TranRequestFailure(code: .clientUnexpected)
+                throw TranRequestFailure(code: .clientUnexpected, traceId: tid)
             }
         }
     }
 
     // MARK: - Refresh
 
-    private func refreshOnce() async throws {
+    private func refreshOnce(traceId: String? = nil) async throws {
         if let running = refreshTask { return try await running.value }
-        let task = Task { try await self.performRefresh() }
+        let task = Task { try await self.performRefresh(traceId: traceId) }
         refreshTask = task
         defer { refreshTask = nil }
         try await task.value
     }
 
-    private func performRefresh() async throws {
+    private func performRefresh(traceId: String? = nil) async throws {
         guard let stored = vault.load() else {
             // Cleared since the call asked; no request is sent.
             endSession()
@@ -196,11 +208,14 @@ actor TranSessionClient {
         }
         let started = epoch
         let body = Self.json(["refresh_token": stored.refreshToken])
+        let tid = traceId ?? TranRetry.newTraceId()
+        let span = TranRetry.newChildSpan(traceId: tid)
+        let tp = span.map { formatTraceparentOffline(context: $0) }
         let data: Data
         do {
-            data = try await send(http.request(.refresh, body: body))
+            data = try await send(http.request(.refresh, body: body, traceparent: tp))
         } catch {
-            let failure = TranRequestFailure.classify(error)
+            let failure = TranRequestFailure.classify(error, traceId: tid)
             let status = failure.status.map { UInt16(clamping: $0) }
             // `nil` means success, which cannot reach this branch.
             let event = sessionRefreshEvent(status: status) ?? .refreshFailed

@@ -1,4 +1,4 @@
-// Verifies: REQ-ERR-011 REQ-ERR-014
+// Verifies: REQ-ERR-011 REQ-ERR-014 REQ-OBS-011
 package com.tran.voting.ui.feedback
 
 import com.tran.voting.api.TranRequestFailure
@@ -12,8 +12,8 @@ import uniffi.tran_uniffi.isReportedLogLevel
  * template, so nothing leaves the device.
  */
 object TranReporting {
-    /** Exactly the `logEvent` fields — never a payload. */
-    data class Event(val code: String, val status: Int?, val requestId: String?)
+    /** Exactly the `logEvent` fields — never a payload (REQ-OBS-002, REQ-OBS-011). */
+    data class Event(val code: String, val status: Int?, val requestId: String?, val traceId: String? = null)
 
     /** Set once at startup; read from any thread, including the crashing one. */
     @Volatile
@@ -25,7 +25,12 @@ object TranReporting {
         if (!isReportedLogLevel(spec.logLevel)) return
         // Only client-side codes carry the thrown value (for its stack), never a payload.
         val cause = failure.cause.takeIf { spec.wireCode.startsWith("client.") }
-        runCatching { sink?.invoke(Event(spec.wireCode, failure.status, failure.requestId), cause) }
+        runCatching {
+            sink?.invoke(
+                Event(spec.wireCode, failure.status, failure.requestId, failure.traceId),
+                cause
+            )
+        }
     }
 
     /**

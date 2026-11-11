@@ -1,7 +1,9 @@
 import {
   apiPath,
   checkVoteEligibility,
+  formatTraceparent,
   HEALTH_PATH,
+  newTraceContext,
   readApiError,
   SessionClient,
   TranApiError,
@@ -107,10 +109,13 @@ export class TranApiClient {
   private readonly fetchWithTimeout: typeof fetch;
 
   private async request<T>(path: string, { signal }: TranCallOptions): Promise<T> {
+    const incomingTp = this.headers.traceparent ?? this.headers.Traceparent;
+    const tp = incomingTp ?? formatTraceparent(newTraceContext());
     const response = await this.fetchWithTimeout(`${this.baseUrl}${path}`, {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
+        traceparent: tp,
         ...this.headers,
       },
       // Only the auth tree may carry the session cookie (REQ-SEC-018).

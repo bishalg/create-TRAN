@@ -29,6 +29,8 @@ hyper-rustls = { workspace = true }
 http-body-util = { workspace = true }
 aws-lc-rs = { workspace = true }
 rusqlite = { workspace = true }
+metrics = { workspace = true }
+metrics-exporter-prometheus = { workspace = true }
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }

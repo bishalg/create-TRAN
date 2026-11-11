@@ -1,4 +1,4 @@
-// Verifies: REQ-NAT-011 REQ-ERR-004 REQ-ERR-005 REQ-ROB-002 REQ-ROB-010 REQ-VER-001
+// Verifies: REQ-NAT-011 REQ-ERR-004 REQ-ERR-005 REQ-ROB-002 REQ-ROB-010 REQ-VER-001 REQ-OBS-010 REQ-OBS-011
 import Foundation
 
 /// Status pill states — the same vocabulary as the web footer (`shell.status.*`).
@@ -21,6 +21,7 @@ struct TranRequestFailure: Error, Equatable {
     let code: TranErrorCode
     var status: Int? = nil
     var requestId: String? = nil
+    var traceId: String? = nil
     /// The server's `Retry-After`, already capped by the catalogue (`retryAfterMs(header:)`).
     var retryAfterDelayMs: UInt64? = nil
 
@@ -38,7 +39,7 @@ struct TranRequestFailure: Error, Equatable {
 
     /// The envelope's `code` when the body is one, else the catalogue's status fallback table. A
     /// request id that is not log-safe is dropped (REQ-ROB-010).
-    static func rejected(_ response: HTTPURLResponse, body: Data) -> TranRequestFailure {
+    static func rejected(_ response: HTTPURLResponse, body: Data, traceId: String? = nil) -> TranRequestFailure {
         let envelope = (try? JSONDecoder().decode(Envelope.self, from: body)).flatMap {
             $0.success ? nil : $0
         }
@@ -51,6 +52,7 @@ struct TranRequestFailure: Error, Equatable {
             code: code,
             status: status,
             requestId: requestId.flatMap { isValidRequestId(value: $0) ? $0 : nil },
+            traceId: traceId,
             retryAfterDelayMs: response.value(forHTTPHeaderField: "retry-after").flatMap {
                 retryAfterMs(header: $0)
             }
@@ -66,23 +68,26 @@ struct TranRequestFailure: Error, Equatable {
     ]
 
     /// No HTTP answer: a timeout, a cancellation, or no route to the server.
-    static func classify(_ error: Error) -> TranRequestFailure {
-        if let failure = error as? TranRequestFailure { return failure }
-        if error is CancellationError { return TranRequestFailure(code: .requestCancelled) }
+    static func classify(_ error: Error, traceId: String? = nil) -> TranRequestFailure {
+        if var failure = error as? TranRequestFailure {
+            if failure.traceId == nil { failure.traceId = traceId }
+            return failure
+        }
+        if error is CancellationError { return TranRequestFailure(code: .requestCancelled, traceId: traceId) }
         guard let urlError = error as? URLError else {
-            return TranRequestFailure(code: .clientUnexpected)
+            return TranRequestFailure(code: .clientUnexpected, traceId: traceId)
         }
         switch urlError.code {
-        case .timedOut: return TranRequestFailure(code: .networkTimeout)
-        case .cancelled: return TranRequestFailure(code: .requestCancelled)
+        case .timedOut: return TranRequestFailure(code: .networkTimeout, traceId: traceId)
+        case .cancelled: return TranRequestFailure(code: .requestCancelled, traceId: traceId)
         case let code where connectivityErrors.contains(code):
-            return TranRequestFailure(code: .networkOffline)
-        default: return TranRequestFailure(code: .clientUnexpected)
+            return TranRequestFailure(code: .networkOffline, traceId: traceId)
+        default: return TranRequestFailure(code: .clientUnexpected, traceId: traceId)
         }
     }
 }
 
-/// Retries retryable failures of idempotent calls on the Rust schedule (REQ-ERR-005).
+/// Retries retryable failures of idempotent calls on the Rust schedule (REQ-ERR-005, REQ-OBS-010).
 struct TranRetry {
     /// Injected in tests so the backoff never really waits.
     var sleep: @Sendable (UInt64) async throws -> Void = { ms in
@@ -90,14 +95,31 @@ struct TranRetry {
     }
     var random: @Sendable () -> Double = { Double.random(in: 0..<1) }
 
-    func run<T>(idempotent: Bool, _ call: () async throws -> T) async throws -> T {
+    static func newTraceId() -> String {
+        var bytes = [UInt8](repeating: 0, count: 24)
+        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        return newTraceOffline(randomBytes: Data(bytes), sampled: true)?.traceId ?? String(repeating: "1", count: 32)
+    }
+
+    static func newChildSpan(traceId: String) -> TranTraceContext? {
+        var spanBytes = [UInt8](repeating: 0, count: 8)
+        _ = SecRandomCopyBytes(kSecRandomDefault, spanBytes.count, &spanBytes)
+        return childSpanOffline(traceId: traceId, randomBytes: Data(spanBytes), sampled: true)
+    }
+
+    func run<T>(
+        idempotent: Bool,
+        traceId: String? = nil,
+        _ call: (String) async throws -> T
+    ) async throws -> T {
         let policy = retryPolicy()
+        let tid = traceId ?? Self.newTraceId()
         var attempt: UInt32 = 1
         while true {
             do {
-                return try await call()
+                return try await call(tid)
             } catch {
-                let failure = TranRequestFailure.classify(error)
+                let failure = TranRequestFailure.classify(error, traceId: tid)
                 guard idempotent, failure.spec.retryable, attempt < policy.maxAttempts else {
                     throw failure
                 }
@@ -105,6 +127,10 @@ struct TranRetry {
                 attempt += 1
             }
         }
+    }
+
+    func run<T>(idempotent: Bool, _ call: () async throws -> T) async throws -> T {
+        try await run(idempotent: idempotent, traceId: nil) { _ in try await call() }
     }
 }
 
@@ -175,28 +201,31 @@ struct TranApiClient {
         return URLSession(configuration: configuration)
     }()
 
-    func checkHealth() async throws {
-        try await retry.run(idempotent: true) {
-            try await send(.checkHealth, body: nil, countryCode: nil)
+    func checkHealth(traceId: String? = nil) async throws {
+        try await retry.run(idempotent: true, traceId: traceId) { tid in
+            try await send(.checkHealth, body: nil, countryCode: nil, traceId: tid)
         }
     }
 
     /// One health request without retries: the recovery probe's question (REQ-ERR-013).
-    func probeHealth() async throws {
-        try await send(.checkHealth, body: nil, countryCode: nil)
+    func probeHealth(traceId: String? = nil) async throws {
+        try await send(.checkHealth, body: nil, countryCode: nil, traceId: traceId)
     }
 
     /// A pure computation on the server, so it is safe to retry.
-    func confirmEligibility(age: UInt16, countryCode: String) async throws {
+    func confirmEligibility(age: UInt16, countryCode: String, traceId: String? = nil) async throws {
         let body = Data("{\"age\":\(age)}".utf8)
-        try await retry.run(idempotent: true) {
-            try await send(.confirmEligibility, body: body, countryCode: countryCode)
+        try await retry.run(idempotent: true, traceId: traceId) { tid in
+            try await send(.confirmEligibility, body: body, countryCode: countryCode, traceId: tid)
         }
     }
 
     /// The answer's body is not read: success is the whole answer (REQ-NAT-002, REQ-VER-008).
-    private func send(_ endpoint: TranEndpoint, body: Data?, countryCode: String?) async throws {
-        var request = http.request(endpoint, body: body)
+    private func send(_ endpoint: TranEndpoint, body: Data?, countryCode: String?, traceId: String? = nil) async throws {
+        let tid = traceId ?? TranRetry.newTraceId()
+        let span = TranRetry.newChildSpan(traceId: tid)
+        let tp = span.map { formatTraceparentOffline(context: $0) }
+        var request = http.request(endpoint, body: body, traceparent: tp)
         if includeDebugCountry, let countryCode, Self.isCountryCode(countryCode) {
             request.setValue(countryCode.uppercased(), forHTTPHeaderField: "X-Debug-Country")
         }

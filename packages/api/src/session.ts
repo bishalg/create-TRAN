@@ -10,6 +10,7 @@
 import type { ZodType } from 'zod';
 import { readApiError } from './client.js';
 import { apiPath } from './compat.js';
+import { childSpanContext, formatTraceparent, newTraceContext, parseTraceparent } from './trace.js';
 import {
   SessionTokenSchema,
   SessionUserSchema,
@@ -50,6 +51,7 @@ export interface SessionRequest {
   body?: string;
   headers?: Record<string, string>;
   signal?: AbortSignal;
+  traceId?: string;
 }
 
 /** The cookie is scoped to `/api/v1/auth`; no other request may carry credentials (REQ-SEC-018). */
@@ -112,9 +114,10 @@ export class SessionClient {
   /**
    * `POST /api/v1/auth/refresh`, once at a time: every caller while one is in flight gets the same
    * answer (REQ-SEC-016), since two parallel refreshes look like a replay and end the session.
+   * If a traceId is supplied (REQ-OBS-010), the refresh call reuses that trace id with a new span id.
    */
-  refresh(): Promise<RefreshOutcome> {
-    this.#refreshing ??= this.#rotate().finally(() => {
+  refresh(options: { traceId?: string; signal?: AbortSignal } = {}): Promise<RefreshOutcome> {
+    this.#refreshing ??= this.#rotate(options.traceId, options.signal).finally(() => {
       this.#refreshing = null;
     });
     return this.#refreshing;
@@ -123,12 +126,25 @@ export class SessionClient {
   /**
    * An authorized call: the bearer token when one is held, and on `401` what the recovery table
    * says: refresh once and repeat, or sign out and hand back the `401`. A refresh that merely
-   * failed keeps the session and rejects with its failure.
+   * failed keeps the session and rejects with its failure. Reuses the user action's trace id
+   * across retries and token refresh (REQ-OBS-010).
    */
   async fetch(path: string, request: SessionRequest = {}): Promise<Response> {
+    const traceparent = request.headers?.traceparent ?? request.headers?.Traceparent;
+    const parsedTrace = traceparent ? parseTraceparent(traceparent) : null;
+    const traceId = request.traceId ?? parsedTrace?.traceId ?? newTraceContext().traceId;
+    const sampled = parsedTrace?.sampled ?? true;
+
     let alreadyRetried = false;
     for (;;) {
-      const response = await this.#send(path, request, this.#accessToken);
+      const span = childSpanContext(traceId, sampled);
+      const callTp = formatTraceparent(span);
+      const reqWithTrace: SessionRequest = {
+        ...request,
+        traceId,
+        headers: { ...request.headers, traceparent: callTp },
+      };
+      const response = await this.#send(path, reqWithTrace, this.#accessToken);
       if (response.status !== 401) return response;
       const action = this.#rules.sessionRecovery({
         kind: 'unauthorized',
@@ -139,7 +155,7 @@ export class SessionClient {
         if (action === 'sign_out') this.#clear();
         return response;
       }
-      const outcome = await this.refresh();
+      const outcome = await this.refresh({ traceId, signal: request.signal });
       if (outcome.kind === 'kept') throw outcome.error;
       if (outcome.kind === 'signed_out') return response;
       alreadyRetried = true;
@@ -182,28 +198,34 @@ export class SessionClient {
    * Clears the token in memory first, then asks the server to revoke the session (REQ-SEC-022).
    * Never rejects: resolves `null` when the server confirmed, else the failure, for the log.
    */
-  signOut(): Promise<unknown> {
+  signOut(options?: { traceId?: string }): Promise<unknown> {
     this.#generation += 1;
     this.#clear();
-    return this.#revoke();
+    return this.#revoke(options?.traceId);
   }
 
-  async #rotate(): Promise<RefreshOutcome> {
+  async #rotate(traceId?: string, signal?: AbortSignal): Promise<RefreshOutcome> {
     const generation = this.#generation;
     let event: SessionRecoveryEvent | null;
     let error: unknown;
+    const span = traceId ? childSpanContext(traceId, true) : newTraceContext();
+    const headers = { traceparent: formatTraceparent(span) };
     try {
-      const response = await this.#send(apiPath('/auth/refresh'), { method: 'POST' });
+      const response = await this.#send(apiPath('/auth/refresh'), {
+        method: 'POST',
+        headers,
+        signal,
+      });
       event = this.#rules.refreshEvent(response.status);
       if (event === null) {
         const token = await parse(response, SessionTokenSchema);
         if (generation !== this.#generation) {
-          void this.#revoke();
+          void this.#revoke(traceId);
           return { kind: 'signed_out', error: cancelled() };
         }
         return { kind: 'refreshed', user: this.#hold(token) };
       }
-      error = await readApiError(response);
+      error = await readApiError(response, span.traceId);
     } catch (failure) {
       event = this.#rules.refreshEvent(null);
       error = failure;
@@ -215,10 +237,12 @@ export class SessionClient {
     return { kind: 'kept', error };
   }
 
-  async #revoke(): Promise<unknown> {
+  async #revoke(traceId?: string): Promise<unknown> {
     try {
-      const response = await this.#send(apiPath('/auth/sign-out'), { method: 'POST' });
-      return response.ok ? null : await readApiError(response);
+      const span = traceId ? childSpanContext(traceId, true) : newTraceContext();
+      const headers = { traceparent: formatTraceparent(span) };
+      const response = await this.#send(apiPath('/auth/sign-out'), { method: 'POST', headers });
+      return response.ok ? null : await readApiError(response, span.traceId);
     } catch (error) {
       return error;
     }
@@ -238,10 +262,13 @@ export class SessionClient {
   }
 
   #send(path: string, request: SessionRequest, token?: string | null): Promise<Response> {
+    const incomingTp = request.headers?.traceparent ?? request.headers?.Traceparent;
+    const tp = incomingTp ?? formatTraceparent(newTraceContext());
     return this.#fetchFn(`${this.#baseUrl}${path}`, {
       method: request.method ?? 'GET',
       headers: {
         Accept: 'application/json',
+        traceparent: tp,
         ...(request.body === undefined ? {} : { 'Content-Type': 'application/json' }),
         ...request.headers,
         ...(token ? { Authorization: `Bearer ${token}` } : {}),

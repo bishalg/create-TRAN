@@ -206,11 +206,11 @@ class TranFeedback(
 
         /**
          * The one `request failed` event with `LOG_EVENT`'s fields (`fixtures/feedback.json`), as
-         * logfmt; `-` marks a field the failure does not have (REQ-ROB-007).
+         * logfmt; `-` marks a field the failure does not have (REQ-ROB-007, REQ-OBS-002).
          */
         fun logLine(failure: TranRequestFailure): String =
             "request failed code=${failure.spec.wireCode} status=${failure.status ?: "-"} " +
-                "request_id=${failure.requestId ?: "-"}"
+                "request_id=${failure.requestId ?: "-"} trace_id=${failure.traceId ?: "-"}"
 
         /**
          * Body, confirm label and button ids per action; the title is the catalogue's `messageKey`.

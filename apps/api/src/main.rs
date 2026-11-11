@@ -5,7 +5,6 @@ use api::commands::{self, Command};
 use api::config::{AppConfig, LogFormat};
 use api::middleware::install_panic_hook;
 use api::push::{manual, providers::Endpoints, sender::ProviderAnswer};
-use api::run_server;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 #[tokio::main]
@@ -67,11 +66,38 @@ async fn main() {
         }
         Command::Serve => {
             tracing::info!(environment = %config.environment, "Initializing TRAN Axum API service");
-            if let Err(err) = run_server(config).await {
+            if let Err(err) =
+                api::run_server_with_shutdown(config, Box::pin(shutdown_signal())).await
+            {
                 tracing::error!(%err, "server stopped");
                 std::process::exit(1);
             }
         }
+    }
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        let _ = tokio::signal::ctrl_c().await;
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        if let Ok(mut sig) =
+            tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+        {
+            sig.recv().await;
+        } else {
+            std::future::pending::<()>().await;
+        }
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
     }
 }
 

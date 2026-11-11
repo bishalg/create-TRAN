@@ -322,11 +322,18 @@ export const STATUS_FALLBACK: readonly { from: number; to: number; code: ErrorCo
 /** Rust's `is_valid_request_id`: 1–64 characters of `[A-Za-z0-9._-]` (REQ-ROB-010). */
 export const REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{1,64}$/;
 
-/** The one log event every platform emits for a failure (REQ-ROB-007). */
+/** The one log event every platform emits for a failure (REQ-ROB-007, REQ-OBS-002). */
 export const LOG_EVENT = {
   message: 'request failed',
-  fields: ['code', 'status', 'request_id'],
+  fields: ['code', 'status', 'request_id', 'trace_id'],
 } as const;
+
+export const REQUEST_COMPLETED_LOG_EVENT = {
+  message: 'request completed',
+  fields: ['method', 'route', 'status', 'latency_ms', 'request_id', 'trace_id'],
+} as const;
+
+export const LOG_EVENTS = [LOG_EVENT, REQUEST_COMPLETED_LOG_EVENT] as const;
 
 /** Who vouched for the verdict on screen (REQ-LOAD-005). */
 export type VerdictSource =

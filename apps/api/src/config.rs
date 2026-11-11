@@ -50,6 +50,10 @@ pub struct AppConfig {
     pub rate_limit_read: Option<String>,
     /// `RATE_MAX_IN_FLIGHT`, as read (REQ-RL-007).
     pub rate_max_in_flight: Option<usize>,
+    /// `METRICS_ADDR`, private metrics listener address (REQ-OBS-006).
+    pub metrics_addr: Option<String>,
+    /// `SHUTDOWN_GRACE_MS`, drain window in ms on shutdown (REQ-OBS-008).
+    pub shutdown_grace_ms: u64,
 }
 
 impl AppConfig {
@@ -86,7 +90,21 @@ impl AppConfig {
             rate_limit_write: lookup("RATE_LIMIT_WRITE"),
             rate_limit_read: lookup("RATE_LIMIT_READ"),
             rate_max_in_flight: lookup("RATE_MAX_IN_FLIGHT").and_then(|s| s.trim().parse().ok()),
+            metrics_addr: lookup("METRICS_ADDR").filter(|s| !s.trim().is_empty()),
+            shutdown_grace_ms: lookup("SHUTDOWN_GRACE_MS")
+                .and_then(|s| s.trim().parse().ok())
+                .unwrap_or(10_000),
         }
+    }
+
+    /// Private metrics listener address if configured (REQ-OBS-006).
+    pub fn metrics_addr(&self) -> Option<&str> {
+        self.metrics_addr.as_deref()
+    }
+
+    /// Shutdown grace period in ms (REQ-OBS-008).
+    pub fn shutdown_grace_ms(&self) -> u64 {
+        self.shutdown_grace_ms
     }
 
     /// Where the database is (REQ-DB-001): `DATABASE_URL`, else `data/api.sqlite3`.
@@ -441,5 +459,19 @@ mod tests {
             .rate_policy()
             .unwrap();
         assert_eq!(with_max.max_in_flight, 50);
+    }
+
+    #[test]
+    fn metrics_addr_and_shutdown_grace_ms() {
+        let cfg = config_from(&[
+            ("METRICS_ADDR", "127.0.0.1:9090"),
+            ("SHUTDOWN_GRACE_MS", "5000"),
+        ]);
+        assert_eq!(cfg.metrics_addr(), Some("127.0.0.1:9090"));
+        assert_eq!(cfg.shutdown_grace_ms(), 5000);
+
+        let empty = config_from(&[("METRICS_ADDR", "   ")]);
+        assert_eq!(empty.metrics_addr(), None);
+        assert_eq!(empty.shutdown_grace_ms(), 10_000);
     }
 }

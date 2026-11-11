@@ -1,4 +1,4 @@
-// Verifies: REQ-NAT-011 REQ-ERR-004 REQ-ERR-005 REQ-ROB-010 REQ-VER-001 REQ-VER-004
+// Verifies: REQ-NAT-011 REQ-ERR-004 REQ-ERR-005 REQ-ROB-010 REQ-VER-001 REQ-VER-004 REQ-OBS-010 REQ-OBS-011
 package com.tran.voting.api
 
 import com.tran.voting.BuildConfig
@@ -23,10 +23,14 @@ import org.json.JSONTokener
 import uniffi.tran_uniffi.TranErrorCode
 import uniffi.tran_uniffi.TranErrorSpec
 import uniffi.tran_uniffi.TranPresentation
+import uniffi.tran_uniffi.childSpanOffline
 import uniffi.tran_uniffi.errorCodeForHttpStatus
 import uniffi.tran_uniffi.errorCodeFromWire
 import uniffi.tran_uniffi.errorSpec
+import uniffi.tran_uniffi.formatTraceparentOffline
 import uniffi.tran_uniffi.isValidRequestId
+import uniffi.tran_uniffi.newTraceOffline
+import uniffi.tran_uniffi.parseTraceparentOffline
 import uniffi.tran_uniffi.retryAfterMs
 import uniffi.tran_uniffi.retryDelayMs
 import uniffi.tran_uniffi.retryPolicy
@@ -42,6 +46,7 @@ class TranRequestFailure(
     val code: TranErrorCode,
     val status: Int? = null,
     val requestId: String? = null,
+    val traceId: String? = null,
     /** The server's `Retry-After`, already capped by the catalogue. */
     val retryAfterDelayMs: Long? = null,
     cause: Throwable? = null,
@@ -77,7 +82,7 @@ class TranRequestFailure(
          * The envelope's `code` when the body is one, else the catalogue's status fallback table. A
          * request id that is not log-safe is dropped (REQ-ROB-010).
          */
-        fun rejected(response: Response): TranRequestFailure {
+        fun rejected(response: Response, traceId: String? = null): TranRequestFailure {
             val envelope = envelope(response.body.string())
             val status = response.code
             val code = envelope?.code?.let { errorCodeFromWire(it) }
@@ -87,17 +92,20 @@ class TranRequestFailure(
                 code = code,
                 status = status,
                 requestId = requestId?.takeIf { isValidRequestId(it) },
+                traceId = traceId,
                 retryAfterDelayMs = response.header("retry-after")?.let { retryAfterMs(it) }?.toLong(),
             )
         }
 
         /** No HTTP answer: a timeout, a cancellation, or no route to the server. */
-        fun classify(error: Throwable): TranRequestFailure = when (error) {
-            is TranRequestFailure -> error
-            is CancellationException -> TranRequestFailure(TranErrorCode.REQUEST_CANCELLED, cause = error)
-            is InterruptedIOException -> TranRequestFailure(TranErrorCode.NETWORK_TIMEOUT, cause = error)
-            is IOException -> TranRequestFailure(TranErrorCode.NETWORK_OFFLINE, cause = error)
-            else -> TranRequestFailure(TranErrorCode.CLIENT_UNEXPECTED, cause = error)
+        fun classify(error: Throwable, traceId: String? = null): TranRequestFailure = when (error) {
+            is TranRequestFailure -> if (error.traceId == null && traceId != null) TranRequestFailure(
+                error.code, error.status, error.requestId, traceId, error.retryAfterDelayMs, error.cause
+            ) else error
+            is CancellationException -> TranRequestFailure(TranErrorCode.REQUEST_CANCELLED, traceId = traceId, cause = error)
+            is InterruptedIOException -> TranRequestFailure(TranErrorCode.NETWORK_TIMEOUT, traceId = traceId, cause = error)
+            is IOException -> TranRequestFailure(TranErrorCode.NETWORK_OFFLINE, traceId = traceId, cause = error)
+            else -> TranRequestFailure(TranErrorCode.CLIENT_UNEXPECTED, traceId = traceId, cause = error)
         }
     }
 }
@@ -106,25 +114,44 @@ class TranRequestFailure(
 fun tranApiStatusFrom(failure: TranRequestFailure): TranApiStatus =
     if (failure.spec.presentation is TranPresentation.Banner) TranApiStatus.OFFLINE else TranApiStatus.ONLINE
 
-/** Retries retryable failures of idempotent calls on the Rust schedule (REQ-ERR-005). */
+/** Retries retryable failures of idempotent calls on the Rust schedule (REQ-ERR-005, REQ-OBS-010). */
 class TranRetry(
     /** Injected in tests so the backoff never really waits. */
     private val sleep: suspend (Long) -> Unit = { delay(it) },
     private val random: () -> Double = { Random.nextDouble() },
 ) {
-    suspend fun <T> run(idempotent: Boolean, call: suspend () -> T): T {
+    suspend fun <T> run(
+        idempotent: Boolean,
+        traceId: String? = null,
+        call: suspend (traceparent: String) -> T
+    ): T {
         val maxAttempts = retryPolicy().maxAttempts
+        val tid = traceId ?: newTraceId()
         var attempt = 1u
         while (true) {
+            val tp = newChildTraceparent(tid)
             try {
-                return call()
+                return call(tp)
             } catch (error: Exception) {
-                val failure = TranRequestFailure.classify(error)
+                val failure = TranRequestFailure.classify(error, traceId = tid)
                 if (failure.code == TranErrorCode.REQUEST_CANCELLED && error is CancellationException) throw error
                 if (!idempotent || !failure.spec.retryable || attempt >= maxAttempts) throw failure
                 sleep(failure.retryAfterDelayMs ?: retryDelayMs(attempt, random()).toLong())
                 attempt += 1u
             }
+        }
+    }
+
+    companion object {
+        fun newTraceId(): String {
+            val bytes = ByteArray(24).also { java.security.SecureRandom().nextBytes(it) }
+            return newTraceOffline(bytes, true)?.traceId ?: "1".repeat(32)
+        }
+
+        fun newChildTraceparent(traceId: String): String {
+            val bytes = ByteArray(8).also { java.security.SecureRandom().nextBytes(it) }
+            val span = childSpanOffline(traceId, bytes, true)
+            return span?.let { formatTraceparentOffline(it) } ?: "00-$traceId-${"1".repeat(16)}-01"
         }
     }
 }
@@ -159,34 +186,46 @@ class TranApiClient(
     /** [transport] behind the client header and the standing (REQ-VER-004). */
     private val http: OkHttpClient = http.tranClient(standing)
 
-    suspend fun checkHealth() {
-        retry.run(idempotent = true) {
-            send(path = ApiContract.healthPath, method = "GET", body = null, countryCode = null)
+    suspend fun checkHealth(traceId: String? = null) {
+        retry.run(idempotent = true, traceId = traceId) { tp ->
+            send(path = ApiContract.healthPath, method = "GET", body = null, countryCode = null, traceparent = tp)
         }
     }
 
     /** One health request without retries: the recovery probe's question (REQ-ERR-013). */
-    suspend fun probeHealth() {
-        send(path = ApiContract.healthPath, method = "GET", body = null, countryCode = null)
+    suspend fun probeHealth(traceId: String? = null) {
+        val tid = traceId ?: TranRetry.newTraceId()
+        val tp = TranRetry.newChildTraceparent(tid)
+        send(path = ApiContract.healthPath, method = "GET", body = null, countryCode = null, traceparent = tp)
     }
 
     /** A pure computation on the server, so it is safe to retry. */
-    suspend fun confirmEligibility(age: Int, countryCode: String) {
-        retry.run(idempotent = true) {
+    suspend fun confirmEligibility(age: Int, countryCode: String, traceId: String? = null) {
+        retry.run(idempotent = true, traceId = traceId) { tp ->
             send(
                 path = ELIGIBILITY_PATH,
                 method = "POST",
                 body = """{"age":$age}""",
                 countryCode = countryCode,
+                traceparent = tp,
             )
         }
     }
 
-    private suspend fun send(path: String, method: String, body: String?, countryCode: String?) {
+    private suspend fun send(
+        path: String,
+        method: String,
+        body: String?,
+        countryCode: String?,
+        traceparent: String? = null,
+    ) {
+        val tp = traceparent ?: TranRetry.newChildTraceparent(TranRetry.newTraceId())
+        val traceId = parseTraceparentOffline(tp)?.traceId
         val request = Request.Builder()
             .url(baseUrl.trimEnd('/') + path)
             .method(method, body?.toRequestBody(JSON))
             .header("Accept", "application/json")
+            .header("traceparent", tp)
             .apply {
                 if (body != null) header("Content-Type", "application/json")
                 if (includeDebugCountry && countryCode != null && countryCode.matches(COUNTRY_CODE)) {
@@ -199,9 +238,9 @@ class TranApiClient(
             val response = try {
                 http.newCall(request).execute()
             } catch (error: IOException) {
-                throw TranRequestFailure.classify(error)
+                throw TranRequestFailure.classify(error, traceId = traceId)
             }
-            response.use { if (!it.isSuccessful) throw TranRequestFailure.rejected(it) }
+            response.use { if (!it.isSuccessful) throw TranRequestFailure.rejected(it, traceId = traceId) }
         }
     }
 

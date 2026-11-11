@@ -148,17 +148,17 @@ class FeedbackParityTest {
         assertTrue(logged.single(), logged.single().startsWith("ERROR request failed code=server.internal"))
     }
 
-    // Verifies: REQ-ROB-007
+    // Verifies: REQ-ROB-007 REQ-OBS-002
     @Test
     fun logLineCarriesTheFixedFieldsOfTheLogEvent() {
         val event = fixture().getJSONObject("logEvent")
-        val full = TranFeedback.logLine(TranRequestFailure(TranErrorCode.SERVER_INTERNAL, status = 500, requestId = "req-9"))
-        assertEquals("request failed code=server.internal status=500 request_id=req-9", full)
+        val full = TranFeedback.logLine(TranRequestFailure(TranErrorCode.SERVER_INTERNAL, status = 500, requestId = "req-9", traceId = "trace-9"))
+        assertEquals("request failed code=server.internal status=500 request_id=req-9 trace_id=trace-9", full)
         assertTrue(full.startsWith(event.getString("message")))
         val fields = event.getJSONArray("fields")
         for (i in 0 until fields.length()) assertTrue(fields.getString(i), full.contains(" ${fields.getString(i)}="))
         assertEquals(
-            "request failed code=network.offline status=- request_id=-",
+            "request failed code=network.offline status=- request_id=- trace_id=-",
             TranFeedback.logLine(TranRequestFailure(TranErrorCode.NETWORK_OFFLINE)),
         )
     }

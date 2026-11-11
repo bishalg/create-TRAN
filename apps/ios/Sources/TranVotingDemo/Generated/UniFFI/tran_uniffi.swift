@@ -628,6 +628,24 @@ fileprivate struct FfiConverterString: FfiConverter {
     }
 }
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterData: FfiConverterRustBuffer {
+    typealias SwiftType = Data
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Data {
+        let len: Int32 = try readInt(&buf)
+        return Data(try readBytes(&buf, count: Int(len)))
+    }
+
+    public static func write(_ value: Data, into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        writeBytes(&buf, value)
+    }
+}
+
 
 /**
  * How a [`TranUserAction`] is presented.
@@ -1179,6 +1197,75 @@ public func FfiConverterTypeTranLoadingPolicy_lift(_ buf: RustBuffer) throws -> 
 #endif
 public func FfiConverterTypeTranLoadingPolicy_lower(_ value: TranLoadingPolicy) -> RustBuffer {
     return FfiConverterTypeTranLoadingPolicy.lower(value)
+}
+
+
+/**
+ * One structured log event's schema (REQ-OBS-002).
+ */
+public struct TranLogEvent: Equatable, Hashable {
+    /**
+     * The event name/message, e.g. "request failed" or "request completed".
+     */
+    public var message: String
+    /**
+     * The allowed field names.
+     */
+    public var fields: [String]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * The event name/message, e.g. "request failed" or "request completed".
+         */message: String, 
+        /**
+         * The allowed field names.
+         */fields: [String]) {
+        self.message = message
+        self.fields = fields
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranLogEvent: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranLogEvent: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranLogEvent {
+        return
+            try TranLogEvent(
+                message: FfiConverterString.read(from: &buf), 
+                fields: FfiConverterSequenceString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranLogEvent, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.message, into: &buf)
+        FfiConverterSequenceString.write(value.fields, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranLogEvent_lift(_ buf: RustBuffer) throws -> TranLogEvent {
+    return try FfiConverterTypeTranLogEvent.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranLogEvent_lower(_ value: TranLogEvent) -> RustBuffer {
+    return FfiConverterTypeTranLogEvent.lower(value)
 }
 
 
@@ -1984,6 +2071,85 @@ public func FfiConverterTypeTranToastPolicy_lift(_ buf: RustBuffer) throws -> Tr
 #endif
 public func FfiConverterTypeTranToastPolicy_lower(_ value: TranToastPolicy) -> RustBuffer {
     return FfiConverterTypeTranToastPolicy.lower(value)
+}
+
+
+/**
+ * A parsed or constructed W3C trace context.
+ */
+public struct TranTraceContext: Equatable, Hashable {
+    /**
+     * 32-character lowercase hex trace identifier.
+     */
+    public var traceId: String
+    /**
+     * 16-character lowercase hex span identifier.
+     */
+    public var spanId: String
+    /**
+     * Whether the sampled flag is set.
+     */
+    public var sampled: Bool
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * 32-character lowercase hex trace identifier.
+         */traceId: String, 
+        /**
+         * 16-character lowercase hex span identifier.
+         */spanId: String, 
+        /**
+         * Whether the sampled flag is set.
+         */sampled: Bool) {
+        self.traceId = traceId
+        self.spanId = spanId
+        self.sampled = sampled
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension TranTraceContext: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTranTraceContext: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranTraceContext {
+        return
+            try TranTraceContext(
+                traceId: FfiConverterString.read(from: &buf), 
+                spanId: FfiConverterString.read(from: &buf), 
+                sampled: FfiConverterBool.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TranTraceContext, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.traceId, into: &buf)
+        FfiConverterString.write(value.spanId, into: &buf)
+        FfiConverterBool.write(value.sampled, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranTraceContext_lift(_ buf: RustBuffer) throws -> TranTraceContext {
+    return try FfiConverterTypeTranTraceContext.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTranTraceContext_lower(_ value: TranTraceContext) -> RustBuffer {
+    return FfiConverterTypeTranTraceContext.lower(value)
 }
 
 
@@ -4565,6 +4731,30 @@ fileprivate struct FfiConverterOptionTypeTranLastRegistration: FfiConverterRustB
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterOptionTypeTranTraceContext: FfiConverterRustBuffer {
+    typealias SwiftType = TranTraceContext?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeTranTraceContext.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeTranTraceContext.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterOptionTypeTranErrorCode: FfiConverterRustBuffer {
     typealias SwiftType = TranErrorCode?
 
@@ -4704,6 +4894,31 @@ fileprivate struct FfiConverterSequenceTypeTranErrorSpec: FfiConverterRustBuffer
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeTranErrorSpec.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeTranLogEvent: FfiConverterRustBuffer {
+    typealias SwiftType = [TranLogEvent]
+
+    public static func write(_ value: [TranLogEvent], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeTranLogEvent.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [TranLogEvent] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [TranLogEvent]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeTranLogEvent.read(from: &buf))
         }
         return seq
     }
@@ -5177,6 +5392,26 @@ public func loadingPolicy() -> TranLoadingPolicy  {
 })
 }
 /**
+ * The failure log event schema (REQ-ROB-007, REQ-OBS-002).
+ */
+public func logEvent() -> TranLogEvent  {
+    return try!  FfiConverterTypeTranLogEvent_lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_log_event(uniffiCallStatus
+    )
+})
+}
+/**
+ * All structured log events declared across platforms (REQ-OBS-002).
+ */
+public func logEvents() -> [TranLogEvent]  {
+    return try!  FfiConverterSequenceTypeTranLogEvent.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_log_events(uniffiCallStatus
+    )
+})
+}
+/**
  * The recovery schedule every app uses.
  */
 public func recoveryPolicy() -> TranRecoveryPolicy  {
@@ -5436,6 +5671,55 @@ public func sessionRefreshEvent(status: UInt16?) -> TranSessionEvent?  {
     )
 })
 }
+/**
+ * Derives a child span from a parent trace ID using injected random bytes (REQ-OBS-001).
+ */
+public func childSpanOffline(traceId: String, randomBytes: Data, sampled: Bool) -> TranTraceContext?  {
+    return try!  FfiConverterOptionTypeTranTraceContext.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_child_span_offline(
+        FfiConverterString.lower(traceId),
+        FfiConverterData.lower(randomBytes),
+        FfiConverterBool.lower(sampled),uniffiCallStatus
+    )
+})
+}
+/**
+ * Formats a [`TranTraceContext`] into a W3C `traceparent` header string.
+ */
+public func formatTraceparentOffline(context: TranTraceContext) -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_format_traceparent_offline(
+        FfiConverterTypeTranTraceContext_lower(context),uniffiCallStatus
+    )
+})
+}
+/**
+ * Creates a new trace with a root span using injected random bytes (REQ-OBS-001).
+ */
+public func newTraceOffline(randomBytes: Data, sampled: Bool) -> TranTraceContext?  {
+    return try!  FfiConverterOptionTypeTranTraceContext.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_new_trace_offline(
+        FfiConverterData.lower(randomBytes),
+        FfiConverterBool.lower(sampled),uniffiCallStatus
+    )
+})
+}
+/**
+ * Parses a W3C `traceparent` header string (REQ-OBS-001).
+ *
+ * Accepts only version `00`, lowercase hex, non-zero trace and span identifiers.
+ */
+public func parseTraceparentOffline(header: String) -> TranTraceContext?  {
+    return try!  FfiConverterOptionTypeTranTraceContext.lift(try! rustCall() {
+        uniffiCallStatus in
+    uniffi_tran_uniffi_fn_func_parse_traceparent_offline(
+        FfiConverterString.lower(header),uniffiCallStatus
+    )
+})
+}
 
 private enum InitializationResult {
     case ok
@@ -5518,6 +5802,12 @@ private let initializationResult: InitializationResult = {
     if (uniffi_tran_uniffi_checksum_func_loading_policy() != 52020) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_tran_uniffi_checksum_func_log_event() != 41786) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_log_events() != 10102) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_tran_uniffi_checksum_func_recovery_policy() != 62828) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -5567,6 +5857,18 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_session_refresh_event() != 10936) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_child_span_offline() != 62045) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_format_traceparent_offline() != 43888) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_new_trace_offline() != 15395) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_tran_uniffi_checksum_func_parse_traceparent_offline() != 30024) {
         return InitializationResult.apiChecksumMismatch
     }
 

@@ -4,7 +4,8 @@
 
 use rust_core::feedback::{
     code_for_http_status, ErrorCode, Presentation, ToastDuration, UserAction, VerdictSource,
-    LOADING_POLICY, LOG_EVENT, RECOVERY_POLICY, REQUEST_ID_MAX_LEN, RETRY_POLICY, TOAST_POLICY,
+    LOADING_POLICY, LOG_EVENT, RECOVERY_POLICY, REQUEST_COMPLETED_EVENT, REQUEST_ID_MAX_LEN,
+    RETRY_POLICY, TOAST_POLICY,
 };
 
 fn presentation_ts(presentation: Presentation) -> String {
@@ -126,8 +127,10 @@ export const RECOVERY_POLICY = {{\n  firstProbeMs: {},\n  maxProbeMs: {},\n}} as
 export const STATUS_FALLBACK: readonly {{ from: number; to: number; code: ErrorCode }}[] = [\n{ranges}];\n\n\
 /** Rust's `is_valid_request_id`: 1–{} characters of `[A-Za-z0-9._-]` (REQ-ROB-010). */\n\
 export const REQUEST_ID_PATTERN = /^[A-Za-z0-9._-]{{1,{}}}$/;\n\n\
-/** The one log event every platform emits for a failure (REQ-ROB-007). */\n\
+/** The one log event every platform emits for a failure (REQ-ROB-007, REQ-OBS-002). */\n\
 export const LOG_EVENT = {{\n  message: '{}',\n  fields: [{}],\n}} as const;\n\n\
+export const REQUEST_COMPLETED_LOG_EVENT = {{\n  message: '{}',\n  fields: [{}],\n}} as const;\n\n\
+export const LOG_EVENTS = [LOG_EVENT, REQUEST_COMPLETED_LOG_EVENT] as const;\n\n\
 /** Who vouched for the verdict on screen (REQ-LOAD-005). */\n\
 export type VerdictSource ={sources};\n\n\
 export interface VerdictSourceSpec {{\n  readonly source: VerdictSource;\n  /** Locale key of the label that names the source. */\n  readonly messageKey: TranStringKey;\n}}\n\n\
@@ -145,6 +148,13 @@ export const LOADING_POLICY: {{\n  readonly indicatorDelayMs: number;\n  readonl
         REQUEST_ID_MAX_LEN,
         LOG_EVENT.message,
         LOG_EVENT
+            .fields
+            .iter()
+            .map(|f| format!("'{f}'"))
+            .collect::<Vec<_>>()
+            .join(", "),
+        REQUEST_COMPLETED_EVENT.message,
+        REQUEST_COMPLETED_EVENT
             .fields
             .iter()
             .map(|f| format!("'{f}'"))

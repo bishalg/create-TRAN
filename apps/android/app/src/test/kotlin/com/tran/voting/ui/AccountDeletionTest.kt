@@ -201,8 +201,8 @@ class AccountDeletionTest {
         assertEquals("voter-001", vault.read()?.userId)
         // Usable again after a failure.
         compose.onNodeWithTag(ScreenContract.Eligibility.deleteAccountButton).assertIsEnabled()
-        // REQ-ROB-007: one failure, one event, whoever caught it on the way.
-        assertEquals(listOf("request failed code=server.internal status=500 request_id=-"), failureEvents())
+        // REQ-ROB-007, REQ-OBS-011: one failure, one event, carrying code, status and trace_id.
+        assertTrue(failureEvents().single().matches(Regex("^request failed code=server\\.internal status=500 request_id=- trace_id=[0-9a-f]{32}$")))
     }
 
     @Test
@@ -231,7 +231,7 @@ class AccountDeletionTest {
 
         compose.waitUntil(TIMEOUT_MS) { failureEvents().isNotEmpty() }
         compose.waitForIdle()
-        assertEquals(listOf("request failed code=server.unavailable status=503 request_id=-"), failureEvents())
+        assertTrue(failureEvents().single().matches(Regex("^request failed code=server\\.unavailable status=503 request_id=- trace_id=[0-9a-f]{32}$")))
     }
 
     @Test

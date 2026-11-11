@@ -1,15 +1,17 @@
 // Verifies: REQ-SEC-014 REQ-SEC-015 REQ-SEC-016 REQ-SEC-017 REQ-SEC-022 REQ-ACC-006 REQ-PSH-011
-// Verifies: REQ-VER-001 REQ-VER-004 REQ-VER-008
+// Verifies: REQ-VER-001 REQ-VER-004 REQ-VER-008 REQ-OBS-010 REQ-OBS-011
 package com.tran.voting.session
 
 import com.tran.voting.api.ClientStanding
 import com.tran.voting.api.TranApiClient
 import com.tran.voting.api.TranApiConfig
 import com.tran.voting.api.TranRequestFailure
+import com.tran.voting.api.TranRetry
 import com.tran.voting.api.tranClient
 import com.tran.voting.generated.ApiContract
 import com.tran.voting.ui.feedback.TranFeedback
 import com.tran.voting.ui.feedback.tranLogcat
+import uniffi.tran_uniffi.parseTraceparentOffline
 import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -114,16 +116,18 @@ class SessionClient(
      * `POST /api/auth/session` with the body transport (ADR-0039 decision 7: the device session is
      * already open; this establishes the API session behind it and stores it in the vault).
      */
-    suspend fun signIn(role: TranUserRole): SessionUser {
+    suspend fun signIn(role: TranUserRole, traceId: String? = null): SessionUser {
+        val tid = traceId ?: TranRetry.newTraceId()
+        val tp = TranRetry.newChildTraceparent(tid)
         val body = JSONObject().put("role", role.wire).put("transport", "body")
-        val answer = send(post(SESSION_PATH, body))
+        val answer = send(post(SESSION_PATH, body).newBuilder().header("traceparent", tp).build())
         answer.failure?.let { throw it }
         return store(answer.json())
     }
 
     /** `GET /api/auth/session`: who the stored session belongs to, refreshing once if needed. */
-    suspend fun currentUser(): SessionUser {
-        val answer = authorized { Request.Builder().url(url(SESSION_PATH)).get() }
+    suspend fun currentUser(traceId: String? = null): SessionUser {
+        val answer = authorized(traceId = traceId) { Request.Builder().url(url(SESSION_PATH)).get() }
         return decodeUser(answer.json())
     }
 
@@ -139,7 +143,7 @@ class SessionClient(
      * Single-flight (REQ-ACC-006): a call made while one is in flight sends nothing and shares its
      * outcome, so a second `DELETE` never answers `401` for an account the first one just deleted.
      */
-    suspend fun deleteAccount() {
+    suspend fun deleteAccount(traceId: String? = null) {
         val (shared, owner) = synchronized(lock) {
             deletion?.let { return@synchronized it to false }
             CompletableDeferred<Throwable?>().also { deletion = it } to true
@@ -149,7 +153,7 @@ class SessionClient(
             return
         }
         val outcome = try {
-            authorized(askWithoutCredential = true) { Request.Builder().url(url(ACCOUNT_PATH)).delete() }
+            authorized(askWithoutCredential = true, traceId = traceId) { Request.Builder().url(url(ACCOUNT_PATH)).delete() }
             endLocally()
             null
         } catch (failure: Throwable) {
@@ -164,16 +168,22 @@ class SessionClient(
      * Clears the vault and the access token first, then asks the server to revoke the session; the
      * server call's outcome never changes the result (REQ-SEC-022).
      */
-    suspend fun signOut() = revoke(endLocally())
+    suspend fun signOut(traceId: String? = null) = revoke(endLocally(), traceId = traceId)
 
     /**
      * `POST /api/auth/sign-out` for a token [endLocally] already forgot. Best effort: it answers
      * `204` even for an unknown token, and a failure is only logged.
      */
-    suspend fun revoke(refreshToken: String?) {
+    suspend fun revoke(refreshToken: String?, traceId: String? = null) {
         if (refreshToken == null) return
+        val tid = traceId ?: TranRetry.newTraceId()
+        val tp = TranRetry.newChildTraceparent(tid)
         try {
-            val answer = send(post(SIGN_OUT_PATH, JSONObject().put("refresh_token", refreshToken)))
+            val req = post(SIGN_OUT_PATH, JSONObject().put("refresh_token", refreshToken))
+                .newBuilder()
+                .header("traceparent", tp)
+                .build()
+            val answer = send(req)
             answer.failure?.let { logged(it) }
         } catch (failure: TranRequestFailure) {
             logged(failure)
@@ -199,32 +209,41 @@ class SessionClient(
      * refreshing at most once and repeating the call once with the new token.
      * [askWithoutCredential] sends the call bare when there is neither an access nor a refresh token.
      */
-    private suspend fun authorized(askWithoutCredential: Boolean = false, build: () -> Request.Builder): Answer {
+    private suspend fun authorized(
+        askWithoutCredential: Boolean = false,
+        traceId: String? = null,
+        build: () -> Request.Builder
+    ): Answer {
         var retried = false
+        val tid = traceId ?: TranRetry.newTraceId()
         while (true) {
             val token = accessToken
             // After a restart there is no access token: that is a 401 we need not send to learn,
             // unless the caller must hear it from the server.
             if (token != null || (askWithoutCredential && vault.read() == null)) {
-                val request = build().apply { if (token != null) header("Authorization", "Bearer $token") }.build()
+                val tp = TranRetry.newChildTraceparent(tid)
+                val request = build()
+                    .apply { if (token != null) header("Authorization", "Bearer $token") }
+                    .header("traceparent", tp)
+                    .build()
                 val answer = send(request)
                 if (answer.failure == null) return answer
                 if (answer.failure.status != UNAUTHORIZED) throw answer.failure
             }
             val event = TranSessionEvent.Unauthorized(hasRefreshCredential = vault.read() != null, alreadyRetried = retried)
             when (sessionRecovery(event)) {
-                TranSessionAction.REFRESH -> when (val outcome = refresh(stale = token)) {
+                TranSessionAction.REFRESH -> when (val outcome = refresh(stale = token, traceId = tid)) {
                     is RefreshOutcome.Refreshed -> retried = true
                     is RefreshOutcome.Failed -> throw act(outcome.action, outcome.failure)
                 }
-                TranSessionAction.SIGN_OUT -> throw act(TranSessionAction.SIGN_OUT, expired())
-                TranSessionAction.KEEP -> throw expired()
+                TranSessionAction.SIGN_OUT -> throw act(TranSessionAction.SIGN_OUT, expired(traceId = tid))
+                TranSessionAction.KEEP -> throw expired(traceId = tid)
             }
         }
     }
 
     /** One shared refresh for every caller holding the same stale token (REQ-SEC-016). */
-    private suspend fun refresh(stale: String?): RefreshOutcome {
+    private suspend fun refresh(stale: String?, traceId: String? = null): RefreshOutcome {
         val (deferred, owner) = synchronized(lock) {
             val current = accessToken
             if (current != null && current != stale) return RefreshOutcome.Refreshed
@@ -233,9 +252,9 @@ class SessionClient(
         }
         if (!owner) return deferred.await()
         val outcome = try {
-            performRefresh()
+            performRefresh(traceId)
         } catch (cancelled: CancellationException) {
-            finish(deferred, RefreshOutcome.Failed(TranSessionAction.KEEP, TranRequestFailure.classify(cancelled)))
+            finish(deferred, RefreshOutcome.Failed(TranSessionAction.KEEP, TranRequestFailure.classify(cancelled, traceId = traceId)))
             throw cancelled
         }
         finish(deferred, outcome)
@@ -247,11 +266,17 @@ class SessionClient(
         deferred.complete(outcome)
     }
 
-    private suspend fun performRefresh(): RefreshOutcome {
+    private suspend fun performRefresh(traceId: String? = null): RefreshOutcome {
+        val tid = traceId ?: TranRetry.newTraceId()
         val stored = vault.read()
-            ?: return RefreshOutcome.Failed(sessionRecovery(TranSessionEvent.RefreshRejected), expired())
+            ?: return RefreshOutcome.Failed(sessionRecovery(TranSessionEvent.RefreshRejected), expired(traceId = tid))
+        val tp = TranRetry.newChildTraceparent(tid)
         val answer = try {
-            send(post(REFRESH_PATH, JSONObject().put("refresh_token", stored.refreshToken)))
+            val req = post(REFRESH_PATH, JSONObject().put("refresh_token", stored.refreshToken))
+                .newBuilder()
+                .header("traceparent", tp)
+                .build()
+            send(req)
         } catch (failure: TranRequestFailure) {
             // No HTTP answer at all.
             val event = sessionRefreshEvent(null) ?: TranSessionEvent.RefreshFailed
@@ -265,7 +290,7 @@ class SessionClient(
             } catch (failure: TranRequestFailure) {
                 RefreshOutcome.Failed(sessionRecovery(TranSessionEvent.RefreshFailed), failure)
             }
-        return RefreshOutcome.Failed(sessionRecovery(event), answer.failure ?: expired())
+        return RefreshOutcome.Failed(sessionRecovery(event), answer.failure ?: expired(traceId = tid))
     }
 
     /** Applies a Rust action that ends the call: `SIGN_OUT` forgets the session; `KEEP` keeps it. */
@@ -290,7 +315,7 @@ class SessionClient(
         return failure
     }
 
-    private fun expired() = TranRequestFailure(TranErrorCode.AUTH_SESSION_EXPIRED, status = UNAUTHORIZED)
+    private fun expired(traceId: String? = null) = TranRequestFailure(TranErrorCode.AUTH_SESSION_EXPIRED, status = UNAUTHORIZED, traceId = traceId)
 
     private fun url(path: String) = baseUrl.trimEnd('/') + path
 
@@ -301,17 +326,22 @@ class SessionClient(
 
     /** One HTTP exchange; a non-2xx answer is returned classified, no answer at all is thrown. */
     private suspend fun send(request: Request): Answer = withContext(io) {
-        val withAccept = request.newBuilder().header("Accept", "application/json").build()
+        val tp = request.header("traceparent") ?: TranRetry.newChildTraceparent(TranRetry.newTraceId())
+        val traceId = parseTraceparentOffline(tp)?.traceId
+        val withAccept = request.newBuilder()
+            .header("Accept", "application/json")
+            .header("traceparent", tp)
+            .build()
         val response = try {
             http.newCall(withAccept).execute()
         } catch (error: IOException) {
-            throw TranRequestFailure.classify(error)
+            throw TranRequestFailure.classify(error, traceId = traceId)
         }
         response.use {
             if (it.isSuccessful) {
                 Answer(it.code, it.body.string(), null)
             } else {
-                Answer(it.code, "", TranRequestFailure.rejected(it))
+                Answer(it.code, "", TranRequestFailure.rejected(it, traceId = traceId))
             }
         }
     }

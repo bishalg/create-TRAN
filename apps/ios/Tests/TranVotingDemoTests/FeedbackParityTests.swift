@@ -45,18 +45,19 @@ final class FeedbackParityTests: XCTestCase {
         }
     }
 
+    // Verifies: REQ-ROB-007 REQ-OBS-002
     func testLogLineCarriesTheFixedFieldsOfTheLogEvent() throws {
         let event = try fixture()["logEvent"] as! [String: Any]
         let full = TranFeedback.logLine(
-            TranRequestFailure(code: .serverInternal, status: 500, requestId: "req-9"))
-        XCTAssertEqual(full, "request failed code=server.internal status=500 request_id=req-9")
+            TranRequestFailure(code: .serverInternal, status: 500, requestId: "req-9", traceId: "trace-9"))
+        XCTAssertEqual(full, "request failed code=server.internal status=500 request_id=req-9 trace_id=trace-9")
         XCTAssertTrue(full.hasPrefix(event["message"] as! String))
         for field in event["fields"] as! [String] {
             XCTAssertTrue(full.contains(" \(field)="), field)
         }
         XCTAssertEqual(
             TranFeedback.logLine(TranRequestFailure(code: .networkOffline)),
-            "request failed code=network.offline status=- request_id=-"
+            "request failed code=network.offline status=- request_id=- trace_id=-"
         )
     }
 

@@ -51,6 +51,7 @@ export interface ReportEvent {
   readonly code: ErrorCode;
   readonly status: number | null;
   readonly request_id: string | undefined;
+  readonly trace_id: string | undefined;
 }
 
 /** Sentry, an HTTP sink, … `cause` is only passed for client-side (`client.*`) codes. */

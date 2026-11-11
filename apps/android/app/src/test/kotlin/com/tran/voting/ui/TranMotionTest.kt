@@ -6,6 +6,7 @@ import androidx.compose.animation.core.SnapSpec
 import androidx.compose.animation.core.TweenSpec
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.tran.voting.generated.TranMotionDuration
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -22,6 +23,12 @@ import org.robolectric.annotation.Config
 class TranMotionTest {
     @get:Rule
     val compose = createComposeRule()
+
+    @After
+    fun restoreScale() {
+        val resolver = RuntimeEnvironment.getApplication().contentResolver
+        Settings.Global.putFloat(resolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
+    }
 
     private fun reduceMotionWith(scale: Float?): Boolean {
         val resolver = RuntimeEnvironment.getApplication().contentResolver

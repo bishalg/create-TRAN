@@ -200,6 +200,32 @@ pub fn loggable_path(path: &str) -> Cow<'_, str> {
     }
 }
 
+/// Whether `path` is an unversioned health or readiness probe (REQ-OBS-004, REQ-OBS-007).
+pub fn is_health_path(path: &str) -> bool {
+    path == rust_core::compat::HEALTH_PATH
+        || path == "/api/health/live"
+        || path == "/api/health/ready"
+}
+
+/// The matched route template for logging and metrics (REQ-OBS-004, REQ-OBS-005):
+/// the route template (e.g. `/api/v1/vote/countries/{code}`) or `"unmatched"`.
+/// Health probes report their template (`/api/health`, `/api/health/live`, `/api/health/ready`).
+pub fn matched_route_template(path: &str) -> Cow<'static, str> {
+    if path == rust_core::compat::HEALTH_PATH {
+        return Cow::Borrowed(rust_core::compat::HEALTH_PATH);
+    }
+    if path == "/api/health/live" {
+        return Cow::Borrowed("/api/health/live");
+    }
+    if path == "/api/health/ready" {
+        return Cow::Borrowed("/api/health/ready");
+    }
+    if let Some(route) = ROUTES.iter().find(|route| route.fits(path)) {
+        return Cow::Owned(route.template());
+    }
+    Cow::Borrowed("unmatched")
+}
+
 /// Where the device registry lives below the base path; the segment after it is an installation
 /// id.
 pub const DEVICES_TREE: &str = "/devices";

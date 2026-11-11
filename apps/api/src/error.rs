@@ -15,6 +15,8 @@ use uuid::Uuid;
 tokio::task_local! {
     /// Set per request by `middleware::request_id`; read when an error is rendered.
     pub static REQUEST_ID: String;
+    /// Set per request by `middleware::request_id`; read when an error is rendered (REQ-OBS-002, 003).
+    pub static TRACE_ID: String;
 }
 
 /// What clients see for any 5xx: the real cause stays in the server log.
@@ -105,6 +107,13 @@ pub fn current_request_id() -> String {
         .unwrap_or_else(|_| Uuid::new_v4().to_string())
 }
 
+/// The current request's trace id, or a fresh one outside a request scope (unit tests).
+pub fn current_trace_id() -> String {
+    TRACE_ID
+        .try_with(Clone::clone)
+        .unwrap_or_else(|_| Uuid::new_v4().simple().to_string())
+}
+
 /// The status a code answers with; client-only codes never reach the wire, so they answer 500.
 fn http_status(code: ErrorCode) -> StatusCode {
     code.spec()
@@ -113,16 +122,24 @@ fn http_status(code: ErrorCode) -> StatusCode {
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR)
 }
 
-/// The one `request failed` event per failure, with `LOG_EVENT`'s fields (REQ-ROB-007).
-fn log(failure: &Failure, request_id: &str) {
+/// The one `request failed` event per failure, with `LOG_EVENT`'s fields (REQ-ROB-007, REQ-OBS-002).
+fn log(failure: &Failure, request_id: &str, trace_id: &str) {
     let code = failure.code.as_str();
     let status = http_status(failure.code).as_u16();
     let detail = failure.cause.as_deref().unwrap_or(&failure.message);
     match failure.code.spec().log_level {
-        LogLevel::Debug => tracing::debug!(code, status, request_id, detail, "request failed"),
-        LogLevel::Info => tracing::info!(code, status, request_id, detail, "request failed"),
-        LogLevel::Warn => tracing::warn!(code, status, request_id, detail, "request failed"),
-        LogLevel::Error => tracing::error!(code, status, request_id, detail, "request failed"),
+        LogLevel::Debug => {
+            tracing::debug!(code, status, request_id, trace_id, detail, "request failed")
+        }
+        LogLevel::Info => {
+            tracing::info!(code, status, request_id, trace_id, detail, "request failed")
+        }
+        LogLevel::Warn => {
+            tracing::warn!(code, status, request_id, trace_id, detail, "request failed")
+        }
+        LogLevel::Error => {
+            tracing::error!(code, status, request_id, trace_id, detail, "request failed")
+        }
     }
 }
 
@@ -131,7 +148,8 @@ impl IntoResponse for ApiError {
         let failure = self.failure();
         let spec = failure.code.spec();
         let request_id = current_request_id();
-        log(&failure, &request_id);
+        let trace_id = current_trace_id();
+        log(&failure, &request_id, &trace_id);
 
         let status = http_status(failure.code);
         let body = Json(json!({
@@ -267,6 +285,7 @@ mod tests {
     struct Fields {
         code: String,
         request_id: String,
+        trace_id: String,
     }
 
     impl Visit for Fields {
@@ -274,6 +293,7 @@ mod tests {
             match field.name() {
                 "code" => self.code = value.to_string(),
                 "request_id" => self.request_id = value.to_string(),
+                "trace_id" => self.trace_id = value.to_string(),
                 _ => {}
             }
         }
@@ -292,7 +312,7 @@ mod tests {
         }
     }
 
-    // Verifies: REQ-ERR-003
+    // Verifies: REQ-ERR-003 REQ-OBS-002
     #[test]
     fn failures_are_logged_at_their_catalogue_level_with_the_request_id() {
         let captured = global_capture();
@@ -300,6 +320,7 @@ mod tests {
         // this test's events are the only ones with its request id), so filter by
         // id instead of claiming the buffer exclusively.
         const ID: &str = "req-catalogue-level-capture";
+        const TRACE: &str = "4bf92f3577b34da6a3ce929d0e0e4736";
         for code in [
             ErrorCode::ValidationAgeOutOfRange,
             ErrorCode::NetworkOffline,
@@ -311,7 +332,7 @@ mod tests {
                 message: "m".into(),
                 cause: None,
             };
-            log(&failure, ID);
+            log(&failure, ID, TRACE);
         }
         let events = captured
             .0

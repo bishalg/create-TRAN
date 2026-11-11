@@ -22,6 +22,7 @@ struct Fixtures {
     loading_policy: Value,
     verdict_sources: Vec<Value>,
     log_event: Value,
+    request_completed_log_event: Value,
     request_ids: RequestIds,
     retry_delays: Vec<DelayCase>,
     retry_after: Vec<RetryAfterCase>,
@@ -134,7 +135,7 @@ fn toast_durations_and_retry_policy_match_the_fixture() {
     );
 }
 
-// Verifies: REQ-ROB-004 REQ-ROB-007
+// Verifies: REQ-ROB-004 REQ-ROB-007 REQ-OBS-002
 #[test]
 fn server_deadline_and_log_event_match_the_fixture() {
     let fixtures = fixtures();
@@ -142,6 +143,10 @@ fn server_deadline_and_log_event_match_the_fixture() {
     assert_eq!(
         json!({ "message": LOG_EVENT.message, "fields": LOG_EVENT.fields }),
         fixtures.log_event
+    );
+    assert_eq!(
+        json!({ "message": rust_core::feedback::REQUEST_COMPLETED_EVENT.message, "fields": rust_core::feedback::REQUEST_COMPLETED_EVENT.fields }),
+        fixtures.request_completed_log_event
     );
 }
 

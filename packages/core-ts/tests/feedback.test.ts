@@ -1,4 +1,4 @@
-// Verifies: REQ-ERR-001 REQ-ERR-004 REQ-ERR-005 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-LOAD-001
+// Verifies: REQ-ERR-001 REQ-ERR-004 REQ-ERR-005 REQ-ERR-006 REQ-ERR-007 REQ-ERR-008 REQ-LOAD-001 REQ-OBS-011
 /**
  * `fixtures/feedback.json` against the generated catalogue (`src/generated/feedback.ts`) and the
  * small functions over it (`src/feedback.ts`) — the same file pins Rust, Swift and Kotlin.
@@ -8,19 +8,25 @@ import { describe, expect, it } from 'vitest';
 import {
   ACTION_CATALOGUE,
   actionSpec,
+  classifyError,
   codeForHttpStatus,
   ERROR_CATALOGUE,
   errorCodeFromWire,
   errorSpec,
   LOADING_POLICY,
+  LOG_EVENT,
+  logFailure,
   RETRY_POLICY,
   retryAfterMs,
   retryDelayMs,
   TOAST_DURATIONS_MS,
+  TranRequestError,
   VERDICT_SOURCES,
   verdictSourceMessageKey,
   type VerdictSource,
 } from '../src/feedback.js';
+import { setErrorReporter, type ReportEvent } from '../src/resilience.js';
+import { TranApiError } from '@tran/api';
 import { designMotion } from '../src/tokens.js';
 import tokensJson from '../src/generated/tokens.json' with { type: 'json' };
 
@@ -99,5 +105,112 @@ describe('waiting policy (shared with Rust and native)', () => {
   it('[REQ-LOAD-006] designMotion is the generated tokens.json motion', () => {
     expect(designMotion).toEqual(tokensJson.motion);
     expect(designMotion).toEqual({ fast: '150ms', base: '250ms' });
+  });
+});
+
+describe('REQ-OBS-011: Client failure trace correlation', () => {
+  it('carries trace_id on request failed log event and reporter event when response arrives', () => {
+    const traceId = '4bf92f3577b34da6a3ce929d0e0e4736';
+    const requestId = 'req-trace-test-1';
+    const logged: Record<string, unknown>[] = [];
+    const reported: ReportEvent[] = [];
+
+    setErrorReporter((event) => {
+      reported.push(event);
+    });
+
+    const mockLogger = {
+      debug: (_msg: string, fields: Record<string, unknown>) => {
+        logged.push(fields);
+      },
+      info: (_msg: string, fields: Record<string, unknown>) => {
+        logged.push(fields);
+      },
+      warn: (_msg: string, fields: Record<string, unknown>) => {
+        logged.push(fields);
+      },
+      error: (_msg: string, fields: Record<string, unknown>) => {
+        logged.push(fields);
+      },
+    };
+
+    const apiError = new TranApiError('Internal Server Error', 500, {
+      code: 'server.internal',
+      requestId,
+      traceId,
+    });
+
+    const error = classifyError(apiError);
+    expect(error.traceId).toBe(traceId);
+    expect(error.requestId).toBe(requestId);
+
+    logFailure(error, mockLogger);
+
+    expect(logged).toHaveLength(1);
+    expect(logged[0]!.trace_id).toBe(traceId);
+    expect(logged[0]!.request_id).toBe(requestId);
+    expect(logged[0]!.code).toBe('server.internal');
+    expect(logged[0]!.status).toBe(500);
+
+    // Verify all fields match LOG_EVENT schema
+    for (const field of LOG_EVENT.fields) {
+      expect(Object.hasOwn(logged[0]!, field)).toBe(true);
+    }
+
+    expect(reported).toHaveLength(1);
+    expect(reported[0]!.trace_id).toBe(traceId);
+    expect(reported[0]!.request_id).toBe(requestId);
+    expect(reported[0]!.code).toBe('server.internal');
+    expect(reported[0]!.status).toBe(500);
+
+    setErrorReporter(null);
+  });
+
+  it('carries trace_id when no response arrived (transport/network failure)', () => {
+    const traceId = '5cf92f3577b34da6a3ce929d0e0e4737';
+    const logged: Record<string, unknown>[] = [];
+    const reported: ReportEvent[] = [];
+
+    setErrorReporter((event) => {
+      reported.push(event);
+    });
+
+    const mockLogger = {
+      debug: (_msg: string, fields: Record<string, unknown>) => {
+        logged.push(fields);
+      },
+      info: (_msg: string, fields: Record<string, unknown>) => {
+        logged.push(fields);
+      },
+      warn: (_msg: string, fields: Record<string, unknown>) => {
+        logged.push(fields);
+      },
+      error: (_msg: string, fields: Record<string, unknown>) => {
+        logged.push(fields);
+      },
+    };
+
+    const networkError = new DOMException('fetch failed', 'NetworkError');
+    const error = classifyError(networkError, traceId);
+    expect(error.traceId).toBe(traceId);
+    expect(error.code).toBe('network.offline');
+
+    logFailure(error, mockLogger);
+
+    expect(logged).toHaveLength(1);
+    expect(logged[0]!.trace_id).toBe(traceId);
+    expect(logged[0]!.code).toBe('network.offline');
+    expect(logged[0]!.status).toBeNull();
+
+    // If unexpected error, reported as well
+    const unexpectedError = new TypeError('null pointer');
+    const error2 = classifyError(unexpectedError, traceId);
+    logFailure(error2, mockLogger);
+
+    expect(reported).toHaveLength(1);
+    expect(reported[0]!.trace_id).toBe(traceId);
+    expect(reported[0]!.code).toBe('client.unexpected');
+
+    setErrorReporter(null);
   });
 });

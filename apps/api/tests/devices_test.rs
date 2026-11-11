@@ -462,7 +462,9 @@ async fn logs_carry_fixed_fields_and_never_a_token_an_installation_or_a_user() {
             "path",
             "platform",
             "replaced",
-            "request_id"
+            "request_id",
+            "span_id",
+            "trace_id",
         ]
     );
     assert_eq!(

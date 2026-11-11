@@ -1,4 +1,4 @@
-// Verifies: REQ-VER-001 REQ-VER-004 REQ-VER-009 REQ-VER-010
+// Verifies: REQ-VER-001 REQ-VER-004 REQ-VER-009 REQ-VER-010 REQ-OBS-010 REQ-OBS-011
 import Foundation
 
 /// Who this app is on the wire (REQ-VER-004): `ios/<CFBundleShortVersionString>`, formatted by the
@@ -45,9 +45,13 @@ struct TranHttp: Sendable {
     /// Told whenever an answer blocks or nudges this version; the app's `TranUpdateCenter` by default.
     var onStanding: @Sendable (TranStandingSignal) -> Void = TranUpdateCenter.post
 
-    /// A request for `endpoint`, with a JSON body and a bearer token when given.
+    /// A request for `endpoint`, with a JSON body, a bearer token and traceparent when given.
     func request(
-        _ endpoint: TranEndpoint, installationId: String? = nil, body: Data? = nil, bearer: String? = nil
+        _ endpoint: TranEndpoint,
+        installationId: String? = nil,
+        body: Data? = nil,
+        bearer: String? = nil,
+        traceparent: String? = nil
     ) -> URLRequest {
         var request = URLRequest(url: baseUrl.appending(path: endpoint.path(installationId: installationId)))
         request.httpMethod = endpoint.method
@@ -58,6 +62,7 @@ struct TranHttp: Sendable {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         }
         if let bearer { request.setValue("Bearer \(bearer)", forHTTPHeaderField: "Authorization") }
+        if let traceparent { request.setValue(traceparent, forHTTPHeaderField: "traceparent") }
         return request
     }
 
@@ -65,16 +70,19 @@ struct TranHttp: Sendable {
     /// `TranRequestFailure`. A failure carries the fixed `LOG_EVENT` fields only, never a header or
     /// a body, so no token can reach a log or a report (REQ-SEC-014).
     func send(_ request: URLRequest) async throws -> Data {
+        let traceId = request.value(forHTTPHeaderField: "traceparent").flatMap {
+            parseTraceparentOffline(header: $0)?.traceId
+        }
         let (data, response): (Data, URLResponse)
         do {
             (data, response) = try await session.data(for: request)
         } catch {
-            throw TranRequestFailure.classify(error)
+            throw TranRequestFailure.classify(error, traceId: traceId)
         }
         guard let http = response as? HTTPURLResponse else {
-            throw TranRequestFailure(code: .clientUnexpected)
+            throw TranRequestFailure(code: .clientUnexpected, traceId: traceId)
         }
-        let failure = (200..<300).contains(http.statusCode) ? nil : TranRequestFailure.rejected(http, body: data)
+        let failure = (200..<300).contains(http.statusCode) ? nil : TranRequestFailure.rejected(http, body: data, traceId: traceId)
         if let signal = TranStandingSignal.from(http, failure: failure) { onStanding(signal) }
         if let failure { throw failure }
         return data

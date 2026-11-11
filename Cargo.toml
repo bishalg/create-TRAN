@@ -64,5 +64,9 @@ aws-lc-rs = "1"
 # straight-line code. No ORM and no migration library: `api::db::migrate` is ours.
 rusqlite = { version = "0.41", default-features = false, features = ["bundled"] }
 
+# Metrics & Observability (ADR-0040)
+metrics = "0.24"
+metrics-exporter-prometheus = { version = "0.18", default-features = false }
+
 # Internal Workspace Crates
 rust-core = { path = "crates/rust-core" }

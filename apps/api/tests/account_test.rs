@@ -370,7 +370,9 @@ async fn deletion_is_logged_without_identity() {
             "client_version",
             "method",
             "path",
-            "request_id"
+            "request_id",
+            "span_id",
+            "trace_id",
         ],
         "only the request span's own fields"
     );

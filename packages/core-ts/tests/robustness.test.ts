@@ -156,7 +156,7 @@ describe('callers can cancel (REQ-ROB-006)', () => {
   });
 });
 
-describe('one structured event per failure (REQ-ROB-007)', () => {
+describe('one structured event per failure (REQ-ROB-007, REQ-OBS-002)', () => {
   it("logs LOG_EVENT's fields, plus the developer detail", () => {
     const logger: FeedbackLogger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
     logFailure(classifyError(new TranApiError('boom', 500, { requestId: 'r-9' })), logger);
@@ -168,6 +168,7 @@ describe('one structured event per failure (REQ-ROB-007)', () => {
       code: 'server.internal',
       status: 500,
       request_id: 'r-9',
+      trace_id: undefined,
       detail: 'boom',
     });
   });

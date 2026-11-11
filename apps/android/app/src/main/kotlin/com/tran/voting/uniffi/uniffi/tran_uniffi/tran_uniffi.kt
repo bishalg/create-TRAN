@@ -718,6 +718,10 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_loading_policy(
     ): Int
+    external fun uniffi_tran_uniffi_checksum_func_log_event(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_log_events(
+    ): Int
     external fun uniffi_tran_uniffi_checksum_func_recovery_policy(
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_recovery_probe_delay_ms(
@@ -751,6 +755,14 @@ internal object IntegrityCheckingUniffiLib {
     external fun uniffi_tran_uniffi_checksum_func_session_recovery(
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_session_refresh_event(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_child_span_offline(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_format_traceparent_offline(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_new_trace_offline(
+    ): Int
+    external fun uniffi_tran_uniffi_checksum_func_parse_traceparent_offline(
     ): Int
     external fun ffi_tran_uniffi_uniffi_contract_version(
     ): Int
@@ -811,6 +823,10 @@ internal object UniffiLib {
     ): Byte
     external fun uniffi_tran_uniffi_fn_func_loading_policy(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_log_event(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_log_events(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_recovery_policy(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_recovery_probe_delay_ms(`probe`: Int,uniffi_out_err: UniffiRustCallStatus, 
@@ -844,6 +860,14 @@ internal object UniffiLib {
     external fun uniffi_tran_uniffi_fn_func_session_recovery(`event`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_session_refresh_event(`status`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_child_span_offline(`traceId`: RustBuffer.ByValue,`randomBytes`: RustBuffer.ByValue,`sampled`: Byte,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_format_traceparent_offline(`context`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_new_trace_offline(`randomBytes`: RustBuffer.ByValue,`sampled`: Byte,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_tran_uniffi_fn_func_parse_traceparent_offline(`header`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun ffi_tran_uniffi_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -1030,6 +1054,12 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_tran_uniffi_checksum_func_loading_policy() and 0xFFFF) != 52020) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_tran_uniffi_checksum_func_log_event() and 0xFFFF) != 41786) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_log_events() and 0xFFFF) != 10102) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if ((lib.uniffi_tran_uniffi_checksum_func_recovery_policy() and 0xFFFF) != 62828) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1079,6 +1109,18 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_tran_uniffi_checksum_func_session_refresh_event() and 0xFFFF) != 10936) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_child_span_offline() and 0xFFFF) != 62045) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_format_traceparent_offline() and 0xFFFF) != 43888) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_new_trace_offline() and 0xFFFF) != 15395) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_tran_uniffi_checksum_func_parse_traceparent_offline() and 0xFFFF) != 30024) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
 }
@@ -1393,6 +1435,25 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
         val byteBuf = toUtf8(value)
         buf.putInt(byteBuf.limit())
         buf.put(byteBuf)
+    }
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterByteArray: FfiConverterRustBuffer<ByteArray> {
+    override fun read(buf: ByteBuffer): ByteArray {
+        val len = buf.getInt()
+        val byteArr = ByteArray(len)
+        buf.get(byteArr)
+        return byteArr
+    }
+    override fun allocationSize(value: ByteArray): ULong {
+        return 4UL + value.size.toULong()
+    }
+    override fun write(value: ByteArray, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        buf.put(value)
     }
 }
 
@@ -1778,6 +1839,53 @@ public object FfiConverterTypeTranLoadingPolicy: FfiConverterRustBuffer<TranLoad
     override fun write(value: TranLoadingPolicy, buf: ByteBuffer) {
             FfiConverterULong.write(value.`indicatorDelayMs`, buf)
             FfiConverterString.write(value.`pendingMessageKey`, buf)
+    }
+}
+
+
+
+/**
+ * One structured log event's schema (REQ-OBS-002).
+ */
+data class TranLogEvent (
+    /**
+     * The event name/message, e.g. "request failed" or "request completed".
+     */
+    var `message`: kotlin.String
+    , 
+    /**
+     * The allowed field names.
+     */
+    var `fields`: List<kotlin.String>
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranLogEvent: FfiConverterRustBuffer<TranLogEvent> {
+    override fun read(buf: ByteBuffer): TranLogEvent {
+        return TranLogEvent(
+            FfiConverterString.read(buf),
+            FfiConverterSequenceString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranLogEvent) = (
+            FfiConverterString.allocationSize(value.`message`) +
+            FfiConverterSequenceString.allocationSize(value.`fields`)
+    )
+
+    override fun write(value: TranLogEvent, buf: ByteBuffer) {
+            FfiConverterString.write(value.`message`, buf)
+            FfiConverterSequenceString.write(value.`fields`, buf)
     }
 }
 
@@ -2347,6 +2455,61 @@ public object FfiConverterTypeTranToastPolicy: FfiConverterRustBuffer<TranToastP
 
     override fun write(value: TranToastPolicy, buf: ByteBuffer) {
             FfiConverterUInt.write(value.`maxVisible`, buf)
+    }
+}
+
+
+
+/**
+ * A parsed or constructed W3C trace context.
+ */
+data class TranTraceContext (
+    /**
+     * 32-character lowercase hex trace identifier.
+     */
+    var `traceId`: kotlin.String
+    , 
+    /**
+     * 16-character lowercase hex span identifier.
+     */
+    var `spanId`: kotlin.String
+    , 
+    /**
+     * Whether the sampled flag is set.
+     */
+    var `sampled`: kotlin.Boolean
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranTraceContext: FfiConverterRustBuffer<TranTraceContext> {
+    override fun read(buf: ByteBuffer): TranTraceContext {
+        return TranTraceContext(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterBoolean.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranTraceContext) = (
+            FfiConverterString.allocationSize(value.`traceId`) +
+            FfiConverterString.allocationSize(value.`spanId`) +
+            FfiConverterBoolean.allocationSize(value.`sampled`)
+    )
+
+    override fun write(value: TranTraceContext, buf: ByteBuffer) {
+            FfiConverterString.write(value.`traceId`, buf)
+            FfiConverterString.write(value.`spanId`, buf)
+            FfiConverterBoolean.write(value.`sampled`, buf)
     }
 }
 
@@ -4141,6 +4304,38 @@ public object FfiConverterOptionalTypeTranLastRegistration: FfiConverterRustBuff
 /**
  * @suppress
  */
+public object FfiConverterOptionalTypeTranTraceContext: FfiConverterRustBuffer<TranTraceContext?> {
+    override fun read(buf: ByteBuffer): TranTraceContext? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeTranTraceContext.read(buf)
+    }
+
+    override fun allocationSize(value: TranTraceContext?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeTranTraceContext.allocationSize(value)
+        }
+    }
+
+    override fun write(value: TranTraceContext?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeTranTraceContext.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterOptionalTypeTranErrorCode: FfiConverterRustBuffer<TranErrorCode?> {
     override fun read(buf: ByteBuffer): TranErrorCode? {
         if (buf.get().toInt() == 0) {
@@ -4311,6 +4506,34 @@ public object FfiConverterSequenceTypeTranErrorSpec: FfiConverterRustBuffer<List
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeTranErrorSpec.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeTranLogEvent: FfiConverterRustBuffer<List<TranLogEvent>> {
+    override fun read(buf: ByteBuffer): List<TranLogEvent> {
+        val len = buf.getInt()
+        return List<TranLogEvent>(len) {
+            FfiConverterTypeTranLogEvent.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<TranLogEvent>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeTranLogEvent.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<TranLogEvent>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeTranLogEvent.write(it, buf)
         }
     }
 }
@@ -4863,6 +5086,32 @@ public object FfiConverterSequenceTypeTranToastKey: FfiConverterRustBuffer<List<
     
 
         /**
+         * The failure log event schema (REQ-ROB-007, REQ-OBS-002).
+         */ fun `logEvent`(): TranLogEvent {
+            return FfiConverterTypeTranLogEvent.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_log_event(
+    
+        _status)
+}
+    )
+    }
+    
+
+        /**
+         * All structured log events declared across platforms (REQ-OBS-002).
+         */ fun `logEvents`(): List<TranLogEvent> {
+            return FfiConverterSequenceTypeTranLogEvent.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_log_events(
+    
+        _status)
+}
+    )
+    }
+    
+
+        /**
          * The recovery schedule every app uses.
          */ fun `recoveryPolicy`(): TranRecoveryPolicy {
             return FfiConverterTypeTranRecoveryPolicy.lift(
@@ -5168,6 +5417,67 @@ public object FfiConverterSequenceTypeTranToastKey: FfiConverterRustBuffer<List<
     
         
         FfiConverterOptionalUShort.lower(`status`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Derives a child span from a parent trace ID using injected random bytes (REQ-OBS-001).
+         */ fun `childSpanOffline`(`traceId`: kotlin.String, `randomBytes`: kotlin.ByteArray, `sampled`: kotlin.Boolean): TranTraceContext? {
+            return FfiConverterOptionalTypeTranTraceContext.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_child_span_offline(
+    
+        
+        FfiConverterString.lower(`traceId`),
+        FfiConverterByteArray.lower(`randomBytes`),
+        FfiConverterBoolean.lower(`sampled`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Formats a [`TranTraceContext`] into a W3C `traceparent` header string.
+         */ fun `formatTraceparentOffline`(`context`: TranTraceContext): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_format_traceparent_offline(
+    
+        
+        FfiConverterTypeTranTraceContext.lower(`context`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Creates a new trace with a root span using injected random bytes (REQ-OBS-001).
+         */ fun `newTraceOffline`(`randomBytes`: kotlin.ByteArray, `sampled`: kotlin.Boolean): TranTraceContext? {
+            return FfiConverterOptionalTypeTranTraceContext.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_new_trace_offline(
+    
+        
+        FfiConverterByteArray.lower(`randomBytes`),
+        FfiConverterBoolean.lower(`sampled`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Parses a W3C `traceparent` header string (REQ-OBS-001).
+         *
+         * Accepts only version `00`, lowercase hex, non-zero trace and span identifiers.
+         */ fun `parseTraceparentOffline`(`header`: kotlin.String): TranTraceContext? {
+            return FfiConverterOptionalTypeTranTraceContext.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_tran_uniffi_fn_func_parse_traceparent_offline(
+    
+        
+        FfiConverterString.lower(`header`),_status)
 }
     )
     }

@@ -109,6 +109,7 @@
 		A66AE7803D01184F5D6894EB /* TranReferenceDate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B83934E01F2D9C881B1710ED /* TranReferenceDate.swift */; };
 		A7D7682FF87B6131E4D7B724 /* NavigationParityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843D7B0C3D41329248AA92A8 /* NavigationParityTests.swift */; };
 		A823D66932990903547033C6 /* KeychainSessionVault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ABB2F2DE67F5DE2910E8717 /* KeychainSessionVault.swift */; };
+		AA800D39AFE4BC26C5FCC800 /* TraceParityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FBF5C432B51DFA5BA1A8DBB /* TraceParityTests.swift */; };
 		ABC6F3CCCF9AB19844AEB8B8 /* UseLocationControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = F419254D57435D3791AD02BC /* UseLocationControl.swift */; };
 		AD05498BBD69E97FDC5B6E5F /* KeychainSessionVaultTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F8E3ACB9D8AC5B72946B98 /* KeychainSessionVaultTests.swift */; };
 		AEA37EC7631E2AA9AF5C5BEB /* TranSessionRestore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFC267A98176DD7F1781C31B /* TranSessionRestore.swift */; };
@@ -127,6 +128,7 @@
 		C3B16AAE36C09CB0AAF56265 /* SessionVault.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E12B106C5CDB7BBB32C6FB /* SessionVault.swift */; };
 		C4191D731C5F3314868A011A /* TranNotifyPermission.swift in Sources */ = {isa = PBXBuildFile; fileRef = F479F435DB204BCED4F545F5 /* TranNotifyPermission.swift */; };
 		C52F1FC2C50EF718E0AD42AA /* TranApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 644FEE3DC9747F2D704B4936 /* TranApiClient.swift */; };
+		C62025E766D3BEAE68394999 /* TranApiClientTraceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC5781840BDE0CE591F276A2 /* TranApiClientTraceTests.swift */; };
 		C65A64C124B8AA8FEDFA6E3D /* TranSessionLaunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24A3BBFCBFE2D6F96DF2259B /* TranSessionLaunch.swift */; };
 		C83569453B5EA47472AEC7CE /* TranFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E84A220EB4D0FDE8F0F9ED3 /* TranFeedback.swift */; };
 		C85B94757DD630DBC497EC52 /* TranMotionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67E4D3E701D250552E7DA222 /* TranMotionTests.swift */; };
@@ -138,6 +140,7 @@
 		D39C8AF2EF4DF3E90159B5A6 /* ScreenContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EFEA7EA26DE0979DBA5AD6F /* ScreenContract.swift */; };
 		D3BB0014D80A337925082AEE /* PermissionGateway.swift in Sources */ = {isa = PBXBuildFile; fileRef = 451A53C9F52F2953C3235D31 /* PermissionGateway.swift */; };
 		D93E76FC13AEFA3757426F41 /* ServerConfirmationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFE247D65740ECEBEA9ED8C /* ServerConfirmationTests.swift */; };
+		DA2A5759814B5A2657E3C288 /* TranReportingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C94DB6FDC79C38F1519F65C5 /* TranReportingTests.swift */; };
 		DAF53B9AFEB8D5CED2684921 /* TranUpdateCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EFD06191D7223210A744B66 /* TranUpdateCenter.swift */; };
 		DCED7FF96DAF77F43564EB88 /* tran_uniffi.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2AF051840CF2BCD45F86C7 /* tran_uniffi.swift */; };
 		DD0A0B199C4232A9176FF3CF /* FakePermissionGateway.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1E1D12F7C3CE0E728E9748B /* FakePermissionGateway.swift */; };
@@ -214,6 +217,7 @@
 		47C76ED62E3611F59F70019A /* TranEligibilityCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranEligibilityCopy.swift; sourceTree = "<group>"; };
 		4EE47502DDA80CCCE1201A9E /* SessionClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionClientTests.swift; sourceTree = "<group>"; };
 		4F832E35AE5EDE8C70E518BF /* Shell.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Shell.xcstrings; sourceTree = "<group>"; };
+		4FBF5C432B51DFA5BA1A8DBB /* TraceParityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TraceParityTests.swift; sourceTree = "<group>"; };
 		50205EBE0EB7A80BE144F622 /* TranVotingDemoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranVotingDemoApp.swift; sourceTree = "<group>"; };
 		54DCF2642437E0392E3016AF /* CompatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompatTests.swift; sourceTree = "<group>"; };
 		57C2A059FD8EE2CC127B2CC1 /* SessionTestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionTestSupport.swift; sourceTree = "<group>"; };
@@ -265,6 +269,7 @@
 		C034730D3B05B84233E15C80 /* TranReporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranReporting.swift; sourceTree = "<group>"; };
 		C1D909CC9584C5C578AB02FA /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		C605A60DCD19EC0E99C8BC52 /* TranLocationPermission.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranLocationPermission.swift; sourceTree = "<group>"; };
+		C94DB6FDC79C38F1519F65C5 /* TranReportingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranReportingTests.swift; sourceTree = "<group>"; };
 		CE6F7FB11DBE49C89653F1A4 /* TranEligibilityCopyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranEligibilityCopyTests.swift; sourceTree = "<group>"; };
 		CFC267A98176DD7F1781C31B /* TranSessionRestore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranSessionRestore.swift; sourceTree = "<group>"; };
 		D0E7F38C960C8BE5BD7556E5 /* ContractScreenDriver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContractScreenDriver.swift; sourceTree = "<group>"; };
@@ -292,6 +297,7 @@
 		F8C57904C226928C1009850D /* Auth.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Auth.xcstrings; sourceTree = "<group>"; };
 		FBC16B5C9AA459E81F099892 /* tran_uniffiFFI.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = tran_uniffiFFI.modulemap; sourceTree = "<group>"; };
 		FBFE247D65740ECEBEA9ED8C /* ServerConfirmationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerConfirmationTests.swift; sourceTree = "<group>"; };
+		FC5781840BDE0CE591F276A2 /* TranApiClientTraceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranApiClientTraceTests.swift; sourceTree = "<group>"; };
 		FC7E4BB3820E7C62D554ECAD /* TranFeedbackHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranFeedbackHost.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -369,11 +375,14 @@
 				10F9A85B277AE7C4D1833B9C /* SessionRestoreTests.swift */,
 				57C2A059FD8EE2CC127B2CC1 /* SessionTestSupport.swift */,
 				58584CC876AB7849FB07325D /* SessionVaultGuardTests.swift */,
+				4FBF5C432B51DFA5BA1A8DBB /* TraceParityTests.swift */,
 				1A659AC166910DCC044847A5 /* TranApiClientTests.swift */,
+				FC5781840BDE0CE591F276A2 /* TranApiClientTraceTests.swift */,
 				ECA1515D07C3D2B19C4269EC /* TranApiStubTests.swift */,
 				CE6F7FB11DBE49C89653F1A4 /* TranEligibilityCopyTests.swift */,
 				67E4D3E701D250552E7DA222 /* TranMotionTests.swift */,
 				E98C1BAC2E5E0E9359B1C94E /* TranReferenceDateTests.swift */,
+				C94DB6FDC79C38F1519F65C5 /* TranReportingTests.swift */,
 				A362FC3ECB6B475699FBDB28 /* UpdateCenterTests.swift */,
 				818D883971FFB25497E24A1B /* VersionedClientTests.swift */,
 				2416105BFC37987133B79587 /* VoteEligibilityParityTests.swift */,
@@ -812,9 +821,11 @@
 				C0138A42A2925F3962194EEC /* SessionVaultGuardTests.swift in Sources */,
 				2F9D1038DF03B2A76A0A1657 /* SystemPermissionGateway.swift in Sources */,
 				54A08164FC74A6F2DE5A89CB /* SystemPushGateway.swift in Sources */,
+				AA800D39AFE4BC26C5FCC800 /* TraceParityTests.swift in Sources */,
 				0CD1B8A91B7F10EA447300E3 /* TranAccountDeletion.swift in Sources */,
 				C52F1FC2C50EF718E0AD42AA /* TranApiClient.swift in Sources */,
 				4FEF69E87E2281A47A026A3C /* TranApiClientTests.swift in Sources */,
+				C62025E766D3BEAE68394999 /* TranApiClientTraceTests.swift in Sources */,
 				F11ADDB7E97690CB7467B05C /* TranApiStub.swift in Sources */,
 				3F5C9C2AC33FF4D365E265DE /* TranApiStubTests.swift in Sources */,
 				FF5D8649083D8DA80DE2A533 /* TranConnectivity.swift in Sources */,
@@ -834,6 +845,7 @@
 				A66AE7803D01184F5D6894EB /* TranReferenceDate.swift in Sources */,
 				62FC87D780405E09F801828D /* TranReferenceDateTests.swift in Sources */,
 				9DE149D15E74C7A9A1AB9379 /* TranReporting.swift in Sources */,
+				DA2A5759814B5A2657E3C288 /* TranReportingTests.swift in Sources */,
 				B065E6803B588E9D76D5F874 /* TranSessionClient.swift in Sources */,
 				C65A64C124B8AA8FEDFA6E3D /* TranSessionLaunch.swift in Sources */,
 				AEA37EC7631E2AA9AF5C5BEB /* TranSessionRestore.swift in Sources */,

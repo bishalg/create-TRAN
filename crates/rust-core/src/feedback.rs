@@ -587,17 +587,33 @@ pub fn is_valid_request_id(value: &str) -> bool {
             .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_' | b'.'))
 }
 
-/// The one log event every platform emits for a failure, and its fixed fields (REQ-ROB-007).
+/// The structured log events emitted by platforms and their allowed fields (REQ-ROB-007, REQ-OBS-002).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LogEvent {
     pub message: &'static str,
     pub fields: &'static [&'static str],
 }
 
-pub const LOG_EVENT: LogEvent = LogEvent {
+pub const REQUEST_FAILED_EVENT: LogEvent = LogEvent {
     message: "request failed",
-    fields: &["code", "status", "request_id"],
+    fields: &["code", "status", "request_id", "trace_id"],
 };
+
+pub const REQUEST_COMPLETED_EVENT: LogEvent = LogEvent {
+    message: "request completed",
+    fields: &[
+        "method",
+        "route",
+        "status",
+        "latency_ms",
+        "request_id",
+        "trace_id",
+    ],
+};
+
+pub const LOG_EVENT: LogEvent = REQUEST_FAILED_EVENT;
+
+pub const LOG_EVENTS: [LogEvent; 2] = [REQUEST_FAILED_EVENT, REQUEST_COMPLETED_EVENT];
 
 /// Wait before retry number `retry` (1 = the first retry), with "equal jitter":
 /// `half + random × half`, `half = min(max, base × 2^(retry−1)) / 2`. `random` is in `[0, 1)` and

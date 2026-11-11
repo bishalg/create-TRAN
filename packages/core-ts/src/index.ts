@@ -11,4 +11,5 @@ export * from './recovery.js';
 export * from './session.js';
 export * from './permissions.js';
 export * from './push.js';
+export * from './trace.js';
 export * from './generated/screens.js';

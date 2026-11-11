@@ -356,6 +356,18 @@ RustBuffer uniffi_tran_uniffi_fn_func_loading_policy(RustCallStatus *_Nonnull ou
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_LOG_EVENT
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_LOG_EVENT
+RustBuffer uniffi_tran_uniffi_fn_func_log_event(RustCallStatus *_Nonnull out_status
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_LOG_EVENTS
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_LOG_EVENTS
+RustBuffer uniffi_tran_uniffi_fn_func_log_events(RustCallStatus *_Nonnull out_status
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_RECOVERY_POLICY
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_RECOVERY_POLICY
 RustBuffer uniffi_tran_uniffi_fn_func_recovery_policy(RustCallStatus *_Nonnull out_status
@@ -446,6 +458,26 @@ RustBuffer uniffi_tran_uniffi_fn_func_session_recovery(RustBuffer event, RustCal
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_SESSION_REFRESH_EVENT
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_SESSION_REFRESH_EVENT
 RustBuffer uniffi_tran_uniffi_fn_func_session_refresh_event(RustBuffer status, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_CHILD_SPAN_OFFLINE
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_CHILD_SPAN_OFFLINE
+RustBuffer uniffi_tran_uniffi_fn_func_child_span_offline(RustBuffer trace_id, RustBuffer random_bytes, int8_t sampled, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_FORMAT_TRACEPARENT_OFFLINE
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_FORMAT_TRACEPARENT_OFFLINE
+RustBuffer uniffi_tran_uniffi_fn_func_format_traceparent_offline(RustBuffer context, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_NEW_TRACE_OFFLINE
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_NEW_TRACE_OFFLINE
+RustBuffer uniffi_tran_uniffi_fn_func_new_trace_offline(RustBuffer random_bytes, int8_t sampled, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_PARSE_TRACEPARENT_OFFLINE
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_PARSE_TRACEPARENT_OFFLINE
+RustBuffer uniffi_tran_uniffi_fn_func_parse_traceparent_offline(RustBuffer header, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_FFI_TRAN_UNIFFI_RUSTBUFFER_ALLOC
@@ -840,6 +872,18 @@ uint16_t uniffi_tran_uniffi_checksum_func_loading_policy(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_LOG_EVENT
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_LOG_EVENT
+uint16_t uniffi_tran_uniffi_checksum_func_log_event(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_LOG_EVENTS
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_LOG_EVENTS
+uint16_t uniffi_tran_uniffi_checksum_func_log_events(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_RECOVERY_POLICY
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_RECOVERY_POLICY
 uint16_t uniffi_tran_uniffi_checksum_func_recovery_policy(void
@@ -939,6 +983,30 @@ uint16_t uniffi_tran_uniffi_checksum_func_session_recovery(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_SESSION_REFRESH_EVENT
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_SESSION_REFRESH_EVENT
 uint16_t uniffi_tran_uniffi_checksum_func_session_refresh_event(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_CHILD_SPAN_OFFLINE
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_CHILD_SPAN_OFFLINE
+uint16_t uniffi_tran_uniffi_checksum_func_child_span_offline(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_FORMAT_TRACEPARENT_OFFLINE
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_FORMAT_TRACEPARENT_OFFLINE
+uint16_t uniffi_tran_uniffi_checksum_func_format_traceparent_offline(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_NEW_TRACE_OFFLINE
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_NEW_TRACE_OFFLINE
+uint16_t uniffi_tran_uniffi_checksum_func_new_trace_offline(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_PARSE_TRACEPARENT_OFFLINE
+#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_PARSE_TRACEPARENT_OFFLINE
+uint16_t uniffi_tran_uniffi_checksum_func_parse_traceparent_offline(void
     
 );
 #endif

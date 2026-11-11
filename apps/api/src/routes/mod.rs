@@ -25,7 +25,10 @@ pub fn create_router(state: AppState) -> Router {
     table::ROUTES
         .iter()
         .fold(
-            Router::new().route(HEALTH_PATH, get(health::health_check_handler)),
+            Router::new()
+                .route(HEALTH_PATH, get(health::health_check_handler))
+                .route("/api/health/live", get(health::liveness_handler))
+                .route("/api/health/ready", get(health::readiness_handler)),
             |router, route| router.route(&route.template(), (route.handler)()),
         )
         .fallback(not_found)

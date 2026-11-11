@@ -541,3 +541,37 @@ pub fn recovery_policy() -> TranRecoveryPolicy {
 pub fn recovery_probe_delay_ms(probe: u32) -> u64 {
     feedback::recovery_probe_delay_ms(probe)
 }
+
+/// One structured log event's schema (REQ-OBS-002).
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Record)]
+pub struct TranLogEvent {
+    /// The event name/message, e.g. "request failed" or "request completed".
+    pub message: String,
+    /// The allowed field names.
+    pub fields: Vec<String>,
+}
+
+/// The failure log event schema (REQ-ROB-007, REQ-OBS-002).
+#[uniffi::export]
+pub fn log_event() -> TranLogEvent {
+    TranLogEvent {
+        message: rust_core::feedback::LOG_EVENT.message.to_string(),
+        fields: rust_core::feedback::LOG_EVENT
+            .fields
+            .iter()
+            .map(|s| s.to_string())
+            .collect(),
+    }
+}
+
+/// All structured log events declared across platforms (REQ-OBS-002).
+#[uniffi::export]
+pub fn log_events() -> Vec<TranLogEvent> {
+    rust_core::feedback::LOG_EVENTS
+        .iter()
+        .map(|e| TranLogEvent {
+            message: e.message.to_string(),
+            fields: e.fields.iter().map(|s| s.to_string()).collect(),
+        })
+        .collect()
+}

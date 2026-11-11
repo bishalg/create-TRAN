@@ -107,10 +107,10 @@ final class TranFeedback {
     }
 
     /// The one `request failed` event with `LOG_EVENT`'s fields (`fixtures/feedback.json`), as
-    /// logfmt; `-` marks a field the failure does not have (REQ-ROB-007).
+    /// logfmt; `-` marks a field the failure does not have (REQ-ROB-007, REQ-OBS-002).
     nonisolated static func logLine(_ failure: TranRequestFailure) -> String {
         let status = failure.status.map(String.init) ?? "-"
-        return "request failed code=\(failure.spec.wireCode) status=\(status) request_id=\(failure.requestId ?? "-")"
+        return "request failed code=\(failure.spec.wireCode) status=\(status) request_id=\(failure.requestId ?? "-") trace_id=\(failure.traceId ?? "-")"
     }
 
     /// Logs at the catalogue level — for background calls the user did not start — and hands
