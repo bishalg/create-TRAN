@@ -1,5 +1,15 @@
 # create-TRAN — External Architecture Review (Synthesized)
 
+> **Status note, 2026-11-11.** This is the October 2026 external review, kept as a record; the findings were acted on and
+> most no longer hold. Superseded: the Expo app and the duplicated `useTranApi`/`fakeApi` on native (removed; native
+> clients are `apps/ios` and `apps/android` with their own HTTP clients, [ADR-0023](./adr/0023-native-api-clients.md));
+> `X-Debug-Country` trusted everywhere and the unused `AppConfig.environment` (gated by `APP_ENV`, REQ-API-006, see
+> [API.md](./API.md)); the stub health report (REQ-API-012); "no TS lint", "no mutation testing" and "no native CI"
+> (ESLint in `apps/web`, [mutation.yml](../.github/workflows/mutation.yml), `ios-smoke`/`android-smoke`); the 26 inline
+> `style={{}}` blocks (none remain, [ATOMIC.md](./ATOMIC.md)); the unversioned API ([API_VERSIONING.md](./API_VERSIONING.md)).
+> Still open: the TanStack Start decision, a generated Rust-to-TS HTTP contract and a live contract test, and Nx
+> usage. The live backlog is [ROADMAP.md](./ROADMAP.md); the system as it is now is in [ARCHITECTURE.md](./ARCHITECTURE.md).
+
 > **Historical snapshot.** Written while `apps/native` (Expo) still existed; it has since been removed (tag `archive/react-native-demo`). References below describe that earlier state.
 
 **Review date:** October 2026  

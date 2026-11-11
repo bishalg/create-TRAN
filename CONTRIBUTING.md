@@ -69,6 +69,11 @@ We follow **Gitflow branching**:
   - Native changes: verify `pnpm ios:build` and/or `pnpm android:build`.
   - Update documentation and specs (`docs/specs/`, `docs/adr/`) for any architectural or domain changes.
 
+## Conduct
+
+Be kind: this project follows the [Code of Conduct](./CODE_OF_CONDUCT.md). New here? Start with the
+[glossary](./docs/GLOSSARY.md) and [troubleshooting](./docs/TROUBLESHOOTING.md).
+
 ## License
 
 MIT — see [LICENSE](./LICENSE).

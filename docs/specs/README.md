@@ -53,6 +53,7 @@ ID that no spec defines.
 | [016 Supply chain](./016-supply-chain.md)                             | Audits in CI, pinned actions, Dependabot, SECURITY.md                    | `REQ-SUP`             |
 | [017 Release](./017-release.md)                                       | One version, conventional commits, changelog, tagged releases            | `REQ-REL`             |
 | [018 Loading and offline](./018-loading-and-offline.md)               | Delayed indicators, kept verdicts, cancellation, device fallback         | `REQ-LOAD`            |
+| [019 Code health](./019-code-health.md)                               | Code health gates ported from AstroFusion                                | `REQ-CODE`            |
 | [020 Issue-driven agents](./020-issue-driven-agents.md)               | Issue intake, quality gate, triage labels, plan and approval             | `REQ-ISS`             |
 | [021 Screen contract](./021-screen-contract.md)                       | Declared screens, elements, scenarios, conformance oracle                | `REQ-SCR`             |
 | [022 Security](./022-security.md)                                     | Secrets, sessions, token storage, sensitive data                         | `REQ-SEC`             |
@@ -66,6 +67,8 @@ ID that no spec defines.
 | [030 Persistence and migrations](./030-persistence-and-migrations.md) | SQL stores, forward-only migrations, stored-record versions              | `REQ-DB`              |
 | [031 Rate limiting](./031-rate-limiting.md)                           | Classes, token bucket, trusted proxies, load shedding                    | `REQ-RL`              |
 | [032 Deploy pipeline](./032-deploy-pipeline.md)                       | Image, promote by digest, deploy order, rollback, web headers            | `REQ-DEP`             |
+| [033 Idempotency](./033-idempotency.md)                               | Repeat rules, keyed retries, stored answers, client keys                 | `REQ-IDEM`            |
+| [034 HTTP contract](./034-http-contract.md)                           | Declared shapes, generated Zod and OpenAPI, live contract test           | `REQ-CON`             |
 
 ## Template
 

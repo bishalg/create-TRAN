@@ -50,7 +50,7 @@ iOS (`apps/ios/Sources/TranVotingDemo/Atoms/`) and Android (`apps/android/.../ui
 whose steps are the generated space scale (`xxs…xxl`). The palette arrives through the platform environment
 (SwiftUI `\.tranPalette` / Compose `LocalTranPalette`) — the native analogue of web CSS variables. Raw
 `Text`/`Button`/`TextField`/`Picker`/`Divider` (iOS) and their Material3 counterparts (Android) outside the atoms
-directories fail [`native-atoms.test.ts`](../../packages/core-ts/tests/native-atoms.test.ts) — a regex guard, not
+directories fail [`native-atoms.test.ts`](../packages/core-ts/tests/native-atoms.test.ts) — a regex guard, not
 a type checker ([ADR-0022](./adr/0022-native-atoms.md)). Feedback goes through `TranFeedback` (iOS
 `Feedback/`, Android `ui/feedback/`), which reads the presentation from the UniFFI catalogue.
 

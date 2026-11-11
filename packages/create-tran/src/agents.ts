@@ -45,6 +45,7 @@ export const AGENT_PATHS = [
   'docs/README.md',
   'docs/specs/README.md',
   'docs/LEARNINGS.md',
+  'docs/THREAT_MODEL.md',
   'package.json',
   'SECURITY.md',
 ];
@@ -101,6 +102,10 @@ const NONE_EDITS: Edit[] = [
   { file: '.gitignore', line: '# Agent runs (ADR-0032)' },
   { file: '.gitignore', line: '.agents/out/' },
   { file: 'docs/LEARNINGS.md', from: ' (ADR-0032, REQ-AGT-009)', to: '' },
+  {
+    file: 'docs/THREAT_MODEL.md',
+    line: '| E   | An agent with repository tokens is steered by an issue',
+  },
   {
     file: 'SECURITY.md',
     from: '; the `dependency-audit` agent task can propose the fix.',

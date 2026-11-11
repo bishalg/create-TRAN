@@ -1,7 +1,7 @@
 # 002 HTTP API
 
 Scope: the Axum service in `apps/api`. Request/response examples live in [`../API.md`](../API.md); this file is the
-normative behaviour. Rationale: [ADR-0003](../adr/0003-uniform-error-envelope.md),
+normative behaviour. Rationale: [ADR-0003](../adr/0003-error-envelope.md),
 [ADR-0004](../adr/0004-inject-time-and-config.md), [ADR-0012](../adr/0012-browser-calls-api-directly.md).
 
 ### REQ-API-001 [verified] Handlers contain no business logic

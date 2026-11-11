@@ -48,7 +48,7 @@ Platform-native iOS (`apps/ios`) and Android (`apps/android`) are the real **N**
 ## 4. Production-safe debug and proxy headers
 
 - [x] Wire `AppConfig.environment` into the eligibility handler: ignore `X-Debug-Country` unless `development` or `test` (REQ-API-006).
-- [ ] Trusted proxy list for `X-Forwarded-For` (env var or config struct field).
+- [x] Trusted proxy list for `X-Forwarded-For` (env var or config struct field) — `TRUSTED_PROXIES`, REQ-RL-003, `d6b5b04`, [RATE_LIMITING.md](./RATE_LIMITING.md).
 - [x] Update `docs/API.md` to match enforced behaviour.
 - [x] API tests: debug header ignored in `production`; honoured in `development`/`test`.
 - [ ] E2E: optional scenario for “debug header blocked” when `APP_ENV` is not development.
@@ -58,10 +58,10 @@ Platform-native iOS (`apps/ios`) and Android (`apps/android`) are the real **N**
 ## 5. Clean-ups (shared code, styling, tooling)
 
 - [ ] Extract `useTranApi` (+ shared `fakeApi` test helper) into `packages/` (e.g. `@tran/react` or extend `@tran/core`).
-- [ ] Pick one styling approach for web (generated CSS vs inline tokens); reduce `App.tsx` inline `style={{}}` blocks.
-- [ ] Add TypeScript linter (Biome or ESLint) to CI; extend `pnpm lint` beyond Clippy.
-- [ ] Optional: mutation testing (`cargo-mutants`, Stryker) on critical paths.
-- [ ] **Nx:** use `nx affected` + caching in CI, add Rust plugin, **or** remove Nx and document plain `pnpm` workflows.
+- [x] Pick one styling approach for web (generated CSS vs inline tokens); reduce `App.tsx` inline `style={{}}` blocks — token-bound atoms only, [ATOMIC.md](./ATOMIC.md); no `style={{` remains in `apps/web/src`.
+- [x] Add TypeScript linter (Biome or ESLint) to CI; extend `pnpm lint` beyond Clippy — ESLint in `apps/web` (`apps/web/eslint.config.js`), root `pnpm lint` runs `pnpm --filter web lint`, `ci.yml` runs it.
+- [x] Optional: mutation testing (`cargo-mutants`, Stryker) on critical paths — `.github/workflows/mutation.yml`, `packages/core-ts/stryker.config.json` (`5e5e180` bumps Stryker).
+- [ ] **Nx** (still open: `nx.json` exists and root scripts use `nx run-many`, but CI does not use `nx affected`): use `nx affected` + caching in CI, add Rust plugin, **or** remove Nx and document plain `pnpm` workflows.
 - [x] **Health:** report only `rust-core` + `axum-api` with real crate versions (REQ-API-012). ~~Return minimal `{ "ok": true, "uptime_seconds": … }` or probe real dependencies; stop asserting web/native process health from Axum.~~
 
 ---
@@ -92,23 +92,25 @@ and one short playbook in `docs/` (what the topic is, why it matters, the rules 
 5. [x] **Push notifications and device registration** ([spec 027](./specs/027-push-and-devices.md), ADR-0044,
        [playbook](./PUSH.md)): optional push, the device token registered to the signed-in
        user on the API, replaced when it changes, removed on sign-out and account deletion.
-6. [ ] **API versioning and compatibility** ([spec 028](./specs/028-api-versioning.md), ADR-0047,
+6. [x] **API versioning and compatibility** ([spec 028](./specs/028-api-versioning.md), ADR-0047,
        [playbook](./API_VERSIONING.md)): a versioned base path, additive-change rules checked against contract
-       snapshots (REQ-API-011), deprecation headers, and a minimum supported client version that old apps obey.
-7. [ ] **Feature flags and remote configuration** ([spec 029](./specs/029-remote-config.md), ADR-0048,
+       snapshots (REQ-API-011), deprecation headers, and a minimum supported client version that old apps obey. Shipped
+       (`9b60346`, `bb188de`; REQ-VER-001 to 005 verified).
+7. [x] **Feature flags and remote configuration** ([spec 029](./specs/029-remote-config.md), ADR-0048,
        [playbook](./REMOTE_CONFIG.md)): typed flags with safe defaults, evaluated in one place, a kill
-       switch, and stale flags removed by a check.
-8. [ ] **Persistence and migrations** ([spec 030](./specs/030-persistence-and-migrations.md), ADR-0049,
+       switch, and stale flags removed by a check. Shipped (`2972292`; spec 029 has no `[planned]` requirement).
+8. [x] **Persistence and migrations** ([spec 030](./specs/030-persistence-and-migrations.md), ADR-0049,
        [playbook](./PERSISTENCE.md)): a durable `SessionStore`, forward-only schema migrations run and verified at
-       start-up, and versioned client-side stored records.
-9. [ ] **Rate limiting and abuse protection** ([spec 031](./specs/031-rate-limiting.md), ADR-0050,
+       start-up, and versioned client-side stored records. Shipped (`5cc25bb`, `5112791`; spec 030 has no `[planned]` requirement).
+9. [x] **Rate limiting and abuse protection** ([spec 031](./specs/031-rate-limiting.md), ADR-0050,
        [playbook](./RATE_LIMITING.md)): limits per client and per route as policy data, `429` with
-       `Retry-After` (the clients already honour it), tighter limits on the auth routes.
-10. [ ] **Observability** ([spec 023](./specs/023-observability.md), ADR-0040, [runbook](./OBSERVABILITY.md)): trace
-        context, log schema, RED metrics, readiness and graceful shutdown.
-11. [ ] **Container image and deploy pipeline** ([spec 032](./specs/032-deploy-pipeline.md), ADR-0051,
+       `Retry-After` (the clients already honour it), tighter limits on the auth routes. Shipped (`d6b5b04`; REQ-RL-001 to 010 verified).
+10. [x] **Observability** ([spec 023](./specs/023-observability.md), ADR-0040, [runbook](./OBSERVABILITY.md)): trace
+        context, log schema, RED metrics, readiness and graceful shutdown. Shipped (`967d33e`; spec 023 has no `[planned]` requirement).
+11. [x] **Container image and deploy pipeline** ([spec 032](./specs/032-deploy-pipeline.md), ADR-0051,
         [playbook](./DEPLOY.md)): a small reproducible image, configuration by environment, health-gated
-        rollout and rollback, and release artefacts built once and promoted.
+        rollout and rollback, and release artefacts built once and promoted. Shipped (`e4cdd71`, `e523aee`); REQ-DEP-010 (image size and
+        start-up budgets) is still `[planned]` in spec 032.
 
 12. [ ] **Sign-in providers**: a provider seam with Google and Sign in with Apple, the rule that Apple is offered
         whenever a third-party provider is (guideline 4.8) as a check, the system Apple button and Google's branded
@@ -120,6 +122,26 @@ and one short playbook in `docs/` (what the topic is, why it matters, the rules 
         and already-owned outcomes each with a catalogue presentation.
 14. [ ] **Onboarding**: a short first-run flow that can be skipped, leads into sign-in, and never asks for an account or
         a permission before the feature that needs it.
+
+---
+
+## 7. Hardening backlog
+
+Not started; each is a candidate phase once the topics above are done.
+
+- [ ] **Defect:** rollback after a migration. `scripts/deploy.sh --rollback` cannot redeploy the previous digest once a newer migration has run, because the older binary's migration `verify()` rejects an unknown migration (REQ-DB-002 against REQ-DEP-006); decide and fix ([RUNBOOK.md Gaps](./RUNBOOK.md#gaps)).
+- [ ] Idempotency keys for mutating routes ([spec 033](./specs/033-idempotency.md), planned).
+- [ ] Generated HTTP contract from Rust ([spec 034](./specs/034-http-contract.md), planned); would close section 3.
+- [ ] Database backup command, schedule and restore drill ([RUNBOOK.md Gaps](./RUNBOOK.md#gaps)).
+- [ ] Readiness checks the database ([RUNBOOK.md Gaps](./RUNBOOK.md#gaps)).
+- [ ] Revoke all sessions (one user, or everyone) without deleting an account ([RUNBOOK.md Gaps](./RUNBOOK.md#gaps)).
+- [ ] Container hardening in Compose (`cap_drop`, `no-new-privileges`), image scan and signature/provenance check at deploy ([THREAT_MODEL.md](./THREAT_MODEL.md#out-of-scope-or-not-mitigated-in-the-template)).
+- [ ] The log schema lists the `detail` field the API's `request failed` event carries (REQ-OBS-002), and panic text is kept out of it ([THREAT_MODEL.md](./THREAT_MODEL.md#out-of-scope-or-not-mitigated-in-the-template)).
+- [ ] Security audit log (who did what, to which account, when; no tokens or bodies).
+- [ ] Personal data export (the counterpart of [account deletion](./ACCOUNT_DELETION.md)).
+- [ ] Static analysis in CI (CodeQL or Semgrep).
+- [ ] Licence policy (`cargo-deny`).
+- [ ] Docs link check wired into `pnpm tooling:test` (checker: `tooling/doc-links/doc-links.mjs`).
 
 ---
 

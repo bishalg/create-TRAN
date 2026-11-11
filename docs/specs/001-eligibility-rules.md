@@ -1,7 +1,7 @@
 # 001 Eligibility rules
 
 Scope: the question "can a person of this age vote in this country?", implemented in `crates/rust-core`
-and mirrored in `packages/core-ts` and the native apps. Rationale: [ADR-0001](../adr/0001-rust-core-source-of-truth.md),
+and mirrored in `packages/core-ts` and the native apps. Rationale: [ADR-0001](../adr/0001-rust-is-the-source-of-truth.md),
 [ADR-0002](../adr/0002-golden-fixtures.md), [ADR-0004](../adr/0004-inject-time-and-config.md).
 
 ### REQ-RULE-001 [verified] One source of truth

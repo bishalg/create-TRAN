@@ -1,0 +1,11 @@
+# Code owners. One developer owns everything; a fork can split the sections below
+# (uncomment a line and name the team). The last matching pattern wins.
+*  @bishalg
+
+# /crates/        @bishalg
+# /apps/api/      @bishalg
+# /apps/web/      @bishalg
+# /apps/ios/      @bishalg
+# /apps/android/  @bishalg
+# /docs/          @bishalg
+# /.github/       @bishalg

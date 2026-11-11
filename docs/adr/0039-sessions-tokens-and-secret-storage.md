@@ -2,6 +2,11 @@
 
 **Status:** accepted · **Date:** 2026-11-10 · **Spec:** [022](../specs/022-security.md)
 
+> **Note, 2026-11-11:** two statements below are superseded. The session store is no longer in memory: it is SQLite
+> ([ADR-0049](./0049-sqlite-first-forward-only-migrations.md)), so sessions survive a restart. The refresh cookie is
+> scoped to `/api/v1/auth`, not `/api/auth`, because the API is versioned
+> ([ADR-0047](./0047-old-clients-keep-working.md), [spec 028](../specs/028-api-versioning.md)).
+
 ## Context
 
 The template shows how production code handles rules, errors, loading, accessibility and the supply chain. It showed

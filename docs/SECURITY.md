@@ -55,13 +55,16 @@ look like a replay.
 
 - **A real credential check** in front of `POST /api/v1/auth/session` (password with a slow hash, passkeys, or OIDC with
   PKCE). The sample signs in whoever picks a role.
-- **Rate limiting and lockout** on that check.
-- **A durable `SessionStore`** (a database or Redis) before running more than one API process.
+- **A per-account limit and lockout** on that check. The template limits by user or address
+  ([RATE_LIMITING.md](./RATE_LIMITING.md)) but has no per-account lockout.
+- **A shared store for more than one host.** Sessions are in SQLite ([PERSISTENCE.md](./PERSISTENCE.md)), but the
+  token-to-user map and the rate-limit buckets are per process.
 - **Authorisation**: check the role on each business route, on the server. Hiding a button is not access control.
-- **Response headers for the web host**: `Content-Security-Policy` with `frame-ancestors 'none'`,
-  `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`. The built page carries a CSP
-  `<meta>`, which cannot express `frame-ancestors`.
+- **TLS and the edge in front of the web host.** `deploy/web/` sends the security headers
+  ([DEPLOY.md](./DEPLOY.md)), but terminating TLS, a CDN or WAF and the host's secrets are a fork's.
 - **The same site for web and API** (`app.example.com`, `api.example.com`), or a same-site proxy for `/api/v1/auth`.
+- **The rest of the gaps** listed in the [threat model](./THREAT_MODEL.md) (session revocation at scale, audit log,
+  container hardening, image scanning).
 - **A decision on certificate pinning**, with a rotation plan if the answer is yes.
 - **Biometric gating** (`kSecAccessControl`, `setUserAuthenticationRequired`) if a stolen unlocked phone is in your
   threat model.
