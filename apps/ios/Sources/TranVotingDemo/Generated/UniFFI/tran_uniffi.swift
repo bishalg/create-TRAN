@@ -1963,174 +1963,6 @@ public func FfiConverterTypeTranSessionPolicy_lower(_ value: TranSessionPolicy) 
 
 
 /**
- * Stored push notification registration record on native device (REQ-PSH-010, REQ-DB-011).
- */
-public struct TranStoredPushRecord: Equatable, Hashable {
-    /**
-     * Record schema version.
-     */
-    public var schema: UInt32
-    /**
-     * Registered push token.
-     */
-    public var token: String
-    /**
-     * Timestamp of last registration in Unix seconds.
-     */
-    public var registeredAtUnixS: Int64
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(
-        /**
-         * Record schema version.
-         */schema: UInt32, 
-        /**
-         * Registered push token.
-         */token: String, 
-        /**
-         * Timestamp of last registration in Unix seconds.
-         */registeredAtUnixS: Int64) {
-        self.schema = schema
-        self.token = token
-        self.registeredAtUnixS = registeredAtUnixS
-    }
-
-    
-
-    
-}
-
-#if compiler(>=6)
-extension TranStoredPushRecord: Sendable {}
-#endif
-
-#if swift(>=5.8)
-@_documentation(visibility: private)
-#endif
-public struct FfiConverterTypeTranStoredPushRecord: FfiConverterRustBuffer {
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranStoredPushRecord {
-        return
-            try TranStoredPushRecord(
-                schema: FfiConverterUInt32.read(from: &buf), 
-                token: FfiConverterString.read(from: &buf), 
-                registeredAtUnixS: FfiConverterInt64.read(from: &buf)
-        )
-    }
-
-    public static func write(_ value: TranStoredPushRecord, into buf: inout [UInt8]) {
-        FfiConverterUInt32.write(value.schema, into: &buf)
-        FfiConverterString.write(value.token, into: &buf)
-        FfiConverterInt64.write(value.registeredAtUnixS, into: &buf)
-    }
-}
-
-
-#if swift(>=5.8)
-@_documentation(visibility: private)
-#endif
-public func FfiConverterTypeTranStoredPushRecord_lift(_ buf: RustBuffer) throws -> TranStoredPushRecord {
-    return try FfiConverterTypeTranStoredPushRecord.lift(buf)
-}
-
-#if swift(>=5.8)
-@_documentation(visibility: private)
-#endif
-public func FfiConverterTypeTranStoredPushRecord_lower(_ value: TranStoredPushRecord) -> RustBuffer {
-    return FfiConverterTypeTranStoredPushRecord.lower(value)
-}
-
-
-/**
- * Stored session vault record on native device (REQ-SEC-017, REQ-DB-011).
- */
-public struct TranStoredSessionRecord: Equatable, Hashable {
-    /**
-     * Record schema version.
-     */
-    public var schema: UInt32
-    /**
-     * User identifier.
-     */
-    public var userId: String
-    /**
-     * User role wire string.
-     */
-    public var role: String
-    /**
-     * Refresh token credential.
-     */
-    public var refreshToken: String
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(
-        /**
-         * Record schema version.
-         */schema: UInt32, 
-        /**
-         * User identifier.
-         */userId: String, 
-        /**
-         * User role wire string.
-         */role: String, 
-        /**
-         * Refresh token credential.
-         */refreshToken: String) {
-        self.schema = schema
-        self.userId = userId
-        self.role = role
-        self.refreshToken = refreshToken
-    }
-
-    
-
-    
-}
-
-#if compiler(>=6)
-extension TranStoredSessionRecord: Sendable {}
-#endif
-
-#if swift(>=5.8)
-@_documentation(visibility: private)
-#endif
-public struct FfiConverterTypeTranStoredSessionRecord: FfiConverterRustBuffer {
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TranStoredSessionRecord {
-        return
-            try TranStoredSessionRecord(
-                schema: FfiConverterUInt32.read(from: &buf), 
-                userId: FfiConverterString.read(from: &buf), 
-                role: FfiConverterString.read(from: &buf), 
-                refreshToken: FfiConverterString.read(from: &buf)
-        )
-    }
-
-    public static func write(_ value: TranStoredSessionRecord, into buf: inout [UInt8]) {
-        FfiConverterUInt32.write(value.schema, into: &buf)
-        FfiConverterString.write(value.userId, into: &buf)
-        FfiConverterString.write(value.role, into: &buf)
-        FfiConverterString.write(value.refreshToken, into: &buf)
-    }
-}
-
-
-#if swift(>=5.8)
-@_documentation(visibility: private)
-#endif
-public func FfiConverterTypeTranStoredSessionRecord_lift(_ buf: RustBuffer) throws -> TranStoredSessionRecord {
-    return try FfiConverterTypeTranStoredSessionRecord.lift(buf)
-}
-
-#if swift(>=5.8)
-@_documentation(visibility: private)
-#endif
-public func FfiConverterTypeTranStoredSessionRecord_lower(_ value: TranStoredSessionRecord) -> RustBuffer {
-    return FfiConverterTypeTranStoredSessionRecord.lower(value)
-}
-
-
-/**
  * What makes two toasts "the same".
  */
 public struct TranToastKey: Equatable, Hashable {
@@ -4265,7 +4097,8 @@ public enum TranStoredRecordAction: Equatable, Hashable {
      */
     case upgrade
     /**
-     * The schema is newer than understood or invalid (0); discard and treat as absent.
+     * The schema is newer than this build understands (or 0): treat the record as absent and
+     * leave it in place. Only an unreadable record is deleted (REQ-DB-012).
      */
     case discard
 
@@ -5086,54 +4919,6 @@ fileprivate struct FfiConverterOptionTypeTranLastRegistration: FfiConverterRustB
         switch try readInt(&buf) as Int8 {
         case 0: return nil
         case 1: return try FfiConverterTypeTranLastRegistration.read(from: &buf)
-        default: throw UniffiInternalError.unexpectedOptionalTag
-        }
-    }
-}
-
-#if swift(>=5.8)
-@_documentation(visibility: private)
-#endif
-fileprivate struct FfiConverterOptionTypeTranStoredPushRecord: FfiConverterRustBuffer {
-    typealias SwiftType = TranStoredPushRecord?
-
-    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
-        guard let value = value else {
-            writeInt(&buf, Int8(0))
-            return
-        }
-        writeInt(&buf, Int8(1))
-        FfiConverterTypeTranStoredPushRecord.write(value, into: &buf)
-    }
-
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
-        switch try readInt(&buf) as Int8 {
-        case 0: return nil
-        case 1: return try FfiConverterTypeTranStoredPushRecord.read(from: &buf)
-        default: throw UniffiInternalError.unexpectedOptionalTag
-        }
-    }
-}
-
-#if swift(>=5.8)
-@_documentation(visibility: private)
-#endif
-fileprivate struct FfiConverterOptionTypeTranStoredSessionRecord: FfiConverterRustBuffer {
-    typealias SwiftType = TranStoredSessionRecord?
-
-    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
-        guard let value = value else {
-            writeInt(&buf, Int8(0))
-            return
-        }
-        writeInt(&buf, Int8(1))
-        FfiConverterTypeTranStoredSessionRecord.write(value, into: &buf)
-    }
-
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
-        switch try readInt(&buf) as Int8 {
-        case 0: return nil
-        case 1: return try FfiConverterTypeTranStoredSessionRecord.read(from: &buf)
         default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }
@@ -6109,30 +5894,6 @@ public func sessionRefreshEvent(status: UInt16?) -> TranSessionEvent?  {
 })
 }
 /**
- * Reads and optionally upgrades a stored push registration record (REQ-DB-011).
- */
-public func tranReadStoredPush(rawJson: String, currentSchema: UInt32) -> TranStoredPushRecord?  {
-    return try!  FfiConverterOptionTypeTranStoredPushRecord.lift(try! rustCall() {
-        uniffiCallStatus in
-    uniffi_tran_uniffi_fn_func_tran_read_stored_push(
-        FfiConverterString.lower(rawJson),
-        FfiConverterUInt32.lower(currentSchema),uniffiCallStatus
-    )
-})
-}
-/**
- * Reads and optionally upgrades a stored session vault record (REQ-DB-011, REQ-DB-012).
- */
-public func tranReadStoredSession(rawJson: String, currentSchema: UInt32) -> TranStoredSessionRecord?  {
-    return try!  FfiConverterOptionTypeTranStoredSessionRecord.lift(try! rustCall() {
-        uniffiCallStatus in
-    uniffi_tran_uniffi_fn_func_tran_read_stored_session(
-        FfiConverterString.lower(rawJson),
-        FfiConverterUInt32.lower(currentSchema),uniffiCallStatus
-    )
-})
-}
-/**
  * Current remote config record schema version.
  */
 public func tranStoredConfigSchema() -> UInt32  {
@@ -6366,12 +6127,6 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_session_refresh_event() != 10936) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_tran_uniffi_checksum_func_tran_read_stored_push() != 578) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_tran_uniffi_checksum_func_tran_read_stored_session() != 36305) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_tran_uniffi_checksum_func_tran_stored_config_schema() != 22336) {

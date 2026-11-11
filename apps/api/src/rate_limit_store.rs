@@ -1,13 +1,21 @@
 // Verifies: REQ-RL-006 REQ-RL-008 REQ-RL-010
 //! Rate limit store abstraction and in-memory bounded implementation (spec 031, ADR-0050).
+//!
+//! [`MemoryRateLimitStore`] keeps at most `max_keys` buckets. Each take does `O(log n)` work: two
+//! ordered indexes say which bucket was used least recently (evicted when full) and which become
+//! droppable soonest (pruned once idle for a whole refill period). Nothing is rebuilt per request,
+//! and the "logged at" stamp of REQ-RL-008 lives in the bucket's entry, so it is evicted with it.
 
-use std::collections::{HashMap, VecDeque};
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::Mutex;
+use std::collections::{BTreeMap, HashMap};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Mutex, MutexGuard, PoisonError};
 
 use rust_core::rate::{take, Bucket, ClassPolicy, RouteClass, TakeResult};
 
 use crate::db::StoreError;
+
+/// How long one key's "rate limited" log stays quiet after it is written (REQ-RL-008).
+pub const LOG_WINDOW_MS: u64 = 60_000;
 
 /// Storage interface for token buckets (REQ-RL-006).
 pub trait RateLimitStore: Send + Sync {
@@ -20,28 +28,68 @@ pub trait RateLimitStore: Send + Sync {
         now_ms: u64,
     ) -> Result<TakeResult, StoreError>;
 
-    /// Records that a request was limited for `class` in metrics (REQ-RL-008).
-    fn record_limited(&self, class: RouteClass);
-
-    /// Total count of rate-limited requests for `class` (REQ-RL-008: `tran_rate_limited_total{class}`).
-    fn rate_limited_count(&self, class: RouteClass) -> u64;
-
-    /// Checks if a rate-limited event should be logged for `key` (at most once per window, REQ-RL-008).
-    fn should_log_limited(&self, key: &str, now_ms: u64) -> bool;
+    /// Whether a limited answer for `key` may be logged now: at most once per [`LOG_WINDOW_MS`]
+    /// per key (REQ-RL-008). It must never grow the store.
+    fn should_log_limited(&self, key: &str, class: RouteClass, now_ms: u64) -> bool;
 }
 
-#[derive(Debug, Clone)]
-struct BucketEntry {
+type Key = (RouteClass, String);
+
+#[derive(Debug, Clone, Copy)]
+struct Entry {
     bucket: Bucket,
-    policy: ClassPolicy,
+    /// Position in the recency index; also breaks ties in the drop index.
+    seq: u64,
+    droppable_at_ms: u64,
+    logged_at_ms: Option<u64>,
 }
 
+#[derive(Default)]
 struct MemoryState {
-    buckets: HashMap<(RouteClass, String), BucketEntry>,
-    /// Order of keys by last activity for LRU eviction when reaching capacity (REQ-RL-006).
-    access_order: VecDeque<(RouteClass, String)>,
-    /// Last timestamp a rate-limit log was emitted for this key (REQ-RL-008).
-    last_logged: HashMap<String, u64>,
+    entries: HashMap<Key, Entry>,
+    /// Least recently used first: the eviction order when the store is full.
+    by_recency: BTreeMap<u64, Key>,
+    /// Soonest droppable first: the pruning order.
+    by_drop: BTreeMap<(u64, u64), Key>,
+    next_seq: u64,
+}
+
+impl MemoryState {
+    fn remove(&mut self, key: &Key) -> Option<Entry> {
+        let entry = self.entries.remove(key)?;
+        self.by_recency.remove(&entry.seq);
+        self.by_drop.remove(&(entry.droppable_at_ms, entry.seq));
+        Some(entry)
+    }
+
+    fn insert(&mut self, key: Key, mut entry: Entry) {
+        entry.seq = self.next_seq;
+        self.next_seq += 1;
+        self.by_recency.insert(entry.seq, key.clone());
+        self.by_drop
+            .insert((entry.droppable_at_ms, entry.seq), key.clone());
+        self.entries.insert(key, entry);
+    }
+
+    /// Drops every bucket idle for a whole refill period (REQ-RL-006); each is removed once.
+    fn prune(&mut self, now_ms: u64) {
+        while let Some(entry) = self
+            .by_drop
+            .first_entry()
+            .filter(|entry| entry.key().0 <= now_ms)
+        {
+            let key = entry.remove();
+            self.remove(&key);
+        }
+    }
+
+    /// Evicts the bucket used least recently.
+    fn evict_oldest(&mut self) {
+        let oldest = self.by_recency.pop_first();
+        oldest.into_iter().for_each(|(_, key)| {
+            self.remove(&key);
+        });
+    }
 }
 
 /// In-process token bucket store bounded by `max_keys` (REQ-RL-006).
@@ -49,24 +97,14 @@ pub struct MemoryRateLimitStore {
     max_keys: usize,
     state: Mutex<MemoryState>,
     failing: AtomicBool,
-    auth_limited_count: AtomicU64,
-    write_limited_count: AtomicU64,
-    read_limited_count: AtomicU64,
 }
 
 impl MemoryRateLimitStore {
     pub fn new(max_keys: usize) -> Self {
         Self {
             max_keys,
-            state: Mutex::new(MemoryState {
-                buckets: HashMap::new(),
-                access_order: VecDeque::new(),
-                last_logged: HashMap::new(),
-            }),
+            state: Mutex::new(MemoryState::default()),
             failing: AtomicBool::new(false),
-            auth_limited_count: AtomicU64::new(0),
-            write_limited_count: AtomicU64::new(0),
-            read_limited_count: AtomicU64::new(0),
         }
     }
 
@@ -77,11 +115,17 @@ impl MemoryRateLimitStore {
 
     /// Number of active buckets currently held in memory.
     pub fn len(&self) -> usize {
-        self.state.lock().map(|s| s.buckets.len()).unwrap_or(0)
+        self.lock().entries.len()
     }
 
     pub fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+
+    /// The lock, recovered if a panic poisoned it: no code under the lock leaves the indexes
+    /// half-updated on a panic it can raise, so the state is still consistent.
+    fn lock(&self) -> MutexGuard<'_, MemoryState> {
+        self.state.lock().unwrap_or_else(PoisonError::into_inner)
     }
 }
 
@@ -96,88 +140,40 @@ impl RateLimitStore for MemoryRateLimitStore {
         if self.failing.load(Ordering::SeqCst) {
             return Err(StoreError::Failed);
         }
+        let mut state = self.lock();
+        state.prune(now_ms);
 
-        let mut state = self.state.lock().map_err(|_| StoreError::Failed)?;
-
-        // Prune full buckets that have been idle for a full refill period (REQ-RL-006).
-        state.buckets.retain(|_, entry| {
-            let delta_ms = now_ms.saturating_sub(entry.bucket.last_refill_at_ms);
-            let refill_units = delta_ms.saturating_mul(entry.policy.sustained_per_minute as u64);
-            let units = entry
-                .bucket
-                .units
-                .saturating_add(refill_units)
-                .min(entry.policy.burst_units());
-            let current_bucket = Bucket {
-                units,
-                last_refill_at_ms: entry.bucket.last_refill_at_ms,
-            };
-            !current_bucket.is_idle_and_full(&entry.policy, now_ms)
-        });
-        let retained_keys: std::collections::HashSet<(RouteClass, String)> =
-            state.buckets.keys().cloned().collect();
-        state.access_order.retain(|k| retained_keys.contains(k));
-
-        let store_key = (class, key.to_string());
-        let bucket = match state.buckets.get(&store_key) {
-            Some(entry) => entry.bucket,
+        let key = (class, key.to_owned());
+        let (bucket, logged_at_ms) = match state.remove(&key) {
+            Some(entry) => (entry.bucket, entry.logged_at_ms),
             None => {
-                // If capacity is reached, evict the oldest key (REQ-RL-006).
-                if state.buckets.len() >= self.max_keys {
-                    if let Some(oldest) = state.access_order.pop_front() {
-                        state.buckets.remove(&oldest);
-                    }
+                while state.entries.len() >= self.max_keys.max(1) {
+                    state.evict_oldest();
                 }
-                Bucket::full(policy, now_ms)
+                (Bucket::full(policy, now_ms), None)
             }
         };
 
         let result = take(&bucket, policy, now_ms);
-        state.buckets.insert(
-            store_key.clone(),
-            BucketEntry {
-                bucket: result.bucket,
-                policy: *policy,
-            },
-        );
-        state.access_order.retain(|k| k != &store_key);
-        state.access_order.push_back(store_key);
-
-        if !result.allowed {
-            self.record_limited(class);
-        }
-
+        let entry = Entry {
+            bucket: result.bucket,
+            seq: 0,
+            droppable_at_ms: result.bucket.droppable_at_ms(policy),
+            logged_at_ms,
+        };
+        state.insert(key, entry);
         Ok(result)
     }
 
-    fn record_limited(&self, class: RouteClass) {
-        match class {
-            RouteClass::Auth => self.auth_limited_count.fetch_add(1, Ordering::SeqCst),
-            RouteClass::Write => self.write_limited_count.fetch_add(1, Ordering::SeqCst),
-            RouteClass::Read => self.read_limited_count.fetch_add(1, Ordering::SeqCst),
-            RouteClass::Exempt => 0,
+    fn should_log_limited(&self, key: &str, class: RouteClass, now_ms: u64) -> bool {
+        let mut state = self.lock();
+        let Some(entry) = state.entries.get_mut(&(class, key.to_owned())) else {
+            return true;
         };
-    }
-
-    fn rate_limited_count(&self, class: RouteClass) -> u64 {
-        match class {
-            RouteClass::Auth => self.auth_limited_count.load(Ordering::SeqCst),
-            RouteClass::Write => self.write_limited_count.load(Ordering::SeqCst),
-            RouteClass::Read => self.read_limited_count.load(Ordering::SeqCst),
-            RouteClass::Exempt => 0,
-        }
-    }
-
-    fn should_log_limited(&self, key: &str, now_ms: u64) -> bool {
-        let mut state = self
-            .state
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        const WINDOW_MS: u64 = 60_000;
-        match state.last_logged.get(key) {
-            Some(&last) if now_ms.saturating_sub(last) < WINDOW_MS => false,
+        match entry.logged_at_ms {
+            Some(last) if now_ms.saturating_sub(last) < LOG_WINDOW_MS => false,
             _ => {
-                state.last_logged.insert(key.to_string(), now_ms);
+                entry.logged_at_ms = Some(now_ms);
                 true
             }
         }
@@ -188,130 +184,131 @@ impl RateLimitStore for MemoryRateLimitStore {
 mod tests {
     use super::*;
 
-    // Verifies: REQ-RL-006 REQ-RL-008 REQ-RL-010
-    #[test]
-    fn store_is_bounded_and_evicts_oldest() {
-        let store = MemoryRateLimitStore::new(2);
-        let policy = ClassPolicy::new(10, 5);
+    fn class(sustained: u32, burst: u32) -> ClassPolicy {
+        ClassPolicy::new(sustained, burst).unwrap()
+    }
 
-        assert!(store.is_empty());
-        assert_eq!(store.len(), 0);
-
-        let res1 = store.take("key1", RouteClass::Auth, &policy, 1000).unwrap();
-        assert!(res1.allowed);
-        assert_eq!(store.len(), 1);
-
-        let res2 = store.take("key2", RouteClass::Auth, &policy, 1000).unwrap();
-        assert!(res2.allowed);
-        assert_eq!(store.len(), 2);
-
-        // Taking an existing key hits Some(entry)
-        let res2_existing = store.take("key2", RouteClass::Auth, &policy, 1000).unwrap();
-        assert!(res2_existing.allowed);
-
-        // Third key forces eviction of oldest key1
-        let res3 = store.take("key3", RouteClass::Auth, &policy, 1000).unwrap();
-        assert!(res3.allowed);
-        assert_eq!(store.len(), 2);
-
-        // key1 was evicted, so taking it again treats it as a fresh bucket
-        let res1_again = store.take("key1", RouteClass::Auth, &policy, 1000).unwrap();
-        assert!(res1_again.allowed);
+    fn allowed(store: &MemoryRateLimitStore, key: &str, policy: &ClassPolicy, now: u64) -> bool {
+        store
+            .take(key, RouteClass::Read, policy, now)
+            .unwrap()
+            .allowed
     }
 
     // Verifies: REQ-RL-006
     #[test]
-    fn idle_full_buckets_are_dropped() {
+    fn the_store_never_holds_more_than_max_keys() {
         let store = MemoryRateLimitStore::new(10);
-        let policy = ClassPolicy::new(10, 5);
+        let policy = class(1, 1);
+        assert!(store.is_empty());
+        for i in 0..1_000 {
+            store
+                .take(&format!("flood-{i}"), RouteClass::Read, &policy, 1_000)
+                .unwrap();
+            assert!(store.len() <= 10);
+            assert_eq!(store.len(), (i + 1).min(10));
+        }
+        assert_eq!(store.len(), 10);
+        let state = store.lock();
+        assert_eq!(state.by_recency.len(), 10);
+        assert_eq!(state.by_drop.len(), 10);
+    }
 
+    // Verifies: REQ-RL-006
+    #[test]
+    fn a_full_store_evicts_the_bucket_used_least_recently() {
+        let store = MemoryRateLimitStore::new(2);
+        let policy = class(1, 1);
+        assert!(allowed(&store, "a", &policy, 0));
+        assert!(allowed(&store, "b", &policy, 0));
+        // Touching `a` (limited) makes `b` the least recently used.
+        assert!(!allowed(&store, "a", &policy, 0));
+        assert!(allowed(&store, "c", &policy, 0));
+        assert_eq!(store.len(), 2);
+        // `a` kept its empty bucket; `b` was evicted and starts full.
+        assert!(!allowed(&store, "a", &policy, 0));
+        assert!(allowed(&store, "b", &policy, 0));
+    }
+
+    // Verifies: REQ-RL-006
+    #[test]
+    fn a_bucket_idle_for_a_whole_refill_period_is_dropped() {
+        let store = MemoryRateLimitStore::new(10);
+        let policy = class(10, 5); // refills completely in 30 s
         store.take("key1", RouteClass::Auth, &policy, 0).unwrap();
-        assert_eq!(store.len(), 1);
-
-        // Advance past full refill period (30s) so it becomes idle and full
         store
-            .take("key2", RouteClass::Auth, &policy, 31_000)
+            .take("key2", RouteClass::Auth, &policy, 20_000)
             .unwrap();
-        // key1 should be dropped
-        assert_eq!(store.len(), 1);
+        store
+            .take("key3", RouteClass::Auth, &policy, 29_999)
+            .unwrap();
+        assert_eq!(store.len(), 3);
+        store
+            .take("key3", RouteClass::Auth, &policy, 30_000)
+            .unwrap();
+        assert_eq!(store.len(), 2, "key1 idle for 30 s is dropped");
+        // A clock that goes backwards prunes nothing.
+        store.take("key3", RouteClass::Auth, &policy, 1).unwrap();
+        assert_eq!(store.len(), 2);
     }
 
     // Verifies: REQ-RL-008
     #[test]
-    fn limited_counts_and_logging_window() {
-        let store = MemoryRateLimitStore::new(10);
-        let policy = ClassPolicy::new(0, 0); // Always rejects
-
-        assert_eq!(store.rate_limited_count(RouteClass::Auth), 0);
-        let res = store.take("k1", RouteClass::Auth, &policy, 1000).unwrap();
-        assert!(!res.allowed);
-        assert_eq!(store.rate_limited_count(RouteClass::Auth), 1);
-
-        store.record_limited(RouteClass::Write);
-        assert_eq!(store.rate_limited_count(RouteClass::Write), 1);
-        store.record_limited(RouteClass::Read);
-        assert_eq!(store.rate_limited_count(RouteClass::Read), 1);
-        store.record_limited(RouteClass::Exempt);
-        assert_eq!(store.rate_limited_count(RouteClass::Exempt), 0);
-
-        // Logging: at most once per window (60s)
-        assert!(store.should_log_limited("k1", 1000));
-        assert!(!store.should_log_limited("k1", 2000));
-        assert!(store.should_log_limited("k1", 62000));
+    fn a_limited_key_is_logged_once_per_window_and_the_stamp_is_evicted_with_it() {
+        let store = MemoryRateLimitStore::new(1);
+        let policy = class(1, 1);
+        store.take("k1", RouteClass::Auth, &policy, 1_000).unwrap();
+        assert!(store.should_log_limited("k1", RouteClass::Auth, 1_000));
+        assert!(!store.should_log_limited("k1", RouteClass::Auth, 2_000));
+        // A take keeps the stamp.
+        store.take("k1", RouteClass::Auth, &policy, 30_000).unwrap();
+        assert!(!store.should_log_limited("k1", RouteClass::Auth, 30_000));
+        assert!(store.should_log_limited("k1", RouteClass::Auth, 61_000));
+        // The stamp lives in the bucket: an unknown key is answered without being stored.
+        assert!(store.should_log_limited("ghost", RouteClass::Auth, 61_000));
+        assert!(store.should_log_limited("ghost", RouteClass::Auth, 61_000));
+        assert_eq!(store.len(), 1);
+        // Evicted with its bucket: a new bucket for the key logs again.
+        store
+            .take("other", RouteClass::Auth, &policy, 61_000)
+            .unwrap();
+        store.take("k1", RouteClass::Auth, &policy, 61_000).unwrap();
+        assert!(store.should_log_limited("k1", RouteClass::Auth, 61_000));
     }
 
     // Verifies: REQ-RL-010
     #[test]
     fn failure_injection() {
         let store = MemoryRateLimitStore::new(10);
-        let policy = ClassPolicy::new(10, 5);
-
         store.set_failing(true);
         assert_eq!(
             store
-                .take("k1", RouteClass::Auth, &policy, 1000)
+                .take("k1", RouteClass::Auth, &class(10, 5), 1000)
                 .unwrap_err(),
             StoreError::Failed
         );
-        assert!(store.should_log_limited("k1", 1000));
+        store.set_failing(false);
+        assert!(store
+            .take("k1", RouteClass::Auth, &class(10, 5), 1000)
+            .is_ok());
     }
 
+    // Verifies: REQ-RL-010
     #[test]
-    fn poisoned_mutex_fails_gracefully() {
+    fn a_poisoned_lock_is_recovered_instead_of_failing_forever() {
         let store = std::sync::Arc::new(MemoryRateLimitStore::new(10));
-        let store_clone = store.clone();
+        let policy = class(10, 5);
+        store.take("k", RouteClass::Auth, &policy, 0).unwrap();
+        let poisoner = store.clone();
         let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            let _lock = store_clone.state.lock().unwrap();
+            let _lock = poisoner.state.lock().unwrap();
             panic!("poisoning");
         }));
-        let policy = ClassPolicy::new(10, 5);
-        assert_eq!(
-            store
-                .take("k", RouteClass::Auth, &policy, 1000)
-                .unwrap_err(),
-            StoreError::Failed
-        );
-        assert_eq!(store.len(), 0);
-        assert!(store.should_log_limited("k", 1000));
-    }
-
-    #[test]
-    fn evicts_even_if_access_order_is_empty() {
-        let store = MemoryRateLimitStore::new(1);
-        let policy = ClassPolicy::new(10, 5);
-        {
-            let mut s = store.state.lock().unwrap();
-            s.buckets.insert(
-                (RouteClass::Auth, "ghost".to_string()),
-                BucketEntry {
-                    bucket: Bucket::full(&policy, 0),
-                    policy,
-                },
-            );
-        }
-        let res = store
-            .take("new_key", RouteClass::Auth, &policy, 1000)
-            .unwrap();
-        assert!(res.allowed);
+        assert!(store.state.is_poisoned());
+        let result = store.take("k", RouteClass::Auth, &policy, 0).unwrap();
+        assert!(result.allowed);
+        assert_eq!(result.bucket.units, 3 * rust_core::rate::TOKEN_SCALE);
+        assert_eq!(store.len(), 1);
+        assert!(store.should_log_limited("k", RouteClass::Auth, 0));
     }
 }

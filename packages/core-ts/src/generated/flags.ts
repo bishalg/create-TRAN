@@ -3,18 +3,70 @@
  * Run `pnpm tokens:sync` after changing a flag in Rust.
  */
 
+/** The value types a flag may have (REQ-CFG-001). */
+export type FlagType = 'boolean' | 'integer' | 'string';
+
+/** A declared flag (REQ-CFG-001). */
+export interface FlagDefinition {
+  readonly id: string;
+  readonly flagType: FlagType;
+  readonly defaultValue: boolean | number | string;
+  /** Applied as soon as a fetch brings it; otherwise read once at launch (REQ-CFG-005). */
+  readonly live: boolean;
+  readonly owner: string;
+  readonly purpose: string;
+  /** `YYYY-MM-DD`; `pnpm flags:check` fails after it (REQ-CFG-009). */
+  readonly expiry: string;
+}
+
+/** Remote configuration policy (REQ-CFG-004). */
+export const CONFIG_POLICY = {
+  maxAgeSeconds: 300,
+} as const;
+
+/** Carries the device's rollout bucket, 0 to 99 (REQ-CFG-006). */
+export const BUCKET_HEADER = 'X-Tran-Bucket';
+
+/** Every declared flag (REQ-CFG-001). */
+export const ALL_FLAGS: readonly FlagDefinition[] = [
+  {
+    id: 'notify_me',
+    flagType: 'boolean',
+    defaultValue: false,
+    live: true,
+    owner: 'growth',
+    purpose: 'Remind voter when registration opens',
+    expiry: '2027-01-01',
+  },
+];
+
+/** Every flag's value, typed. */
 export interface FlagsCatalogue {
   readonly notifyMe: boolean;
 }
 
+/** Raw flag values, as fetched or stored. */
+export type FlagValues = Readonly<Record<string, unknown>> | null | undefined;
+
+/** Typed accessors: a missing or wrong-typed value is the flag's default. */
 export const FLAGS = {
   notifyMe: {
     id: 'notify_me',
-    defaultValue: false,
+    defaultValue: false as boolean,
     live: true,
-    get(flags?: Record<string, unknown> | null): boolean {
-      const val = flags?.[this.id];
-      return typeof val === 'boolean' ? (val as boolean) : this.defaultValue;
+    get(flags: FlagValues): boolean {
+      const value = flags?.['notify_me'];
+      return typeof value === 'boolean' ? value : false;
     },
   },
 } as const;
+
+/**
+ * Every flag, typed: a `live` flag from the latest values, any other from the values at launch
+ * (REQ-CFG-005).
+ */
+export function readFlags(launch: FlagValues, latest: FlagValues): FlagsCatalogue {
+  return {
+    notifyMe: FLAGS.notifyMe.get(latest),
+  };
+}

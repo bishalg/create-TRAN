@@ -120,7 +120,7 @@ class SessionClient(
         val tid = traceId ?: TranRetry.newTraceId()
         val tp = TranRetry.newChildTraceparent(tid)
         val body = JSONObject().put("role", role.wire).put("transport", "body")
-        val answer = send(post(SESSION_PATH, body).newBuilder().header("traceparent", tp).build())
+        val answer = send(post(SESSION_PATH, body).newBuilder().traceparent(tp).build())
         answer.failure?.let { throw it }
         return store(answer.json())
     }
@@ -181,7 +181,7 @@ class SessionClient(
         try {
             val req = post(SIGN_OUT_PATH, JSONObject().put("refresh_token", refreshToken))
                 .newBuilder()
-                .header("traceparent", tp)
+                .traceparent(tp)
                 .build()
             val answer = send(req)
             answer.failure?.let { logged(it) }
@@ -224,7 +224,7 @@ class SessionClient(
                 val tp = TranRetry.newChildTraceparent(tid)
                 val request = build()
                     .apply { if (token != null) header("Authorization", "Bearer $token") }
-                    .header("traceparent", tp)
+                    .traceparent(tp)
                     .build()
                 val answer = send(request)
                 if (answer.failure == null) return answer
@@ -274,7 +274,7 @@ class SessionClient(
         val answer = try {
             val req = post(REFRESH_PATH, JSONObject().put("refresh_token", stored.refreshToken))
                 .newBuilder()
-                .header("traceparent", tp)
+                .traceparent(tp)
                 .build()
             send(req)
         } catch (failure: TranRequestFailure) {
@@ -297,7 +297,8 @@ class SessionClient(
     private fun act(action: TranSessionAction, failure: TranRequestFailure): TranRequestFailure = when (action) {
         TranSessionAction.SIGN_OUT -> {
             endLocally()
-            expired()
+            // The action's trace id stays on the answer, so the logged event joins the server's logs (REQ-OBS-011).
+            expired(traceId = failure.traceId)
         }
         TranSessionAction.KEEP, TranSessionAction.REFRESH -> failure
     }
@@ -319,6 +320,9 @@ class SessionClient(
 
     private fun url(path: String) = baseUrl.trimEnd('/') + path
 
+    /** Sets `traceparent` when there is one; without randomness there is none (REQ-OBS-010). */
+    private fun Request.Builder.traceparent(tp: String?): Request.Builder = apply { if (tp != null) header("traceparent", tp) }
+
     private fun devicePath(installationId: String) = "$DEVICES_PATH/$installationId"
 
     private fun post(path: String, body: JSONObject): Request =
@@ -327,10 +331,10 @@ class SessionClient(
     /** One HTTP exchange; a non-2xx answer is returned classified, no answer at all is thrown. */
     private suspend fun send(request: Request): Answer = withContext(io) {
         val tp = request.header("traceparent") ?: TranRetry.newChildTraceparent(TranRetry.newTraceId())
-        val traceId = parseTraceparentOffline(tp)?.traceId
+        val traceId = tp?.let { parseTraceparentOffline(it)?.traceId }
         val withAccept = request.newBuilder()
             .header("Accept", "application/json")
-            .header("traceparent", tp)
+            .traceparent(tp)
             .build()
         val response = try {
             http.newCall(withAccept).execute()

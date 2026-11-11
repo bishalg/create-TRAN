@@ -1,7 +1,9 @@
 // Verifies: REQ-RL-003 REQ-API-004
 //! Client address resolution and geo mapping (spec 002, spec 031, ADR-0050).
 
-use std::net::IpAddr;
+use std::net::{IpAddr, SocketAddr};
+
+use axum::http::HeaderMap;
 
 /// An IPv4 or IPv6 CIDR block for matching trusted proxies (REQ-RL-003).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -92,42 +94,66 @@ pub fn country_from_client_ip(ip: &str, debug_country: Option<&str>) -> (String,
     ("US".to_string(), "default".to_string())
 }
 
-/// Extracts the client IP address (REQ-RL-003, REQ-API-004).
+/// The address a request without a socket peer is counted as: only an in-process caller (a test
+/// driving the router directly) has none, and it is never treated as a trusted proxy.
+pub const NO_PEER: IpAddr = IpAddr::V4(std::net::Ipv4Addr::LOCALHOST);
+
+/// The client's address (REQ-RL-003, replacing the first-hop rule of REQ-API-004).
 ///
-/// If direct peer is in `trusted_proxies`, reads `X-Forwarded-For` from right to left,
-/// selecting the right-most address that is not itself a trusted proxy.
-/// If peer is not a trusted proxy, `X-Forwarded-For` is ignored.
-pub fn extract_client_ip(
-    forwarded_for: Option<&str>,
-    direct: Option<&str>,
-    peer_addr: Option<IpAddr>,
+/// `peer` is the socket's remote address. Only when it is in `trusted_proxies` is
+/// `X-Forwarded-For` read: every header line in order, as one list, walked from the right past
+/// trusted proxies to the first address that is not one. A hop that does not parse (anything but
+/// an IP address, `ip:port`, `[ipv6]` or `[ipv6]:port`) makes the whole header ignored, so a
+/// caller can never steer the scan into values it wrote itself. No other header is consulted.
+pub fn client_address(
+    headers: &HeaderMap,
+    peer: Option<IpAddr>,
     trusted_proxies: &[Cidr],
-) -> String {
-    let peer = peer_addr
-        .or_else(|| direct.and_then(|d| d.trim().parse::<IpAddr>().ok()))
-        .unwrap_or_else(|| IpAddr::V4(std::net::Ipv4Addr::new(127, 0, 0, 1)));
-
-    let is_peer_trusted = trusted_proxies.iter().any(|cidr| cidr.contains(&peer));
-    if !is_peer_trusted {
-        return peer.to_string();
+) -> IpAddr {
+    let Some(peer) = peer.map(|ip| ip.to_canonical()) else {
+        return NO_PEER;
+    };
+    let trusted = |ip: &IpAddr| trusted_proxies.iter().any(|cidr| cidr.contains(ip));
+    if !trusted(&peer) {
+        return peer;
     }
-
-    if let Some(ff) = forwarded_for {
-        let hops: Vec<&str> = ff
-            .split(',')
-            .map(str::trim)
-            .filter(|s| !s.is_empty())
-            .collect();
-        for hop in hops.into_iter().rev() {
-            if let Ok(ip) = hop.parse::<IpAddr>() {
-                if !trusted_proxies.iter().any(|cidr| cidr.contains(&ip)) {
-                    return ip.to_string();
-                }
-            }
+    let Some(lines) = headers
+        .get_all(X_FORWARDED_FOR)
+        .iter()
+        .map(|value| value.to_str().ok())
+        .collect::<Option<Vec<&str>>>()
+    else {
+        return peer;
+    };
+    let hops: Vec<&str> = lines.iter().flat_map(|line| line.split(',')).collect();
+    for hop in hops.into_iter().rev() {
+        let Some(ip) = parse_hop(hop) else {
+            return peer;
+        };
+        if !trusted(&ip) {
+            return ip;
         }
     }
+    peer
+}
 
-    peer.to_string()
+const X_FORWARDED_FOR: &str = "x-forwarded-for";
+
+/// One `X-Forwarded-For` entry: an address, optionally with a port as some proxies append it.
+fn parse_hop(hop: &str) -> Option<IpAddr> {
+    let hop = hop.trim();
+    let ip = hop
+        .parse::<IpAddr>()
+        .ok()
+        .or_else(|| hop.parse::<SocketAddr>().ok().map(|socket| socket.ip()))
+        .or_else(|| {
+            hop.strip_prefix('[')?
+                .strip_suffix(']')?
+                .parse::<std::net::Ipv6Addr>()
+                .ok()
+                .map(IpAddr::V6)
+        })?;
+    Some(ip.to_canonical())
 }
 
 #[cfg(test)]
@@ -204,70 +230,124 @@ mod tests {
         assert!(Cidr::parse("::1/129").is_err());
     }
 
-    // Verifies: REQ-RL-003 REQ-API-004
+    fn xff(lines: &[&str]) -> HeaderMap {
+        let mut headers = HeaderMap::new();
+        for line in lines {
+            headers.append(X_FORWARDED_FOR, line.parse().unwrap());
+        }
+        headers
+    }
+
+    fn ip(s: &str) -> IpAddr {
+        s.parse().unwrap()
+    }
+
+    // Verifies: REQ-RL-003
     #[test]
     fn untrusted_peer_ignores_forwarded_for() {
-        let peer: IpAddr = "192.0.2.1".parse().unwrap();
-        let res = extract_client_ip(Some("1.1.1.1, 2.2.2.2"), None, Some(peer), &[]);
-        assert_eq!(res, "192.0.2.1");
-
-        // Direct fallback when peer_addr is None
+        let headers = xff(&["1.1.1.1, 2.2.2.2"]);
         assert_eq!(
-            extract_client_ip(None, Some("198.51.100.1"), None, &[]),
-            "198.51.100.1"
+            client_address(&headers, Some(ip("192.0.2.1")), &[]),
+            ip("192.0.2.1")
         );
+        let lb = [Cidr::parse("10.0.0.0/8").unwrap()];
         assert_eq!(
-            extract_client_ip(None, Some("not-an-ip"), None, &[]),
-            "127.0.0.1"
+            client_address(&headers, Some(ip("192.0.2.1")), &lb),
+            ip("192.0.2.1")
         );
     }
 
-    // Verifies: REQ-RL-003 REQ-API-004
+    // Verifies: REQ-RL-003
+    #[test]
+    fn no_peer_is_never_a_trusted_proxy() {
+        let loopback = [Cidr::parse("127.0.0.1/32").unwrap()];
+        let headers = xff(&["203.0.113.7"]);
+        assert_eq!(client_address(&headers, None, &loopback), NO_PEER);
+    }
+
+    // Verifies: REQ-RL-003
     #[test]
     fn trusted_proxy_reads_rightmost_untrusted_address() {
-        let proxy1 = Cidr::parse("10.0.0.0/8").unwrap();
-        let proxy2 = Cidr::parse("172.16.0.0/12").unwrap();
-        let proxies = [proxy1, proxy2];
-
-        let peer: IpAddr = "10.0.0.1".parse().unwrap();
-        // Client: 203.0.113.195, Intermediate proxy: 172.16.0.5, Peer proxy: 10.0.0.1
-        let res = extract_client_ip(
-            Some("1.1.1.1, 203.0.113.195, 172.16.0.5"),
-            None,
-            Some(peer),
-            &proxies,
+        let proxies = [
+            Cidr::parse("10.0.0.0/8").unwrap(),
+            Cidr::parse("172.16.0.0/12").unwrap(),
+        ];
+        let peer = Some(ip("10.0.0.1"));
+        let headers = xff(&["1.1.1.1, 203.0.113.195, 172.16.0.5"]);
+        assert_eq!(
+            client_address(&headers, peer, &proxies),
+            ip("203.0.113.195")
         );
-        assert_eq!(res, "203.0.113.195");
+        // Several header lines are one list, in order: the last line holds the nearest hops.
+        let split = xff(&["1.1.1.1, 203.0.113.195", "172.16.0.5"]);
+        assert_eq!(client_address(&split, peer, &proxies), ip("203.0.113.195"));
+        let later = xff(&["6.6.6.6", "203.0.113.9, 172.16.0.5"]);
+        assert_eq!(client_address(&later, peer, &proxies), ip("203.0.113.9"));
     }
 
-    // Verifies: REQ-RL-003 REQ-API-004
+    // Verifies: REQ-RL-003
     #[test]
-    fn trusted_proxy_falls_back_when_all_trusted_or_invalid() {
-        let proxy = Cidr::parse("10.0.0.0/8").unwrap();
-        let peer: IpAddr = "10.0.0.1".parse().unwrap();
-
-        let all_trusted = extract_client_ip(
-            Some("10.0.0.2, 10.0.0.3"),
-            None,
-            Some(peer),
-            std::slice::from_ref(&proxy),
+    fn an_unparsable_hop_ignores_the_header_instead_of_walking_into_caller_values() {
+        let proxy = [Cidr::parse("10.0.0.0/8").unwrap()];
+        let peer = Some(ip("10.0.0.1"));
+        for header in [
+            "6.6.6.6, not-an-ip",
+            "6.6.6.6, 203.0.113.7:51234:9",
+            "6.6.6.6, unknown, 10.0.0.2",
+            "6.6.6.6,,10.0.0.2",
+            "6.6.6.6, [::1",
+            "6.6.6.6, []",
+        ] {
+            assert_eq!(
+                client_address(&xff(&[header]), peer, &proxy),
+                ip("10.0.0.1"),
+                "{header}"
+            );
+        }
+        let mut binary = HeaderMap::new();
+        binary.append(
+            X_FORWARDED_FOR,
+            axum::http::HeaderValue::from_bytes(b"\xff6.6.6.6").unwrap(),
         );
-        assert_eq!(all_trusted, "10.0.0.1");
-
-        let invalid = extract_client_ip(
-            Some("invalid-ip, another-bad"),
-            None,
-            Some(peer),
-            std::slice::from_ref(&proxy),
-        );
-        assert_eq!(invalid, "10.0.0.1");
-
-        let none_ff = extract_client_ip(None, None, Some(peer), std::slice::from_ref(&proxy));
-        assert_eq!(none_ff, "10.0.0.1");
+        assert_eq!(client_address(&binary, peer, &proxy), ip("10.0.0.1"));
     }
 
+    // Verifies: REQ-RL-003
     #[test]
-    fn extract_client_ip_falls_back_to_loopback_when_nothing_provided() {
-        assert_eq!(extract_client_ip(None, None, None, &[]), "127.0.0.1");
+    fn hops_with_ports_and_mapped_addresses_parse() {
+        let proxy = [Cidr::parse("10.0.0.0/8").unwrap()];
+        let peer = Some(ip("::ffff:10.0.0.1"));
+        let cases = [
+            ("6.6.6.6, 203.0.113.7:51234", "203.0.113.7"),
+            ("[2001:db8::7]:443", "2001:db8::7"),
+            ("[2001:db8::8]", "2001:db8::8"),
+            ("::ffff:203.0.113.8", "203.0.113.8"),
+            ("203.0.113.9, ::ffff:10.0.0.3", "203.0.113.9"),
+        ];
+        for (header, want) in cases {
+            assert_eq!(
+                client_address(&xff(&[header]), peer, &proxy),
+                ip(want),
+                "{header}"
+            );
+        }
+    }
+
+    // Verifies: REQ-RL-003
+    #[test]
+    fn trusted_proxy_falls_back_to_the_peer_when_every_hop_is_trusted_or_absent() {
+        let proxy = [Cidr::parse("10.0.0.0/8").unwrap()];
+        let peer = Some(ip("10.0.0.1"));
+        assert_eq!(
+            client_address(&xff(&["10.0.0.2, 10.0.0.3"]), peer, &proxy),
+            ip("10.0.0.1")
+        );
+        assert_eq!(
+            client_address(&HeaderMap::new(), peer, &proxy),
+            ip("10.0.0.1")
+        );
+        let mut real_ip = HeaderMap::new();
+        real_ip.insert("x-real-ip", "8.8.4.4".parse().unwrap());
+        assert_eq!(client_address(&real_ip, peer, &proxy), ip("10.0.0.1"));
     }
 }

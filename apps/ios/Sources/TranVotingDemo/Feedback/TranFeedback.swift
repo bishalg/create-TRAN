@@ -106,11 +106,24 @@ final class TranFeedback {
         return spec.presentation
     }
 
-    /// The one `request failed` event with `LOG_EVENT`'s fields (`fixtures/feedback.json`), as
-    /// logfmt; `-` marks a field the failure does not have (REQ-ROB-007, REQ-OBS-002).
+    /// The one `request failed` event, as logfmt: the message and fields come from the Rust schema
+    /// over UniFFI (`logEvent()`, REQ-OBS-002), in its order; `-` marks a field the failure does not
+    /// have (REQ-ROB-007).
     nonisolated static func logLine(_ failure: TranRequestFailure) -> String {
-        let status = failure.status.map(String.init) ?? "-"
-        return "request failed code=\(failure.spec.wireCode) status=\(status) request_id=\(failure.requestId ?? "-") trace_id=\(failure.traceId ?? "-")"
+        let event = logEvent()
+        let values = logFields(failure)
+        return ([event.message] + event.fields.map { "\($0)=\(values[$0] ?? "-")" }).joined(separator: " ")
+    }
+
+    /// The values this app has for the schema's fields. A key the schema does not list fails
+    /// `FeedbackParityTests` (REQ-OBS-002).
+    nonisolated static func logFields(_ failure: TranRequestFailure) -> [String: String] {
+        [
+            "code": failure.spec.wireCode,
+            "status": failure.status.map(String.init) ?? "-",
+            "request_id": failure.requestId ?? "-",
+            "trace_id": failure.traceId ?? "-",
+        ]
     }
 
     /// Logs at the catalogue level — for background calls the user did not start — and hands

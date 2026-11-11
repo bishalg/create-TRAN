@@ -10,7 +10,8 @@ use rust_core::{CountryVotingAge, VoteEligibilityRequest, SUPPORTED_COUNTRIES};
 use serde::Serialize;
 
 use crate::error::ApiError;
-use crate::geo::{country_from_client_ip, extract_client_ip};
+use crate::geo::country_from_client_ip;
+use crate::middleware::ClientAddr;
 use crate::state::AppState;
 
 #[derive(Debug, Serialize)]
@@ -42,15 +43,16 @@ pub async fn get_country_handler(
     Ok(Json(*country))
 }
 
+/// `POST /api/v1/vote/eligibility`. The country comes from the [`ClientAddr`] the edge resolved
+/// from the socket peer and trusted proxies (REQ-RL-003), never from a raw header.
 pub async fn eligibility_handler(
     State(state): State<AppState>,
+    ClientAddr(client_addr): ClientAddr,
     headers: HeaderMap,
     payload: Result<Json<VoteEligibilityRequest>, JsonRejection>,
 ) -> Result<Json<rust_core::VoteEligibilityResponse>, ApiError> {
     let Json(payload) = payload?;
-    let forwarded = headers.get("x-forwarded-for").and_then(|v| v.to_str().ok());
-    let direct = headers.get("x-real-ip").and_then(|v| v.to_str().ok());
-    let client_ip = extract_client_ip(forwarded, direct, None, &state.edge.trusted_proxies);
+    let client_ip = client_addr.to_string();
 
     let debug_country = headers
         .get("x-debug-country")

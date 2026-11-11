@@ -66,15 +66,105 @@ async fn config_route_returns_200_and_all_declared_flags_with_defaults() {
     assert!(reply.body["client"]["minimum_version"].is_null());
     assert!(reply.body["client"]["recommended_version"].is_null());
 
-    // Invalid bucket header falls back to 0
-    let reply_bad_bucket = send(
-        app,
+    // Answered per caller: private, revalidated, varying on the client and bucket headers.
+    assert_eq!(reply.header("cache-control"), Some("private, no-cache"));
+    let vary: Vec<&str> = reply
+        .headers
+        .get_all("vary")
+        .iter()
+        .map(|v| v.to_str().unwrap())
+        .collect();
+    assert!(
+        vary.iter()
+            .any(|v| v.contains("x-tran-client") && v.contains("x-tran-bucket")),
+        "{vary:?}"
+    );
+}
+
+/// A source with one rule: `notify_me` on for `rollout` percent.
+fn rollout_app(rollout: u8) -> axum::Router {
+    let clock = Arc::new(ManualClock::starting_at(Utc::now()));
+    let mut rules = HashMap::new();
+    rules.insert(
+        FLAG_NOTIFY_ME.to_string(),
+        vec![Rule {
+            platform: None,
+            min_version: None,
+            rollout,
+            value: rust_core::flags::FlagValue::Boolean(true),
+        }],
+    );
+    let mut state = AppState::new();
+    state.config_source = Arc::new(FileConfigSource::with_rules(rules, clock));
+    build_app(state)
+}
+
+#[tokio::test]
+async fn config_route_puts_a_caller_without_a_valid_bucket_outside_every_partial_rollout() {
+    // Verifies: REQ-CFG-002 REQ-CFG-003
+    let one_percent = rollout_app(1);
+    for bucket in [
+        None,
+        Some("invalid-bucket"),
+        Some("300"),
+        Some("100"),
+        Some("-1"),
+        Some(""),
+    ] {
+        let headers: Vec<(&str, &str)> = bucket.map(|b| (BUCKET_HEADER, b)).into_iter().collect();
+        let reply = send(one_percent.clone(), Method::GET, "/api/v1/config", &headers).await;
+        assert_eq!(reply.status, StatusCode::OK);
+        assert_eq!(reply.body["flags"][FLAG_NOTIFY_ME], false, "{bucket:?}");
+    }
+    let inside = send(
+        one_percent,
         Method::GET,
         "/api/v1/config",
-        &[(BUCKET_HEADER, "invalid-bucket")],
+        &[(BUCKET_HEADER, "0")],
     )
     .await;
-    assert_eq!(reply_bad_bucket.status, StatusCode::OK);
+    assert_eq!(inside.body["flags"][FLAG_NOTIFY_ME], true);
+
+    // A full rollout reaches every caller, with or without a bucket.
+    let everyone = rollout_app(100);
+    for headers in [
+        &[][..],
+        &[(BUCKET_HEADER, "99")],
+        &[(BUCKET_HEADER, "junk")],
+    ] {
+        let reply = send(everyone.clone(), Method::GET, "/api/v1/config", headers).await;
+        assert_eq!(reply.body["flags"][FLAG_NOTIFY_ME], true, "{headers:?}");
+    }
+}
+
+#[tokio::test]
+async fn config_route_lets_a_web_client_send_its_bucket_and_etag_across_origins() {
+    // Verifies: REQ-CFG-002 REQ-API-007
+    let app = build_app(AppState::new());
+    let origin = "http://localhost:3000";
+    let preflight = send(
+        app.clone(),
+        Method::OPTIONS,
+        "/api/v1/config",
+        &[
+            ("origin", origin),
+            ("access-control-request-method", "GET"),
+            (
+                "access-control-request-headers",
+                "x-tran-bucket,if-none-match,x-tran-client",
+            ),
+        ],
+    )
+    .await;
+    assert_eq!(preflight.status, StatusCode::OK);
+    let allowed = preflight.header("access-control-allow-headers").unwrap();
+    for name in ["x-tran-bucket", "if-none-match", "x-tran-client"] {
+        assert!(allowed.contains(name), "{name} in {allowed}");
+    }
+
+    let reply = send(app, Method::GET, "/api/v1/config", &[("origin", origin)]).await;
+    let exposed = reply.header("access-control-expose-headers").unwrap();
+    assert!(exposed.contains("etag"), "{exposed}");
 }
 
 #[tokio::test]
@@ -93,6 +183,8 @@ async fn config_route_returns_304_on_matching_if_none_match() {
     .await;
     assert_eq!(reply304.status, StatusCode::NOT_MODIFIED);
     assert_eq!(reply304.header("etag"), Some(etag));
+    assert_eq!(reply304.header("cache-control"), Some("private, no-cache"));
+    assert!(reply304.header("vary").is_some());
 
     // Weak ETag syntax also matches
     let weak_etag = format!("W/{etag}");
@@ -306,13 +398,34 @@ async fn config_source_updates_on_injected_clock_after_max_age_and_ignores_bad_f
     .unwrap();
     clock.advance(Duration::seconds(305));
 
-    // Last good rules remain in force
+    // A file naming only an unknown flag: that rule is ignored, leaving no rules for notify_me
     let reply4 = send(
-        app,
+        app.clone(),
         Method::GET,
         "/api/v1/config",
         &[("x-tran-client", "ios/1.0.0"), (BUCKET_HEADER, "10")],
     )
     .await;
     assert_eq!(reply4.body["flags"][FLAG_NOTIFY_ME], false);
+
+    // The deploy that removes a flag from the catalogue keeps every other flag's rules
+    fs::write(
+        &file_path,
+        r#"{
+            "flags": {
+                "totally_unknown_flag": [ { "rollout": 100, "value": true } ],
+                "notify_me": [ { "rollout": 100, "value": true } ]
+            }
+        }"#,
+    )
+    .unwrap();
+    clock.advance(Duration::seconds(305));
+    let reply5 = send(
+        app,
+        Method::GET,
+        "/api/v1/config",
+        &[("x-tran-client", "ios/1.0.0"), (BUCKET_HEADER, "10")],
+    )
+    .await;
+    assert_eq!(reply5.body["flags"][FLAG_NOTIFY_ME], true);
 }

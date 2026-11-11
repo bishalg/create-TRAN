@@ -1,0 +1,69 @@
+name: Image
+
+# Spec 032, ADR-0051. REQ-DEP-005/006: the deploy script's order, failure and rollback paths
+# (pnpm deploy:check, with fake docker/curl/ssh). REQ-DEP-007: the API image is built and proven by
+# running it (pnpm deploy:smoke): read-only root, uid 10001, migrate, ready, sign-in, a product
+# route, SIGTERM and a clean exit. Runs on changes to what goes into the image, and before every
+# tag's build (deploy.yml calls it).
+
+on:
+  pull_request:
+    paths:
+      - 'apps/api/**'
+      - 'crates/**'
+      - 'locales/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.dockerignore'
+      - 'deploy/**'
+      - 'scripts/deploy.sh'
+      - 'tooling/deploy/**'
+      - 'e2e/smoke/image.spec.ts'
+      - 'e2e/playwright.image.config.ts'
+      - '.github/workflows/image.yml'
+  push:
+    branches: [main, dev]
+    paths:
+      - 'apps/api/**'
+      - 'crates/**'
+      - 'locales/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.dockerignore'
+      - 'deploy/**'
+      - 'scripts/deploy.sh'
+      - 'tooling/deploy/**'
+      - 'e2e/smoke/image.spec.ts'
+      - 'e2e/playwright.image.config.ts'
+      - '.github/workflows/image.yml'
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  image:
+    name: Deploy script and image smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Deploy order, failure and rollback paths (fake docker, curl and ssh)
+        run: pnpm run deploy:check
+
+      - name: Shell scripts
+        run: shellcheck scripts/deploy.sh deploy/remote.sh
+
+      # The runner's Docker (BuildKit through buildx's default `docker` driver) loads the image for
+      # `docker run`; no setup-buildx here, whose container builder would not.
+      - name: Build the image and prove it by running it
+        run: pnpm run deploy:smoke
+        env:
+          CI: 'true'

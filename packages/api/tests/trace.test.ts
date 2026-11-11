@@ -11,7 +11,7 @@ import {
   newTrace,
   parseTraceparent,
   type TraceContext,
-} from '../src/index.js';
+} from '../src/trace.js';
 
 interface TraceFixtures {
   parseValid: {

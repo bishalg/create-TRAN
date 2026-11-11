@@ -89,12 +89,14 @@
 		7470EB204FFB751DAB9D7F17 /* TranSessionLaunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24A3BBFCBFE2D6F96DF2259B /* TranSessionLaunch.swift */; };
 		75CA1785BCB8CBF04DE07068 /* RemoteConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56EA22092E58F162C62F4723 /* RemoteConfigTests.swift */; };
 		76A30F1C84F0F69296023BC0 /* TranAccountDeletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19905B0CE9FE16E4F7FF6A7D /* TranAccountDeletion.swift */; };
+		785C4C7736901ED9EE457198 /* TranStoredSchema.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E1972C6017EFBEA21329811 /* TranStoredSchema.swift */; };
 		788C5A5986A24F49A9B574D0 /* TranSegmented.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80AD0CC17ECB82BFFFD53D53 /* TranSegmented.swift */; };
 		798BE0B9AE996551F5934A38 /* TranPushStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C076D32F65148B097AF411 /* TranPushStore.swift */; };
 		79A802B80645147C7D970211 /* TranMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10BA7AEEF263598B8C38A9B8 /* TranMotion.swift */; };
 		79F2B36FDEF094305B3AB009 /* Errors.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B390E496B5F1AF4FB4F92F21 /* Errors.xcstrings */; };
 		7A27D0309EE5215BD84FF541 /* ApnsRegistrationLiveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63178074AA8DE3A3101F854C /* ApnsRegistrationLiveTests.swift */; };
 		83A2DDE9C3EB6D13494714AB /* ScreenContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EFEA7EA26DE0979DBA5AD6F /* ScreenContract.swift */; };
+		8AA944FDA39C082A2C1421F0 /* TranStoredSchema.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E1972C6017EFBEA21329811 /* TranStoredSchema.swift */; };
 		8B5F1315C202E7CB99BFA9FD /* Screen.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = DABEEB333A8AAFC44BD09475 /* Screen.xcstrings */; };
 		8BB20B45D9FEB4BFA71F57D9 /* Shell.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 4F832E35AE5EDE8C70E518BF /* Shell.xcstrings */; };
 		8BBDF5053E78B05127AD3BB9 /* SystemPermissionGateway.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78A5CDD6A61E50CB70B030FB /* SystemPermissionGateway.swift */; };
@@ -257,6 +259,7 @@
 		90C58467B34F8EBFDDD6B2B3 /* SessionParityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionParityTests.swift; sourceTree = "<group>"; };
 		92632F4DD202467AAF2520FF /* TranHttp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranHttp.swift; sourceTree = "<group>"; };
 		9C81897D258076C9D6DAA915 /* FeedbackParityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedbackParityTests.swift; sourceTree = "<group>"; };
+		9E1972C6017EFBEA21329811 /* TranStoredSchema.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranStoredSchema.swift; sourceTree = "<group>"; };
 		A0C076D32F65148B097AF411 /* TranPushStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranPushStore.swift; sourceTree = "<group>"; };
 		A11501118A23965A69E81723 /* screens.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = screens.json; sourceTree = "<group>"; };
 		A1E1D12F7C3CE0E728E9748B /* FakePermissionGateway.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakePermissionGateway.swift; sourceTree = "<group>"; };
@@ -488,6 +491,7 @@
 				BA5E111CB3FF688FED915A22 /* PrivacyCoverView.swift */,
 				BB2E6BF6A206D1427D2DDEEB /* SignedInHeader.swift */,
 				10BA7AEEF263598B8C38A9B8 /* TranMotion.swift */,
+				9E1972C6017EFBEA21329811 /* TranStoredSchema.swift */,
 				50205EBE0EB7A80BE144F622 /* TranVotingDemoApp.swift */,
 				1F12B1DA0784C6782819F899 /* UpdateRequiredView.swift */,
 				F419254D57435D3791AD02BC /* UseLocationControl.swift */,
@@ -867,6 +871,7 @@
 				B065E6803B588E9D76D5F874 /* TranSessionClient.swift in Sources */,
 				C65A64C124B8AA8FEDFA6E3D /* TranSessionLaunch.swift in Sources */,
 				AEA37EC7631E2AA9AF5C5BEB /* TranSessionRestore.swift in Sources */,
+				785C4C7736901ED9EE457198 /* TranStoredSchema.swift in Sources */,
 				1B8662A5C960003C4A34CB3D /* TranUpdateCenter.swift in Sources */,
 				9D97EC4BB25AFE358EF41772 /* UpdateCenterTests.swift in Sources */,
 				70D2367487EE65A664AC70DE /* VersionedClientTests.swift in Sources */,
@@ -930,6 +935,7 @@
 				1E28F4F956B14CEC7F48991E /* TranSessionClient.swift in Sources */,
 				7470EB204FFB751DAB9D7F17 /* TranSessionLaunch.swift in Sources */,
 				E28F45A19D14F616B0736166 /* TranSessionRestore.swift in Sources */,
+				8AA944FDA39C082A2C1421F0 /* TranStoredSchema.swift in Sources */,
 				694938D5D406B1D1673EF152 /* TranText.swift in Sources */,
 				5E315F6D96D583BEF20BF325 /* TranToast.swift in Sources */,
 				DAF53B9AFEB8D5CED2684921 /* TranUpdateCenter.swift in Sources */,

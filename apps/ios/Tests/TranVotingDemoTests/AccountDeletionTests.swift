@@ -101,8 +101,8 @@ final class AccountDeletionTests: XCTestCase {
         try await confirmDeletion(answer: .status(401, body: SessionWire.expired))
 
         XCTAssertNil(vault.load(), "the recovery table ended the session")
-        XCTAssertEqual(failures, [TranSessionClient.expired])
-        XCTAssertEqual(events.entries, [TranSessionClient.expired], "the DELETE's 401, once, reported by its handler")
+        XCTAssertEqual(failures.map(\.untraced), [TranSessionClient.expired])
+        XCTAssertEqual(events.entries.map(\.untraced), [TranSessionClient.expired], "the DELETE's 401, once, reported by its handler")
         XCTAssertEqual(
             feedback.confirmation?.title, TranFeedback.message(errorSpec(code: .authSessionExpired).messageKey))
     }

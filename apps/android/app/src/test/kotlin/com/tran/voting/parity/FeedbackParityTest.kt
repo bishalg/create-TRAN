@@ -26,6 +26,7 @@ import uniffi.tran_uniffi.actionSpec
 import uniffi.tran_uniffi.errorCatalogue
 import uniffi.tran_uniffi.errorCodeForHttpStatus
 import uniffi.tran_uniffi.loadingPolicy
+import uniffi.tran_uniffi.logEvent
 import uniffi.tran_uniffi.toastDurationMs
 import uniffi.tran_uniffi.verdictSourceSpec
 
@@ -161,6 +162,19 @@ class FeedbackParityTest {
             "request failed code=network.offline status=- request_id=- trace_id=-",
             TranFeedback.logLine(TranRequestFailure(TranErrorCode.NETWORK_OFFLINE)),
         )
+    }
+
+    // Verifies: REQ-OBS-002
+    @Test
+    fun theLogLineIsBuiltFromTheRustSchemaOnly() {
+        val event = fixture().getJSONObject("logEvent")
+        val schema = logEvent()
+        assertEquals(event.getString("message"), schema.message)
+        val fields = event.getJSONArray("fields")
+        assertEquals((0 until fields.length()).map { fields.getString(it) }, schema.fields)
+        // A field the app adds outside the schema fails here.
+        val failure = TranRequestFailure(TranErrorCode.SERVER_INTERNAL, status = 500, requestId = "r", traceId = "t")
+        assertEquals(schema.fields.toSet(), TranFeedback.logFields(failure).keys)
     }
 
     @Test

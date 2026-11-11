@@ -163,7 +163,7 @@ final class SessionClientTests: XCTestCase {
             _ = try await makeClient().authorized(.validateSession)
             XCTFail("expected the session to end")
         } catch {
-            XCTAssertEqual(error as? TranRequestFailure, TranSessionClient.expired)
+            XCTAssertEqual((error as? TranRequestFailure)?.untraced, TranSessionClient.expired)
         }
         XCTAssertEqual(SessionStubProtocol.requests(to: TranEndpoint.refresh.path()).count, 1, "refresh once only")
         XCTAssertNil(vault.load())
@@ -356,7 +356,7 @@ final class SessionClientTests: XCTestCase {
 
         let failure = await deletionFailure(client)
 
-        XCTAssertEqual(failure, TranSessionClient.expired, "the recovery table signs out")
+        XCTAssertEqual(failure?.untraced, TranSessionClient.expired, "the recovery table signs out")
         XCTAssertEqual(SessionStubProtocol.requests.map(\.path), [TranEndpoint.deleteAccount.path(), TranEndpoint.refresh.path()])
         XCTAssertNil(vault.load())
     }
@@ -378,7 +378,7 @@ final class SessionClientTests: XCTestCase {
         SessionStubProtocol.reset { _ in .status(401, body: SessionWire.expired) }
         let rejected = await deletionFailure(client)
 
-        XCTAssertEqual(rejected, TranSessionClient.expired, "the server's 401 goes through the table")
+        XCTAssertEqual(rejected?.untraced, TranSessionClient.expired, "the server's 401 goes through the table")
         XCTAssertEqual(SessionStubProtocol.requests.map(\.path), [TranEndpoint.deleteAccount.path()], "nothing to refresh with")
     }
 
@@ -395,7 +395,7 @@ final class SessionClientTests: XCTestCase {
         // The flight is over: a later call is a new request (and the server's 401 for it).
         SessionStubProtocol.reset { _ in .status(401, body: SessionWire.expired) }
         let later = await deletionFailure(client)
-        XCTAssertEqual(later, TranSessionClient.expired)
+        XCTAssertEqual(later?.untraced, TranSessionClient.expired)
         XCTAssertEqual(SessionStubProtocol.requests(to: TranEndpoint.deleteAccount.path()).count, 1)
     }
 
@@ -405,7 +405,7 @@ final class SessionClientTests: XCTestCase {
 
         let failure = await deletionFailure(client)
 
-        XCTAssertEqual(failure, TranSessionClient.expired)
+        XCTAssertEqual(failure?.untraced, TranSessionClient.expired)
         // Two failed requests, two events: the DELETE's 401, which the client recovered from with
         // a refresh, here; the refresh's 401 ends the session and is thrown, so the handler logs
         // that one (`AccountDeletionTests`).

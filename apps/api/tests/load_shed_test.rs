@@ -65,7 +65,7 @@ async fn load_shed_answers_503_when_in_flight_exceeds_max() {
     assert_eq!(normal.status, StatusCode::OK);
 
     // Simulate in-flight requests at ceiling (>= max_in_flight: 2)
-    state.in_flight.store(2, Ordering::SeqCst);
+    state.edge.in_flight.store(2, Ordering::SeqCst);
 
     let shed = send(&state, Method::GET, "/api/v1/vote/countries").await;
     assert_eq!(shed.status, StatusCode::SERVICE_UNAVAILABLE);
@@ -76,7 +76,7 @@ async fn load_shed_answers_503_when_in_flight_exceeds_max() {
     assert_eq!(shed.retry_after(), Some(1));
 
     // In-flight count was not permanently inflated by the rejected request
-    assert_eq!(state.in_flight.load(Ordering::SeqCst), 2);
+    assert_eq!(state.edge.in_flight.load(Ordering::SeqCst), 2);
 }
 
 #[tokio::test]
@@ -88,7 +88,7 @@ async fn load_shed_health_routes_are_exempt() {
     let state = AppState::from_config(&config);
 
     // Overload the server
-    state.in_flight.store(100, Ordering::SeqCst);
+    state.edge.in_flight.store(100, Ordering::SeqCst);
 
     // Health route must remain reachable for orchestrators
     let health = send(&state, Method::GET, "/api/health").await;
@@ -109,12 +109,12 @@ async fn load_shed_recovers_when_in_flight_drops() {
     });
     let state = AppState::from_config(&config);
 
-    state.in_flight.store(1, Ordering::SeqCst);
+    state.edge.in_flight.store(1, Ordering::SeqCst);
     let shed = send(&state, Method::GET, "/api/v1/vote/countries").await;
     assert_eq!(shed.status, StatusCode::SERVICE_UNAVAILABLE);
 
     // In-flight count drops below ceiling
-    state.in_flight.store(0, Ordering::SeqCst);
+    state.edge.in_flight.store(0, Ordering::SeqCst);
     let recovered = send(&state, Method::GET, "/api/v1/vote/countries").await;
     assert_eq!(recovered.status, StatusCode::OK);
 }

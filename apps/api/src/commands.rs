@@ -145,11 +145,13 @@ pub fn check_config(config: &AppConfig) -> Result<String, Failure> {
     )
     .map_err(|error| Failure::new(error.to_string()))?;
 
-    config.trusted_proxies().map_err(Failure::new)?;
-
-    config.rate_policy().map_err(Failure::new)?;
+    config.validate().map_err(Failure::new)?;
 
     config.migrate_on_start().map_err(Failure::new)?;
+
+    if let Some(path) = &config.remote_config_path {
+        crate::config_source::check_file(std::path::Path::new(path)).map_err(Failure::new)?;
+    }
 
     if !config.is_local()
         && (config.cors_allowed_origins.is_none() || config.allowed_origins().is_empty())

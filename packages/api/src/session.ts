@@ -10,7 +10,15 @@
 import type { ZodType } from 'zod';
 import { readApiError } from './client.js';
 import { apiPath } from './compat.js';
-import { childSpanContext, formatTraceparent, newTraceContext, parseTraceparent } from './trace.js';
+import {
+  formatTraceparent,
+  nextSpan,
+  parseTraceparent,
+  requestSpan,
+  startTrace,
+  traceparentOf,
+  withTraceparent,
+} from './trace.js';
 import {
   SessionTokenSchema,
   SessionUserSchema,
@@ -70,6 +78,23 @@ async function parse<T>(response: Response, schema: ZodType<T>): Promise<T> {
 const cancelled = () =>
   new DOMException('Signed out while the request was in flight', 'AbortError');
 
+const stoppedWaiting = (): RefreshOutcome => ({
+  kind: 'kept',
+  error: new DOMException('Stopped waiting for the refresh', 'AbortError'),
+});
+
+/** `shared`, or `kept` with an `AbortError` as soon as this caller's `signal` fires. */
+function waitFor(shared: Promise<RefreshOutcome>, signal: AbortSignal): Promise<RefreshOutcome> {
+  return new Promise((resolve) => {
+    const stop = () => resolve(stoppedWaiting());
+    signal.addEventListener('abort', stop, { once: true });
+    void shared.then((outcome) => {
+      signal.removeEventListener('abort', stop);
+      resolve(outcome);
+    });
+  });
+}
+
 export class SessionClient {
   readonly #baseUrl: string;
   readonly #fetchFn: typeof fetch;
@@ -115,12 +140,18 @@ export class SessionClient {
    * `POST /api/v1/auth/refresh`, once at a time: every caller while one is in flight gets the same
    * answer (REQ-SEC-016), since two parallel refreshes look like a replay and end the session.
    * If a traceId is supplied (REQ-OBS-010), the refresh call reuses that trace id with a new span id.
+   * The shared refresh takes no caller's signal: one caller giving up must not fail it for the
+   * others. `signal` only stops this caller waiting (`kept` with an `AbortError`).
    */
-  refresh(options: { traceId?: string; signal?: AbortSignal } = {}): Promise<RefreshOutcome> {
-    this.#refreshing ??= this.#rotate(options.traceId, options.signal).finally(() => {
+  refresh({
+    traceId,
+    signal,
+  }: { traceId?: string; signal?: AbortSignal } = {}): Promise<RefreshOutcome> {
+    if (signal?.aborted) return Promise.resolve(stoppedWaiting());
+    this.#refreshing ??= this.#rotate(traceId).finally(() => {
       this.#refreshing = null;
     });
-    return this.#refreshing;
+    return signal ? waitFor(this.#refreshing, signal) : this.#refreshing;
   }
 
   /**
@@ -130,19 +161,16 @@ export class SessionClient {
    * across retries and token refresh (REQ-OBS-010).
    */
   async fetch(path: string, request: SessionRequest = {}): Promise<Response> {
-    const traceparent = request.headers?.traceparent ?? request.headers?.Traceparent;
-    const parsedTrace = traceparent ? parseTraceparent(traceparent) : null;
-    const traceId = request.traceId ?? parsedTrace?.traceId ?? newTraceContext().traceId;
-    const sampled = parsedTrace?.sampled ?? true;
+    const sampled = parseTraceparent(traceparentOf(request.headers))?.sampled ?? true;
+    const { traceId } = requestSpan(request.traceId, request.headers);
 
     let alreadyRetried = false;
     for (;;) {
-      const span = childSpanContext(traceId, sampled);
-      const callTp = formatTraceparent(span);
+      const span = nextSpan(traceId, undefined, sampled);
       const reqWithTrace: SessionRequest = {
         ...request,
         traceId,
-        headers: { ...request.headers, traceparent: callTp },
+        headers: withTraceparent(request.headers, formatTraceparent(span)),
       };
       const response = await this.#send(path, reqWithTrace, this.#accessToken);
       if (response.status !== 401) return response;
@@ -204,18 +232,14 @@ export class SessionClient {
     return this.#revoke(options?.traceId);
   }
 
-  async #rotate(traceId?: string, signal?: AbortSignal): Promise<RefreshOutcome> {
+  async #rotate(traceId?: string): Promise<RefreshOutcome> {
     const generation = this.#generation;
     let event: SessionRecoveryEvent | null;
     let error: unknown;
-    const span = traceId ? childSpanContext(traceId, true) : newTraceContext();
+    const span = traceId ? nextSpan(traceId) : startTrace();
     const headers = { traceparent: formatTraceparent(span) };
     try {
-      const response = await this.#send(apiPath('/auth/refresh'), {
-        method: 'POST',
-        headers,
-        signal,
-      });
+      const response = await this.#send(apiPath('/auth/refresh'), { method: 'POST', headers });
       event = this.#rules.refreshEvent(response.status);
       if (event === null) {
         const token = await parse(response, SessionTokenSchema);
@@ -239,7 +263,7 @@ export class SessionClient {
 
   async #revoke(traceId?: string): Promise<unknown> {
     try {
-      const span = traceId ? childSpanContext(traceId, true) : newTraceContext();
+      const span = traceId ? nextSpan(traceId) : startTrace();
       const headers = { traceparent: formatTraceparent(span) };
       const response = await this.#send(apiPath('/auth/sign-out'), { method: 'POST', headers });
       return response.ok ? null : await readApiError(response, span.traceId);
@@ -262,17 +286,18 @@ export class SessionClient {
   }
 
   #send(path: string, request: SessionRequest, token?: string | null): Promise<Response> {
-    const incomingTp = request.headers?.traceparent ?? request.headers?.Traceparent;
-    const tp = incomingTp ?? formatTraceparent(newTraceContext());
+    const traceparent = traceparentOf(request.headers) ?? formatTraceparent(startTrace());
     return this.#fetchFn(`${this.#baseUrl}${path}`, {
       method: request.method ?? 'GET',
-      headers: {
-        Accept: 'application/json',
-        traceparent: tp,
-        ...(request.body === undefined ? {} : { 'Content-Type': 'application/json' }),
-        ...request.headers,
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+      headers: withTraceparent(
+        {
+          Accept: 'application/json',
+          ...(request.body === undefined ? {} : { 'Content-Type': 'application/json' }),
+          ...request.headers,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        traceparent
+      ),
       body: request.body,
       credentials: credentialsFor(path),
       signal: request.signal,

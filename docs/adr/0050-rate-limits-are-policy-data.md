@@ -23,14 +23,14 @@ outage; `429` without `Retry-After`, so well-behaved clients retry at once and m
 3. **The key is the user when there is one, else the client address read through trusted proxies only.** With no
    trusted proxy configured the peer address is used. This also fixes the forgeable address of REQ-API-004.
 4. **Auth routes are limited before authentication** by address, and refresh also by session.
-5. **One answer:** `429`, `rate.limited`, `Retry-After`, before any handler, identical whether or not the target
+5. **One answer:** `429`, `server.rate_limited`, `Retry-After`, before any handler, identical whether or not the target
    exists.
 6. **The limiter is bounded.** A fixed number of keys with eviction, behind a trait a fork points at a shared store.
 7. **Shed load early.** Past a ceiling of in-flight requests the API answers `503` with `Retry-After` instead of
    queueing work it will time out on.
 8. **Fail open, except for auth.** A broken limiter must not be an outage, but credential routes are never left
    unlimited.
-9. **Clients obey.** They already honour `Retry-After` (ADR-0028); the catalogue gives `rate.limited` its own message
+9. **Clients obey.** They already honour `Retry-After` (ADR-0028); the catalogue gives `server.rate_limited` its own message
    and forbids automatic retry of something a person started.
 
 ## Consequences

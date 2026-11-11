@@ -760,10 +760,6 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_session_refresh_event(
     ): Int
-    external fun uniffi_tran_uniffi_checksum_func_tran_read_stored_push(
-    ): Int
-    external fun uniffi_tran_uniffi_checksum_func_tran_read_stored_session(
-    ): Int
     external fun uniffi_tran_uniffi_checksum_func_tran_stored_config_schema(
     ): Int
     external fun uniffi_tran_uniffi_checksum_func_tran_stored_push_schema(
@@ -880,10 +876,6 @@ internal object UniffiLib {
     external fun uniffi_tran_uniffi_fn_func_session_recovery(`event`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_session_refresh_event(`status`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    external fun uniffi_tran_uniffi_fn_func_tran_read_stored_push(`rawJson`: RustBuffer.ByValue,`currentSchema`: Int,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    external fun uniffi_tran_uniffi_fn_func_tran_read_stored_session(`rawJson`: RustBuffer.ByValue,`currentSchema`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_tran_uniffi_fn_func_tran_stored_config_schema(uniffi_out_err: UniffiRustCallStatus, 
     ): Int
@@ -1147,12 +1139,6 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_tran_uniffi_checksum_func_session_refresh_event() and 0xFFFF) != 10936) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if ((lib.uniffi_tran_uniffi_checksum_func_tran_read_stored_push() and 0xFFFF) != 578) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if ((lib.uniffi_tran_uniffi_checksum_func_tran_read_stored_session() and 0xFFFF) != 36305) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_tran_uniffi_checksum_func_tran_stored_config_schema() and 0xFFFF) != 22336) {
@@ -2452,124 +2438,6 @@ public object FfiConverterTypeTranSessionPolicy: FfiConverterRustBuffer<TranSess
             FfiConverterULong.write(value.`accessTtlSeconds`, buf)
             FfiConverterULong.write(value.`refreshTtlSeconds`, buf)
             FfiConverterUInt.write(value.`tokenBytes`, buf)
-    }
-}
-
-
-
-/**
- * Stored push notification registration record on native device (REQ-PSH-010, REQ-DB-011).
- */
-data class TranStoredPushRecord (
-    /**
-     * Record schema version.
-     */
-    var `schema`: kotlin.UInt
-    , 
-    /**
-     * Registered push token.
-     */
-    var `token`: kotlin.String
-    , 
-    /**
-     * Timestamp of last registration in Unix seconds.
-     */
-    var `registeredAtUnixS`: kotlin.Long
-    
-){
-    
-
-    
-
-    
-    companion object
-}
-
-/**
- * @suppress
- */
-public object FfiConverterTypeTranStoredPushRecord: FfiConverterRustBuffer<TranStoredPushRecord> {
-    override fun read(buf: ByteBuffer): TranStoredPushRecord {
-        return TranStoredPushRecord(
-            FfiConverterUInt.read(buf),
-            FfiConverterString.read(buf),
-            FfiConverterLong.read(buf),
-        )
-    }
-
-    override fun allocationSize(value: TranStoredPushRecord) = (
-            FfiConverterUInt.allocationSize(value.`schema`) +
-            FfiConverterString.allocationSize(value.`token`) +
-            FfiConverterLong.allocationSize(value.`registeredAtUnixS`)
-    )
-
-    override fun write(value: TranStoredPushRecord, buf: ByteBuffer) {
-            FfiConverterUInt.write(value.`schema`, buf)
-            FfiConverterString.write(value.`token`, buf)
-            FfiConverterLong.write(value.`registeredAtUnixS`, buf)
-    }
-}
-
-
-
-/**
- * Stored session vault record on native device (REQ-SEC-017, REQ-DB-011).
- */
-data class TranStoredSessionRecord (
-    /**
-     * Record schema version.
-     */
-    var `schema`: kotlin.UInt
-    , 
-    /**
-     * User identifier.
-     */
-    var `userId`: kotlin.String
-    , 
-    /**
-     * User role wire string.
-     */
-    var `role`: kotlin.String
-    , 
-    /**
-     * Refresh token credential.
-     */
-    var `refreshToken`: kotlin.String
-    
-){
-    
-
-    
-
-    
-    companion object
-}
-
-/**
- * @suppress
- */
-public object FfiConverterTypeTranStoredSessionRecord: FfiConverterRustBuffer<TranStoredSessionRecord> {
-    override fun read(buf: ByteBuffer): TranStoredSessionRecord {
-        return TranStoredSessionRecord(
-            FfiConverterUInt.read(buf),
-            FfiConverterString.read(buf),
-            FfiConverterString.read(buf),
-            FfiConverterString.read(buf),
-        )
-    }
-
-    override fun allocationSize(value: TranStoredSessionRecord) = (
-            FfiConverterUInt.allocationSize(value.`schema`) +
-            FfiConverterString.allocationSize(value.`userId`) +
-            FfiConverterString.allocationSize(value.`role`) +
-            FfiConverterString.allocationSize(value.`refreshToken`)
-    )
-
-    override fun write(value: TranStoredSessionRecord, buf: ByteBuffer) {
-            FfiConverterUInt.write(value.`schema`, buf)
-            FfiConverterString.write(value.`userId`, buf)
-            FfiConverterString.write(value.`role`, buf)
-            FfiConverterString.write(value.`refreshToken`, buf)
     }
 }
 
@@ -3995,7 +3863,8 @@ enum class TranStoredRecordAction {
      */
     UPGRADE,
     /**
-     * The schema is newer than understood or invalid (0); discard and treat as absent.
+     * The schema is newer than this build understands (or 0): treat the record as absent and
+     * leave it in place. Only an unreadable record is deleted (REQ-DB-012).
      */
     DISCARD;
 
@@ -4634,70 +4503,6 @@ public object FfiConverterOptionalTypeTranLastRegistration: FfiConverterRustBuff
         } else {
             buf.put(1)
             FfiConverterTypeTranLastRegistration.write(value, buf)
-        }
-    }
-}
-
-
-
-
-/**
- * @suppress
- */
-public object FfiConverterOptionalTypeTranStoredPushRecord: FfiConverterRustBuffer<TranStoredPushRecord?> {
-    override fun read(buf: ByteBuffer): TranStoredPushRecord? {
-        if (buf.get().toInt() == 0) {
-            return null
-        }
-        return FfiConverterTypeTranStoredPushRecord.read(buf)
-    }
-
-    override fun allocationSize(value: TranStoredPushRecord?): ULong {
-        if (value == null) {
-            return 1UL
-        } else {
-            return 1UL + FfiConverterTypeTranStoredPushRecord.allocationSize(value)
-        }
-    }
-
-    override fun write(value: TranStoredPushRecord?, buf: ByteBuffer) {
-        if (value == null) {
-            buf.put(0)
-        } else {
-            buf.put(1)
-            FfiConverterTypeTranStoredPushRecord.write(value, buf)
-        }
-    }
-}
-
-
-
-
-/**
- * @suppress
- */
-public object FfiConverterOptionalTypeTranStoredSessionRecord: FfiConverterRustBuffer<TranStoredSessionRecord?> {
-    override fun read(buf: ByteBuffer): TranStoredSessionRecord? {
-        if (buf.get().toInt() == 0) {
-            return null
-        }
-        return FfiConverterTypeTranStoredSessionRecord.read(buf)
-    }
-
-    override fun allocationSize(value: TranStoredSessionRecord?): ULong {
-        if (value == null) {
-            return 1UL
-        } else {
-            return 1UL + FfiConverterTypeTranStoredSessionRecord.allocationSize(value)
-        }
-    }
-
-    override fun write(value: TranStoredSessionRecord?, buf: ByteBuffer) {
-        if (value == null) {
-            buf.put(0)
-        } else {
-            buf.put(1)
-            FfiConverterTypeTranStoredSessionRecord.write(value, buf)
         }
     }
 }
@@ -5854,36 +5659,6 @@ public object FfiConverterSequenceTypeTranToastKey: FfiConverterRustBuffer<List<
     
         
         FfiConverterOptionalUShort.lower(`status`),_status)
-}
-    )
-    }
-    
-
-        /**
-         * Reads and optionally upgrades a stored push registration record (REQ-DB-011).
-         */ fun `tranReadStoredPush`(`rawJson`: kotlin.String, `currentSchema`: kotlin.UInt): TranStoredPushRecord? {
-            return FfiConverterOptionalTypeTranStoredPushRecord.lift(
-    uniffiRustCall() { _status ->
-    UniffiLib.uniffi_tran_uniffi_fn_func_tran_read_stored_push(
-    
-        
-        FfiConverterString.lower(`rawJson`),
-        FfiConverterUInt.lower(`currentSchema`),_status)
-}
-    )
-    }
-    
-
-        /**
-         * Reads and optionally upgrades a stored session vault record (REQ-DB-011, REQ-DB-012).
-         */ fun `tranReadStoredSession`(`rawJson`: kotlin.String, `currentSchema`: kotlin.UInt): TranStoredSessionRecord? {
-            return FfiConverterOptionalTypeTranStoredSessionRecord.lift(
-    uniffiRustCall() { _status ->
-    UniffiLib.uniffi_tran_uniffi_fn_func_tran_read_stored_session(
-    
-        
-        FfiConverterString.lower(`rawJson`),
-        FfiConverterUInt.lower(`currentSchema`),_status)
 }
     )
     }

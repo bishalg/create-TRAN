@@ -95,22 +95,34 @@ struct TranRetry {
     }
     var random: @Sendable () -> Double = { Double.random(in: 0..<1) }
 
-    static func newTraceId() -> String {
-        var bytes = [UInt8](repeating: 0, count: 24)
-        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
-        return newTraceOffline(randomBytes: Data(bytes), sampled: true)?.traceId ?? String(repeating: "1", count: 32)
+    /// Fills `bytes` from the system's secure random source; a test passes a failing one.
+    typealias RandomSource = (inout [UInt8]) -> OSStatus
+
+    static let secureRandom: RandomSource = { bytes in
+        SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
     }
 
-    static func newChildSpan(traceId: String) -> TranTraceContext? {
+    /// A new trace id, or `nil` when no randomness is available: the call then goes without a
+    /// `traceparent` and the server starts the trace. A made-up constant id would merge unrelated
+    /// traces (REQ-OBS-010).
+    static func newTraceId(random: RandomSource = secureRandom) -> String? {
+        var bytes = [UInt8](repeating: 0, count: 24)
+        guard random(&bytes) == errSecSuccess else { return nil }
+        return newTraceOffline(randomBytes: Data(bytes), sampled: true)?.traceId
+    }
+
+    /// A new span of `traceId`, or `nil` (no trace, or no randomness): no `traceparent` is sent.
+    static func newChildSpan(traceId: String?, random: RandomSource = secureRandom) -> TranTraceContext? {
+        guard let traceId else { return nil }
         var spanBytes = [UInt8](repeating: 0, count: 8)
-        _ = SecRandomCopyBytes(kSecRandomDefault, spanBytes.count, &spanBytes)
+        guard random(&spanBytes) == errSecSuccess else { return nil }
         return childSpanOffline(traceId: traceId, randomBytes: Data(spanBytes), sampled: true)
     }
 
     func run<T>(
         idempotent: Bool,
         traceId: String? = nil,
-        _ call: (String) async throws -> T
+        _ call: (String?) async throws -> T
     ) async throws -> T {
         let policy = retryPolicy()
         let tid = traceId ?? Self.newTraceId()

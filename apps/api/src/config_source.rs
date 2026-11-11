@@ -4,13 +4,13 @@
 
 use std::collections::HashMap;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, PoisonError};
-use std::time::SystemTime;
 
 use chrono::{DateTime, Duration, Utc};
 use rust_core::flags::{find_flag, Rule, CONFIG_POLICY};
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 
 use crate::clock::Clock;
 
@@ -30,16 +30,67 @@ pub struct RuleFile {
     pub flags: HashMap<String, Vec<Rule>>,
 }
 
+/// The version of "no rules": no file configured, or the file is gone.
+pub const NO_RULES_VERSION: u64 = 1;
+
+/// The version of a rule file: the first 48 bits of the SHA-256 of its bytes, so every replica
+/// and every restart serving the same file agrees, and a JSON number carries it exactly. Never
+/// [`NO_RULES_VERSION`].
+pub fn content_version(content: &[u8]) -> u64 {
+    let hash = Sha256::digest(content);
+    let version = hash[..6]
+        .iter()
+        .fold(0u64, |acc, byte| (acc << 8) | u64::from(*byte));
+    version.max(NO_RULES_VERSION + 1)
+}
+
+/// `api check-config`: the file named by `REMOTE_CONFIG_PATH` exists and parses. A rule naming an
+/// unknown flag passes: the server ignores it, which is what a deploy removing a flag needs.
+pub fn check_file(path: &Path) -> Result<(), String> {
+    let content = fs::read(path)
+        .map_err(|_| "REMOTE_CONFIG_PATH names a file that cannot be read".to_string())?;
+    serde_json::from_slice::<RuleFile>(&content)
+        .map(drop)
+        .map_err(|_| "REMOTE_CONFIG_PATH names a file that is not a valid rule file".to_string())
+}
+
 #[derive(Debug)]
 struct FileConfigSourceInner {
     last_good_rules: HashMap<String, Vec<Rule>>,
     config_version: u64,
     last_checked_at: Option<DateTime<Utc>>,
-    last_modified: Option<SystemTime>,
+    /// The bytes behind `last_good_rules`, by version; `None` while no file is in force.
+    applied: Option<u64>,
     last_error: Option<String>,
 }
 
+impl FileConfigSourceInner {
+    fn new(rules: HashMap<String, Vec<Rule>>) -> Self {
+        Self {
+            last_good_rules: rules,
+            config_version: NO_RULES_VERSION,
+            last_checked_at: None,
+            applied: None,
+            last_error: None,
+        }
+    }
+
+    /// Logs `message` unless it is the problem already reported.
+    fn report(&mut self, message: String) {
+        if self.last_error.as_deref() != Some(&message) {
+            tracing::warn!("{message}");
+            self.last_error = Some(message);
+        }
+    }
+}
+
 /// File-backed configuration source reading `REMOTE_CONFIG_PATH` (REQ-CFG-004).
+///
+/// The file is read at most once per `CONFIG_POLICY.max_age_seconds` and applied when its bytes
+/// changed, whatever its timestamp says. A file that is gone means no rules: every flag is its
+/// default, as with no file configured. A file that cannot be read or does not parse leaves the
+/// last good rules in force; a rule naming an unknown flag is dropped on its own. Each problem is
+/// logged once.
 #[derive(Debug)]
 pub struct FileConfigSource {
     path: Option<PathBuf>,
@@ -53,13 +104,7 @@ impl FileConfigSource {
         Self {
             path,
             clock,
-            inner: Mutex::new(FileConfigSourceInner {
-                last_good_rules: HashMap::new(),
-                config_version: 1,
-                last_checked_at: None,
-                last_modified: None,
-                last_error: None,
-            }),
+            inner: Mutex::new(FileConfigSourceInner::new(HashMap::new())),
         }
     }
 
@@ -68,13 +113,7 @@ impl FileConfigSource {
         Self {
             path: None,
             clock,
-            inner: Mutex::new(FileConfigSourceInner {
-                last_good_rules: rules,
-                config_version: 1,
-                last_checked_at: None,
-                last_modified: None,
-                last_error: None,
-            }),
+            inner: Mutex::new(FileConfigSourceInner::new(rules)),
         }
     }
 
@@ -92,64 +131,56 @@ impl FileConfigSource {
         }
         inner.last_checked_at = Some(now);
 
-        let metadata = match fs::metadata(path) {
-            Ok(m) => m,
-            Err(e) => {
-                let err_msg = format!("Cannot read metadata for {}: {e}", path.display());
-                if inner.last_error.as_deref() != Some(&err_msg) {
-                    tracing::warn!("{err_msg}");
-                    inner.last_error = Some(err_msg);
-                }
+        let content = match fs::read(path) {
+            Ok(content) => content,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                inner.applied = None;
+                inner.last_good_rules.clear();
+                inner.config_version = NO_RULES_VERSION;
+                inner.report(format!(
+                    "Rule file {} not found; every flag is its default",
+                    path.display()
+                ));
+                return;
+            }
+            Err(error) => {
+                inner.report(format!("Cannot read file {}: {error}", path.display()));
                 return;
             }
         };
 
-        let modified = metadata.modified().unwrap_or(SystemTime::UNIX_EPOCH);
-        if inner.last_modified == Some(modified) {
+        let version = content_version(&content);
+        if inner.applied == Some(version) {
             return;
         }
 
-        let content = match fs::read_to_string(path) {
-            Ok(c) => c,
-            Err(e) => {
-                let err_msg = format!("Cannot read file {}: {e}", path.display());
-                if inner.last_error.as_deref() != Some(&err_msg) {
-                    tracing::warn!("{err_msg}");
-                    inner.last_error = Some(err_msg);
-                }
-                return;
-            }
-        };
-
-        let parsed: RuleFile = match serde_json::from_str(&content) {
-            Ok(p) => p,
-            Err(e) => {
-                let err_msg = format!("Failed to parse rule file {}: {e}", path.display());
-                if inner.last_error.as_deref() != Some(&err_msg) {
-                    tracing::warn!("{err_msg}");
-                    inner.last_error = Some(err_msg);
-                }
-                return;
-            }
-        };
-
-        for flag_id in parsed.flags.keys() {
-            if find_flag(flag_id).is_none() {
-                let err_msg = format!(
-                    "Rule file {} references unknown flag '{flag_id}'",
+        let parsed: RuleFile = match serde_json::from_slice(&content) {
+            Ok(parsed) => parsed,
+            Err(error) => {
+                inner.report(format!(
+                    "Failed to parse rule file {}: {error}",
                     path.display()
-                );
-                if inner.last_error.as_deref() != Some(&err_msg) {
-                    tracing::warn!("{err_msg}");
-                    inner.last_error = Some(err_msg);
-                }
+                ));
                 return;
             }
+        };
+
+        let mut rules = parsed.flags;
+        let mut unknown: Vec<String> = rules
+            .keys()
+            .filter(|flag_id| find_flag(flag_id).is_none())
+            .cloned()
+            .collect();
+        unknown.sort();
+        let file = path.display().to_string();
+        for flag_id in &unknown {
+            rules.remove(flag_id);
+            tracing::warn!(flag = %flag_id, file = %file, "rule file names an unknown flag; its rules are ignored");
         }
 
-        inner.last_good_rules = parsed.flags;
-        inner.config_version += 1;
-        inner.last_modified = Some(modified);
+        inner.last_good_rules = rules;
+        inner.config_version = version;
+        inner.applied = Some(version);
         inner.last_error = None;
     }
 }
@@ -174,93 +205,147 @@ mod tests {
     use crate::clock::ManualClock;
     use rust_core::flags::{FlagValue, FLAG_NOTIFY_ME};
 
+    const NOTIFY_ON: &str =
+        r#"{ "flags": { "notify_me": [ { "rollout": 100, "value": true } ] } }"#;
+    const NOTIFY_OFF: &str = r#"{ "flags": { "notify_me": [ { "rollout": 0, "value": true } ] } }"#;
+
+    fn temp_file() -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("tran-config-test-{}", uuid::Uuid::new_v4()));
+        fs::create_dir_all(&dir).unwrap();
+        dir.join("flags.json")
+    }
+
+    fn next_check(clock: &ManualClock) {
+        clock.advance(Duration::seconds(CONFIG_POLICY.max_age_seconds as i64));
+    }
+
+    fn rollout(source: &FileConfigSource) -> Option<u8> {
+        source
+            .rules()
+            .get(FLAG_NOTIFY_ME)
+            .map(|rules| rules[0].rollout)
+    }
+
     #[test]
     fn file_config_source_no_path_returns_empty_rules_and_version_one() {
         // Verifies: REQ-CFG-004
         let clock = Arc::new(ManualClock::starting_at(Utc::now()));
         let source = FileConfigSource::new(None, clock);
         assert!(source.rules().is_empty());
-        assert_eq!(source.config_version(), 1);
+        assert_eq!(source.config_version(), NO_RULES_VERSION);
     }
 
+    // Verifies: REQ-CFG-002 REQ-CFG-004
     #[test]
-    fn file_config_source_reads_valid_file_and_ignores_unknown_flag_or_malformed_json() {
-        // Verifies: REQ-CFG-004
-        let dir = std::env::temp_dir().join(format!("tran-config-test-{}", uuid::Uuid::new_v4()));
-        fs::create_dir_all(&dir).unwrap();
-        let path = dir.join("flags.json");
+    fn the_version_is_the_content_hash_so_replicas_and_restarts_agree() {
+        let path = temp_file();
+        fs::write(&path, NOTIFY_ON).unwrap();
         let clock = Arc::new(ManualClock::starting_at(Utc::now()));
-
-        fs::write(
-            &path,
-            r#"{
-                "flags": {
-                    "notify_me": [
-                        { "rollout": 100, "value": true }
-                    ]
-                }
-            }"#,
-        )
-        .unwrap();
-
-        let source = FileConfigSource::new(Some(path.clone()), clock.clone());
-        let rules = source.rules();
-        assert_eq!(rules.len(), 1);
-        assert_eq!(
-            rules.get(FLAG_NOTIFY_ME).unwrap()[0].value,
-            FlagValue::Boolean(true)
+        let one = FileConfigSource::new(Some(path.clone()), clock.clone());
+        let other = FileConfigSource::new(Some(path), clock);
+        assert_eq!(one.config_version(), content_version(NOTIFY_ON.as_bytes()));
+        assert_eq!(one.config_version(), other.config_version());
+        assert_ne!(
+            content_version(NOTIFY_ON.as_bytes()),
+            content_version(NOTIFY_OFF.as_bytes())
         );
+        assert!(content_version(b"") > NO_RULES_VERSION);
+        assert!(content_version(NOTIFY_ON.as_bytes()) < 1 << 48);
+    }
+
+    // Verifies: REQ-CFG-004
+    #[test]
+    fn a_changed_file_is_applied_by_its_content_even_with_the_same_timestamp() {
+        let path = temp_file();
+        fs::write(&path, NOTIFY_ON).unwrap();
+        let file = fs::File::options().write(true).open(&path).unwrap();
+        let stamp = file.metadata().unwrap().modified().unwrap();
+        let clock = Arc::new(ManualClock::starting_at(Utc::now()));
+        let source = FileConfigSource::new(Some(path.clone()), clock.clone());
+        assert_eq!(rollout(&source), Some(100));
         let v1 = source.config_version();
 
-        // Advance clock without touching file: modified timestamp matches
-        clock.advance(Duration::seconds(305));
-        let rules_same_file = source.rules();
-        assert_eq!(rules_same_file.len(), 1);
+        // Same length, same mtime (`cp -p`, or an edit within one clock tick).
+        fs::write(&path, NOTIFY_ON.replace("100", " 42")).unwrap();
+        file.set_modified(stamp).unwrap();
+        assert_eq!(rollout(&source), Some(100), "not before max_age");
+        next_check(&clock);
+        assert_eq!(rollout(&source), Some(42));
+        assert_ne!(source.config_version(), v1);
 
-        // Writing invalid JSON leaves last good rules in force
+        // Unchanged bytes are not re-applied.
+        let v2 = source.config_version();
+        next_check(&clock);
+        assert_eq!(source.config_version(), v2);
+    }
+
+    // Verifies: REQ-CFG-004
+    #[test]
+    fn a_bad_file_keeps_the_last_good_rules_and_an_unknown_flag_is_dropped_alone() {
+        let path = temp_file();
+        fs::write(&path, NOTIFY_ON).unwrap();
+        let clock = Arc::new(ManualClock::starting_at(Utc::now()));
+        let source = FileConfigSource::new(Some(path.clone()), clock.clone());
+        assert_eq!(rollout(&source), Some(100));
+        let v1 = source.config_version();
+
         fs::write(&path, "malformed JSON {{{{").unwrap();
-        clock.advance(Duration::seconds(305));
-        let rules_after_bad = source.rules();
-        assert_eq!(rules_after_bad.len(), 1);
+        next_check(&clock);
+        assert_eq!(rollout(&source), Some(100));
         assert_eq!(source.config_version(), v1);
+        next_check(&clock);
+        assert_eq!(
+            rollout(&source),
+            Some(100),
+            "the same problem is logged once"
+        );
 
-        // Repeated query with same error suppresses duplicate warning
-        clock.advance(Duration::seconds(305));
-        assert_eq!(source.rules().len(), 1);
+        // The flag removed from the catalogue is ignored; every other rule still applies.
+        let with_unknown = r#"{ "flags": {
+            "retired_flag": [ { "rollout": 100, "value": true } ],
+            "another_retired": [ { "rollout": 100, "value": true } ],
+            "notify_me": [ { "rollout": 42, "value": true } ] } }"#;
+        fs::write(&path, with_unknown).unwrap();
+        next_check(&clock);
+        let rules = source.rules();
+        assert_eq!(rules.len(), 1);
+        assert_eq!(rules[FLAG_NOTIFY_ME][0].rollout, 42);
+        assert_eq!(rules[FLAG_NOTIFY_ME][0].value, FlagValue::Boolean(true));
+        assert_eq!(
+            source.config_version(),
+            content_version(with_unknown.as_bytes())
+        );
+    }
 
-        // Writing unknown flag leaves last good rules in force
-        fs::write(
-            &path,
-            r#"{
-                "flags": {
-                    "unrecognized_flag_xyz": [
-                        { "rollout": 100, "value": true }
-                    ]
-                }
-            }"#,
-        )
-        .unwrap();
-        clock.advance(Duration::seconds(305));
-        let rules_after_unknown = source.rules();
-        assert_eq!(rules_after_unknown.len(), 1);
-        assert_eq!(source.config_version(), v1);
+    // Verifies: REQ-CFG-004
+    #[test]
+    fn a_deleted_file_means_every_flag_is_its_default_until_it_returns() {
+        let path = temp_file();
+        fs::write(&path, NOTIFY_ON).unwrap();
+        let clock = Arc::new(ManualClock::starting_at(Utc::now()));
+        let source = FileConfigSource::new(Some(path.clone()), clock.clone());
+        assert_eq!(rollout(&source), Some(100));
 
-        // Repeated unknown flag suppresses duplicate warning
-        clock.advance(Duration::seconds(305));
-        assert_eq!(source.rules().len(), 1);
+        fs::remove_file(&path).unwrap();
+        next_check(&clock);
+        assert!(source.rules().is_empty());
+        assert_eq!(source.config_version(), NO_RULES_VERSION);
+        next_check(&clock);
+        assert!(source.rules().is_empty());
+
+        fs::write(&path, NOTIFY_ON).unwrap();
+        next_check(&clock);
+        assert_eq!(rollout(&source), Some(100));
+        assert_eq!(
+            source.config_version(),
+            content_version(NOTIFY_ON.as_bytes())
+        );
     }
 
     #[test]
-    fn file_config_source_handles_missing_file_and_with_rules_constructor() {
+    fn an_unreadable_path_and_fixed_rules() {
         // Verifies: REQ-CFG-004
         let clock = Arc::new(ManualClock::starting_at(Utc::now()));
-        let missing_path = PathBuf::from("/non/existent/path/to/flags.json");
-        let source = FileConfigSource::new(Some(missing_path), clock.clone());
-        assert!(source.rules().is_empty());
-        // Second check with same missing file suppresses duplicate warning
-        clock.advance(Duration::seconds(305));
-        assert!(source.rules().is_empty());
-
         let mut fixed_rules = HashMap::new();
         fixed_rules.insert(
             FLAG_NOTIFY_ME.to_string(),
@@ -273,14 +358,26 @@ mod tests {
         );
         let mem_source = FileConfigSource::with_rules(fixed_rules, clock.clone());
         assert_eq!(mem_source.rules().len(), 1);
-        assert_eq!(mem_source.config_version(), 1);
+        assert_eq!(mem_source.config_version(), NO_RULES_VERSION);
 
-        // Path is a directory: metadata succeeds, but read_to_string fails
-        let temp_dir = std::env::temp_dir();
-        let dir_source = FileConfigSource::new(Some(temp_dir), clock.clone());
+        // A directory: it exists, but cannot be read as a file.
+        let dir_source = FileConfigSource::new(Some(std::env::temp_dir()), clock.clone());
         assert!(dir_source.rules().is_empty());
-        // Second check with directory suppresses duplicate warning
-        clock.advance(Duration::seconds(305));
+        next_check(&clock);
         assert!(dir_source.rules().is_empty());
+    }
+
+    // Verifies: REQ-DEP-003 REQ-CFG-004
+    #[test]
+    fn check_file_names_the_variable_never_the_path() {
+        let path = temp_file();
+        let missing = check_file(&path).unwrap_err();
+        assert!(missing.starts_with("REMOTE_CONFIG_PATH"));
+        assert!(!missing.contains("flags.json"));
+        fs::write(&path, "{ nope").unwrap();
+        let bad = check_file(&path).unwrap_err();
+        assert!(bad.starts_with("REMOTE_CONFIG_PATH"));
+        fs::write(&path, r#"{ "flags": { "retired_flag": [] } }"#).unwrap();
+        assert_eq!(check_file(&path), Ok(()));
     }
 }

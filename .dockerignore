@@ -1,29 +1,23 @@
-# Version control and environments (REQ-DEP-002)
-.git
-.github
-.env*
-data/
+# The build context of apps/api/Dockerfile is the repository root, so this is the file that applies
+# (REQ-DEP-002). An allow-list: ignore everything, re-include only what `cargo build -p api` reads.
+*
+!Cargo.toml
+!Cargo.lock
+!crates/
+!apps/api/
+!locales/
 
-# Signing keys and certificates
-*.pem
-*.p8
-*.key
-*.keystore
-*.jks
-*.p12
-*.mobileprovision
-
-# Build artifacts and caches
-target/
-node_modules/
-dist/
-build/
-.nx/
-
-# Mobile and web apps (not needed for API container)
-apps/ios/
-apps/android/
-apps/web/
-e2e/
-docs/
-tooling/
+# Never, even inside an allowed folder: build output, tests, local data, environments and keys.
+**/target/
+**/node_modules/
+**/tests/
+**/data/
+**/.env*
+**/*.pem
+**/*.key
+**/*.p8
+**/*.p12
+**/*.jks
+**/*.keystore
+**/*.mobileprovision
+**/.git

@@ -123,7 +123,7 @@ class TranRetry(
     suspend fun <T> run(
         idempotent: Boolean,
         traceId: String? = null,
-        call: suspend (traceparent: String) -> T
+        call: suspend (traceparent: String?) -> T
     ): T {
         val maxAttempts = retryPolicy().maxAttempts
         val tid = traceId ?: newTraceId()
@@ -143,15 +143,34 @@ class TranRetry(
     }
 
     companion object {
-        fun newTraceId(): String {
-            val bytes = ByteArray(24).also { java.security.SecureRandom().nextBytes(it) }
-            return newTraceOffline(bytes, true)?.traceId ?: "1".repeat(32)
+        /** The system's secure random source; a test passes one that fails. */
+        val secureRandom: (ByteArray) -> Unit = { java.security.SecureRandom().nextBytes(it) }
+
+        /**
+         * A new trace id, or `null` when no randomness is available: the call then goes without a
+         * `traceparent` and the server starts the trace. A made-up constant id would merge unrelated
+         * traces (REQ-OBS-010).
+         */
+        fun newTraceId(random: (ByteArray) -> Unit = secureRandom): String? {
+            val bytes = ByteArray(24)
+            return try {
+                random(bytes)
+                newTraceOffline(bytes, true)?.traceId
+            } catch (_: RuntimeException) {
+                null
+            }
         }
 
-        fun newChildTraceparent(traceId: String): String {
-            val bytes = ByteArray(8).also { java.security.SecureRandom().nextBytes(it) }
-            val span = childSpanOffline(traceId, bytes, true)
-            return span?.let { formatTraceparentOffline(it) } ?: "00-$traceId-${"1".repeat(16)}-01"
+        /** A `traceparent` with a new span of [traceId], or `null` (no trace, or no randomness): none is sent. */
+        fun newChildTraceparent(traceId: String?, random: (ByteArray) -> Unit = secureRandom): String? {
+            if (traceId == null) return null
+            val bytes = ByteArray(8)
+            return try {
+                random(bytes)
+                childSpanOffline(traceId, bytes, true)?.let { formatTraceparentOffline(it) }
+            } catch (_: RuntimeException) {
+                null
+            }
         }
     }
 }
@@ -220,13 +239,13 @@ class TranApiClient(
         traceparent: String? = null,
     ) {
         val tp = traceparent ?: TranRetry.newChildTraceparent(TranRetry.newTraceId())
-        val traceId = parseTraceparentOffline(tp)?.traceId
+        val traceId = tp?.let { parseTraceparentOffline(it)?.traceId }
         val request = Request.Builder()
             .url(baseUrl.trimEnd('/') + path)
             .method(method, body?.toRequestBody(JSON))
             .header("Accept", "application/json")
-            .header("traceparent", tp)
             .apply {
+                if (tp != null) header("traceparent", tp)
                 if (body != null) header("Content-Type", "application/json")
                 if (includeDebugCountry && countryCode != null && countryCode.matches(COUNTRY_CODE)) {
                     header("X-Debug-Country", countryCode.uppercase())

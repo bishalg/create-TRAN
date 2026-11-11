@@ -1,5 +1,5 @@
 {
-  "$comment": "W3C Trace Context (spec 023, REQ-OBS-001) shared by Rust (crates/rust-core/tests/trace_fixtures.rs), UniFFI (crates/tran-uniffi/tests/trace_fixtures.rs), TypeScript (packages/core-ts/tests/trace.test.ts), iOS (TraceParityTests.swift) and Android (TraceParityTest.kt). Change a rule here first (red), then crates/rust-core/src/trace.rs, then `pnpm tokens:sync`.",
+  "$comment": "W3C Trace Context (spec 023, REQ-OBS-001) shared by Rust (crates/rust-core/tests/trace_fixtures.rs), UniFFI (crates/tran-uniffi/tests/trace_fixtures.rs), TypeScript (packages/api/tests/trace.test.ts), iOS (TraceParityTests.swift) and Android (TraceParityTest.kt). Change a rule here first (red), then crates/rust-core/src/trace.rs, then `pnpm tokens:sync`.",
   "parseValid": [
     {
       "name": "standard sampled trace",

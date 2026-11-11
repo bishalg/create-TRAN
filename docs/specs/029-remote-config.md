@@ -30,8 +30,11 @@ it spells itself.
 
 `GET /api/v1/config` MUST answer `200` with `{ "config_version", "flags": { … }, "client": { "minimum_version",
 "recommended_version" } }`, evaluated for the platform and version in `X-Tran-Client` (REQ-VER-004) and the bucket in
-`X-Tran-Bucket`. It needs no session, carries an `ETag`, answers `304` to a matching `If-None-Match`, and is exempt
-from the `426` of REQ-VER-005 so an outdated app can still learn that it must update. Every declared flag MUST be
+`X-Tran-Bucket`; a missing bucket or one outside `0..=99` is outside every rollout below 100. It needs no session,
+carries an `ETag`, `Cache-Control: private, no-cache` and `Vary` on the client and bucket headers, answers `304` to a
+matching `If-None-Match`, is reachable cross-origin (CORS allows `X-Tran-Bucket` and `If-None-Match` and exposes
+`ETag`), and is exempt from the `426` of REQ-VER-005 so an outdated app can still learn that it must update. It is
+rate limited as a `read` route (spec 031). Every declared flag MUST be
 present in the answer; a flag the caller's rules do not match takes its default.
 **Verified by:** `apps/api/tests/config_test.rs`.
 
@@ -41,16 +44,19 @@ present in the answer; a flag the caller's rules do not match takes its default.
 platform, minimum version and rollout range all match gives the value; no match gives the default; a value of the
 wrong type gives the default. Rollout MUST be stable (bucket below the percentage) so raising a percentage only adds
 people.
-**Verified by:** `crates/rust-core/tests/flag_fixtures.rs`, `crates/tran-uniffi/tests/flag_fixtures.rs`,
-`packages/core-ts/tests/flags.test.ts`.
+**Verified by:** `crates/rust-core/tests/flag_fixtures.rs`, `crates/tran-uniffi/tests/flag_fixtures.rs`. The
+server evaluates; TypeScript keeps no copy of `evaluate`.
 
 ### REQ-CFG-004 [verified] Rules come from a source that can change without a deploy
 
 Rules MUST be read through a `ConfigSource` trait. The sample's source is a JSON file named by `REMOTE_CONFIG_PATH`,
-re-read when it changes; with no file every flag is its default. A rule naming an unknown flag, or a file that does
-not parse, MUST be reported once in the log and ignored, leaving the last good rules in force. A change MUST reach
-callers within `CONFIG_POLICY.max_age_seconds` (`300`).
-**Verified by:** `config_test.rs` on the injected clock.
+re-read when its content changes (whatever its timestamp); with no file configured, or the file removed, every flag
+is its default. A file that cannot be read or does not parse MUST be reported once in the log and ignored, leaving the
+last good rules in force; a rule naming an unknown flag MUST be reported once and dropped on its own, the other rules
+of the file applying. `config_version` is derived from the file's content (`1` with no file), so replicas and
+restarts serving one file agree. A change MUST reach callers within `CONFIG_POLICY.max_age_seconds` (`300`).
+`api check-config` MUST fail when the variable is set and the file is missing or does not parse.
+**Verified by:** `config_test.rs` on the injected clock, `config_source.rs` unit tests, `check_config_test.rs`.
 
 ### REQ-CFG-005 [verified] The app never waits for configuration
 
@@ -58,7 +64,7 @@ Each client MUST start with compiled defaults or the last configuration it store
 and on return to the foreground (with `If-None-Match`), and store the answer. No screen may block on the fetch, and a
 failed fetch MUST leave the stored configuration in use and show nothing. A flag read at launch keeps its value for
 the whole run; a `live` flag changes as soon as a fetch brings a new value.
-**Verified by:** `packages/api/tests/remote-config.test.ts`, `RemoteConfigTests.swift`, `RemoteConfigTest.kt`.
+**Verified by:** `packages/core-ts/tests/remote-config.test.ts`, `RemoteConfigTests.swift`, `RemoteConfigTest.kt`.
 
 ### REQ-CFG-006 [verified] The bucket is derived on the device and reveals nothing
 

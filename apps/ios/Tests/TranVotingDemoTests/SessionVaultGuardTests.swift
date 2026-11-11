@@ -2,7 +2,7 @@
 import XCTest
 
 /// A source guard over the hand-written app code: a token or a session reaches storage only
-/// through the Keychain vault. `UserDefaults` is written in three allowlisted places (a launch flag;
+/// through the Keychain vault. `UserDefaults` is written in four allowlisted places (a launch flag; the config cache;
 /// the push store; the dismissed update prompt), nothing writes files, and only the vault and the session client handle a token.
 final class SessionVaultGuardTests: XCTestCase {
     private static let sources = URL(fileURLWithPath: #filePath)
@@ -45,22 +45,30 @@ final class SessionVaultGuardTests: XCTestCase {
     /// is an address, not a secret), so they belong in ordinary app storage, not the Keychain
     /// (REQ-PSH-010). The update center keeps the recommended version the prompt was dismissed for,
     /// a version number and nothing else: a preference, as the web keeps it in Web Storage
-    /// (REQ-VER-010). No session, refresh or access token may join this list.
+    /// (REQ-VER-010). The remote config store caches the server's public configuration (flags,
+    /// version thresholds) and its ETag (REQ-CFG-005), which every client may read. No session,
+    /// refresh or access token may join this list.
     private static let allowedWrites: [String: [String]] = [
         "Session/TranSessionLaunch.swift": ["defaults.set(true, forKey: launchedKey)"],
         "Push/TranPushStore.swift": [
             "defaults.set(created, forKey: Self.installationKey)",
             "defaults.set(token, forKey: Self.boundTokenKey)",
             "defaults.set(UUID().uuidString.lowercased(), forKey: Self.installationKey)",
+            "defaults.set(Int(tranStoredPushSchema()), forKey: Self.schemaKey)",
             "defaults.set(registration.token, forKey: Self.tokenKey)",
             "defaults.set(NSNumber(value: registration.registeredAtUnixS), forKey: Self.registeredAtKey)",
+        ],
+        "Api/RemoteConfigStore.swift": [
+            "userDefaults.set(payloadData, forKey: storageKey)",
+            "userDefaults.set(data, forKey: storageKey)",
+            "userDefaults.set(etag, forKey: etagKey)",
         ],
         "Api/TranUpdateCenter.swift": [
             #"defaults.set(offer.recommendedVersion ?? "", forKey: Self.dismissedKey)"#
         ],
     ]
 
-    func testUserDefaultsIsWrittenOnlyForTheLaunchFlagThePushStoreAndTheUpdatePrompt() throws {
+    func testUserDefaultsIsWrittenOnlyForTheLaunchFlagThePushStoreTheConfigCacheAndTheUpdatePrompt() throws {
         let writes = try matches(
             #"(\.set\(|\.setValue\([^)]*forKey:|\.register\(defaults|@AppStorage|@SceneStorage|NSUbiquitousKeyValueStore)"#)
         XCTAssertEqual(files(of: writes), Set(Self.allowedWrites.keys), "UserDefaults writes: \(writes)")

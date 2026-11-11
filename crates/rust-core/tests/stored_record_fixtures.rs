@@ -1,10 +1,14 @@
 // Verifies: REQ-DB-011 REQ-DB-012
-//! Stored-record decision and recovery cases from `fixtures/stored-records.json`.
+//! Stored-record decisions and schema rule from `fixtures/stored-records.json`.
+//!
+//! The records themselves are driven through each platform's real store (iOS
+//! `StoredRecordTests.swift`, Android `StoredRecordTest.kt`); here every record's `schema` is held
+//! to the one rule the platforms apply, so the fixture cannot ask a platform for the impossible.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use rust_core::stored_records::{
-    read_stored_config, read_stored_push, read_stored_session, stored_record,
-    CURRENT_CONFIG_SCHEMA, CURRENT_PUSH_SCHEMA, CURRENT_SESSION_SCHEMA,
+    stored_record, stored_schema, StoredRecordAction, CURRENT_CONFIG_SCHEMA, CURRENT_PUSH_SCHEMA,
+    CURRENT_SESSION_SCHEMA,
 };
 use serde::Deserialize;
 use serde_json::Value;
@@ -46,6 +50,7 @@ struct RecordCase {
     name: String,
     raw: Value,
     expected: Option<Value>,
+    kept: bool,
 }
 
 fn fixture() -> FixtureData {
@@ -76,97 +81,59 @@ fn stored_record_decisions_match_fixture() {
     }
 }
 
-#[test]
-fn session_records_match_fixture() {
-    let data = fixture();
-    for case in data.records.session {
-        let raw_str = case.raw.to_string();
-        let result = read_stored_session(&raw_str, CURRENT_SESSION_SCHEMA);
-        match case.expected {
-            Some(expected) => {
-                let rec = result.unwrap_or_else(|| panic!("expected record for '{}'", case.name));
-                let expected_schema = expected["schema"].as_u64().unwrap() as u32;
-                let expected_user_id = expected["userId"].as_str().unwrap();
-                let expected_role = expected["role"].as_str().unwrap();
-                let expected_token = expected["refreshToken"].as_str().unwrap();
+/// What the two rules say about one stored record, before its fields are read.
+fn verdict(raw: &Value, current: u32) -> Option<StoredRecordAction> {
+    stored_schema(raw.get("schema")).map(|schema| stored_record(schema, current))
+}
 
-                assert_eq!(rec.schema, expected_schema, "{}: schema", case.name);
-                assert_eq!(rec.user_id, expected_user_id, "{}: userId", case.name);
-                assert_eq!(rec.role, expected_role, "{}: role", case.name);
-                assert_eq!(rec.refresh_token, expected_token, "{}: token", case.name);
-            }
-            None => {
-                assert!(
-                    result.is_none(),
-                    "expected None for case '{}', got {:?}",
-                    case.name,
-                    result
+fn check_records(cases: &[RecordCase], current: u32) {
+    for case in cases {
+        let verdict = verdict(&case.raw, current);
+        match (&case.expected, verdict) {
+            // A record handed back was readable and not newer.
+            (Some(expected), Some(StoredRecordAction::Use | StoredRecordAction::Upgrade)) => {
+                assert_eq!(
+                    expected["schema"], current,
+                    "{}: read as current",
+                    case.name
                 );
+                assert!(case.kept, "{}: a used record is never rewritten", case.name);
             }
+            // A newer version is treated as absent and left for the app that wrote it.
+            (None, Some(StoredRecordAction::Discard)) => {
+                assert!(case.kept, "{}: a newer record is left in place", case.name);
+            }
+            // An unreadable schema is deleted.
+            (None, None) => assert!(!case.kept, "{}: unreadable is deleted", case.name),
+            // A readable version whose fields are broken: unreadable, deleted.
+            (None, Some(_)) => assert!(!case.kept, "{}: unreadable is deleted", case.name),
+            (Some(_), other) => panic!("{}: expected a record, rule says {other:?}", case.name),
         }
     }
 }
 
 #[test]
-fn push_records_match_fixture() {
+fn every_kept_record_follows_the_schema_rule() {
     let data = fixture();
-    for case in data.records.push {
-        let raw_str = case.raw.to_string();
-        let result = read_stored_push(&raw_str, CURRENT_PUSH_SCHEMA);
-        match case.expected {
-            Some(expected) => {
-                let rec = result.unwrap_or_else(|| panic!("expected record for '{}'", case.name));
-                let expected_schema = expected["schema"].as_u64().unwrap() as u32;
-                let expected_token = expected["token"].as_str().unwrap();
-                let expected_at = expected["registeredAtUnixS"].as_i64().unwrap();
-
-                assert_eq!(rec.schema, expected_schema, "{}: schema", case.name);
-                assert_eq!(rec.token, expected_token, "{}: token", case.name);
-                assert_eq!(
-                    rec.registered_at_unix_s, expected_at,
-                    "{}: registeredAtUnixS",
-                    case.name
-                );
-            }
-            None => {
-                assert!(
-                    result.is_none(),
-                    "expected None for case '{}', got {:?}",
-                    case.name,
-                    result
-                );
-            }
-        }
-    }
+    check_records(&data.records.session, CURRENT_SESSION_SCHEMA);
+    check_records(&data.records.push, CURRENT_PUSH_SCHEMA);
+    check_records(&data.records.config, CURRENT_CONFIG_SCHEMA);
 }
 
 #[test]
-fn config_records_match_fixture() {
+fn the_fixture_keeps_an_unversioned_record_of_every_kind() {
+    // REQ-DB-012: what the release before versioning wrote must keep reading.
     let data = fixture();
-    for case in data.records.config {
-        let raw_str = case.raw.to_string();
-        let result = read_stored_config(&raw_str, CURRENT_CONFIG_SCHEMA);
-        match case.expected {
-            Some(expected) => {
-                let rec = result.unwrap_or_else(|| panic!("expected record for '{}'", case.name));
-                let expected_schema = expected["schema"].as_u64().unwrap() as u32;
-                let expected_version = expected["configVersion"].as_i64().unwrap();
-
-                assert_eq!(rec.schema, expected_schema, "{}: schema", case.name);
-                assert_eq!(
-                    rec.config_version, expected_version,
-                    "{}: configVersion",
-                    case.name
-                );
-            }
-            None => {
-                assert!(
-                    result.is_none(),
-                    "expected None for case '{}', got {:?}",
-                    case.name,
-                    result
-                );
-            }
-        }
+    for (kind, cases) in [
+        ("session", &data.records.session),
+        ("push", &data.records.push),
+        ("config", &data.records.config),
+    ] {
+        assert!(
+            cases
+                .iter()
+                .any(|c| c.raw.get("schema").is_none() && c.expected.is_some()),
+            "{kind}: no unversioned record that keeps reading"
+        );
     }
 }

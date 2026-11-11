@@ -132,3 +132,60 @@ fn malformed_migrate_on_start_fails_naming_variable() {
     assert_eq!(err.exit_code, 2);
     assert!(err.message.contains("MIGRATE_ON_START"));
 }
+
+fn check(pairs: &'static [(&'static str, &'static str)]) -> Result<String, api::commands::Failure> {
+    check_config(&AppConfig::from_lookup(|key| {
+        pairs
+            .iter()
+            .chain([("DATABASE_URL", "sqlite::memory:")].iter())
+            .find(|(k, _)| *k == key)
+            .map(|(_, v)| v.to_string())
+    }))
+}
+
+// Verifies: REQ-DEP-003 REQ-OBS-006 REQ-OBS-008 REQ-RL-001 REQ-RL-007
+#[test]
+fn malformed_server_settings_fail_naming_the_variable_only() {
+    let cases: [&'static [(&str, &str)]; 6] = [
+        &[("PORT", "abc")],
+        &[("METRICS_ADDR", "off")],
+        &[("SHUTDOWN_GRACE_MS", "15s")],
+        &[("RATE_LIMIT_AUTH", "0")],
+        &[("RATE_LIMIT_READ", "10/0")],
+        &[("RATE_MAX_IN_FLIGHT", "many")],
+    ];
+    for pairs in cases {
+        let (name, value) = pairs[0];
+        let err = check(pairs).unwrap_err();
+        assert_eq!(err.exit_code, 2);
+        assert!(err.message.contains(name), "{name}: {}", err.message);
+        assert!(!err.message.contains(value), "{name}: {}", err.message);
+    }
+}
+
+// Verifies: REQ-DEP-003 REQ-CFG-004
+#[test]
+fn remote_config_path_must_exist_and_parse_when_set() {
+    let dir = std::env::temp_dir().join(format!("tran-check-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("flags.json");
+    let leaked: &'static str = Box::leak(path.display().to_string().into_boxed_str());
+    let pairs: &'static [(&str, &str)] = Box::leak(Box::new([("REMOTE_CONFIG_PATH", leaked)]));
+
+    let missing = check(pairs).unwrap_err();
+    assert!(missing.message.contains("REMOTE_CONFIG_PATH"));
+    assert!(!missing.message.contains(leaked));
+
+    std::fs::write(&path, "{ not json").unwrap();
+    assert!(check(pairs)
+        .unwrap_err()
+        .message
+        .contains("REMOTE_CONFIG_PATH"));
+
+    std::fs::write(
+        &path,
+        r#"{ "flags": { "notify_me": [ { "rollout": 5, "value": true } ] } }"#,
+    )
+    .unwrap();
+    assert!(check(pairs).is_ok());
+}

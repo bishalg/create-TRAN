@@ -1,18 +1,22 @@
-// Verifies: REQ-OBS-010
+// Verifies: REQ-OBS-010 REQ-OBS-011
 package com.tran.voting.api
 
 import com.tran.voting.parity.VoteEligibilityParityTest
+import com.tran.voting.ui.feedback.TranFeedback
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
+import uniffi.tran_uniffi.TranErrorCode
 import uniffi.tran_uniffi.parseTraceparentOffline
 
 /** REQ-OBS-010: Every API call carries a trace; retries reuse the trace id with a new span id. */
@@ -98,5 +102,35 @@ class TranApiClientTraceTest {
         val parsed = parseTraceparentOffline(header!!)
         assertNotNull(parsed)
         assertEquals(32, parsed!!.traceId.length)
+    }
+
+    @Test
+    fun noRandomnessSendsNoTraceparentRatherThanAConstantOne() {
+        val failing: (ByteArray) -> Unit = { throw IllegalStateException("no entropy") }
+        val zeros: (ByteArray) -> Unit = { it.fill(0) }
+        assertNull(TranRetry.newTraceId(failing))
+        assertNull("all-zero bytes are not an id", TranRetry.newTraceId(zeros))
+        assertNull(TranRetry.newChildTraceparent(null))
+        assertNull(TranRetry.newChildTraceparent("4bf92f3577b34da6a3ce929d0e0e4736", failing))
+        assertNull(TranRetry.newChildTraceparent("4bf92f3577b34da6a3ce929d0e0e4736", zeros))
+        assertNotEquals(TranRetry.newTraceId(), TranRetry.newTraceId())
+    }
+
+    @Test
+    fun aFailedCallWithNoAnswerCarriesTheTraceIdItSent() = runBlocking {
+        server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
+
+        val failure = try {
+            client().probeHealth()
+            throw AssertionError("expected the call to fail")
+        } catch (failure: TranRequestFailure) {
+            failure
+        }
+
+        val sent = parseTraceparentOffline(server.takeRequest().getHeader("traceparent")!!)!!
+        assertNull("no answer arrived", failure.status)
+        assertEquals(TranErrorCode.NETWORK_OFFLINE, failure.code)
+        assertEquals(sent.traceId, failure.traceId)
+        assertTrue(TranFeedback.logLine(failure).endsWith("trace_id=${sent.traceId}"))
     }
 }

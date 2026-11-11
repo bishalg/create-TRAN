@@ -2,7 +2,7 @@ import type { ContractRouterClient } from '@orpc/contract';
 import { apiPath } from './compat.js';
 import type { TranContract } from './contract.js';
 import { ErrorEnvelopeSchema } from './schemas/error.js';
-import { childSpanContext, formatTraceparent, newTraceContext, parseTraceparent } from './trace.js';
+import { formatTraceparent, parseTraceparent, requestSpan, withTraceparent } from './trace.js';
 import {
   VoteEligibilityInputSchema,
   VoteEligibilityOutputSchema,
@@ -71,6 +71,8 @@ export interface TranOrpcClientOptions {
   headers?: Record<string, string>;
   /** Cancels the request; the rejection is the fetch `AbortError`. */
   signal?: AbortSignal;
+  /** The user action's trace; this request is a new span of it (REQ-OBS-010). */
+  traceId?: string;
 }
 
 /** Contract-shaped client; Axum implements REST, not the binary oRPC wire protocol. */
@@ -95,28 +97,21 @@ export async function checkVoteEligibility(
   const baseUrl = (options.baseUrl ?? 'http://localhost:3001').replace(/\/+$/, '');
   const fetchFn = options.fetchFn ?? globalThis.fetch.bind(globalThis);
 
-  const incomingTp = options.headers?.traceparent ?? options.headers?.Traceparent;
-  const parsedIncoming = incomingTp ? parseTraceparent(incomingTp) : null;
-  const traceCtx = parsedIncoming
-    ? childSpanContext(parsedIncoming.traceId, parsedIncoming.sampled)
-    : newTraceContext();
-  const traceparent = formatTraceparent(traceCtx);
+  const span = requestSpan(options.traceId, options.headers);
 
   const response = await fetchFn(`${baseUrl}${apiPath('/vote/eligibility')}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...(options.headers ?? {}),
-      traceparent,
-    },
+    headers: withTraceparent(
+      { 'Content-Type': 'application/json', Accept: 'application/json', ...options.headers },
+      formatTraceparent(span)
+    ),
     body: JSON.stringify(parsed),
     // Only the auth tree may carry the session cookie (REQ-SEC-018).
     credentials: 'omit',
     signal: options.signal,
   });
 
-  if (!response.ok) throw await readApiError(response, traceCtx.traceId);
+  if (!response.ok) throw await readApiError(response, span.traceId);
 
   const json = await response.json();
   return VoteEligibilityOutputSchema.parse(json);

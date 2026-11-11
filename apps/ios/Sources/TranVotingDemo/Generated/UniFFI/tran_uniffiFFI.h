@@ -470,16 +470,6 @@ RustBuffer uniffi_tran_uniffi_fn_func_session_recovery(RustBuffer event, RustCal
 RustBuffer uniffi_tran_uniffi_fn_func_session_refresh_event(RustBuffer status, RustCallStatus *_Nonnull out_status
 );
 #endif
-#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_READ_STORED_PUSH
-#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_READ_STORED_PUSH
-RustBuffer uniffi_tran_uniffi_fn_func_tran_read_stored_push(RustBuffer raw_json, uint32_t current_schema, RustCallStatus *_Nonnull out_status
-);
-#endif
-#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_READ_STORED_SESSION
-#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_READ_STORED_SESSION
-RustBuffer uniffi_tran_uniffi_fn_func_tran_read_stored_session(RustBuffer raw_json, uint32_t current_schema, RustCallStatus *_Nonnull out_status
-);
-#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_STORED_CONFIG_SCHEMA
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_FN_FUNC_TRAN_STORED_CONFIG_SCHEMA
 uint32_t uniffi_tran_uniffi_fn_func_tran_stored_config_schema(RustCallStatus *_Nonnull out_status
@@ -1038,18 +1028,6 @@ uint16_t uniffi_tran_uniffi_checksum_func_session_recovery(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_SESSION_REFRESH_EVENT
 #define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_SESSION_REFRESH_EVENT
 uint16_t uniffi_tran_uniffi_checksum_func_session_refresh_event(void
-    
-);
-#endif
-#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_READ_STORED_PUSH
-#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_READ_STORED_PUSH
-uint16_t uniffi_tran_uniffi_checksum_func_tran_read_stored_push(void
-    
-);
-#endif
-#ifndef UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_READ_STORED_SESSION
-#define UNIFFI_FFIDEF_UNIFFI_TRAN_UNIFFI_CHECKSUM_FUNC_TRAN_READ_STORED_SESSION
-uint16_t uniffi_tran_uniffi_checksum_func_tran_read_stored_session(void
     
 );
 #endif

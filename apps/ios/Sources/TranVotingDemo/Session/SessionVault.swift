@@ -3,9 +3,9 @@ import Foundation
 
 /// What the vault keeps for one API session: the refresh credential and whom it belongs to.
 /// Never the access token, which lives in `TranSessionClient`'s memory only (REQ-SEC-017).
-/// Carries a schema version; reading upgrades older records and discards newer ones (REQ-DB-011).
+/// Carries a schema version (REQ-DB-011); `stored(_:)` reads the bytes a vault holds.
 /// Printing or dumping one shows the token as `[redacted]` (REQ-SEC-014).
-struct TranStoredSession: Equatable, Sendable, Codable {
+struct TranStoredSession: Equatable, Sendable, Encodable {
     var schema: Int
     let refreshToken: String
     let userId: String
@@ -34,12 +34,35 @@ struct TranStoredSession: Equatable, Sendable, Codable {
         case roleWire = "role"
     }
 
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.schema = try container.decodeIfPresent(Int.self, forKey: .schema) ?? 1
-        self.userId = try container.decode(String.self, forKey: .userId)
-        self.roleWire = try container.decode(String.self, forKey: .roleWire)
-        self.refreshToken = try container.decode(String.self, forKey: .refreshToken)
+    /// What a vault's stored bytes come to (REQ-DB-011, REQ-DB-012).
+    enum Stored: Equatable {
+        /// A record to use: the current version, or an older one read into the current shape.
+        /// Nothing is written back; the next rotation stores the current version.
+        case session(TranStoredSession)
+        /// Written by a newer app version: treat as signed out and leave it in place.
+        case newer
+        /// Damaged bytes, a missing or mistyped field, or an invalid `schema`: delete it.
+        case unreadable
+    }
+
+    /// Reads the bytes a vault stored, of any version this or an earlier release wrote. Never traps.
+    static func stored(_ data: Data) -> Stored {
+        guard let record = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+            return .unreadable
+        }
+        let current = tranStoredSessionSchema()
+        switch TranStoredSchema.verdict(record[CodingKeys.schema.rawValue], current: current) {
+        case .unreadable: return .unreadable
+        case .newer: return .newer
+        case .use: break
+        }
+        guard let userId = record[CodingKeys.userId.rawValue] as? String,
+            let roleWire = record[CodingKeys.roleWire.rawValue] as? String,
+            let refreshToken = record[CodingKeys.refreshToken.rawValue] as? String
+        else { return .unreadable }
+        return .session(
+            TranStoredSession(
+                schema: Int(current), refreshToken: refreshToken, userId: userId, roleWire: roleWire))
     }
 
     func encode(to encoder: Encoder) throws {

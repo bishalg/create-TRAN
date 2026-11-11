@@ -1,167 +1,107 @@
-// Verifies: REQ-CFG-001 REQ-CFG-003 REQ-CFG-006 REQ-CFG-007 REQ-CFG-010
+// Verifies: REQ-CFG-001 REQ-CFG-004 REQ-CFG-005 REQ-CFG-006 REQ-CFG-007
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import * as core from '../src/index.js';
 import {
   ALL_FLAGS,
   BUCKET_HEADER,
   CONFIG_POLICY,
-  ClientEvaluationContext,
   deriveBucket,
-  deriveBucketAsync,
-  evaluate,
-  findFlag,
-  FLAG_NOTIFY_ME,
-  FlagDefinition,
-  Rule,
-} from '../src/flags.js';
+  FLAGS,
+  readFlags,
+} from '../src/index.js';
 
-const ROOT = path.resolve(fileURLToPath(import.meta.url), '../../../..');
-const FIXTURE_PATH = path.join(ROOT, 'fixtures/flags.json');
-const fixture = JSON.parse(readFileSync(FIXTURE_PATH, 'utf8'));
+interface FlagsFixture {
+  flags: {
+    id: string;
+    type: string;
+    defaultValue: unknown;
+    live: boolean;
+    owner: string;
+    purpose: string;
+    expiry: string;
+  }[];
+  buckets: { installationId: string; bucket: number }[];
+}
 
-describe('flags catalogue and constants (REQ-CFG-001, REQ-CFG-007)', () => {
-  it('defines headers and flag ids', () => {
-    expect(BUCKET_HEADER).toBe('X-Tran-Bucket');
-    expect(FLAG_NOTIFY_ME).toBe('notify_me');
+const fixture: FlagsFixture = JSON.parse(
+  readFileSync(new URL('../../../fixtures/flags.json', import.meta.url), 'utf8')
+);
+
+describe('the generated catalogue (REQ-CFG-001)', () => {
+  it('carries every flag of the fixture, field for field', () => {
+    expect(
+      ALL_FLAGS.map(({ id, flagType, defaultValue, live, owner, purpose, expiry }) => ({
+        id,
+        type: flagType,
+        defaultValue,
+        live,
+        owner,
+        purpose,
+        expiry,
+      }))
+    ).toEqual(fixture.flags);
+  });
+
+  it('carries the policy and the bucket header', () => {
     expect(CONFIG_POLICY.maxAgeSeconds).toBe(300);
+    expect(BUCKET_HEADER).toBe('X-Tran-Bucket');
   });
 
-  it('matches flags in fixture', () => {
-    expect(ALL_FLAGS.length).toBe(fixture.flags.length);
-    for (const expected of fixture.flags) {
-      const actual = findFlag(expected.id);
-      expect(actual).toBeDefined();
-      expect(actual?.flagType).toBe(expected.type);
-      expect(actual?.defaultValue).toBe(expected.defaultValue);
-      expect(actual?.live).toBe(expected.live);
-      expect(actual?.owner).toBe(expected.owner);
-      expect(actual?.purpose).toBe(expected.purpose);
-      expect(actual?.expiry).toBe(expected.expiry);
+  it('every accessor names a declared flag with its default', () => {
+    for (const accessor of Object.values(FLAGS)) {
+      const declared = ALL_FLAGS.find((flag) => flag.id === accessor.id);
+      expect(declared?.defaultValue).toBe(accessor.defaultValue);
+      expect(declared?.live).toBe(accessor.live);
     }
   });
 
-  it('returns undefined for unknown flag', () => {
-    expect(findFlag('unknown_flag')).toBeUndefined();
-  });
-});
-
-describe('deriveBucket parity (REQ-CFG-006)', () => {
-  it('derives bucket synchronously matching fixture cases', () => {
-    for (const item of fixture.buckets) {
-      const bucket = deriveBucket(item.installationId);
-      expect(bucket).toBe(item.bucket);
-    }
-  });
-
-  it('derives bucket asynchronously via subtle crypto matching fixture cases', async () => {
-    for (const item of fixture.buckets) {
-      const bucket = await deriveBucketAsync(item.installationId);
-      expect(bucket).toBe(item.bucket);
+  it('no hand-written copy of the catalogue or of evaluate is exported', () => {
+    for (const name of ['FLAG_NOTIFY_ME', 'findFlag', 'evaluate', 'deriveBucketAsync']) {
+      expect(Object.keys(core), name).not.toContain(name);
     }
   });
 });
 
-describe('evaluate pure function parity (REQ-CFG-003)', () => {
-  it('matches all evaluation test cases from fixture', () => {
-    for (const testCase of fixture.evaluations) {
-      const flag = findFlag(testCase.flag);
-      expect(flag).toBeDefined();
-      const actual = evaluate(
-        flag!,
-        testCase.rules as Rule[],
-        testCase.client as ClientEvaluationContext
-      );
-      expect(actual).toBe(testCase.expected);
-    }
+describe('typed accessors read a wrong-typed value as the default (REQ-CFG-005, REQ-CFG-007)', () => {
+  it.each([
+    ['a real true', { notify_me: true }, true],
+    ['a real false', { notify_me: false }, false],
+    ['the string "true"', { notify_me: 'true' }, false],
+    ['the string "false"', { notify_me: 'false' }, false],
+    ['the number 1', { notify_me: 1 }, false],
+    ['null', { notify_me: null }, false],
+    ['a missing flag', {}, false],
+    ['no values at all', null, false],
+  ])('notify_me from %s', (_name, values, expected) => {
+    expect(FLAGS.notifyMe.get(values)).toBe(expected);
   });
 
-  it('returns default when no rules match or rules list is empty', () => {
-    const flag: FlagDefinition = {
-      id: 'test',
-      flagType: 'boolean',
-      defaultValue: false,
-      live: true,
-      owner: 'core',
-      purpose: 'test',
-      expiry: '2027-01-01',
-    };
-    const client: ClientEvaluationContext = {
-      platform: 'ios',
-      version: '1.0.0',
-      bucket: 50,
-    };
-    expect(evaluate(flag, [], client)).toBe(false);
-  });
-
-  it('evaluates integer and string flags and checks value types', () => {
-    const intFlag: FlagDefinition = {
-      id: 'int_flag',
-      flagType: 'integer',
-      defaultValue: 10,
-      live: true,
-      owner: 'core',
-      purpose: 'test',
-      expiry: '2027-01-01',
-    };
-    const strFlag: FlagDefinition = {
-      id: 'str_flag',
-      flagType: 'string',
-      defaultValue: 'default_str',
-      live: true,
-      owner: 'core',
-      purpose: 'test',
-      expiry: '2027-01-01',
-    };
-    const client: ClientEvaluationContext = {
-      platform: 'android',
-      version: '1.0.0',
-      bucket: 10,
-    };
-
-    expect(evaluate(intFlag, [{ value: 42 }], client)).toBe(42);
-    expect(evaluate(intFlag, [{ value: 'not-an-int' }], client)).toBe(10);
-
-    expect(evaluate(strFlag, [{ value: 'custom_str' }], client)).toBe('custom_str');
-    expect(evaluate(strFlag, [{ value: true }], client)).toBe('default_str');
-  });
-
-  it('skips min_version rule when client version is missing', () => {
-    const flag: FlagDefinition = {
-      id: 'flag',
-      flagType: 'boolean',
-      defaultValue: false,
-      live: true,
-      owner: 'core',
-      purpose: 'test',
-      expiry: '2027-01-01',
-    };
-    const clientWithoutVersion: ClientEvaluationContext = {
-      platform: 'web',
-      bucket: 5,
-    };
-    expect(evaluate(flag, [{ min_version: '1.0.0', value: true }], clientWithoutVersion)).toBe(
-      false
-    );
+  it('a live flag follows the latest values, not the launch values', () => {
+    expect(readFlags({ notify_me: false }, { notify_me: true })).toEqual({ notifyMe: true });
+    expect(readFlags({ notify_me: true }, null)).toEqual({ notifyMe: false });
   });
 });
 
-describe('deriveBucketAsync fallback (REQ-CFG-006)', () => {
-  it('falls back to sync deriveBucket when subtle crypto is absent', async () => {
-    const originalSubtle = globalThis.crypto?.subtle;
+describe('deriveBucket uses Web Crypto and matches every platform (REQ-CFG-006)', () => {
+  it.each(fixture.buckets)('$installationId → $bucket', async ({ installationId, bucket }) => {
+    expect(await deriveBucket(installationId)).toBe(bucket);
+  });
+
+  it('folds ASCII case only, as Rust does', async () => {
+    const id = 'ÄBC-def';
+    const digest = createHash('sha256').update('Äbc-def').digest();
+    expect(await deriveBucket(id)).toBe(digest.readUInt32BE(0) % 100);
+  });
+
+  it('is null where Web Crypto is unavailable (an insecure origin): no bucket is sent', async () => {
+    expect(await deriveBucket('2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c', null)).toBeNull();
+    vi.stubGlobal('crypto', { getRandomValues: globalThis.crypto.getRandomValues });
     try {
-      Object.defineProperty(globalThis.crypto, 'subtle', {
-        value: undefined,
-        configurable: true,
-      });
-      const bucket = await deriveBucketAsync('2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c');
-      expect(bucket).toBe(83);
+      expect(await deriveBucket('2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c')).toBeNull();
     } finally {
-      Object.defineProperty(globalThis.crypto, 'subtle', {
-        value: originalSubtle,
-        configurable: true,
-      });
+      vi.unstubAllGlobals();
     }
   });
 });

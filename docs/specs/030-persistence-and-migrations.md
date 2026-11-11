@@ -95,15 +95,39 @@ fail when the snapshot has a column the table does not list.
 
 ### REQ-DB-011 [verified] Every stored record on a device carries a version
 
-The session vault record, the push record and any cached server answer MUST carry a `schema` number. Reading MUST go
-through one Rust decision, `stored_record(schema, current)`, pinned by `fixtures/stored-records.json`: the current
-version is used; an older one is upgraded by a pure, fixture-tested function; a newer or unreadable one is discarded
-and treated as absent (signed out; defaults), never a crash.
-**Verified by:** the fixture on every platform; `StoredRecordTests.swift`, `StoredRecordTest.kt`,
-`packages/api/tests/stored-record.test.ts`.
+The session vault record, the push record and any cached server answer MUST carry a `schema` number; a record without
+one is the unversioned first release (version 1). Reading MUST apply two rules from `crates/rust-core`, pinned by
+`fixtures/stored-records.json`: `stored_schema` (a present `schema` that is not a whole number from 1 to 4294967295 —
+a string, a negative, fractional or larger number, 0, `null` — makes the record unreadable) and the decision
+`stored_record(schema, current)`: the current version is used; an older one is read into the current shape (upgraded);
+a newer one is discarded. The decision is the one rule in the core; mapping fields is each platform's own code and is
+proven by driving that platform's real store with the fixture, never by a Rust reader the app does not run. No outcome
+may crash: a version number is converted with a checked conversion everywhere. Reading MUST NOT write: an upgraded
+record is used as read and the next ordinary write stores the current version, so a failed rewrite cannot lose a
+credential. Today every upgrade is the identity (only the number changes). A release that changes a record's shape
+adds the step from its previous version in that record's reader on every platform, and the fixture case that pins it.
+**Verified by:** `crates/rust-core/tests/stored_record_fixtures.rs` and the `stored_records.rs` unit tests (both rules);
+`StoredRecordTests.swift` (`KeychainSessionVault`, `TranPushStore`, `RemoteConfigStore`) and `StoredRecordTest.kt`
+(`KeystoreSessionVault`, `PushPreferences`, `RemoteConfigStore`) over every fixture record;
+`packages/core-ts/tests/stored-records.test.ts` (the decision in TypeScript).
 
-### REQ-DB-012 [verified] An app update keeps the person signed in
+### REQ-DB-012 [verified] An app update keeps the person signed in; a downgrade destroys nothing
 
 A record written by the previous released client version MUST be readable by the current one. Each release MUST add
-the records it writes to `fixtures/stored-records.json`, and the tests MUST read every kept version.
-**Verified by:** the platform stored-record tests over the kept versions.
+the records it writes to `fixtures/stored-records.json`, and the tests MUST read every kept version through each
+platform's real store, including the unversioned record the release before versioning wrote. What happens to the
+stored record after a read is the same for the session, the push record and the config cache on every platform:
+
+- A record that is used (current or older) stays as it is.
+- A record from a newer app version (a valid `schema` above current) is treated as absent (signed out; no
+  registration; compiled defaults) and left in place, so going back to the newer version finds it. The config cache's
+  ETag is removed with it unused, so a conditional fetch cannot answer `304` for a body this build cannot read.
+- An unreadable record (damaged bytes, a missing or mistyped field, an invalid `schema`) is deleted.
+
+This reconciles with REQ-SEC-020 ("a record that cannot be decrypted MUST be deleted"): only an unreadable record is
+deleted; a newer one is readable by the version that wrote it, is protected exactly as a current record is (Keychain
+item, Keystore ciphertext), and is still removed by a sign-out or by REQ-SEC-019's first-launch cleanup.
+**Verified by:** the iOS and Android tests of REQ-DB-011: each fixture case states, in `kept`, whether the record is still stored
+after the read, and each platform asserts it; the previous release's exact records are read in
+`testThePreviousReleaseItemKeepsThePersonSignedIn` / `testThePreviousReleaseRegistrationIsKept` (iOS) and
+`thePreviousReleaseSessionKeepsThePersonSignedIn` / `thePreviousReleaseRegistrationIsKept` (Android).

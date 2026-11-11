@@ -174,17 +174,34 @@ async fn eligibility_without_headers_defaults_to_loopback_us() {
     assert_eq!(reply.json["country_source"], "loopback-default");
 }
 
+/// The eligibility request as it arrives over a socket from `peer` (what `ConnectInfo` carries).
+fn eligibility_from(peer: [u8; 4], headers: &[(&str, &str)]) -> Request<Body> {
+    let mut request = eligibility(r#"{"age": 21}"#, headers);
+    request
+        .extensions_mut()
+        .insert(axum::extract::ConnectInfo(std::net::SocketAddr::from((
+            peer, 51_234,
+        ))));
+    request
+}
+
+/// Behind the load balancer `10.0.0.1`, as `TRUSTED_PROXIES` says.
+fn behind_load_balancer() -> AppState {
+    AppState::from_config(&AppConfig::from_lookup(|key| match key {
+        "TRUSTED_PROXIES" => Some("10.0.0.0/8, 8.8.8.8/32".to_string()),
+        _ => None,
+    }))
+}
+
+// Verifies: REQ-RL-003 REQ-API-004
 #[tokio::test]
 async fn eligibility_resolves_client_ip_through_trusted_proxies() {
-    let state = AppState::from_config(&AppConfig::from_lookup(|key| match key {
-        "TRUSTED_PROXIES" => Some("127.0.0.1/32, 8.8.8.8/32".to_string()),
-        _ => None,
-    }));
+    // The load balancer appended the client; 8.8.8.8 is another trusted hop.
     let reply = send_to(
-        state,
-        eligibility(
-            r#"{"age": 21}"#,
-            &[("x-forwarded-for", "192.168.1.9, 8.8.8.8")],
+        behind_load_balancer(),
+        eligibility_from(
+            [10, 0, 0, 1],
+            &[("x-forwarded-for", "6.6.6.6, 192.168.1.9, 8.8.8.8")],
         ),
     )
     .await;
@@ -194,12 +211,30 @@ async fn eligibility_resolves_client_ip_through_trusted_proxies() {
     assert_eq!(reply.json["country_source"], "private-range-stub");
 }
 
+// Verifies: REQ-RL-003 REQ-API-004
+#[tokio::test]
+async fn eligibility_ignores_x_forwarded_for_from_an_untrusted_peer() {
+    let reply = send_to(
+        behind_load_balancer(),
+        eligibility_from([203, 0, 113, 7], &[("x-forwarded-for", "192.168.1.9")]),
+    )
+    .await;
+
+    assert_eq!(reply.json["client_ip"], "203.0.113.7");
+    assert_eq!(reply.json["country_source"], "default");
+}
+
+// Verifies: REQ-RL-003 REQ-API-004
 #[tokio::test]
 async fn eligibility_ignores_x_forwarded_for_when_peer_is_not_trusted() {
-    let reply = send(eligibility(
-        r#"{"age": 21}"#,
-        &[("x-forwarded-for", "192.168.1.9, 8.8.8.8")],
-    ))
+    // No socket peer (the router driven in-process) is never a trusted proxy.
+    let reply = send_to(
+        behind_load_balancer(),
+        eligibility(
+            r#"{"age": 21}"#,
+            &[("x-forwarded-for", "192.168.1.9, 8.8.8.8")],
+        ),
+    )
     .await;
 
     assert_eq!(reply.json["client_ip"], "127.0.0.1");
@@ -207,12 +242,33 @@ async fn eligibility_ignores_x_forwarded_for_when_peer_is_not_trusted() {
     assert_eq!(reply.json["country_source"], "loopback-default");
 }
 
+// Verifies: REQ-RL-003 REQ-API-004
 #[tokio::test]
-async fn eligibility_falls_back_to_x_real_ip() {
+async fn eligibility_never_reads_x_real_ip() {
+    for state in [AppState::new(), behind_load_balancer()] {
+        let reply = send_to(
+            state,
+            eligibility_from([10, 0, 0, 1], &[("x-real-ip", "8.8.4.4")]),
+        )
+        .await;
+        assert_eq!(reply.json["client_ip"], "10.0.0.1");
+    }
     let reply = send(eligibility(r#"{"age": 21}"#, &[("x-real-ip", "8.8.4.4")])).await;
+    assert_eq!(reply.json["client_ip"], "127.0.0.1");
+}
 
-    assert_eq!(reply.json["client_ip"], "8.8.4.4");
-    assert_eq!(reply.json["country_source"], "default");
+// Verifies: REQ-RL-003
+#[tokio::test]
+async fn eligibility_ignores_a_forwarded_header_with_an_unparsable_hop() {
+    let reply = send_to(
+        behind_load_balancer(),
+        eligibility_from(
+            [10, 0, 0, 1],
+            &[("x-forwarded-for", "6.6.6.6, not-an-address")],
+        ),
+    )
+    .await;
+    assert_eq!(reply.json["client_ip"], "10.0.0.1");
 }
 
 #[tokio::test]

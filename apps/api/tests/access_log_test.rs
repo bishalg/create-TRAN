@@ -127,6 +127,40 @@ async fn unmatched_route_logs_unmatched() {
     assert_eq!(event.field("request_id"), Some("access-req-003"));
 }
 
+// Verifies: REQ-OBS-004
+#[tokio::test]
+async fn an_unmatched_path_and_a_custom_method_never_reach_the_log() {
+    let _lock = SERIAL.lock().await;
+    let (captured, _guard) = Captured::install();
+    let app = build_app(AppState::new());
+
+    let req = Request::builder()
+        .method(Method::from_bytes(b"BREWCOFFEE").unwrap())
+        .uri("/api/v1/users/alice@example.com")
+        .header("x-request-id", "access-req-004")
+        .body(Body::empty())
+        .unwrap();
+    let res = app.oneshot(req).await.unwrap();
+    assert_eq!(res.status(), StatusCode::NOT_FOUND);
+
+    let completions = captured.named(REQUEST_COMPLETED_EVENT.message);
+    assert_eq!(completions.len(), 1);
+    let event = &completions[0];
+    assert_eq!(event.field("route"), Some("unmatched"));
+    assert_eq!(event.field("method"), Some("OTHER"));
+    // The request span's own fields, which the JSON log prints as well.
+    assert_eq!(event.field("path"), Some("unmatched"));
+    assert_eq!(event.field("span.method"), None, "span and event agree");
+    for event in captured.events() {
+        let line = event.line();
+        assert!(!line.contains("alice"), "raw path in the log: {line}");
+        assert!(
+            !line.contains("BREWCOFFEE"),
+            "raw method in the log: {line}"
+        );
+    }
+}
+
 #[tokio::test]
 async fn health_probes_log_at_debug_level() {
     let _lock = SERIAL.lock().await;

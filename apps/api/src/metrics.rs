@@ -4,11 +4,22 @@
 //! - `tran_http_requests_total{method,route,status}`
 //! - `tran_http_request_duration_seconds{method,route}` with fixed buckets from 5ms to 10s
 //! - `tran_http_requests_in_flight`
-//! - `tran_build_info{version}` = 1
+//! - `tran_build_info{version,commit}` = 1
+//! - `tran_rate_limited_total{class}` (spec 031, REQ-RL-008)
 
 use std::sync::OnceLock;
 
 use metrics_exporter_prometheus::{Matcher, PrometheusBuilder, PrometheusHandle};
+
+/// The release this binary is: the one workspace version (ADR-0034).
+pub const BUILD_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+/// The commit it was built from: `TRAN_COMMIT` at compile time (the image build sets it), else
+/// `unknown`.
+pub const BUILD_COMMIT: &str = match option_env!("TRAN_COMMIT") {
+    Some(commit) => commit,
+    None => "unknown",
+};
 
 static RECORDER_INITIALIZED: OnceLock<PrometheusHandle> = OnceLock::new();
 
@@ -37,10 +48,20 @@ pub fn init_metrics() -> PrometheusHandle {
                 .install_recorder()
                 .expect("failed to install prometheus recorder");
 
-            metrics::gauge!("tran_build_info", "version" => env!("CARGO_PKG_VERSION")).set(1.0);
+            metrics::gauge!(
+                "tran_build_info",
+                "version" => BUILD_VERSION,
+                "commit" => BUILD_COMMIT,
+            )
+            .set(1.0);
             handle
         })
         .clone()
+}
+
+/// Counts one limited request of `class` (REQ-RL-008).
+pub fn record_rate_limited(class: rust_core::rate::RouteClass) {
+    metrics::counter!("tran_rate_limited_total", "class" => class.as_str()).increment(1);
 }
 
 /// Normalizes HTTP method to one of the standard methods or `"OTHER"` (REQ-OBS-005).
@@ -123,6 +144,8 @@ mod tests {
         let handle = init_metrics();
         let rendered = handle.render();
         assert!(rendered.contains("tran_build_info"));
-        assert!(rendered.contains(env!("CARGO_PKG_VERSION")));
+        assert!(rendered.contains(&format!(
+            r#"tran_build_info{{version="{BUILD_VERSION}",commit="{BUILD_COMMIT}"}} 1"#
+        )));
     }
 }

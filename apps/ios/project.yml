@@ -113,6 +113,7 @@ targets:
       - Sources/TranVotingDemo/Extensions
       - Sources/TranVotingDemo/TranMotion.swift
       - Sources/TranVotingDemo/AuthSession.swift
+      - Sources/TranVotingDemo/TranStoredSchema.swift
       - Sources/TranVotingDemo/Feedback/TranFeedback.swift
       - Sources/TranVotingDemo/Feedback/TranReporting.swift
       - Sources/TranVotingDemo/Permissions

@@ -29,6 +29,7 @@ import uniffi.tran_uniffi.TranErrorCode
 import uniffi.tran_uniffi.TranLogLevel
 import uniffi.tran_uniffi.TranUserRole
 import uniffi.tran_uniffi.errorSpec
+import uniffi.tran_uniffi.parseTraceparentOffline
 
 /** The Android session client on a stubbed API (hermetic, ADR-0023): body transport, bearer, refresh, sign-out. */
 class SessionClientTest {
@@ -445,6 +446,36 @@ class SessionClientTest {
     @Test
     fun aStoredRecordNeverPrintsItsToken() {
         val record = StoredSession("voter-001", TranUserRole.ELECTION_AUDITOR, REFRESH_1)
-        assertEquals("StoredSession(userId=voter-001, role=election_auditor, refreshToken=[redacted])", record.toString())
+        assertEquals("StoredSession(schema=2, userId=voter-001, role=election_auditor, refreshToken=[redacted])", record.toString())
+    }
+
+    // Verifies: REQ-OBS-010
+    @Test
+    fun aRefreshMadeForAnActionReusesItsTraceWithANewSpan() = runBlocking {
+        vault.write(StoredSession("voter-001", TranUserRole.CITIZEN_VOTER, REFRESH_1))
+        val action = "4bf92f3577b34da6a3ce929d0e0e4736"
+
+        // No access token after a restart: the action refreshes first, then is sent.
+        client().currentUser(traceId = action)
+
+        val sent = requests()
+        assertEquals(listOf("/api/v1/auth/refresh", "/api/v1/auth/session"), sent.map { it.path })
+        val traces = sent.map { parseTraceparentOffline(it.getHeader("traceparent")!!)!! }
+        assertEquals("one action, one trace", setOf(action), traces.map { it.traceId }.toSet())
+        assertEquals("a new span for each request", traces.size, traces.map { it.spanId }.toSet().size)
+    }
+
+    // Verifies: REQ-OBS-011
+    @Test
+    fun aSignOutAfterA401CarriesTheActionTraceId() = runBlocking {
+        vault.write(StoredSession("voter-001", TranUserRole.CITIZEN_VOTER, REFRESH_1))
+        refreshAnswer = { expired() }
+        val action = "4bf92f3577b34da6a3ce929d0e0e4736"
+
+        val failure = failureOf { client().currentUser(traceId = action) }
+
+        assertEquals(TranErrorCode.AUTH_SESSION_EXPIRED, failure.code)
+        assertEquals("the logged event joins the server's logs", action, failure.traceId)
+        assertNull(vault.read())
     }
 }

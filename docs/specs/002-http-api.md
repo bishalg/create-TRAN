@@ -25,8 +25,10 @@ content type `415`. Unknown routes are `404` and wrong methods `405`, in the sam
 
 ### REQ-API-004 [verified] Client IP
 
-The client IP MUST be the first hop of `X-Forwarded-For`, else `X-Real-IP`, else `127.0.0.1`.
-**Verified by:** `api_test.rs` (`*x_forwarded_for*`, `*x_real_ip*`) and `geo.rs` unit tests.
+The client IP MUST be resolved once per request as REQ-RL-003 defines it: the socket peer, or, when that peer is a
+trusted proxy, the right-most `X-Forwarded-For` hop that is not one. No other header is read.
+**Verified by:** `api_test.rs` (`eligibility_*x_forwarded_for*`, `eligibility_never_reads_x_real_ip`,
+`eligibility_resolves_client_ip_through_trusted_proxies`) and `geo.rs` unit tests.
 
 ### REQ-API-005 [verified] Country resolution order
 

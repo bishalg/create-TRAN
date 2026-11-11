@@ -15,6 +15,11 @@
     "reason": "A test host without the Keychain entitlement (errSecMissingEntitlement, an unsigned simulator run) cannot store a Keychain item; the machine, not a credential."
   },
   {
+    "file": "apps/ios/Tests/TranVotingDemoTests/StoredRecordTests.swift",
+    "count": 1,
+    "reason": "A test host without the Keychain entitlement (errSecMissingEntitlement, an unsigned simulator run) cannot store a Keychain item; the machine, not a credential."
+  },
+  {
     "file": "e2e/smoke/release.spec.ts",
     "count": 6,
     "reason": "The release smoke suite needs the release builds pnpm smoke makes, macOS for iOS, and an attached Android device or an available iPhone simulator; each skip names what the machine lacks."
@@ -32,6 +37,6 @@
   {
     "file": "e2e/smoke/image.spec.ts",
     "count": 1,
-    "reason": "The container image smoke test requires a container runtime (Docker) to build and run the image; when absent it is skipped with the reason."
+    "reason": "The API image smoke test builds and runs the image, so it needs a container runtime (docker with its daemon running); without one it is skipped with that reason, and in CI it never skips."
   }
 ]

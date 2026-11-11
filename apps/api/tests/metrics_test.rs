@@ -158,3 +158,56 @@ async fn metrics_listener_serves_prometheus_format() {
         "metrics response must contain tran_build_info: {text}"
     );
 }
+
+// Verifies: REQ-OBS-005
+#[tokio::test]
+async fn build_info_names_the_version_and_the_commit() {
+    let rendered = AppState::new().render_metrics();
+    let expected = format!(
+        r#"tran_build_info{{version="{}",commit="{}"}} 1"#,
+        api::metrics::BUILD_VERSION,
+        api::metrics::BUILD_COMMIT
+    );
+    assert!(rendered.contains(&expected), "{rendered}");
+    assert_eq!(api::metrics::BUILD_VERSION, env!("CARGO_PKG_VERSION"));
+    assert_eq!(
+        api::metrics::BUILD_COMMIT,
+        option_env!("TRAN_COMMIT").unwrap_or("unknown")
+    );
+}
+
+// Verifies: REQ-RL-008 REQ-OBS-006
+#[tokio::test]
+async fn metrics_listener_counts_limited_requests_by_class() {
+    let state = AppState::from_config(&api::config::AppConfig::from_lookup(|key| {
+        (key == "RATE_LIMIT_WRITE").then(|| "60/1".to_string())
+    }));
+    let app = build_app(state.clone());
+    let scrape = || async {
+        let res = create_metrics_router(state.clone())
+            .oneshot(
+                Request::builder()
+                    .uri("/metrics")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        let body = res.into_body().collect().await.unwrap().to_bytes();
+        let text = String::from_utf8(body.to_vec()).unwrap();
+        text.lines()
+            .find_map(|line| line.strip_prefix(r#"tran_rate_limited_total{class="write"} "#))
+            .map_or(0, |value| value.trim().parse::<u64>().unwrap())
+    };
+    let before = scrape().await;
+    for _ in 0..3 {
+        let req = Request::builder()
+            .method(Method::DELETE)
+            .uri("/api/v1/devices/00000000-0000-0000-0000-000000000000")
+            .body(Body::empty())
+            .unwrap();
+        app.clone().oneshot(req).await.unwrap();
+    }
+    // One allowed, two limited.
+    assert_eq!(scrape().await, before + 2);
+}

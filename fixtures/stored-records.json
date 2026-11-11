@@ -1,5 +1,5 @@
 {
-  "$comment": "Stored-record versions and recovery decisions (spec 030, REQ-DB-011, REQ-DB-012, ADR-0049) shared by Rust (crates/rust-core/tests/stored_record_fixtures.rs), UniFFI (crates/tran-uniffi/tests/stored_record_fixtures.rs), TypeScript (packages/api/tests/stored-record.test.ts), iOS (StoredRecordTests.swift) and Android (StoredRecordTest.kt) parity tests. Every device record (session vault, push preferences, remote config) carries a schema version. `decisions`: the one Rust decision `stored_record(schema, current)` mapping versions to `use`, `upgrade`, or `discard`. `records`: kept records from past releases ensuring an app update keeps the person signed in and active.",
+  "$comment": "Stored-record versions and recovery decisions (spec 030, REQ-DB-011, REQ-DB-012, ADR-0049). `decisions`: the one Rust decision `stored_record(schema, current)` mapping a version to `use`, `upgrade` or `discard` (crates/rust-core/tests/stored_record_fixtures.rs, crates/tran-uniffi/tests/stored_record_fixtures.rs, the native and TypeScript parity tests). `records`: what a device really has stored, driven through each platform's real store (iOS StoredRecordTests.swift, Android StoredRecordTest.kt; TypeScript: packages/core-ts/tests). `raw` is the stored JSON; `expected` is what the store hands back (null: treated as absent); `kept` is whether the stored record is still there after the read: a record is never rewritten on read, a newer version is left for the app that wrote it, and only an unreadable record (bad bytes or field types, or a `schema` that is not a whole number from 1 to 4294967295) is deleted. A record without `schema` is the unversioned first release (version 1). Push has no JSON on either device: each key is one preference (iOS UserDefaults TranPushSchema / TranPushRegisteredToken / TranPushRegisteredAt; Android tran.push schema / registered_token / registered_at_unix_s), written with the JSON value's type.",
   "currentSchemas": {
     "session": 2,
     "push": 2,
@@ -69,7 +69,8 @@
           "userId": "usr_v0_voter",
           "role": "citizen_voter",
           "refreshToken": "rt_test_token_v0"
-        }
+        },
+        "kept": true
       },
       {
         "name": "v1 session with schema 1 is upgraded to current",
@@ -84,7 +85,8 @@
           "userId": "usr_v1_voter",
           "role": "citizen_voter",
           "refreshToken": "rt_test_token_v1"
-        }
+        },
+        "kept": true
       },
       {
         "name": "v2 session matches current schema",
@@ -99,25 +101,83 @@
           "userId": "usr_v2_auditor",
           "role": "election_auditor",
           "refreshToken": "rt_test_token_v2"
-        }
+        },
+        "kept": true
       },
       {
-        "name": "v3 future session is discarded",
+        "name": "v3 future session is treated as absent and left in place",
         "raw": {
           "schema": 3,
           "user_id": "usr_v3_future",
           "role": "citizen_voter",
           "refresh_token": "rt_test_token_v3"
         },
-        "expected": null
+        "expected": null,
+        "kept": true
       },
       {
-        "name": "corrupt session missing fields is discarded",
+        "name": "corrupt session missing fields is unreadable and deleted",
         "raw": {
           "schema": 2,
           "invalid_field": "corrupt"
         },
-        "expected": null
+        "expected": null,
+        "kept": false
+      },
+      {
+        "name": "session with a string schema is unreadable and deleted",
+        "raw": {
+          "schema": "2",
+          "user_id": "usr_bad_schema",
+          "role": "citizen_voter",
+          "refresh_token": "rt_test_token_bad"
+        },
+        "expected": null,
+        "kept": false
+      },
+      {
+        "name": "session with a negative schema is unreadable and deleted",
+        "raw": {
+          "schema": -1,
+          "user_id": "usr_bad_schema",
+          "role": "citizen_voter",
+          "refresh_token": "rt_test_token_bad"
+        },
+        "expected": null,
+        "kept": false
+      },
+      {
+        "name": "session with a fractional schema is unreadable and deleted",
+        "raw": {
+          "schema": 1.5,
+          "user_id": "usr_bad_schema",
+          "role": "citizen_voter",
+          "refresh_token": "rt_test_token_bad"
+        },
+        "expected": null,
+        "kept": false
+      },
+      {
+        "name": "session with a schema beyond 32 bits is unreadable and deleted",
+        "raw": {
+          "schema": 4294967298,
+          "user_id": "usr_bad_schema",
+          "role": "citizen_voter",
+          "refresh_token": "rt_test_token_bad"
+        },
+        "expected": null,
+        "kept": false
+      },
+      {
+        "name": "session with schema 0 is unreadable and deleted",
+        "raw": {
+          "schema": 0,
+          "user_id": "usr_bad_schema",
+          "role": "citizen_voter",
+          "refresh_token": "rt_test_token_bad"
+        },
+        "expected": null,
+        "kept": false
       }
     ],
     "push": [
@@ -132,7 +192,8 @@
           "schema": 2,
           "token": "tok_push_v1",
           "registeredAtUnixS": 1700000000
-        }
+        },
+        "kept": true
       },
       {
         "name": "v1 legacy push record without schema is upgraded to current",
@@ -144,7 +205,8 @@
           "schema": 2,
           "token": "tok_push_v0",
           "registeredAtUnixS": 1700000000
-        }
+        },
+        "kept": true
       },
       {
         "name": "v2 push record matches current schema",
@@ -157,24 +219,77 @@
           "schema": 2,
           "token": "tok_push_v2",
           "registeredAtUnixS": 1700000000
-        }
+        },
+        "kept": true
       },
       {
-        "name": "v3 future push record is discarded",
+        "name": "v3 future push record is treated as absent and left in place",
         "raw": {
           "schema": 3,
           "token": "tok_push_v3",
           "registered_at_unix_s": 1700000000
         },
-        "expected": null
+        "expected": null,
+        "kept": true
       },
       {
-        "name": "corrupt push record is discarded",
+        "name": "corrupt push record is unreadable and deleted",
         "raw": {
           "schema": 2,
           "token": 12345
         },
-        "expected": null
+        "expected": null,
+        "kept": false
+      },
+      {
+        "name": "push record with a string schema is unreadable and deleted",
+        "raw": {
+          "schema": "2",
+          "token": "tok_push_bad",
+          "registered_at_unix_s": 1700000000
+        },
+        "expected": null,
+        "kept": false
+      },
+      {
+        "name": "push record with a negative schema is unreadable and deleted",
+        "raw": {
+          "schema": -1,
+          "token": "tok_push_bad",
+          "registered_at_unix_s": 1700000000
+        },
+        "expected": null,
+        "kept": false
+      },
+      {
+        "name": "push record with a fractional schema is unreadable and deleted",
+        "raw": {
+          "schema": 1.5,
+          "token": "tok_push_bad",
+          "registered_at_unix_s": 1700000000
+        },
+        "expected": null,
+        "kept": false
+      },
+      {
+        "name": "push record with a schema beyond 32 bits is unreadable and deleted",
+        "raw": {
+          "schema": 4294967298,
+          "token": "tok_push_bad",
+          "registered_at_unix_s": 1700000000
+        },
+        "expected": null,
+        "kept": false
+      },
+      {
+        "name": "push record with schema 0 is unreadable and deleted",
+        "raw": {
+          "schema": 0,
+          "token": "tok_push_bad",
+          "registered_at_unix_s": 1700000000
+        },
+        "expected": null,
+        "kept": false
       }
     ],
     "config": [
@@ -201,7 +316,8 @@
             "recommendedVersion": "1.2.0"
           },
           "configVersion": 5
-        }
+        },
+        "kept": true
       },
       {
         "name": "v1 legacy config record without schema is upgraded to current",
@@ -225,7 +341,8 @@
             "recommendedVersion": "1.2.0"
           },
           "configVersion": 5
-        }
+        },
+        "kept": true
       },
       {
         "name": "v2 config record matches current schema",
@@ -250,10 +367,11 @@
             "recommendedVersion": "1.3.0"
           },
           "configVersion": 8
-        }
+        },
+        "kept": true
       },
       {
-        "name": "v3 future config record is discarded",
+        "name": "v3 future config record is treated as absent and left in place",
         "raw": {
           "schema": 3,
           "flags": {
@@ -261,15 +379,77 @@
           },
           "config_version": 99
         },
-        "expected": null
+        "expected": null,
+        "kept": true
       },
       {
-        "name": "corrupt config record is discarded",
+        "name": "corrupt config record is unreadable and deleted",
         "raw": {
           "schema": 2,
           "flags": "not-an-object"
         },
-        "expected": null
+        "expected": null,
+        "kept": false
+      },
+      {
+        "name": "config record with a string schema is unreadable and deleted",
+        "raw": {
+          "schema": "2",
+          "flags": {
+            "notify_me": true
+          },
+          "config_version": 7
+        },
+        "expected": null,
+        "kept": false
+      },
+      {
+        "name": "config record with a negative schema is unreadable and deleted",
+        "raw": {
+          "schema": -1,
+          "flags": {
+            "notify_me": true
+          },
+          "config_version": 7
+        },
+        "expected": null,
+        "kept": false
+      },
+      {
+        "name": "config record with a fractional schema is unreadable and deleted",
+        "raw": {
+          "schema": 1.5,
+          "flags": {
+            "notify_me": true
+          },
+          "config_version": 7
+        },
+        "expected": null,
+        "kept": false
+      },
+      {
+        "name": "config record with a schema beyond 32 bits is unreadable and deleted",
+        "raw": {
+          "schema": 4294967298,
+          "flags": {
+            "notify_me": true
+          },
+          "config_version": 7
+        },
+        "expected": null,
+        "kept": false
+      },
+      {
+        "name": "config record with schema 0 is unreadable and deleted",
+        "raw": {
+          "schema": 0,
+          "flags": {
+            "notify_me": true
+          },
+          "config_version": 7
+        },
+        "expected": null,
+        "kept": false
       }
     ]
   }

@@ -4,7 +4,7 @@
  * these functions are the mechanics, pinned by `fixtures/feedback.json`.
  */
 
-import { TranApiError } from '@tran/api';
+import { startTrace, TranApiError } from '@tran/api';
 import {
   ACTION_CATALOGUE,
   ERROR_CATALOGUE,
@@ -24,6 +24,7 @@ import {
 import type { TranStringKey } from './generated/keys.js';
 import { VoteEligibilityValidationError } from './voting.js';
 import { isReportedLogLevel, reportFailure } from './resilience.js';
+import { sentTraceId } from './transport-trace.js';
 
 export {
   ACTION_CATALOGUE,
@@ -151,7 +152,16 @@ function classifyKnown(err: unknown): TranRequestError {
     return new TranRequestError(err.code, err.message);
   }
   if (err instanceof DOMException && Object.hasOwn(TRANSPORT_CODES, err.name)) {
-    return new TranRequestError(TRANSPORT_CODES[err.name], err.message);
+    const code = TRANSPORT_CODES[err.name]!;
+    return new TranRequestError(
+      code,
+      err.message,
+      null,
+      undefined,
+      null,
+      undefined,
+      sentTraceId(err)
+    );
   }
   // Anything else — a TypeError included — is a bug in the client, never "offline".
   return new TranRequestError(
@@ -200,6 +210,8 @@ export function classifyError(err: unknown, traceId?: string): TranRequestError 
 export interface RetryOptions {
   /** Only idempotent requests are retried; the eligibility check is a pure computation. */
   idempotent: boolean;
+  /** The action's trace id when the caller already has one; otherwise `withRetry` starts one. */
+  traceId?: string;
   /** The caller's cancellation; it also ends a backoff wait at once (REQ-ERR-015). */
   signal?: AbortSignal;
   sleep?: (ms: number, signal?: AbortSignal) => Promise<void>;
@@ -221,25 +233,50 @@ const realSleep = (ms: number, signal?: AbortSignal) =>
     );
   });
 
-const cancelled = () => new TranRequestError('request.cancelled', 'cancelled during retry wait');
+const cancelled = (traceId: string) =>
+  new TranRequestError(
+    'request.cancelled',
+    'cancelled during retry wait',
+    null,
+    undefined,
+    null,
+    undefined,
+    traceId
+  );
 
-/** Runs `call` up to `RETRY_POLICY.maxAttempts` times; throws the last failure, classified. */
-export async function withRetry<T>(call: () => Promise<T>, options: RetryOptions): Promise<T> {
+/** What one attempt of a user action is told. */
+export interface RetryAttempt {
+  /** The action's one trace id: every request of every attempt is a new span of it (REQ-OBS-010). */
+  traceId: string;
+  /** 1 for the first try. */
+  attempt: number;
+}
+
+/**
+ * Runs `call` up to `RETRY_POLICY.maxAttempts` times; throws the last failure, classified. The
+ * action owns one trace id, handed to every attempt and stamped on the failure even when no
+ * response arrived (REQ-OBS-011).
+ */
+export async function withRetry<T>(
+  call: (attempt: RetryAttempt) => Promise<T>,
+  options: RetryOptions
+): Promise<T> {
   const { idempotent, signal, sleep = realSleep, random = Math.random, onRetry } = options;
+  const traceId = options.traceId ?? startTrace().traceId;
   const attempt = async (n: number): Promise<T> => {
     try {
-      return await call();
+      return await call({ traceId, attempt: n });
     } catch (raw) {
-      const error = classifyError(raw);
+      const error = classifyError(raw, traceId);
       const canRetry = idempotent && error.spec.retryable && n < RETRY_POLICY.maxAttempts;
       if (!canRetry) throw error;
       const delay = error.retryAfterMs ?? retryDelayMs(n, random());
-      if (signal?.aborted) throw cancelled();
+      if (signal?.aborted) throw cancelled(traceId);
       onRetry?.(error, n, delay);
       try {
         await (signal ? sleep(delay, signal) : sleep(delay));
       } catch {
-        throw cancelled();
+        throw cancelled(traceId);
       }
       return attempt(n + 1);
     }

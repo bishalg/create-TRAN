@@ -145,44 +145,88 @@ async fn shutdown_drains_and_logs_lifecycle_events() {
     );
 }
 
+fn server_config(pairs: &'static [(&'static str, &'static str)]) -> AppConfig {
+    AppConfig::from_lookup(|key| {
+        let defaults = [
+            ("HOST", "127.0.0.1"),
+            ("PORT", "0"),
+            ("DATABASE_URL", "sqlite::memory:"),
+            ("MIGRATE_ON_START", "true"),
+        ];
+        pairs
+            .iter()
+            .chain(defaults.iter())
+            .find(|(k, _)| *k == key)
+            .map(|(_, v)| v.to_string())
+    })
+}
+
+// Verifies: REQ-OBS-009
 #[tokio::test]
 async fn startup_event_says_what_is_running() {
     let _lock = SERIAL.lock().await;
     let (captured, _guard) = Captured::install();
 
-    let lookup = |key: &str| match key {
-        "HOST" => Some("127.0.0.1".to_string()),
-        "PORT" => Some("0".to_string()),
-        "APP_ENV" => Some("staging".to_string()),
-        "METRICS_ADDR" => Some("127.0.0.1:9090".to_string()),
-        "DATABASE_URL" => Some("data/api.sqlite3".to_string()),
-        _ => None,
-    };
-    let config = AppConfig::from_lookup(lookup);
-
-    let addr = config.socket_addr();
-    let metrics_address = config.metrics_addr().unwrap_or("off");
-    tracing::info!(
-        version = env!("CARGO_PKG_VERSION"),
-        environment = %config.environment,
-        listening_address = %addr,
-        metrics_address = %metrics_address,
-        "service started"
-    );
+    // The real start: bind, log, then the shutdown signal fires at once.
+    let config = server_config(&[("APP_ENV", "staging")]);
+    api::run_server_with_shutdown(config, Box::pin(async {}))
+        .await
+        .unwrap();
 
     let events = captured.named("service started");
     assert_eq!(events.len(), 1);
     let event = &events[0];
     assert_eq!(event.level, Level::INFO);
     assert_eq!(event.field("version"), Some(env!("CARGO_PKG_VERSION")));
+    assert_eq!(event.field("commit"), Some(api::metrics::BUILD_COMMIT));
     assert_eq!(event.field("environment"), Some("staging"));
-    assert_eq!(event.field("listening_address"), Some("127.0.0.1:0"));
-    assert_eq!(event.field("metrics_address"), Some("127.0.0.1:9090"));
+    let listening = event.field("listening_address").unwrap();
+    assert!(listening.starts_with("127.0.0.1:"), "{listening}");
+    assert!(
+        !listening.ends_with(":0"),
+        "the bound port, not the configured 0"
+    );
+    assert_eq!(event.field("metrics_address"), Some("off"));
 
-    // Verify secret is NOT printed
+    // No secret, no environment dump.
     let line = event.line();
     assert!(!line.contains("DATABASE_URL"));
-    assert!(!line.contains("data/api.sqlite3"));
+    assert!(!line.contains("sqlite"));
+}
+
+// Verifies: REQ-OBS-009
+#[tokio::test]
+async fn startup_event_comes_only_after_every_listener_is_bound() {
+    let _lock = SERIAL.lock().await;
+    let (captured, _guard) = Captured::install();
+    let taken = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let busy: &'static str = Box::leak(taken.local_addr().unwrap().to_string().into_boxed_str());
+    let pairs: &'static [(&str, &str)] = Box::leak(Box::new([("METRICS_ADDR", busy)]));
+    let result =
+        api::run_server_with_shutdown(server_config(pairs), Box::pin(std::future::pending())).await;
+    assert!(result.is_err());
+    assert!(captured.named("service started").is_empty());
+}
+
+// Verifies: REQ-OBS-006 REQ-OBS-008 REQ-DEP-003
+#[tokio::test]
+async fn a_malformed_setting_stops_the_start_naming_its_variable() {
+    for (name, value) in [
+        ("PORT", "abc"),
+        ("METRICS_ADDR", "off"),
+        ("SHUTDOWN_GRACE_MS", "soon"),
+        ("TRUSTED_PROXIES", "10.0.0.300"),
+        ("RATE_LIMIT_AUTH", "0"),
+        ("RATE_MAX_IN_FLIGHT", "-5"),
+    ] {
+        let pairs: &'static [(&str, &str)] = Box::leak(Box::new([(name, value)]));
+        let error = api::run_server_with_shutdown(server_config(pairs), Box::pin(async {}))
+            .await
+            .unwrap_err();
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidInput);
+        assert!(error.to_string().starts_with(name), "{name}: {error}");
+        assert!(!error.to_string().contains(value), "{name}: {error}");
+    }
 }
 
 #[tokio::test]
@@ -244,18 +288,13 @@ async fn shutdown_drains_times_out_on_hung_request() {
     release.notify_waiters();
 }
 
+// Verifies: REQ-OBS-006 REQ-OBS-008
 #[tokio::test]
 async fn run_server_with_shutdown_serves_and_drains_with_metrics() {
     let _lock = SERIAL.lock().await;
+    let (captured, _guard) = Captured::install();
     let (shutdown_tx, shutdown_rx) = oneshot::channel::<()>();
-    let lookup = |key: &str| match key {
-        "HOST" => Some("127.0.0.1".to_string()),
-        "PORT" => Some("0".to_string()),
-        "METRICS_ADDR" => Some("127.0.0.1:0".to_string()),
-        "DATABASE_URL" => Some("sqlite::memory:".to_string()),
-        _ => None,
-    };
-    let config = AppConfig::from_lookup(lookup);
+    let config = server_config(&[("METRICS_ADDR", "127.0.0.1:0")]);
     let server_task = tokio::spawn(api::run_server_with_shutdown(
         config,
         Box::pin(async move {
@@ -263,14 +302,38 @@ async fn run_server_with_shutdown_serves_and_drains_with_metrics() {
         }),
     ));
 
-    tokio::time::sleep(Duration::from_millis(50)).await;
-    shutdown_tx.send(()).unwrap();
+    let started = loop {
+        if let Some(event) = captured.named("service started").pop() {
+            break event;
+        }
+        tokio::time::sleep(Duration::from_millis(5)).await;
+    };
+    let metrics_address = started.field("metrics_address").unwrap().to_string();
+    let mut stream = tokio::net::TcpStream::connect(&metrics_address)
+        .await
+        .unwrap();
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    stream
+        .write_all(b"GET /metrics HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")
+        .await
+        .unwrap();
+    let mut scraped = String::new();
+    stream.read_to_string(&mut scraped).await.unwrap();
+    assert!(scraped.starts_with("HTTP/1.1 200 OK"), "{scraped}");
+    assert!(scraped.contains("tran_build_info"), "{scraped}");
 
+    shutdown_tx.send(()).unwrap();
     let res = tokio::time::timeout(Duration::from_secs(5), server_task)
         .await
         .expect("server must exit within timeout")
         .unwrap();
     assert!(res.is_ok());
+    // One pair for the whole process, the metrics listener included.
+    assert_eq!(captured.named("shutdown started").len(), 1);
+    assert_eq!(captured.named("shutdown complete").len(), 1);
+    assert!(tokio::net::TcpStream::connect(&metrics_address)
+        .await
+        .is_err());
 }
 
 #[tokio::test]

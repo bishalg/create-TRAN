@@ -14,5 +14,6 @@ export * from './push.js';
 export * from './trace.js';
 export * from './flags.js';
 export * from './stored-records.js';
+export * from './remote-config.js';
 export * from './generated/flags.js';
 export * from './generated/screens.js';

@@ -23,12 +23,12 @@ pub async fn config_handler(State(state): State<AppState>, request: Request) -> 
         .get(BUCKET_HEADER)
         .and_then(|v| v.to_str().ok())
         .and_then(|s| s.trim().parse::<u8>().ok())
-        .unwrap_or(0);
+        .filter(|bucket| *bucket <= LAST_BUCKET);
 
     let ctx = ClientEvaluationContext {
         platform: client.platform,
         version: client.version.as_deref(),
-        bucket,
+        bucket: evaluated_bucket(bucket),
     };
 
     let active_rules = state.config_source.rules();
@@ -82,7 +82,7 @@ pub async fn config_handler(State(state): State<AppState>, request: Request) -> 
         let trimmed = if_none_match.trim();
         if trimmed == etag || trimmed == format!("W/{etag}") {
             let mut response = StatusCode::NOT_MODIFIED.into_response();
-            response.headers_mut().insert(header::ETAG, etag_val);
+            cache_headers(response.headers_mut(), etag_val);
             return response;
         }
     }
@@ -93,6 +93,30 @@ pub async fn config_handler(State(state): State<AppState>, request: Request) -> 
         header::CONTENT_TYPE,
         HeaderValue::from_static("application/json"),
     );
-    headers.insert(header::ETAG, etag_val);
+    cache_headers(headers, etag_val);
     response
+}
+
+/// The highest bucket a device derives (REQ-CFG-006).
+const LAST_BUCKET: u8 = 99;
+
+/// The bucket rules are evaluated with. A caller that sent none, or one outside `0..=99`, is
+/// outside every partial rollout: a rule matches when the bucket is below its percentage, so
+/// [`LAST_BUCKET`] matches only a rollout of 100 (REQ-CFG-002, REQ-CFG-003).
+fn evaluated_bucket(sent: Option<u8>) -> u8 {
+    sent.unwrap_or(LAST_BUCKET)
+}
+
+/// The answer depends on the caller's client and bucket headers: caches key on both, keep it
+/// private to the caller, and revalidate with the `ETag` before each use.
+fn cache_headers(headers: &mut axum::http::HeaderMap, etag: HeaderValue) {
+    headers.insert(header::ETAG, etag);
+    headers.insert(
+        header::CACHE_CONTROL,
+        HeaderValue::from_static("private, no-cache"),
+    );
+    headers.append(
+        header::VARY,
+        HeaderValue::from_static("x-tran-client, x-tran-bucket"),
+    );
 }

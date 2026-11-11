@@ -2,6 +2,8 @@
 //!
 //! Verifies: REQ-RL-001 REQ-RL-002
 
+use std::num::NonZeroU32;
+
 use serde::{Deserialize, Serialize};
 
 /// Number of micro-units per whole token. Using 60,000 means that at a rate of
@@ -9,16 +11,16 @@ use serde::{Deserialize, Serialize};
 pub const TOKEN_SCALE: u64 = 60_000;
 
 /// A route's rate-limiting class (REQ-RL-001). Every product and health route belongs to one.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum RouteClass {
     /// Sign-in, refresh, sign-out and account deletion: tightest limits, counted before authentication.
     Auth,
     /// Operations that change state (e.g. device registrations).
     Write,
-    /// Read-only product routes.
+    /// Read-only product routes, including the configuration route.
     Read,
-    /// Health, readiness and configuration routes: exempt from limiting and load shedding.
+    /// Health and readiness probes: exempt from limiting and load shedding.
     Exempt,
 }
 
@@ -36,26 +38,55 @@ impl RouteClass {
 }
 
 /// The sustained rate and burst capacity for one route class (REQ-RL-001).
+///
+/// Both numbers are non-zero by type, so [`take`] is total: a policy that could never refill or
+/// never hold a token cannot be built, by configuration or by deserialisation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ClassPolicy {
-    /// Maximum tokens refilled per minute.
-    pub sustained_per_minute: u32,
+    /// Tokens refilled per minute.
+    pub sustained_per_minute: NonZeroU32,
     /// Maximum tokens the bucket can hold at any moment.
-    pub burst: u32,
+    pub burst: NonZeroU32,
 }
 
 impl ClassPolicy {
-    pub const fn new(sustained_per_minute: u32, burst: u32) -> Self {
-        Self {
-            sustained_per_minute,
-            burst,
+    /// A policy, or `None` when either number is zero.
+    pub const fn new(sustained_per_minute: u32, burst: u32) -> Option<Self> {
+        match (
+            NonZeroU32::new(sustained_per_minute),
+            NonZeroU32::new(burst),
+        ) {
+            (Some(sustained_per_minute), Some(burst)) => Some(Self {
+                sustained_per_minute,
+                burst,
+            }),
+            _ => None,
         }
     }
 
     /// Full burst capacity in internal token scale units.
     pub const fn burst_units(self) -> u64 {
-        (self.burst as u64) * TOKEN_SCALE
+        (self.burst.get() as u64) * TOKEN_SCALE
+    }
+
+    /// Refill in units per millisecond: `sustained_per_minute`, by the choice of [`TOKEN_SCALE`].
+    const fn units_per_ms(self) -> u64 {
+        self.sustained_per_minute.get() as u64
+    }
+
+    /// Milliseconds an empty bucket takes to refill completely: after this long untouched, any
+    /// bucket is full again (REQ-RL-006).
+    pub const fn full_refill_ms(self) -> u64 {
+        self.burst_units().div_ceil(self.units_per_ms())
+    }
+}
+
+/// A policy constant from numbers known to be non-zero.
+const fn policy(sustained_per_minute: u32, burst: u32) -> ClassPolicy {
+    match ClassPolicy::new(sustained_per_minute, burst) {
+        Some(policy) => policy,
+        None => panic!("a class policy needs a non-zero rate and burst"),
     }
 }
 
@@ -86,9 +117,9 @@ impl RatePolicy {
 
 /// The canonical rate limits (REQ-RL-001).
 pub const RATE_POLICY: RatePolicy = RatePolicy {
-    auth: ClassPolicy::new(10, 5),
-    write: ClassPolicy::new(60, 20),
-    read: ClassPolicy::new(300, 60),
+    auth: policy(10, 5),
+    write: policy(60, 20),
+    read: policy(300, 60),
     max_keys: 10_000,
     max_in_flight: 100,
 };
@@ -111,17 +142,17 @@ impl Bucket {
         }
     }
 
-    /// Whether this bucket is at full capacity and has been idle for at least one full refill cycle (REQ-RL-006).
+    /// Whether this bucket has been idle for at least one full refill period, and so is full
+    /// whatever it held (REQ-RL-006).
     pub fn is_idle_and_full(&self, policy: &ClassPolicy, now_ms: u64) -> bool {
-        if self.units < policy.burst_units() {
-            return false;
-        }
-        let full_refill_ms = if policy.sustained_per_minute > 0 {
-            (policy.burst as u64 * 60_000).div_ceil(policy.sustained_per_minute as u64)
-        } else {
-            60_000
-        };
-        now_ms.saturating_sub(self.last_refill_at_ms) >= full_refill_ms
+        now_ms >= self.droppable_at_ms(policy)
+    }
+
+    /// When this bucket, left untouched, may be dropped: one full refill period after it was last
+    /// touched, by which time it is full whatever it held (REQ-RL-006).
+    pub fn droppable_at_ms(&self, policy: &ClassPolicy) -> u64 {
+        self.last_refill_at_ms
+            .saturating_add(policy.full_refill_ms())
     }
 }
 
@@ -136,19 +167,12 @@ pub struct TakeResult {
     pub retry_after_secs: Option<u64>,
 }
 
-/// Pure token bucket decision function (REQ-RL-002).
+/// Pure token bucket decision function (REQ-RL-002). Total: it answers for every bucket, policy
+/// and time without panicking.
 ///
 /// Evaluates whether one token can be consumed from `bucket` under `policy` at `now_ms`.
 /// If the clock goes backwards, it is treated as no time passing.
 pub fn take(bucket: &Bucket, policy: &ClassPolicy, now_ms: u64) -> TakeResult {
-    if policy.sustained_per_minute == 0 && policy.burst == 0 {
-        return TakeResult {
-            allowed: false,
-            bucket: *bucket,
-            retry_after_secs: Some(60),
-        };
-    }
-
     let burst_units = policy.burst_units();
     let (delta_ms, last_refill_at_ms) = if now_ms >= bucket.last_refill_at_ms {
         (now_ms - bucket.last_refill_at_ms, now_ms)
@@ -157,7 +181,7 @@ pub fn take(bucket: &Bucket, policy: &ClassPolicy, now_ms: u64) -> TakeResult {
         (0, bucket.last_refill_at_ms)
     };
 
-    let refill_units = delta_ms.saturating_mul(policy.sustained_per_minute as u64);
+    let refill_units = delta_ms.saturating_mul(policy.units_per_ms());
     let available_units = bucket.units.saturating_add(refill_units).min(burst_units);
 
     if available_units >= TOKEN_SCALE {
@@ -171,8 +195,7 @@ pub fn take(bucket: &Bucket, policy: &ClassPolicy, now_ms: u64) -> TakeResult {
         }
     } else {
         let missing_units = TOKEN_SCALE - available_units;
-        let rate = policy.sustained_per_minute as u64;
-        let time_ms = missing_units.div_ceil(rate);
+        let time_ms = missing_units.div_ceil(policy.units_per_ms());
         let retry_after_secs = time_ms.div_ceil(1000).max(1);
 
         TakeResult {
@@ -190,17 +213,19 @@ pub fn take(bucket: &Bucket, policy: &ClassPolicy, now_ms: u64) -> TakeResult {
 mod tests {
     use super::*;
 
+    fn class(sustained: u32, burst: u32) -> ClassPolicy {
+        ClassPolicy::new(sustained, burst).unwrap()
+    }
+
     #[test]
     fn policy_values_match_spec_defaults() {
         // Verifies: REQ-RL-001
-        assert_eq!(RATE_POLICY.auth.sustained_per_minute, 10);
-        assert_eq!(RATE_POLICY.auth.burst, 5);
-        assert_eq!(RATE_POLICY.write.sustained_per_minute, 60);
-        assert_eq!(RATE_POLICY.write.burst, 20);
-        assert_eq!(RATE_POLICY.read.sustained_per_minute, 300);
-        assert_eq!(RATE_POLICY.read.burst, 60);
+        assert_eq!(RATE_POLICY.auth, class(10, 5));
+        assert_eq!(RATE_POLICY.write, class(60, 20));
+        assert_eq!(RATE_POLICY.read, class(300, 60));
         assert_eq!(RATE_POLICY.max_keys, 10_000);
         assert_eq!(RATE_POLICY.max_in_flight, 100);
+        assert_eq!(policy(10, 5), RATE_POLICY.auth);
 
         assert_eq!(
             RATE_POLICY.for_class(RouteClass::Auth),
@@ -226,31 +251,93 @@ mod tests {
         assert_eq!(RouteClass::Exempt.as_str(), "exempt");
     }
 
+    // Verifies: REQ-RL-001 REQ-RL-002
     #[test]
-    fn zero_policy_rejects() {
-        let policy = ClassPolicy::new(0, 0);
-        let bucket = Bucket::full(&policy, 0);
-        let res = take(&bucket, &policy, 1000);
-        assert!(!res.allowed);
-        assert_eq!(res.retry_after_secs, Some(60));
+    fn a_zero_rate_or_burst_cannot_be_built() {
+        assert_eq!(ClassPolicy::new(0, 5), None);
+        assert_eq!(ClassPolicy::new(10, 0), None);
+        assert_eq!(ClassPolicy::new(0, 0), None);
+        let zero_rate = r#"{"sustainedPerMinute":0,"burst":5}"#;
+        assert!(serde_json::from_str::<ClassPolicy>(zero_rate).is_err());
+        let zero_burst = r#"{"sustainedPerMinute":5,"burst":0}"#;
+        assert!(serde_json::from_str::<ClassPolicy>(zero_burst).is_err());
+        let fine = r#"{"sustainedPerMinute":5,"burst":2}"#;
+        assert_eq!(
+            serde_json::from_str::<ClassPolicy>(fine).unwrap(),
+            class(5, 2)
+        );
     }
 
     #[test]
+    #[should_panic(expected = "non-zero rate and burst")]
+    fn a_zero_constant_policy_does_not_compile() {
+        // In a `const` this panic is a compile error; here it runs once to prove the guard.
+        let _ = policy(0, 1);
+    }
+
+    // Verifies: REQ-RL-002
+    #[test]
+    fn take_is_total_at_the_extremes() {
+        let policies = [
+            class(1, 1),
+            class(u32::MAX, 1),
+            class(1, u32::MAX),
+            class(u32::MAX, u32::MAX),
+        ];
+        let buckets = [
+            Bucket {
+                units: 0,
+                last_refill_at_ms: 0,
+            },
+            Bucket {
+                units: u64::MAX,
+                last_refill_at_ms: u64::MAX,
+            },
+            Bucket {
+                units: 0,
+                last_refill_at_ms: u64::MAX,
+            },
+        ];
+        for policy in policies {
+            for bucket in buckets {
+                for now in [0, 1, 59_999, u64::MAX] {
+                    let res = take(&bucket, &policy, now);
+                    assert_eq!(res.allowed, res.retry_after_secs.is_none());
+                    assert!(res.bucket.units <= policy.burst_units().max(bucket.units));
+                    let _ = bucket.is_idle_and_full(&policy, now);
+                }
+            }
+        }
+        // The slowest possible refill: one token per minute, so one whole minute to wait.
+        let slow = class(1, 1);
+        let empty = Bucket {
+            units: 0,
+            last_refill_at_ms: 0,
+        };
+        assert_eq!(take(&empty, &slow, 0).retry_after_secs, Some(60));
+    }
+
+    // Verifies: REQ-RL-006
+    #[test]
     fn idle_and_full_detection() {
-        let policy = ClassPolicy::new(10, 5);
+        let policy = class(10, 5);
+        assert_eq!(policy.full_refill_ms(), 30_000);
         let bucket = Bucket::full(&policy, 0);
-        // At 0 ms it is full, but hasn't been idle for a full refill period (30s)
         assert!(!bucket.is_idle_and_full(&policy, 10_000));
         assert!(bucket.is_idle_and_full(&policy, 30_000));
+        assert_eq!(bucket.droppable_at_ms(&policy), 30_000);
 
         let partial = Bucket {
             units: 100,
             last_refill_at_ms: 0,
         };
-        assert!(!partial.is_idle_and_full(&policy, 60_000));
+        assert!(!partial.is_idle_and_full(&policy, 29_999));
+        assert!(partial.is_idle_and_full(&policy, 30_000));
 
-        let zero_rate_policy = ClassPolicy::new(0, 5);
-        let zero_bucket = Bucket::full(&zero_rate_policy, 0);
-        assert!(zero_bucket.is_idle_and_full(&zero_rate_policy, 60_000));
+        let late = Bucket {
+            units: 0,
+            last_refill_at_ms: u64::MAX,
+        };
+        assert_eq!(late.droppable_at_ms(&policy), u64::MAX);
     }
 }

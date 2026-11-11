@@ -1,4 +1,4 @@
-// Verifies: REQ-SEC-001, REQ-SEC-002, REQ-SEC-003, REQ-MOB-004, REQ-MOB-005
+// Verifies: REQ-SEC-001, REQ-SEC-002, REQ-SEC-003, REQ-MOB-004, REQ-MOB-005, REQ-DEP-002
 // Sample tokens are built by concatenation so this file does not trip the scanner it tests.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -10,6 +10,9 @@ import {
   codeEnvNames,
   compareEnv,
   credentialTestNames,
+  DOCKER_CONTEXT_SECRETS,
+  dockerBuildProblems,
+  dockerIgnored,
   exampleKeys,
   isBinary,
   isLockfile,
@@ -219,6 +222,7 @@ describe('env contract (REQ-SEC-002)', () => {
     const live = credentialTestNames({
       api: read('apps/api/tests/push_live_test.rs'),
       ios: read('apps/ios/Tests/TranVotingDemoTests/ApnsRegistrationLiveTests.swift'),
+      deploy: read('tooling/deploy/remote.test.mjs'),
     });
     assert.deepEqual(compareEnv(code, example.keys, live), []);
   });
@@ -385,5 +389,48 @@ describe('signing material (REQ-MOB-005)', () => {
     const ignore = read('.gitignore');
     for (const ext of ['p8', 'p12', 'mobileprovision', 'jks', 'keystore'])
       assert.match(ignore, new RegExp(`^\\*\\.${ext}$`, 'm'), ext);
+  });
+});
+
+describe('the image build context and recipe hold no secret (REQ-DEP-002)', () => {
+  it('REQ-DEP-002 Docker rules: last match wins, folders cover their contents, ! re-includes', () => {
+    const rules = '*\n!apps/api/\n**/*.pem\n!apps/api/keep.pem\n';
+    assert.equal(dockerIgnored(rules, 'docs/a.md'), true);
+    assert.equal(dockerIgnored(rules, 'apps/api/src/main.rs'), false);
+    assert.equal(dockerIgnored(rules, 'apps/api/deep/x.pem'), true);
+    assert.equal(dockerIgnored(rules, 'apps/api/keep.pem'), false);
+    assert.equal(
+      dockerIgnored('.env*\n', 'apps/api/.env'),
+      false,
+      'a root pattern stays at the root'
+    );
+    assert.equal(dockerIgnored('**/.env*\n', 'apps/api/.env'), true);
+  });
+
+  it('REQ-DEP-002 root-only patterns let a nested key or env file through', () => {
+    const rootOnly =
+      '.git\n.env*\ndata/\n*.pem\n*.p8\n*.key\n*.p12\n*.jks\n*.keystore\n*.mobileprovision\n';
+    const problems = dockerBuildProblems(rootOnly, '');
+    assert.ok(
+      problems.includes(
+        '.dockerignore: apps/api/certs/server.pem would enter the image build context'
+      )
+    );
+    assert.ok(
+      problems.includes('.dockerignore: apps/api/.env would enter the image build context')
+    );
+    assert.ok(!problems.some((p) => p.includes(': .env ')));
+  });
+
+  it('REQ-DEP-002 a secret-like ARG or ENV in the Dockerfile fails', () => {
+    assert.deepEqual(dockerBuildProblems('*\n', 'ARG VERSION\nENV DB_PASSWORD=x\nARG apiKey\n'), [
+      'apps/api/Dockerfile:2: ENV DB_PASSWORD looks like a secret',
+      'apps/api/Dockerfile:3: ARG apiKey looks like a secret',
+    ]);
+  });
+
+  it('REQ-DEP-002 the real .dockerignore and Dockerfile pass, for every sample path', () => {
+    assert.ok(DOCKER_CONTEXT_SECRETS.length >= 10);
+    assert.deepEqual(dockerBuildProblems(read('.dockerignore'), read('apps/api/Dockerfile')), []);
   });
 });

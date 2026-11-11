@@ -20,8 +20,9 @@ version working and run as their own step (ADR-0049), configuration only from th
    read-only root filesystem. It contains the binary and its migrations, and no configuration.
 2. **Build once, promote by digest.** The image built from the tag is the one staging tests and the one production
    runs. A tag can move; a digest cannot.
-3. **Validate, migrate, start, wait for ready, then drain the old.** The order is a script with an injected target, so
-   it is tested with a fake and reused by any host.
+3. **Validate, migrate, start, wait for ready, then drain the old.** The order is one script for one reference target
+   (two slots behind a proxy on one host), tested by running it against fake `docker`, `curl` and `ssh` executables;
+   a failed readiness removes the new slot and leaves the old one serving. A fork replaces the target branch.
 4. **Rollback is redeploying the previous digest.** No reverse migrations exist or are needed, because the schema
    always works with the previous release. The one-way doors (`-- contract:` migrations) are printed at deploy time.
 5. **Prove the image by running it** in a smoke test: start, ready, a real request, `SIGTERM`, clean exit.
@@ -41,5 +42,5 @@ version working and run as their own step (ADR-0049), configuration only from th
   processes on the same file. A fork with several hosts moves to a network database first (ADR-0049).
 - A container runtime is needed to run the smoke test locally; without one it is skipped with a stated reason and
   still runs in CI.
-- The deploy script is shell with a test double. It is the one place where behaviour is proven mostly by the smoke
-  test, not by unit tests.
+- The deploy script is shell, proven by unit tests that run it against fake executables; the smoke test proves the
+  image, not the script.

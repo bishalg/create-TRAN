@@ -20,6 +20,7 @@ import uniffi.tran_uniffi.TranToastTone
 import uniffi.tran_uniffi.TranUserAction
 import uniffi.tran_uniffi.actionSpec
 import uniffi.tran_uniffi.admitToast
+import uniffi.tran_uniffi.logEvent
 import uniffi.tran_uniffi.toastDurationMs
 
 /** A self-dismissing, non-blocking message; strings stay resource ids until rendered. */
@@ -205,12 +206,23 @@ class TranFeedback(
         fun messageRes(key: String): Int = feedbackMessageRes[key] ?: TranStrings.Errors.unexpected
 
         /**
-         * The one `request failed` event with `LOG_EVENT`'s fields (`fixtures/feedback.json`), as
-         * logfmt; `-` marks a field the failure does not have (REQ-ROB-007, REQ-OBS-002).
+         * The one `request failed` event, as logfmt: the message and fields come from the Rust schema
+         * over UniFFI (`logEvent()`, REQ-OBS-002), in its order; `-` marks a field the failure does not
+         * have (REQ-ROB-007).
          */
-        fun logLine(failure: TranRequestFailure): String =
-            "request failed code=${failure.spec.wireCode} status=${failure.status ?: "-"} " +
-                "request_id=${failure.requestId ?: "-"} trace_id=${failure.traceId ?: "-"}"
+        fun logLine(failure: TranRequestFailure): String {
+            val event = logEvent()
+            val values = logFields(failure)
+            return (listOf(event.message) + event.fields.map { "$it=${values[it] ?: "-"}" }).joinToString(" ")
+        }
+
+        /** The values this app has for the schema's fields. A key the schema does not list fails `FeedbackParityTest`. */
+        fun logFields(failure: TranRequestFailure): Map<String, String> = mapOf(
+            "code" to failure.spec.wireCode,
+            "status" to (failure.status?.toString() ?: "-"),
+            "request_id" to (failure.requestId ?: "-"),
+            "trace_id" to (failure.traceId ?: "-"),
+        )
 
         /**
          * Body, confirm label and button ids per action; the title is the catalogue's `messageKey`.

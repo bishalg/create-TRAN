@@ -114,11 +114,11 @@ Evaluates voting eligibility using **Rust Core** (`crates/rust-core/src/voting.r
 
 ### Headers
 
-| Header                          | Purpose                                                                                  |
-| :------------------------------ | :--------------------------------------------------------------------------------------- |
-| `Content-Type`                  | `application/json`                                                                       |
-| `X-Forwarded-For` / `X-Real-IP` | Client IP for country stub                                                               |
-| `X-Debug-Country`               | Honoured only when `APP_ENV` is `development` or `test`; ignored otherwise (REQ-API-006) |
+| Header            | Purpose                                                                                  |
+| :---------------- | :--------------------------------------------------------------------------------------- |
+| `Content-Type`    | `application/json`                                                                       |
+| `X-Forwarded-For` | Client IP for country stub, read only when the peer is a trusted proxy (REQ-RL-003)      |
+| `X-Debug-Country` | Honoured only when `APP_ENV` is `development` or `test`; ignored otherwise (REQ-API-006) |
 
 Loopback addresses default to `US`; private ranges stub to `IN` for demo variety.
 

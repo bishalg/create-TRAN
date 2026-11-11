@@ -64,7 +64,7 @@ One small domain you can extend:
 
 **API (async)** — `POST /api/v1/vote/eligibility` uses Rust Core plus a stub geo resolver:
 
-- `X-Forwarded-For` / `X-Real-IP` for client IP
+- `X-Forwarded-For` for client IP, read only when the peer is a trusted proxy
 - `X-Debug-Country` (e.g. `US`, `IN`, `NP`, `BR`) — documented as dev-only; **not gated by env in code yet**
 - Loopback defaults to `US`; private ranges stub to `IN` for variety
 

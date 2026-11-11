@@ -27,7 +27,8 @@ and a span id that are not all zeros; anything else is `None`), `format_tracepar
 (same trace id, new span id). Randomness MUST be injected so the functions are pure. All four MUST be exported over
 UniFFI and mirrored in TypeScript, pinned by `fixtures/trace.json`.
 **Verified by:** `crates/rust-core/tests/trace_fixtures.rs`, `crates/tran-uniffi/tests/trace_fixtures.rs`,
-`packages/core-ts/tests/trace.test.ts`, `TraceParityTests.swift`, `TraceParityTest.kt`.
+`packages/api/tests/trace.test.ts` (the one TypeScript implementation; `@tran/core` re-exports it,
+`packages/core-ts/tests/trace-reexport.test.ts`), `packages/api/tests/trace-runtime.test.ts`, `TraceParityTests.swift`, `TraceParityTest.kt`.
 
 ### REQ-OBS-002 [verified] The log schema is Rust data
 
@@ -36,7 +37,8 @@ UniFFI and mirrored in TypeScript, pinned by `fixtures/trace.json`.
 `request_id`, `trace_id`). The schema MUST reach TypeScript through `pnpm tokens:sync` and native code through UniFFI,
 and `fixtures/feedback.json` `logEvent` MUST list the same fields. A field outside the schema MUST fail a test on the
 platform that added it.
-**Verified by:** `feedback.rs` unit tests, the `logEvent` fixture rows on every platform.
+**Verified by:** `feedback.rs` unit tests, the `logEvent` fixture rows on every platform; the native log lines are built
+from `logEvent()` over UniFFI (`FeedbackParityTests.swift`, `FeedbackParityTest.kt`).
 
 ## The API
 
@@ -51,23 +53,26 @@ invalid header MUST start a new trace. Every log event written while handling th
 
 Each completed request MUST log exactly one `request completed` event with the fields of REQ-OBS-002, where `route` is
 the matched template or `unmatched`. The level MUST be `info`, except for the health and readiness probes, which log at
-`debug` so they do not drown the rest. The raw path, the query string and header values MUST NOT be logged. (This
-replaces the `debug` level stated in REQ-ROB-007.)
+`debug` so they do not drown the rest. The raw path, the query string, a non-standard method and header values MUST NOT
+be logged, in the event or in any span field the log prints (`method` is normalised as in REQ-OBS-005). (This replaces
+the `debug` level stated in REQ-ROB-007.)
 **Verified by:** `apps/api/tests/access_log_test.rs`.
 
 ### REQ-OBS-005 [verified] RED metrics with bounded labels
 
 The API MUST count `tran_http_requests_total{method,route,status}`, observe
 `tran_http_request_duration_seconds{method,route}` in a histogram with fixed buckets from 5 ms to 10 s, track
-`tran_http_requests_in_flight`, and expose `tran_build_info{version}` as `1`. `route` MUST be the matched template or
+`tran_http_requests_in_flight`, and expose `tran_build_info{version,commit}` as `1` (`commit` from `TRAN_COMMIT` at
+build time, else `unknown`). `route` MUST be the matched template or
 `unmatched`; `method` MUST be one of the standard methods or `OTHER`. No label may hold a path, an id or any other
 client-chosen value.
 **Verified by:** `apps/api/tests/metrics_test.rs`.
 
 ### REQ-OBS-006 [verified] Metrics are served on a private listener
 
-Metrics MUST be served in the Prometheus text format at `GET /metrics` on the address in `METRICS_ADDR`, and only
-there. When `METRICS_ADDR` is unset no metrics endpoint exists. The public router MUST NOT serve them.
+Metrics MUST be served in the Prometheus text format at `GET /metrics` on the address in `METRICS_ADDR` (an IP
+address and port), and only there. When `METRICS_ADDR` is unset or empty no metrics endpoint exists; any other value
+that is not an address stops the start, naming the variable. The public router MUST NOT serve them.
 **Verified by:** `metrics_test.rs` (`metrics_listener_*`, `public_router_has_no_metrics`).
 
 ### REQ-OBS-007 [verified] Liveness and readiness are different questions
@@ -80,14 +85,16 @@ begun. `GET /api/health` keeps its report (REQ-API-012).
 ### REQ-OBS-008 [verified] Shutdown drains
 
 On `SIGTERM` or `SIGINT` the API MUST at once report not ready, stop accepting connections, let in-flight requests
-finish for up to `SHUTDOWN_GRACE_MS` (default `10000`), and exit `0`, logging `shutdown started` and
-`shutdown complete`. The signal MUST be injectable so the behaviour is tested without sending one.
+finish for up to `SHUTDOWN_GRACE_MS` (default `10000`; not a whole number stops the start), and exit `0`, logging
+`shutdown started` and `shutdown complete` once each for the process, the metrics listener included, which drains
+with it. The signal MUST be injectable so the behaviour is tested without sending one.
 **Verified by:** `lifecycle_test.rs` (`shutdown_*`).
 
 ### REQ-OBS-009 [verified] The start-up event says what is running
 
-Start-up MUST log one `info` event, `service started`, with the version, the environment, the listening address and
-the metrics address or `off`. It MUST NOT print a `Secret` (REQ-SEC-004) or the whole environment.
+Start-up MUST log one `info` event, `service started`, once every listener is bound, with the version, the commit,
+the environment, the bound listening address and the bound metrics address or `off`. It MUST NOT print a `Secret`
+(REQ-SEC-004) or the whole environment.
 **Verified by:** `lifecycle_test.rs` (`startup_event_*`).
 
 ## The clients
@@ -96,12 +103,16 @@ the metrics address or `off`. It MUST NOT print a `Secret` (REQ-SEC-004) or the 
 
 Each client MUST send `traceparent` on every API request. One user action is one trace: its retries (REQ-ERR-005) and
 a token refresh made on its behalf (REQ-SEC-015) MUST reuse the trace id with a new span id each.
-**Verified by:** `packages/api/tests/trace-headers.test.ts`, `TranApiClientTraceTests.swift`,
-`TranApiClientTraceTest.kt`.
+**Verified by:** `packages/api/tests/trace-headers.test.ts`, `packages/api/tests/trace-actions.test.ts`,
+`packages/core-ts/tests/retry-trace.test.ts`, `apps/web/src/shared/api/useTranApi.test.tsx`; `TranApiClientTraceTests.swift` and `TranApiClientTraceTest.kt`
+(retries, a refresh made for an action, and no `traceparent` rather than a constant one when there is no randomness).
 
 ### REQ-OBS-011 [verified] A client failure can be joined to the server's logs
 
 The client's `request failed` event and the event handed to the reporter (REQ-ERR-014) MUST carry the `trace_id` of
 the call that failed, including when no response arrived. The fields MUST come from the generated schema of
 REQ-OBS-002.
-**Verified by:** `packages/core-ts/tests/feedback.test.ts`, `TranReportingTests.swift`, `TranReportingTest.kt`.
+**Verified by:** `packages/core-ts/tests/feedback.test.ts`, `packages/core-ts/tests/retry-trace.test.ts`,
+`apps/web/src/shared/api/useTranApi.test.tsx`, `TranReportingTests.swift`, `TranReportingTest.kt`;
+`TranApiClientTraceTests.swift` and `TranApiClientTraceTest.kt` (a real call with no answer reports the trace id it
+sent; the expired answer after a `401` carries the action's trace id).

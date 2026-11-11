@@ -5,6 +5,7 @@ pub mod contract;
 pub mod db;
 pub mod devices;
 pub mod providers;
+pub mod rate;
 
 use std::collections::BTreeMap;
 use std::fmt::Debug;
@@ -17,7 +18,8 @@ use tracing_subscriber::layer::{Context, SubscriberExt};
 use tracing_subscriber::registry::LookupSpan;
 use tracing_subscriber::Layer;
 
-/// One event: level, message and every field (span fields included) rendered as text.
+/// One event: level, message and every field (span fields included) rendered as text. A span
+/// field with the same name as an event field but another value is kept as `span.<name>`.
 #[derive(Clone, Debug)]
 pub struct Event {
     pub level: Level,
@@ -104,7 +106,16 @@ where
                 }
             }
         }
-        event.record(&mut fields);
+        let mut own = Fields::default();
+        event.record(&mut own);
+        for (name, value) in own.0 {
+            // A span field the event shadows stays visible, so "must not contain" checks see it.
+            if let Some(shadowed) = fields.0.insert(name.clone(), value.clone()) {
+                if shadowed != value {
+                    fields.0.insert(format!("span.{name}"), shadowed);
+                }
+            }
+        }
         let message = fields.0.remove("message").unwrap_or_default();
         self.0.lock().unwrap().push(Event {
             level: *event.metadata().level(),

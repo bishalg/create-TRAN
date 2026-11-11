@@ -1,4 +1,4 @@
-// Verifies: REQ-PSH-009 REQ-PSH-010 REQ-DB-011
+// Verifies: REQ-PSH-009 REQ-PSH-010 REQ-DB-011 REQ-DB-012
 import Foundation
 
 /// What push keeps on the device, in ordinary app storage (`UserDefaults`): the installation id and
@@ -53,23 +53,27 @@ struct TranPushStore {
         return true
     }
 
-    /// The registration the API answered `204` to, or `nil`.
+    /// The registration the API answered `204` to, or `nil` (REQ-DB-011). An older version is read
+    /// as it is; a newer one is left for the app version that wrote it; an unreadable one (a
+    /// mistyped value, an invalid `schema`) is cleared. Reading never writes.
     var lastRegistration: TranLastRegistration? {
-        guard let token = defaults.string(forKey: Self.tokenKey),
-            let at = defaults.object(forKey: Self.registeredAtKey) as? NSNumber
-        else { return nil }
-        let schema = defaults.object(forKey: Self.schemaKey) as? Int ?? 1
-        let decision = tranStoredRecordDecision(schema: UInt32(schema), current: tranStoredPushSchema())
-        switch decision {
-        case .use:
-            return TranLastRegistration(token: token, registeredAtUnixS: at.int64Value)
-        case .upgrade:
-            defaults.set(Int(tranStoredPushSchema()), forKey: Self.schemaKey)
-            return TranLastRegistration(token: token, registeredAtUnixS: at.int64Value)
-        case .discard:
+        let keys = [Self.schemaKey, Self.tokenKey, Self.registeredAtKey]
+        guard keys.contains(where: { defaults.object(forKey: $0) != nil }) else { return nil }
+        switch TranStoredSchema.verdict(defaults.object(forKey: Self.schemaKey), current: tranStoredPushSchema()) {
+        case .newer: return nil
+        case .unreadable:
+            clear()
+            return nil
+        case .use: break
+        }
+        guard let token = defaults.object(forKey: Self.tokenKey) as? String,
+            let at = defaults.object(forKey: Self.registeredAtKey) as? NSNumber,
+            CFGetTypeID(at) != CFBooleanGetTypeID(), !CFNumberIsFloatType(at)
+        else {
             clear()
             return nil
         }
+        return TranLastRegistration(token: token, registeredAtUnixS: at.int64Value)
     }
 
     func record(_ registration: TranLastRegistration) {

@@ -1,4 +1,4 @@
-// Verifies: REQ-OBS-010
+// Verifies: REQ-OBS-010 REQ-OBS-011
 import XCTest
 
 /// REQ-OBS-010: Every API call carries a trace; retries and token refresh reuse the trace id.
@@ -108,5 +108,85 @@ final class TranApiClientTraceTests: XCTestCase {
         let header = try XCTUnwrap(TraceStubURLProtocol.requests[0].value(forHTTPHeaderField: "traceparent"))
         let parsed = try XCTUnwrap(parseTraceparentOffline(header: header))
         XCTAssertEqual(parsed.traceId.count, 32)
+    }
+
+    // MARK: - No randomness, no trace
+
+    func testNoRandomnessSendsNoTraceparentRatherThanAConstantOne() {
+        let failing: TranRetry.RandomSource = { _ in errSecAllocate }
+        XCTAssertNil(TranRetry.newTraceId(random: failing))
+        XCTAssertNil(TranRetry.newChildSpan(traceId: nil))
+        XCTAssertNil(TranRetry.newChildSpan(traceId: "4bf92f3577b34da6a3ce929d0e0e4736", random: failing))
+        // Two real ids never collide.
+        XCTAssertNotEqual(TranRetry.newTraceId(), TranRetry.newTraceId())
+    }
+
+    // MARK: - A real failed call, reported
+
+    func testAFailedCallWithNoAnswerReportsTheTraceIdItSent() async throws {
+        TraceStubURLProtocol.handler = { _ in throw URLError(.unsupportedURL) }
+        var reported: TranReporting.Event?
+        TranReporting.sink = { event, _ in reported = event }
+        defer { TranReporting.sink = nil }
+
+        do {
+            try await makeClient().probeHealth()
+            XCTFail("expected the call to fail")
+        } catch let failure as TranRequestFailure {
+            XCTAssertNil(failure.status, "no answer arrived")
+            TranReporting.report(failure)
+        }
+
+        let sent = try XCTUnwrap(TraceStubURLProtocol.requests.first?.value(forHTTPHeaderField: "traceparent"))
+        let traceId = try XCTUnwrap(parseTraceparentOffline(header: sent)?.traceId)
+        XCTAssertEqual(reported?.code, "client.unexpected")
+        XCTAssertEqual(reported?.traceId, traceId)
+        XCTAssertTrue(TranFeedback.logLine(TranRequestFailure.classify(URLError(.unsupportedURL), traceId: traceId))
+            .hasSuffix("trace_id=\(traceId)"))
+    }
+
+    // MARK: - The session client
+
+    private static let action = "4bf92f3577b34da6a3ce929d0e0e4736"
+
+    private func sessionClient(_ vault: SessionVault) -> TranSessionClient {
+        TranSessionClient(
+            vault: vault, baseUrl: URL(string: "http://127.0.0.1:3001")!,
+            session: SessionStubProtocol.session(), log: { _ in })
+    }
+
+    private func traces(_ requests: [SessionStubProtocol.Recorded]) throws -> [TranTraceContext] {
+        try requests.map { try XCTUnwrap(parseTraceparentOffline(header: try XCTUnwrap($0.traceparent))) }
+    }
+
+    func testARefreshMadeForAnActionReusesItsTraceWithANewSpan() async throws {
+        let vault = InMemorySessionVault(SessionWire.stored(refresh: "refresh-0"))
+        SessionStubProtocol.reset { request in
+            request.path == TranEndpoint.refresh.path()
+                ? .status(200, body: SessionWire.pair(access: "access-1", refresh: "refresh-1"))
+                : .status(204, body: "")
+        }
+
+        // No access token after a restart: the action refreshes first, then is sent.
+        _ = try await sessionClient(vault).authorized(.validateSession, traceId: Self.action)
+
+        let sent = try traces(SessionStubProtocol.requests)
+        XCTAssertEqual(SessionStubProtocol.requests.map(\.path), [TranEndpoint.refresh.path(), TranEndpoint.validateSession.path()])
+        XCTAssertEqual(Set(sent.map(\.traceId)), [Self.action], "one action, one trace")
+        XCTAssertEqual(Set(sent.map(\.spanId)).count, sent.count, "a new span for each request")
+    }
+
+    func testASignOutAfterA401CarriesTheActionTraceId() async throws {
+        let vault = InMemorySessionVault(SessionWire.stored(refresh: "refresh-0"))
+        SessionStubProtocol.reset { _ in .status(401, body: SessionWire.expired) }
+
+        do {
+            _ = try await sessionClient(vault).authorized(.validateSession, traceId: Self.action)
+            XCTFail("expected the session to end")
+        } catch let failure as TranRequestFailure {
+            XCTAssertEqual(failure.untraced, TranSessionClient.expired)
+            XCTAssertEqual(failure.traceId, Self.action, "the logged event joins the server's logs")
+        }
+        XCTAssertEqual(Set(try traces(SessionStubProtocol.requests).map(\.traceId)), [Self.action])
     }
 }

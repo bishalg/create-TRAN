@@ -178,13 +178,14 @@ pub fn find<'a>(table: &'a [Route], method: &Method, path: &str) -> Option<&'a R
         .find(|route| route.verb.matches(method) && route.fits(path))
 }
 
-/// Returns the rate-limiting class for a given request path and method (REQ-RL-001).
-/// Health routes are exempt.
-pub fn route_class(path: &str, method: &Method) -> RouteClass {
+/// The rate-limiting class of a request to `path` with `method`, by the route of `table` that
+/// answers it (REQ-RL-001). Health and readiness probes are exempt; anything no route answers
+/// (a `404`) counts as `read`, so scanning for routes is limited too.
+pub fn route_class(table: &[Route], path: &str, method: &Method) -> RouteClass {
     if path.starts_with("/api/health") {
         return RouteClass::Exempt;
     }
-    find(&ROUTES, method, path)
+    find(table, method, path)
         .map(|route| route.class)
         .unwrap_or(RouteClass::Read)
 }
@@ -268,17 +269,28 @@ mod tests {
         for route in &ROUTES {
             assert_ne!(route.class, RouteClass::Exempt);
         }
-        assert_eq!(route_class("/api/health", &Method::GET), RouteClass::Exempt);
         assert_eq!(
-            route_class("/api/v1/auth/session", &Method::POST),
-            RouteClass::Auth
+            route_class(&ROUTES, "/api/health", &Method::GET),
+            RouteClass::Exempt
         );
         assert_eq!(
-            route_class("/api/v1/auth/session", &Method::GET),
+            route_class(&ROUTES, "/api/v1/config", &Method::GET),
             RouteClass::Read
         );
         assert_eq!(
-            route_class("/api/v1/unknown", &Method::GET),
+            route_class(&[], "/api/v1/auth/session", &Method::POST),
+            RouteClass::Read
+        );
+        assert_eq!(
+            route_class(&ROUTES, "/api/v1/auth/session", &Method::POST),
+            RouteClass::Auth
+        );
+        assert_eq!(
+            route_class(&ROUTES, "/api/v1/auth/session", &Method::GET),
+            RouteClass::Read
+        );
+        assert_eq!(
+            route_class(&ROUTES, "/api/v1/unknown", &Method::GET),
             RouteClass::Read
         );
     }

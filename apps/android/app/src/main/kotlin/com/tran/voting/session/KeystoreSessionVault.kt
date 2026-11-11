@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import com.tran.voting.storage.StoredSchema
 import java.security.GeneralSecurityException
 import java.security.KeyStore
 import java.security.ProviderException
@@ -15,8 +16,6 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import org.json.JSONException
 import org.json.JSONObject
-import uniffi.tran_uniffi.TranStoredRecordAction
-import uniffi.tran_uniffi.tranStoredRecordDecision
 import uniffi.tran_uniffi.tranStoredSessionSchema
 
 /**
@@ -24,12 +23,22 @@ import uniffi.tran_uniffi.tranStoredSessionSchema
  * that is generated inside, and never leaves, the Android Keystore. Only the ciphertext and its
  * IV reach app-private preferences, which the manifest keeps out of backup and device transfer.
  * No `androidx.security` (deprecated): platform APIs only.
+ *
+ * Reading never writes (REQ-DB-011, REQ-DB-012): an older record is read into the current shape and
+ * stored again only by the next rotation; a newer app version's record is signed out and left in
+ * place; only an unreadable record is deleted (REQ-SEC-020).
  */
-class KeystoreSessionVault(
+class KeystoreSessionVault internal constructor(
     context: Context,
-    private val keyAlias: String = KEY_ALIAS,
-    preferencesName: String = PREFERENCES,
+    preferencesName: String,
+    private val cipher: VaultCipher,
 ) : SessionVault {
+    constructor(
+        context: Context,
+        keyAlias: String = KEY_ALIAS,
+        preferencesName: String = PREFERENCES,
+    ) : this(context, preferencesName, KeystoreVaultCipher(keyAlias))
+
     private val preferences: SharedPreferences =
         context.applicationContext.getSharedPreferences(preferencesName, Context.MODE_PRIVATE)
 
@@ -41,47 +50,113 @@ class KeystoreSessionVault(
             if (ciphertext != null || iv != null) clear()
             return null
         }
-        val record = try {
+        val stored = try {
             // A restored backup or a wiped Keystore leaves ciphertext whose key is gone: no key, no record.
-            val key = existingKey() ?: throw GeneralSecurityException("vault key missing")
-            val cipher = Cipher.getInstance(TRANSFORMATION)
-            cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(TAG_BITS, decode(iv)))
-            val decoded = decodeRecord(String(cipher.doFinal(decode(ciphertext)), Charsets.UTF_8))
-            if (decoded != null && decoded.schema != tranStoredSessionSchema().toInt()) {
-                val upgraded = StoredSession(decoded.userId, decoded.role, decoded.refreshToken, tranStoredSessionSchema().toInt())
-                write(upgraded)
-                upgraded
-            } else {
-                decoded
-            }
+            decodeRecord(String(cipher.open(decode(ciphertext), decode(iv)), Charsets.UTF_8))
         } catch (_: GeneralSecurityException) {
-            null
+            Stored.Unreadable
         } catch (_: ProviderException) {
-            null
+            Stored.Unreadable
         } catch (_: IllegalArgumentException) {
-            null
-        } catch (_: JSONException) {
-            null
+            Stored.Unreadable
         }
-        // Unreadable is signed out, and the record must not linger (REQ-SEC-020).
-        if (record == null) clear()
-        return record
+        return when (stored) {
+            is Stored.Session -> stored.session
+            // A newer app version wrote it: signed out here, left in place for that version.
+            Stored.Newer -> null
+            // Unreadable is signed out, and the record must not linger (REQ-SEC-020).
+            Stored.Unreadable -> {
+                clear()
+                null
+            }
+        }
     }
 
     @Synchronized
     override fun write(session: StoredSession) {
-        val cipher = Cipher.getInstance(TRANSFORMATION)
-        // The Keystore chooses a fresh random IV for every encryption; callers cannot supply one.
-        cipher.init(Cipher.ENCRYPT_MODE, existingKey() ?: generateKey())
-        val sealed = cipher.doFinal(encodeRecord(session).toByteArray(Charsets.UTF_8))
+        val (sealed, sealedIv) = cipher.seal(encodeRecord(session).toByteArray(Charsets.UTF_8))
         val ciphertext = encode(sealed)
-        val iv = encode(cipher.iv)
+        val iv = encode(sealedIv)
         preferences.edit().putString(KEY_CIPHERTEXT, ciphertext).putString(KEY_IV, iv).commit()
     }
 
     @Synchronized
     override fun clear() {
         preferences.edit().clear().commit()
+    }
+
+    /** What the decrypted record comes to. */
+    internal sealed interface Stored {
+        class Session(val session: StoredSession) : Stored
+
+        data object Newer : Stored
+
+        data object Unreadable : Stored
+    }
+
+    companion object {
+        const val PREFERENCES = "tran_session_vault"
+        const val KEY_ALIAS = "tran_session_vault_key"
+        const val KEY_CIPHERTEXT = "ciphertext"
+        const val KEY_IV = "iv"
+
+        private fun encode(bytes: ByteArray): String = Base64.encodeToString(bytes, Base64.NO_WRAP)
+
+        private fun decode(text: String): ByteArray = Base64.decode(text, Base64.NO_WRAP)
+
+        private fun encodeRecord(session: StoredSession): String =
+            JSONObject()
+                .put("schema", tranStoredSessionSchema().toInt())
+                .put("user_id", session.userId)
+                .put("role", session.role.wire)
+                .put("refresh_token", session.refreshToken)
+                .toString()
+
+        /** Reads a record of any version this or an earlier release wrote; never coerces a mistyped field. */
+        internal fun decodeRecord(json: String): Stored {
+            val record = try {
+                JSONObject(json)
+            } catch (_: JSONException) {
+                return Stored.Unreadable
+            }
+            val current = tranStoredSessionSchema()
+            when (StoredSchema.verdict(record.has("schema"), record.opt("schema"), current)) {
+                StoredSchema.Verdict.NEWER -> return Stored.Newer
+                StoredSchema.Verdict.UNREADABLE -> return Stored.Unreadable
+                StoredSchema.Verdict.USE -> Unit
+            }
+            val userId = record.opt("user_id") as? String ?: return Stored.Unreadable
+            val roleWire = record.opt("role") as? String ?: return Stored.Unreadable
+            val refreshToken = record.opt("refresh_token") as? String ?: return Stored.Unreadable
+            val role = tranUserRoleFromWire(roleWire) ?: return Stored.Unreadable
+            return Stored.Session(StoredSession(userId, role, refreshToken, schema = current.toInt()))
+        }
+    }
+}
+
+/** Seals and opens the vault record: the Keystore in the app; a software key in the JVM suite, which has no Keystore. */
+internal interface VaultCipher {
+    /** Encrypts with a fresh IV the cipher chooses; returns the ciphertext and that IV. */
+    fun seal(plain: ByteArray): Pair<ByteArray, ByteArray>
+
+    /** Decrypts, or throws [GeneralSecurityException] / [ProviderException] when the key is gone or the bytes are not its own. */
+    fun open(ciphertext: ByteArray, iv: ByteArray): ByteArray
+}
+
+/** AES-256-GCM under a non-exportable key in the `"AndroidKeyStore"` (REQ-SEC-020). */
+internal class KeystoreVaultCipher(private val keyAlias: String) : VaultCipher {
+    override fun seal(plain: ByteArray): Pair<ByteArray, ByteArray> {
+        val cipher = Cipher.getInstance(TRANSFORMATION)
+        // The Keystore chooses a fresh random IV for every encryption; callers cannot supply one.
+        cipher.init(Cipher.ENCRYPT_MODE, existingKey() ?: generateKey())
+        return cipher.doFinal(plain) to cipher.iv
+    }
+
+    override fun open(ciphertext: ByteArray, iv: ByteArray): ByteArray {
+        val key = existingKey() ?: throw GeneralSecurityException("vault key missing")
+        val cipher = Cipher.getInstance(TRANSFORMATION)
+        cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(TAG_BITS, iv))
+        return cipher.doFinal(ciphertext)
     }
 
     private fun keyStore(): KeyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
@@ -100,43 +175,10 @@ class KeystoreSessionVault(
             .generateKey()
     }
 
-    companion object {
-        const val PREFERENCES = "tran_session_vault"
-        const val KEY_ALIAS = "tran_session_vault_key"
-        const val KEY_CIPHERTEXT = "ciphertext"
-        const val KEY_IV = "iv"
-        private const val ANDROID_KEYSTORE = "AndroidKeyStore"
-        private const val TRANSFORMATION = "AES/GCM/NoPadding"
-        private const val KEY_BITS = 256
-        private const val TAG_BITS = 128
-
-        private fun encode(bytes: ByteArray): String = Base64.encodeToString(bytes, Base64.NO_WRAP)
-
-        private fun decode(text: String): ByteArray = Base64.decode(text, Base64.NO_WRAP)
-
-        private fun encodeRecord(session: StoredSession): String =
-            JSONObject()
-                .put("schema", tranStoredSessionSchema().toInt())
-                .put("user_id", session.userId)
-                .put("role", session.role.wire)
-                .put("refresh_token", session.refreshToken)
-                .toString()
-
-        private fun decodeRecord(json: String): StoredSession? {
-            val record = JSONObject(json)
-            val schema = if (record.has("schema")) record.getInt("schema") else 1
-            val decision = tranStoredRecordDecision(schema.toUInt(), tranStoredSessionSchema())
-            if (decision == TranStoredRecordAction.DISCARD) {
-                return null
-            }
-            val role = tranUserRoleFromWire(record.getString("role")) ?: return null
-            val currentSchema = tranStoredSessionSchema().toInt()
-            return StoredSession(
-                record.getString("user_id"),
-                role,
-                record.getString("refresh_token"),
-                schema = if (decision == TranStoredRecordAction.UPGRADE) currentSchema else schema
-            )
-        }
+    private companion object {
+        const val ANDROID_KEYSTORE = "AndroidKeyStore"
+        const val TRANSFORMATION = "AES/GCM/NoPadding"
+        const val KEY_BITS = 256
+        const val TAG_BITS = 128
     }
 }

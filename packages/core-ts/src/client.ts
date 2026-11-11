@@ -3,16 +3,18 @@ import {
   checkVoteEligibility,
   formatTraceparent,
   HEALTH_PATH,
-  newTraceContext,
   readApiError,
+  requestSpan,
   SessionClient,
   TranApiError,
+  withTraceparent,
   type VoteEligibilityInput,
   type VoteEligibilityOutput,
 } from '@tran/api';
 import { clientFetch, type ClientFetchOptions } from './compat.js';
 import { RETRY_POLICY } from './generated/feedback.js';
 import { refreshEvent, sessionRecovery } from './session.js';
+import { rememberTrace } from './transport-trace.js';
 import type { TranHealthReport, TranStackInfo } from './types.js';
 
 export { SessionClient, TranApiError };
@@ -22,6 +24,11 @@ export type { RefreshOutcome, SessionUser } from '@tran/api';
 export interface TranCallOptions {
   /** Cancels the call; it then rejects with an `AbortError` (`request.cancelled`, REQ-ROB-006). */
   signal?: AbortSignal;
+  /**
+   * The user action's trace (`withRetry` hands it to the call): this request is a new span of it,
+   * so retries and sibling calls of one action share one trace id (REQ-OBS-010).
+   */
+  traceId?: string;
 }
 
 export interface TranApiClientOptions extends ClientFetchOptions {
@@ -36,7 +43,8 @@ export interface TranApiClientOptions extends ClientFetchOptions {
  * `fetchFn` with a deadline, so only failures of `fetch` itself leave it as transport errors
  * (REQ-ERR-004, REQ-ROB-002): the deadline → `TimeoutError` (`network.timeout`), the caller's
  * signal → `AbortError` (`request.cancelled`), anything else → `NetworkError`
- * (`network.offline`). A `TypeError` from our own code is therefore never "offline".
+ * (`network.offline`). A `TypeError` from our own code is therefore never "offline". Each of these
+ * remembers the trace it was sent with, since no answer will name it (REQ-OBS-011).
  */
 export function timedFetch(fetchFn: typeof fetch, timeoutMs: number): typeof fetch {
   return async (url, init) => {
@@ -52,11 +60,12 @@ export function timedFetch(fetchFn: typeof fetch, timeoutMs: number): typeof fet
     caller?.addEventListener('abort', cancel);
     return fetchFn(url, { ...init, signal: controller.signal })
       .catch((err: unknown) => {
-        if (timedOut) {
-          throw new DOMException(`No response within ${timeoutMs} ms`, 'TimeoutError');
-        }
-        if (caller?.aborted) throw new DOMException('Cancelled by the caller', 'AbortError');
-        throw new DOMException(err instanceof Error ? err.message : 'fetch failed', 'NetworkError');
+        const failure = timedOut
+          ? new DOMException(`No response within ${timeoutMs} ms`, 'TimeoutError')
+          : caller?.aborted
+            ? new DOMException('Cancelled by the caller', 'AbortError')
+            : new DOMException(err instanceof Error ? err.message : 'fetch failed', 'NetworkError');
+        throw rememberTrace(failure, init?.headers);
       })
       .finally(() => {
         clearTimeout(timer);
@@ -108,21 +117,18 @@ export class TranApiClient {
   /** Every call goes through here (see `timedFetch`). */
   private readonly fetchWithTimeout: typeof fetch;
 
-  private async request<T>(path: string, { signal }: TranCallOptions): Promise<T> {
-    const incomingTp = this.headers.traceparent ?? this.headers.Traceparent;
-    const tp = incomingTp ?? formatTraceparent(newTraceContext());
+  private async request<T>(path: string, { signal, traceId }: TranCallOptions): Promise<T> {
+    const span = requestSpan(traceId, this.headers);
     const response = await this.fetchWithTimeout(`${this.baseUrl}${path}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        traceparent: tp,
-        ...this.headers,
-      },
+      headers: withTraceparent(
+        { 'Content-Type': 'application/json', Accept: 'application/json', ...this.headers },
+        formatTraceparent(span)
+      ),
       // Only the auth tree may carry the session cookie (REQ-SEC-018).
       credentials: 'omit',
       signal,
     });
-    if (!response.ok) throw await readApiError(response);
+    if (!response.ok) throw await readApiError(response, span.traceId);
     return (await response.json()) as T;
   }
 
@@ -136,13 +142,14 @@ export class TranApiClient {
 
   public async checkVoteEligibility(
     input: VoteEligibilityInput,
-    { signal }: TranCallOptions = {}
+    { signal, traceId }: TranCallOptions = {}
   ): Promise<VoteEligibilityOutput> {
     return checkVoteEligibility(input, {
       baseUrl: this.baseUrl,
       fetchFn: this.fetchWithTimeout,
       headers: this.headers,
       signal,
+      traceId,
     });
   }
 }

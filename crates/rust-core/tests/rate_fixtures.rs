@@ -55,20 +55,20 @@ fn policy_matches_fixture() {
     // Verifies: REQ-RL-001
     let data = fixture();
     assert_eq!(
-        RATE_POLICY.auth.sustained_per_minute,
+        RATE_POLICY.auth.sustained_per_minute.get(),
         data.policy.auth.sustained_per_minute
     );
-    assert_eq!(RATE_POLICY.auth.burst, data.policy.auth.burst);
+    assert_eq!(RATE_POLICY.auth.burst.get(), data.policy.auth.burst);
     assert_eq!(
-        RATE_POLICY.write.sustained_per_minute,
+        RATE_POLICY.write.sustained_per_minute.get(),
         data.policy.write.sustained_per_minute
     );
-    assert_eq!(RATE_POLICY.write.burst, data.policy.write.burst);
+    assert_eq!(RATE_POLICY.write.burst.get(), data.policy.write.burst);
     assert_eq!(
-        RATE_POLICY.read.sustained_per_minute,
+        RATE_POLICY.read.sustained_per_minute.get(),
         data.policy.read.sustained_per_minute
     );
-    assert_eq!(RATE_POLICY.read.burst, data.policy.read.burst);
+    assert_eq!(RATE_POLICY.read.burst.get(), data.policy.read.burst);
     assert_eq!(RATE_POLICY.max_keys, data.policy.max_keys);
     assert_eq!(RATE_POLICY.max_in_flight, data.policy.max_in_flight);
 }

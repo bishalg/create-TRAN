@@ -3,13 +3,17 @@
 
 import Foundation
 
+/// Typed flag accessors (REQ-CFG-001): a missing or wrong-typed value is the default.
 public enum Flags {
     public static let notifyMeId = "notify_me"
     public static let notifyMeDefault: Bool = false
     public static let notifyMeLive = true
 
     public static func notifyMe(from flags: [String: Any]?) -> Bool {
-        return flags?[notifyMeId] as? Bool ?? notifyMeDefault
+        guard let number = flags?[notifyMeId] as? NSNumber,
+              CFGetTypeID(number) == CFBooleanGetTypeID()
+        else { return notifyMeDefault }
+        return number.boolValue
     }
 
 }

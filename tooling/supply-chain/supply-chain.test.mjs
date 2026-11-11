@@ -5,7 +5,11 @@ import { describe, it } from 'node:test';
 import {
   checkAll,
   dependabotEcosystems,
+  dockerRust,
+  dockerRustProblems,
+  olderThan,
   openEndedOverrides,
+  requiredRust,
   requiredEcosystems,
   securityProblems,
   unexplainedIgnores,
@@ -124,13 +128,66 @@ describe('Dockerfile base images are pinned by digest (REQ-DEP-001)', () => {
       ),
       []
     );
-    assert.deepEqual(
-      unpinnedDockerImages('FROM rust:1.85-alpine AS builder\nFROM alpine:3.21\n'),
-      [
-        'line 1: rust:1.85-alpine is not pinned to a digest (image@sha256:...)',
-        'line 2: alpine:3.21 is not pinned to a digest (image@sha256:...)',
-      ]
-    );
+    assert.deepEqual(unpinnedDockerImages('FROM rust:1.85-alpine AS builder\nFROM alpine:3.21\n'), [
+      'line 1: rust:1.85-alpine is not pinned to a digest (image@sha256:...)',
+      'line 2: alpine:3.21 is not pinned to a digest (image@sha256:...)',
+    ]);
+  });
+});
+
+describe("the image's Rust is new enough for the locked dependencies (REQ-DEP-001)", () => {
+  const pkg = (name, version, rust, source = 'registry') => ({
+    id: `${name} ${version}`,
+    name,
+    version,
+    rust_version: rust,
+    source: source === null ? null : source,
+  });
+  const metadata = {
+    packages: [
+      pkg('api', '0.1.0', null, null),
+      pkg('rusqlite', '0.41.1', '1.89.0'),
+      pkg('sha2', '0.11.1', '1.88'),
+      pkg('loom', '0.7.0', '1.95'),
+    ],
+    resolve: {
+      nodes: [
+        {
+          id: 'api 0.1.0',
+          deps: [
+            { pkg: 'rusqlite 0.41.1', dep_kinds: [{ kind: null }] },
+            { pkg: 'loom 0.7.0', dep_kinds: [{ kind: 'dev' }] },
+          ],
+        },
+        { id: 'rusqlite 0.41.1', deps: [{ pkg: 'sha2 0.11.1', dep_kinds: [{ kind: 'build' }] }] },
+        { id: 'sha2 0.11.1', deps: [] },
+        { id: 'loom 0.7.0', deps: [] },
+      ],
+    },
+  };
+
+  it('REQ-DEP-001 the newest rust-version among normal and build dependencies, not dev ones', () => {
+    assert.deepEqual(requiredRust(metadata), { version: '1.89.0', by: 'rusqlite@0.41.1' });
+    assert.throws(() => requiredRust(metadata, 'web'), /no workspace package "web"/);
+  });
+
+  it('REQ-DEP-001 compares versions numerically, with missing parts as 0', () => {
+    assert.equal(olderThan('1.85', '1.89.0'), true);
+    assert.equal(olderThan('1.100.0', '1.99'), false);
+    assert.equal(olderThan('1.89', '1.89.0'), false);
+  });
+
+  it('REQ-DEP-001 an older builder fails; the same or newer passes', () => {
+    const required = requiredRust(metadata);
+    const from = (tag) => `FROM rust:${tag}@sha256:${'a'.repeat(64)} AS builder\nFROM scratch\n`;
+    assert.equal(dockerRust(from('1.99.1-alpine3.24')), '1.99.1');
+    assert.deepEqual(dockerRustProblems(from('1.85-alpine3.21'), required), [
+      'rust:1.85 is older than 1.89.0, which rusqlite@0.41.1 requires',
+    ]);
+    assert.deepEqual(dockerRustProblems(from('1.89-alpine'), required), []);
+    assert.deepEqual(dockerRustProblems('FROM alpine:3.21\n', required), [
+      'no rust:<version> base image to build the API with',
+    ]);
   });
 });
 

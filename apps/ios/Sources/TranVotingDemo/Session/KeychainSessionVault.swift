@@ -37,25 +37,16 @@ struct KeychainSessionVault: SessionVault {
         guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
             let data = result as? Data
         else { return nil }
-        guard let session = try? JSONDecoder().decode(TranStoredSession.self, from: data) else {
-            // Unreadable: delete it and treat as signed out (REQ-SEC-020).
-            clear()
-            return nil
-        }
-        let decision = tranStoredRecordDecision(schema: UInt32(session.schema), current: tranStoredSessionSchema())
-        switch decision {
-        case .use:
+        switch TranStoredSession.stored(data) {
+        case .session(let session):
+            // An older version is read into the current shape and not written back: a rewrite
+            // (delete, then add) that failed halfway would lose the credential (REQ-DB-012).
             return session
-        case .upgrade:
-            let upgraded = TranStoredSession(
-                schema: Int(tranStoredSessionSchema()),
-                refreshToken: session.refreshToken,
-                userId: session.userId,
-                roleWire: session.roleWire
-            )
-            try? save(upgraded)
-            return upgraded
-        case .discard:
+        case .newer:
+            // A newer app version wrote it: signed out here, left in place for that version.
+            return nil
+        case .unreadable:
+            // Unreadable: delete it and treat as signed out (REQ-SEC-020).
             clear()
             return nil
         }

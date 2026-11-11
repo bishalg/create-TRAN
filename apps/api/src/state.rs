@@ -8,14 +8,16 @@ use rust_core::TranEngine;
 
 use crate::account::{AccountEraser, SessionsOnly};
 use crate::client_versions::ClientThresholds;
-use crate::clock::SystemClock;
+use crate::clock::{Clock, SystemClock};
 use crate::config::{AppConfig, LOCAL_DEV_ORIGINS};
 use crate::config_source::{ConfigSource, FileConfigSource};
 use crate::geo::Cidr;
+use crate::middleware::rate_limit::StoreFailureLog;
 use crate::push::providers::PushProviders;
 use crate::push::Push;
 use crate::rate_limit_store::{MemoryRateLimitStore, RateLimitStore};
 use crate::sessions::Sessions;
+use crate::signed_in::SignedInKeys;
 
 /// What the HTTP edge enforces before any route runs.
 #[derive(Clone)]
@@ -34,8 +36,38 @@ pub struct EdgePolicy {
     pub rate_limit_store: Arc<dyn RateLimitStore>,
     /// Active in-flight requests count for load shedding (REQ-RL-007).
     pub in_flight: Arc<AtomicUsize>,
-    /// Sessions provider for verifying bearer credentials on read/write routes (REQ-RL-003).
-    pub sessions: Sessions,
+    /// The clock buckets are measured on (REQ-RL-002).
+    pub clock: Arc<dyn Clock>,
+    /// The user of each access token this process issued or checked, so a signed-in request is
+    /// counted by user without touching the session store (REQ-RL-003, REQ-RL-004).
+    pub signed_in: Arc<SignedInKeys>,
+    /// Keeps a failing limiter store to one log line per window (REQ-RL-010).
+    pub store_failures: Arc<StoreFailureLog>,
+}
+
+impl EdgePolicy {
+    /// An edge with a fresh limiter for `rate_policy`: an empty store, no request in flight, the
+    /// real clock.
+    pub fn new(
+        allowed_origins: Arc<[String]>,
+        requires_https: bool,
+        client_thresholds: Arc<ClientThresholds>,
+        trusted_proxies: Arc<[Cidr]>,
+        rate_policy: RatePolicy,
+    ) -> Self {
+        Self {
+            allowed_origins,
+            requires_https,
+            client_thresholds,
+            trusted_proxies,
+            rate_policy,
+            rate_limit_store: Arc::new(MemoryRateLimitStore::new(rate_policy.max_keys)),
+            in_flight: Arc::new(AtomicUsize::new(0)),
+            clock: Arc::new(SystemClock),
+            signed_in: Arc::new(SignedInKeys::new(rate_policy.max_keys)),
+            store_failures: Arc::default(),
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -50,10 +82,6 @@ pub struct AppState {
     pub eraser: Arc<dyn AccountEraser>,
     /// The real push senders that are configured; none by default (ADR-0046).
     pub push_providers: Arc<PushProviders>,
-    /// Rate limit bucket store (REQ-RL-006).
-    pub rate_limit_store: Arc<dyn RateLimitStore>,
-    /// Active in-flight requests count for load shedding (REQ-RL-007).
-    pub in_flight: Arc<AtomicUsize>,
     /// Prometheus metrics handle (REQ-OBS-005, REQ-OBS-006).
     pub metrics_handle: metrics_exporter_prometheus::PrometheusHandle,
     /// Whether the server is ready to accept traffic (REQ-OBS-007, REQ-OBS-008).
@@ -68,10 +96,6 @@ impl AppState {
     /// the configured database in its place.
     pub fn new() -> Self {
         let sessions = Sessions::in_memory();
-        let rate_policy = RATE_POLICY;
-        let rate_limit_store: Arc<dyn RateLimitStore> =
-            Arc::new(MemoryRateLimitStore::new(rate_policy.max_keys));
-        let in_flight = Arc::new(AtomicUsize::new(0));
         let metrics_handle = crate::metrics::init_metrics();
         let ready = Arc::new(std::sync::atomic::AtomicBool::new(true));
         let config_source: Arc<dyn ConfigSource> =
@@ -81,36 +105,30 @@ impl AppState {
             engine: Arc::new(TranEngine::new()),
             start_time: Instant::now(),
             allow_debug_headers: true,
-            edge: EdgePolicy {
-                allowed_origins: LOCAL_DEV_ORIGINS.map(str::to_owned).into(),
-                requires_https: false,
-                client_thresholds: Arc::default(),
-                trusted_proxies: Arc::new([]),
-                rate_policy,
-                rate_limit_store: rate_limit_store.clone(),
-                in_flight: in_flight.clone(),
-                sessions: sessions.clone(),
-            },
+            edge: EdgePolicy::new(
+                LOCAL_DEV_ORIGINS.map(str::to_owned).into(),
+                false,
+                Arc::default(),
+                Arc::new([]),
+                RATE_POLICY,
+            ),
             sessions,
             eraser: Arc::new(SessionsOnly),
             push_providers: Arc::new(PushProviders::off()),
-            rate_limit_store,
-            in_flight,
             metrics_handle,
             ready,
             config_source,
         }
     }
 
-    /// A malformed client version threshold counts as none here: [`crate::run_server`] refuses
-    /// to start on one before it builds the state.
+    /// The state `config` describes. Configuration must be valid: [`crate::run_server`] refuses to
+    /// start on any malformed value ([`AppConfig::validate`]) before it builds the state, so the
+    /// fallbacks here (no thresholds, no trusted proxies, the canonical limits) are only reached by
+    /// tests that build a state from a deliberately malformed configuration.
     pub fn from_config(config: &AppConfig) -> Self {
         let trusted = config.trusted_proxies().unwrap_or_default();
         let rate_policy = config.rate_policy().unwrap_or(RATE_POLICY);
         let sessions = Sessions::in_memory();
-        let rate_limit_store: Arc<dyn RateLimitStore> =
-            Arc::new(MemoryRateLimitStore::new(rate_policy.max_keys));
-        let in_flight = Arc::new(AtomicUsize::new(0));
         let config_source: Arc<dyn ConfigSource> = Arc::new(FileConfigSource::new(
             config.remote_config_path.as_ref().map(PathBuf::from),
             Arc::new(SystemClock),
@@ -118,23 +136,18 @@ impl AppState {
 
         Self {
             allow_debug_headers: config.allows_debug_headers(),
-            edge: EdgePolicy {
-                allowed_origins: config.allowed_origins().into(),
-                requires_https: config.requires_https(),
-                client_thresholds: Arc::new(
+            edge: EdgePolicy::new(
+                config.allowed_origins().into(),
+                config.requires_https(),
+                Arc::new(
                     ClientThresholds::from_settings(&config.client_versions).unwrap_or_default(),
                 ),
-                trusted_proxies: Arc::from(trusted),
+                Arc::from(trusted),
                 rate_policy,
-                rate_limit_store: rate_limit_store.clone(),
-                in_flight: in_flight.clone(),
-                sessions: sessions.clone(),
-            },
+            ),
             sessions,
             eraser: Arc::new(SessionsOnly),
             push_providers: Arc::new(PushProviders::off()),
-            rate_limit_store,
-            in_flight,
             config_source,
             ..Self::new()
         }

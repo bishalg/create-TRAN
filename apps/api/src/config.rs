@@ -1,4 +1,5 @@
 use std::env;
+use std::net::SocketAddr;
 
 use rust_core::rate::{ClassPolicy, RatePolicy};
 
@@ -28,7 +29,8 @@ pub const LOCAL_DEV_ORIGINS: [&str; 3] = [
 #[derive(Debug, Clone)]
 pub struct AppConfig {
     pub host: String,
-    pub port: u16,
+    /// `PORT`, as read; [`AppConfig::port`] parses it.
+    pub port: Option<String>,
     pub environment: String,
     /// `CORS_ALLOWED_ORIGINS`, split on commas; `None` when unset or blank.
     pub cors_allowed_origins: Option<Vec<String>>,
@@ -49,11 +51,11 @@ pub struct AppConfig {
     /// `RATE_LIMIT_READ`, as read (REQ-RL-001).
     pub rate_limit_read: Option<String>,
     /// `RATE_MAX_IN_FLIGHT`, as read (REQ-RL-007).
-    pub rate_max_in_flight: Option<usize>,
-    /// `METRICS_ADDR`, private metrics listener address (REQ-OBS-006).
+    pub rate_max_in_flight: Option<String>,
+    /// `METRICS_ADDR`, private metrics listener address, as read (REQ-OBS-006).
     pub metrics_addr: Option<String>,
-    /// `SHUTDOWN_GRACE_MS`, drain window in ms on shutdown (REQ-OBS-008).
-    pub shutdown_grace_ms: u64,
+    /// `SHUTDOWN_GRACE_MS`, drain window in ms on shutdown, as read (REQ-OBS-008).
+    pub shutdown_grace_ms: Option<String>,
     /// `REMOTE_CONFIG_PATH`, path to dynamic JSON feature flag rules file (REQ-CFG-004).
     pub remote_config_path: Option<String>,
 }
@@ -68,9 +70,7 @@ impl AppConfig {
     pub fn from_lookup(lookup: impl Fn(&str) -> Option<String>) -> Self {
         Self {
             host: lookup("HOST").unwrap_or_else(|| "0.0.0.0".to_string()),
-            port: lookup("PORT")
-                .and_then(|p| p.parse::<u16>().ok())
-                .unwrap_or(3001),
+            port: set(lookup("PORT")),
             environment: lookup("APP_ENV").unwrap_or_else(|| "development".to_string()),
             cors_allowed_origins: lookup("CORS_ALLOWED_ORIGINS")
                 .map(|raw| {
@@ -91,25 +91,56 @@ impl AppConfig {
             rate_limit_auth: lookup("RATE_LIMIT_AUTH"),
             rate_limit_write: lookup("RATE_LIMIT_WRITE"),
             rate_limit_read: lookup("RATE_LIMIT_READ"),
-            rate_max_in_flight: lookup("RATE_MAX_IN_FLIGHT").and_then(|s| s.trim().parse().ok()),
-            metrics_addr: lookup("METRICS_ADDR").filter(|s| !s.trim().is_empty()),
-            shutdown_grace_ms: lookup("SHUTDOWN_GRACE_MS")
-                .and_then(|s| s.trim().parse().ok())
-                .unwrap_or(10_000),
+            rate_max_in_flight: set(lookup("RATE_MAX_IN_FLIGHT")),
+            metrics_addr: set(lookup("METRICS_ADDR")),
+            shutdown_grace_ms: set(lookup("SHUTDOWN_GRACE_MS")),
             remote_config_path: lookup("REMOTE_CONFIG_PATH")
                 .map(|s| s.trim().to_string())
                 .filter(|s| !s.is_empty()),
         }
     }
 
-    /// Private metrics listener address if configured (REQ-OBS-006).
-    pub fn metrics_addr(&self) -> Option<&str> {
-        self.metrics_addr.as_deref()
+    /// Every listener and limiter setting the server reads at start, checked: the first malformed
+    /// one, named by its variable and never its value. [`crate::run_server`] and
+    /// `api check-config` refuse on it (`MIGRATE_ON_START` is checked where the database opens).
+    pub fn validate(&self) -> Result<(), String> {
+        self.port()?;
+        self.metrics_addr()?;
+        self.shutdown_grace_ms()?;
+        self.trusted_proxies()?;
+        self.rate_policy()?;
+        Ok(())
     }
 
-    /// Shutdown grace period in ms (REQ-OBS-008).
-    pub fn shutdown_grace_ms(&self) -> u64 {
-        self.shutdown_grace_ms
+    /// `PORT`: unset, `3001`.
+    pub fn port(&self) -> Result<u16, String> {
+        self.port.as_deref().map_or(Ok(3001), |raw| {
+            raw.parse()
+                .map_err(|_| "PORT must be a port number from 0 to 65535".to_string())
+        })
+    }
+
+    /// The private metrics listener's address (REQ-OBS-006): `METRICS_ADDR` as an IP address and
+    /// port; unset or empty, no listener.
+    pub fn metrics_addr(&self) -> Result<Option<SocketAddr>, String> {
+        self.metrics_addr
+            .as_deref()
+            .map(|raw| {
+                raw.parse().map_err(|_| {
+                    "METRICS_ADDR must be an IP address and port, such as 127.0.0.1:9090 \
+                     (unset: no metrics listener)"
+                        .to_string()
+                })
+            })
+            .transpose()
+    }
+
+    /// Shutdown grace period in ms (REQ-OBS-008): `SHUTDOWN_GRACE_MS`; unset, `10000`.
+    pub fn shutdown_grace_ms(&self) -> Result<u64, String> {
+        self.shutdown_grace_ms.as_deref().map_or(Ok(10_000), |raw| {
+            raw.parse()
+                .map_err(|_| "SHUTDOWN_GRACE_MS must be a whole number of milliseconds".to_string())
+        })
     }
 
     /// Where the database is (REQ-DB-001): `DATABASE_URL`, else `data/api.sqlite3`.
@@ -139,7 +170,12 @@ impl AppConfig {
         raw.split(',')
             .map(str::trim)
             .filter(|s| !s.is_empty())
-            .map(|s| Cidr::parse(s).map_err(|e| format!("TRUSTED_PROXIES: {e}")))
+            .map(|s| {
+                Cidr::parse(s).map_err(|_| {
+                    "TRUSTED_PROXIES must be a comma-separated list of IP addresses or CIDR blocks"
+                        .to_string()
+                })
+            })
             .collect()
     }
 
@@ -167,8 +203,12 @@ impl AppConfig {
         )? {
             policy.read = read;
         }
-        if let Some(max) = self.rate_max_in_flight {
-            policy.max_in_flight = max;
+        if let Some(raw) = self.rate_max_in_flight.as_deref() {
+            policy.max_in_flight = raw
+                .parse::<usize>()
+                .ok()
+                .filter(|max| *max > 0)
+                .ok_or_else(|| "RATE_MAX_IN_FLIGHT must be a positive integer".to_string())?;
         }
         Ok(policy)
     }
@@ -222,9 +262,16 @@ impl AppConfig {
         }
     }
 
-    pub fn socket_addr(&self) -> String {
-        format!("{}:{}", self.host, self.port)
+    /// `HOST:PORT`, the public listener's address.
+    pub fn socket_addr(&self) -> Result<String, String> {
+        Ok(format!("{}:{}", self.host, self.port()?))
     }
+}
+
+/// A variable's value, trimmed; unset or blank is `None` (a copied `.env.example` sets many empty).
+fn set(raw: Option<String>) -> Option<String> {
+    raw.map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
 }
 
 fn parse_class_policy(
@@ -238,20 +285,17 @@ fn parse_class_policy(
     if raw.is_empty() {
         return Ok(None);
     }
-    let (sustained_str, burst_str) = match raw.split_once('/') {
-        Some((s, b)) => (s.trim(), Some(b.trim())),
-        None => (raw, None),
+    let invalid =
+        || format!("{var_name} must be <sustained per minute>[/<burst>], both positive integers");
+    let (sustained, burst) = match raw.split_once('/') {
+        Some((sustained, burst)) => (sustained.trim(), burst.trim().parse::<u32>().ok()),
+        None => (raw, Some(fallback.burst.get())),
     };
-    let sustained = sustained_str
-        .parse::<u32>()
-        .map_err(|_| format!("{var_name} must specify a positive integer for sustained rate"))?;
-    let burst = if let Some(b) = burst_str {
-        b.parse::<u32>()
-            .map_err(|_| format!("{var_name} must specify a positive integer for burst"))?
-    } else {
-        fallback.burst
-    };
-    Ok(Some(ClassPolicy::new(sustained, burst)))
+    let sustained = sustained.parse::<u32>().map_err(|_| invalid())?;
+    let burst = burst.ok_or_else(invalid)?;
+    ClassPolicy::new(sustained, burst)
+        .map(Some)
+        .ok_or_else(invalid)
 }
 
 #[cfg(test)]
@@ -270,21 +314,40 @@ mod tests {
     #[test]
     fn defaults_apply_when_nothing_is_set() {
         let cfg = config_from(&[]);
-        assert_eq!(cfg.socket_addr(), "0.0.0.0:3001");
+        assert_eq!(cfg.socket_addr().unwrap(), "0.0.0.0:3001");
+        assert_eq!(cfg.validate(), Ok(()));
         assert_eq!(cfg.environment, "development");
     }
 
     #[test]
     fn values_are_read_from_the_lookup() {
         let cfg = config_from(&[("HOST", "127.0.0.1"), ("PORT", "4000"), ("APP_ENV", "test")]);
-        assert_eq!(cfg.socket_addr(), "127.0.0.1:4000");
+        assert_eq!(cfg.socket_addr().unwrap(), "127.0.0.1:4000");
         assert_eq!(cfg.environment, "test");
     }
 
+    // Verifies: REQ-OBS-006 REQ-OBS-008 REQ-DEP-003
     #[test]
-    fn an_unparsable_port_falls_back_to_the_default() {
-        assert_eq!(config_from(&[("PORT", "not-a-port")]).port, 3001);
-        assert_eq!(config_from(&[("PORT", "99999")]).port, 3001);
+    fn a_malformed_server_setting_is_refused_naming_its_variable_only() {
+        let cases = [
+            ("PORT", "not-a-port"),
+            ("PORT", "99999"),
+            ("METRICS_ADDR", "off"),
+            ("METRICS_ADDR", "localhost"),
+            ("SHUTDOWN_GRACE_MS", "15s"),
+            ("SHUTDOWN_GRACE_MS", "-1"),
+            ("TRUSTED_PROXIES", "10.0.0.0/8, 10.0.0.300"),
+            ("RATE_LIMIT_READ", "0"),
+            ("RATE_MAX_IN_FLIGHT", "lots"),
+            ("RATE_MAX_IN_FLIGHT", "0"),
+        ];
+        for (name, value) in cases {
+            let error = config_from(&[(name, value)]).validate().unwrap_err();
+            assert!(error.starts_with(name), "{name}={value}: {error}");
+            assert!(!error.contains(value), "{name}={value}: {error}");
+        }
+        assert!(config_from(&[("PORT", "x")]).socket_addr().is_err());
+        assert_eq!(config_from(&[("PORT", " ")]).port(), Ok(3001));
     }
 
     // Verifies: REQ-API-006
@@ -391,8 +454,11 @@ mod tests {
     }
 
     #[test]
-    fn from_env_produces_a_usable_address() {
-        assert!(AppConfig::from_env().socket_addr().contains(':'));
+    fn from_env_reads_the_process_environment() {
+        assert_eq!(
+            AppConfig::from_env().host,
+            env::var("HOST").unwrap_or("0.0.0.0".into())
+        );
     }
 
     // Verifies: REQ-RL-003
@@ -421,8 +487,7 @@ mod tests {
     #[test]
     fn rate_policy_reads_defaults_and_overrides() {
         let defaults = config_from(&[]).rate_policy().unwrap();
-        assert_eq!(defaults.auth.sustained_per_minute, 10);
-        assert_eq!(defaults.auth.burst, 5);
+        assert_eq!(defaults, rust_core::rate::RATE_POLICY);
 
         let overridden = config_from(&[
             ("RATE_LIMIT_AUTH", "20/10"),
@@ -432,20 +497,17 @@ mod tests {
         .rate_policy()
         .unwrap();
 
-        assert_eq!(overridden.auth.sustained_per_minute, 20);
-        assert_eq!(overridden.auth.burst, 10);
-        assert_eq!(overridden.write.sustained_per_minute, 80);
-        assert_eq!(overridden.write.burst, 20); // Fallback burst
-        assert_eq!(overridden.read.sustained_per_minute, 400);
-        assert_eq!(overridden.read.burst, 100);
+        assert_eq!(overridden.auth, ClassPolicy::new(20, 10).unwrap());
+        // Fallback burst
+        assert_eq!(overridden.write, ClassPolicy::new(80, 20).unwrap());
+        assert_eq!(overridden.read, ClassPolicy::new(400, 100).unwrap());
 
         assert_eq!(
             config_from(&[("RATE_LIMIT_AUTH", "   ")])
                 .rate_policy()
                 .unwrap()
-                .auth
-                .sustained_per_minute,
-            10
+                .auth,
+            rust_core::rate::RATE_POLICY.auth
         );
         assert!(config_from(&[("RATE_LIMIT_AUTH", "bad")])
             .rate_policy()
@@ -459,6 +521,13 @@ mod tests {
         assert!(config_from(&[("RATE_LIMIT_READ", "bad")])
             .rate_policy()
             .is_err());
+        // Zero would divide by zero in the limiter: refused here, unrepresentable in rust-core.
+        for zero in ["0", "0/5", "10/0", "0/0"] {
+            let error = config_from(&[("RATE_LIMIT_AUTH", zero)])
+                .rate_policy()
+                .unwrap_err();
+            assert!(error.contains("RATE_LIMIT_AUTH"), "{zero}: {error}");
+        }
 
         let with_max = config_from(&[("RATE_MAX_IN_FLIGHT", "50")])
             .rate_policy()
@@ -472,12 +541,15 @@ mod tests {
             ("METRICS_ADDR", "127.0.0.1:9090"),
             ("SHUTDOWN_GRACE_MS", "5000"),
         ]);
-        assert_eq!(cfg.metrics_addr(), Some("127.0.0.1:9090"));
-        assert_eq!(cfg.shutdown_grace_ms(), 5000);
+        assert_eq!(
+            cfg.metrics_addr(),
+            Ok(Some("127.0.0.1:9090".parse().unwrap()))
+        );
+        assert_eq!(cfg.shutdown_grace_ms(), Ok(5000));
 
-        let empty = config_from(&[("METRICS_ADDR", "   ")]);
-        assert_eq!(empty.metrics_addr(), None);
-        assert_eq!(empty.shutdown_grace_ms(), 10_000);
+        let empty = config_from(&[("METRICS_ADDR", "   "), ("SHUTDOWN_GRACE_MS", "")]);
+        assert_eq!(empty.metrics_addr(), Ok(None));
+        assert_eq!(empty.shutdown_grace_ms(), Ok(10_000));
 
         let remote_cfg = config_from(&[("REMOTE_CONFIG_PATH", " /etc/tran/flags.json ")]);
         assert_eq!(

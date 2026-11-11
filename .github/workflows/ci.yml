@@ -87,6 +87,9 @@ jobs:
       - name: The API contract is additive since the last release (ADR-0047)
         run: pnpm run contract:check
 
+      - name: No expired, unread or unknown feature flag; no secret-like flag name (spec 029)
+        run: pnpm run flags:check
+
       - name: Tooling scripts run through symlinked paths; code files stay at or under 800 lines
         run: pnpm run tooling:test
 

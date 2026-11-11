@@ -28,6 +28,8 @@ export default defineConfig({
     {
       name: 'smoke',
       testDir: 'smoke',
+      // The API image has its own config and command (playwright.image.config.ts, pnpm deploy:smoke).
+      testIgnore: 'image.spec.ts',
       fullyParallel: false,
       use: { ...devices['Desktop Chrome'] },
     },

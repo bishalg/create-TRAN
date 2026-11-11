@@ -49,7 +49,27 @@
       "class": "write",
       "takes": [
         { "atMs": 0, "allowed": true, "retryAfter": null },
-        { "atMs": 3600000, "allowed": true, "retryAfter": null }
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": true, "retryAfter": null },
+        { "atMs": 3600000, "allowed": false, "retryAfter": 1 }
       ]
     },
     {

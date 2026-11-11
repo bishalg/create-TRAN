@@ -8,4 +8,3 @@ export * from './compat.js';
 export * from './schemas/info.js';
 export * from './trace.js';
 export * from './schemas/config.js';
-export * from './remote-config.js';

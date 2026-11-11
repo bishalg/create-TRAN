@@ -1,4 +1,4 @@
-// Verifies: REQ-CFG-002 REQ-CFG-005 REQ-CFG-006 REQ-CFG-007 REQ-CFG-008 REQ-DB-011
+// Verifies: REQ-CFG-002 REQ-CFG-005 REQ-CFG-006 REQ-CFG-007 REQ-CFG-008 REQ-DB-011 REQ-DB-012
 import Foundation
 
 /// Remote configuration store for iOS (spec 029, ADR-0048).
@@ -31,22 +31,19 @@ public final class RemoteConfigStore: @unchecked Sendable {
         var initialThresholds: (String?, String?) = (nil, nil)
         var initialVersion = 1
 
-        if let data = userDefaults.data(forKey: storageKey),
-           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            let schema = json["schema"] as? Int ?? 1
-            let decision = tranStoredRecordDecision(schema: UInt32(schema), current: tranStoredConfigSchema())
-            if decision != .discard {
-                if let flags = json["flags"] as? [String: Any] {
-                    for (k, v) in flags {
-                        initial[k] = v
-                    }
-                }
-                if let client = json["client"] as? [String: Any] {
-                    initialThresholds = (client["minimum_version"] as? String, client["recommended_version"] as? String)
-                }
-                if let v = json["config_version"] as? Int {
-                    initialVersion = v
-                }
+        if let data = userDefaults.object(forKey: storageKey) {
+            switch Self.stored(data) {
+            case .config(let flags, let thresholds, let version):
+                initial.merge(flags) { _, stored in stored }
+                initialThresholds = thresholds
+                initialVersion = version ?? initialVersion
+            case .newer:
+                // Left for the app version that wrote it; its ETag must not turn our fetch into a
+                // `304` for a body this build cannot use (REQ-DB-012).
+                userDefaults.removeObject(forKey: etagKey)
+            case .unreadable:
+                userDefaults.removeObject(forKey: storageKey)
+                userDefaults.removeObject(forKey: etagKey)
             }
         }
 
@@ -54,6 +51,44 @@ public final class RemoteConfigStore: @unchecked Sendable {
         self.liveFlags = initial
         self.clientThresholds = initialThresholds
         self.configVersion = initialVersion
+    }
+
+    /// What the stored configuration cache comes to (REQ-DB-011, REQ-DB-012).
+    enum Stored {
+        /// Usable: the current version, or an older one read as it is. Never rewritten on read.
+        case config(flags: [String: Any], thresholds: (String?, String?), version: Int?)
+        /// Written by a newer app version: compiled defaults, the cache left in place.
+        case newer
+        /// Not a configuration this or an earlier release wrote: deleted, compiled defaults.
+        case unreadable
+    }
+
+    /// Reads the cached bytes of any version this or an earlier release wrote. Never traps.
+    static func stored(_ value: Any) -> Stored {
+        guard let data = value as? Data,
+            let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+        else { return .unreadable }
+        switch TranStoredSchema.verdict(json["schema"], current: tranStoredConfigSchema()) {
+        case .newer: return .newer
+        case .unreadable: return .unreadable
+        case .use: break
+        }
+        guard let flags = json["flags"] as? [String: Any] else { return .unreadable }
+        var thresholds: (String?, String?) = (nil, nil)
+        switch json["client"] {
+        case nil, is NSNull: break
+        case let client as [String: Any]:
+            thresholds = (client["minimum_version"] as? String, client["recommended_version"] as? String)
+        default: return .unreadable
+        }
+        var version: Int?
+        if let raw = json["config_version"] {
+            guard let number = raw as? NSNumber, CFGetTypeID(number) != CFBooleanGetTypeID(),
+                !CFNumberIsFloatType(number)
+            else { return .unreadable }
+            version = number.intValue
+        }
+        return .config(flags: flags, thresholds: thresholds, version: version)
     }
 
     /// Whether the notify_me reminder flag is active (live flag) (REQ-CFG-007).

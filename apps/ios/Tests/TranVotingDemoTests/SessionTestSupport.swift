@@ -16,6 +16,8 @@ final class SessionStubProtocol: URLProtocol {
         let authorization: String?
         /// `X-Tran-Client` (REQ-VER-004).
         let client: String?
+        /// `traceparent` (REQ-OBS-010).
+        let traceparent: String?
         let body: [String: String]
         /// The body as sent, for one whose values are not all strings.
         let raw: Data
@@ -53,6 +55,7 @@ final class SessionStubProtocol: URLProtocol {
             path: request.url?.path ?? "",
             authorization: request.value(forHTTPHeaderField: "Authorization"),
             client: request.value(forHTTPHeaderField: ApiContract.clientHeader),
+            traceparent: request.value(forHTTPHeaderField: "traceparent"),
             body: body ?? [:],
             raw: raw
         )
@@ -99,6 +102,16 @@ enum SessionWire {
 
     static func stored(refresh: String = "refresh-0", role: String = "citizen_voter") -> TranStoredSession {
         TranStoredSession(refreshToken: refresh, userId: "voter-001", roleWire: role)
+    }
+}
+
+extension TranRequestFailure {
+    /// The failure without its trace id, for comparing with a fixed answer such as
+    /// `TranSessionClient.expired`; the trace id is asserted on its own (REQ-OBS-011).
+    var untraced: TranRequestFailure {
+        var copy = self
+        copy.traceId = nil
+        return copy
     }
 }
 

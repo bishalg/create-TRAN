@@ -18,7 +18,8 @@ practised on in-memory stores. Rules: [spec 030](./specs/030-persistence-and-mig
 7. **Never block the request runtime** on the database, and bound every wait.
 8. **Store the least, and give it an end date.** Digests instead of tokens; prune expired rows on a schedule.
 9. **Read the schema diff.** `apps/api/schema.sql` changes in the same commit as the migration.
-10. **Version what the device stores.** Use, upgrade or discard; never crash on an old or newer record.
+10. **Version what the device stores.** Use, upgrade or discard; never crash, never rewrite on read, never destroy a
+    newer version's record.
 
 ## Changing the schema
 
@@ -82,6 +83,26 @@ fails when `apps/api/schema.sql` has a column this table does not list, or the t
 | `schema_migrations`    | `version`         | Which migration is applied (REQ-DB-002)                                    | For the life of the database                                                  |
 | `schema_migrations`    | `name`            | Its file name, for messages                                                | For the life of the database                                                  |
 | `schema_migrations`    | `checksum`        | SHA-256 of the file as applied; a changed file stops start-up              | For the life of the database                                                  |
+
+## Records on the device
+
+Each record a client keeps (the session vault, the push registration, the config cache) carries `schema`; none is the
+first release (version 1). What is true today:
+
+- **One rule in the core.** `stored_schema` (which values are versions: whole numbers 1 to 4294967295) and
+  `stored_record(schema, current)` (use, upgrade, discard) live in `crates/rust-core/src/stored_records.rs`; native code
+  calls the decision over UniFFI. Only the decision and the current numbers cross the bridge, never a record, so a
+  refresh token never leaves native code.
+- **Field mapping is per platform.** Each store reads its own bytes (`KeychainSessionVault`, `KeystoreSessionVault`,
+  `TranPushStore`, `PushPreferences`, both `RemoteConfigStore`s). The proof is the fixture: every case in
+  `fixtures/stored-records.json` is written as the real stored item and read back through the real store.
+- **After a read.** Used: left as it is (an upgrade is not written back; the next ordinary write stores the current
+  version). Newer: treated as absent and left for the version that wrote it. Unreadable: deleted (REQ-SEC-020).
+- **Every upgrade is the identity today.** Current is 2 so the upgrade path is exercised; nothing has changed shape.
+
+A fork that changes a record's shape: bump its `CURRENT_*_SCHEMA`, add the step from the previous version in that
+record's reader on each platform (the decision already says `upgrade`), add a fixture case with the old shape and what
+it reads as, and keep every older case. There is no migration framework; the steps are a few lines per platform.
 
 ## Where it lives
 

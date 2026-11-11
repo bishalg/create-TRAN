@@ -1,20 +1,28 @@
-# Hashed assets cached immutably (REQ-DEP-009)
-/assets/*
-  Cache-Control: public, max-age=31536000, immutable
+# Response headers for the static web build (REQ-DEP-009), in the `_headers` format of Netlify and
+# Cloudflare Pages. Hosts merge every rule that matches a path, so no header is set by two rules.
+#
+# Content-Security-Policy here carries only what the page's <meta> policy cannot (`frame-ancestors`)
+# plus directives equal to the meta policy's. Browsers enforce both policies; the meta one (built by
+# apps/web/src/csp/cspPlugin.ts, with the inline script hashes and the API origin) does the rest.
+# apps/web/tests/deploy-headers.test.ts holds the two together.
 
-# HTML entry points revalidate on every load (REQ-DEP-009)
+# Every path, including / and the app's deep links.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Content-Security-Policy: frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'
+
+# The HTML entry points revalidate on every load (a deep link gets the host's default, which on
+# both hosts is the same revalidation).
+/
+  Cache-Control: public, max-age=0, must-revalidate
 /index.html
   Cache-Control: public, max-age=0, must-revalidate
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
-  Content-Security-Policy: default-src 'self'; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';
-
 /account-deletion.html
   Cache-Control: public, max-age=0, must-revalidate
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
-  Content-Security-Policy: default-src 'self'; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';
+
+# Hashed assets never change under their name.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

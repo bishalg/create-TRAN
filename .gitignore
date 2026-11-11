@@ -118,3 +118,6 @@ e2e/conformance/.web-parts/
 data/
 *.sqlite3*
 
+
+# Deploy state on a host (scripts/deploy.sh): current and previous image, proxy slot, env file
+deploy/state/

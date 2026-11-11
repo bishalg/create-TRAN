@@ -13,14 +13,17 @@ use axum::response::{IntoResponse, Response};
 use axum::Json;
 use rust_core::compat::API_BASE_PATH;
 use rust_core::feedback::ErrorCode;
+use rust_core::rate::RouteClass;
 use rust_core::session::SESSION_POLICY;
+use rust_core::trace::bytes_to_hex;
 use rust_core::UserRole;
 use serde::{Deserialize, Serialize};
 
 use crate::error::ApiError;
+use crate::middleware::rate_limit::{check, now_ms};
 use crate::secret::Secret;
 use crate::session_store::{LiveSession, Rotation, SessionUser, StoredSession, Transport};
-use crate::sessions::IssuedTokens;
+use crate::sessions::{digest, IssuedTokens};
 use crate::state::AppState;
 
 /// Name of the cookie that carries the refresh token on the cookie transport.
@@ -143,6 +146,16 @@ fn session_expired() -> ApiError {
     }
 }
 
+/// Notes whose `access` token this is, so the limiter can count its requests by user without
+/// asking the store (REQ-RL-003, REQ-RL-004).
+fn remember(state: &AppState, access: &Secret, user: &SessionUser) {
+    let now = now_ms(&state.edge);
+    state
+        .edge
+        .signed_in
+        .remember(&digest(access.expose()), &user.user_id, now);
+}
+
 /// A refresh token and the transport it arrived on: the cookie wins over the body.
 struct Presented {
     token: Secret,
@@ -188,6 +201,7 @@ pub async fn sign_in(
         .sessions
         .blocking(move |sessions| sessions.sign_in(started))
         .await?;
+    remember(&state, &tokens.access, &session.user);
     Ok(issued(
         StatusCode::CREATED,
         &session,
@@ -232,14 +246,15 @@ impl FromRequestParts<AppState> for Authenticated {
         let Some(token) = token else {
             return Err(Unauthenticated.into_response());
         };
+        let presented = token.clone();
         let found = state
             .sessions
             .blocking(move |sessions| sessions.authenticate(token.expose()))
             .await
             .map_err(|error| ApiError::from(error).into_response())?;
-        found
-            .map(Authenticated)
-            .ok_or_else(|| Unauthenticated.into_response())
+        let live = found.ok_or_else(|| Unauthenticated.into_response())?;
+        remember(state, &presented, &live.session.user);
+        Ok(Authenticated(live))
     }
 }
 
@@ -250,6 +265,10 @@ pub async fn current_session(Authenticated(live): Authenticated) -> Json<UserBod
 
 /// `POST /api/v1/auth/refresh` — spend the refresh token for a new pair (REQ-SEC-009, REQ-SEC-010).
 /// A replay ends the session, with its device registrations, and is logged once.
+///
+/// Besides the address limit every auth route has, the presented token is limited on its own,
+/// before the store is asked, so one stolen token cannot be hammered from many addresses
+/// (REQ-RL-005). A refused or unknown token costs the same as a good one.
 pub async fn refresh(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -257,6 +276,14 @@ pub async fn refresh(
 ) -> Result<Response, ApiError> {
     let requires_https = state.edge.requires_https;
     let presented = presented_refresh(&headers, &body.unwrap_or_default());
+    if let Some(p) = &presented {
+        let key = format!("refresh:{}", bytes_to_hex(&digest(p.token.expose())));
+        let edge = &state.edge;
+        let policy = edge.rate_policy.auth;
+        if let Some(refused) = check(edge, &key, RouteClass::Auth, &policy, now_ms(edge)) {
+            return Ok(refused);
+        }
+    }
     let outcome = match &presented {
         Some(p) => {
             let token = p.token.clone();
@@ -271,7 +298,10 @@ pub async fn refresh(
         tracing::warn!("refresh token replayed; session revoked");
     }
     Ok(match outcome {
-        Ok((session, tokens)) => issued(StatusCode::OK, &session, tokens, requires_https),
+        Ok((session, tokens)) => {
+            remember(&state, &tokens.access, &session.user);
+            issued(StatusCode::OK, &session, tokens, requires_https)
+        }
         Err(_) => {
             let mut response = session_expired().into_response();
             if presented.map(|p| p.via) != Some(Transport::Body) {

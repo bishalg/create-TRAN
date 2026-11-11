@@ -166,11 +166,12 @@ export function useTranApi({
   const fetchStatus = useCallback(async () => {
     setState((prev) => ({ ...prev, isLoading: true }));
     const outcome = await latest('status', (signal) =>
-      withRetry(() => Promise.all([client.getHealth({ signal }), client.getInfo({ signal })]), {
-        idempotent: true,
-        sleep,
-        random,
-      })
+      // One action, one trace: both calls and every retry are spans of it (REQ-OBS-010).
+      withRetry(
+        ({ traceId }) =>
+          Promise.all([client.getHealth({ signal, traceId }), client.getInfo({ signal, traceId })]),
+        { idempotent: true, sleep, random }
+      )
     );
     if (!outcome) return;
     if (outcome.ok) {
@@ -206,7 +207,7 @@ export function useTranApi({
       const scoped =
         headers && Object.keys(headers).length > 0 ? client.withHeaders(headers) : client;
       const outcome = await latest('check', (signal) =>
-        withRetry(() => scoped.checkVoteEligibility({ age }, { signal }), {
+        withRetry(({ traceId }) => scoped.checkVoteEligibility({ age }, { signal, traceId }), {
           // A pure computation: safe to repeat (REQ-ERR-005).
           idempotent: true,
           sleep,

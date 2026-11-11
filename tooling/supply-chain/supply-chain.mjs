@@ -8,13 +8,17 @@
  * - every pnpm override names the vulnerable range as its key, so it expires on its own
  * - every Rust advisory ignored in `.cargo/audit.toml` says why
  * - `SECURITY.md` says how to report and what CI enforces
+ * - `apps/api/Dockerfile` pins its base images by digest, and its Rust is not older than the newest
+ *   `rust-version` among the API's locked dependencies (`cargo metadata`)
  */
+import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const USES = /^\s*-?\s*uses:\s*([^\s#]+)(\s*#.*)?$/;
-const FROM_IMAGE = /^\s*FROM\s+(?:--platform=[^\s]+\s+)?([^\s]+)(?:\s+[aA][sS]\s+[^\s]+)?(\s*#.*)?$/;
+const FROM_IMAGE =
+  /^\s*FROM\s+(?:--platform=[^\s]+\s+)?([^\s]+)(?:\s+[aA][sS]\s+[^\s]+)?(\s*#.*)?$/;
 
 /** Unpinned base images in a Dockerfile (REQ-DEP-001). */
 export function unpinnedDockerImages(dockerfile) {
@@ -31,6 +35,86 @@ export function unpinnedDockerImages(dockerfile) {
     }
   });
   return problems;
+}
+
+/** `1.89` → `[1, 89, 0]`. */
+const parts = (version) => [...version.split('.').map(Number), 0, 0].slice(0, 3);
+/** Whether version `a` is older than `b`. */
+export function olderThan(a, b) {
+  const [x, y] = [parts(a), parts(b)];
+  for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] < y[i];
+  return false;
+}
+
+/** The Rust release of the Dockerfile's `rust:` base image (`rust:1.99.1-alpine…`), or null. */
+export function dockerRust(dockerfile) {
+  const match =
+    /^\s*FROM\s+(?:--platform=\S+\s+)?(?:docker\.io\/)?(?:library\/)?rust:(\d+\.\d+(?:\.\d+)?)\b/m.exec(
+      dockerfile
+    );
+  return match ? match[1] : null;
+}
+
+/**
+ * The newest `rust-version` among the packages a normal build of `pkg` compiles, from `cargo metadata`
+ * JSON: `{ version, by }` (`by` names the package), or null when none declares one.
+ */
+export function requiredRust(metadata, pkg = 'api') {
+  const packages = new Map(metadata.packages.map((p) => [p.id, p]));
+  const nodes = new Map(metadata.resolve.nodes.map((n) => [n.id, n]));
+  const root = metadata.packages.find((p) => p.name === pkg && p.source === null);
+  if (!root) throw new Error(`cargo metadata has no workspace package "${pkg}"`);
+  const seen = new Set();
+  const stack = [root.id];
+  while (stack.length) {
+    const id = stack.pop();
+    if (seen.has(id)) continue;
+    seen.add(id);
+    for (const dep of nodes.get(id)?.deps ?? [])
+      if (dep.dep_kinds.some((k) => k.kind !== 'dev')) stack.push(dep.pkg);
+  }
+  let newest = null;
+  for (const id of seen) {
+    const { rust_version: version, name, version: release } = packages.get(id);
+    if (version && (!newest || olderThan(newest.version, version)))
+      newest = { version, by: `${name}@${release}` };
+  }
+  return newest;
+}
+
+/** Problems with the Dockerfile's Rust against what the dependencies require. */
+export function dockerRustProblems(dockerfile, required) {
+  const rust = dockerRust(dockerfile);
+  if (!rust) return ['no rust:<version> base image to build the API with'];
+  if (required && olderThan(rust, required.version))
+    return [`rust:${rust} is older than ${required.version}, which ${required.by} requires`];
+  return [];
+}
+
+/** `cargo metadata` of the workspace for the image's target; offline first, then from the registry. */
+function cargoMetadata(root) {
+  const args = [
+    'metadata',
+    '--format-version',
+    '1',
+    '--locked',
+    '--filter-platform',
+    'x86_64-unknown-linux-musl',
+  ];
+  const run = (extra) =>
+    JSON.parse(
+      execFileSync('cargo', [...args, ...extra], {
+        cwd: root,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+        maxBuffer: 1 << 28,
+      })
+    );
+  try {
+    return run(['--offline']);
+  } catch {
+    return run([]);
+  }
 }
 
 /** Unpinned or uncommented `uses:` lines of one workflow. */
@@ -138,10 +222,18 @@ export function checkAll(root) {
     ...(exists('SECURITY.md') ? securityProblems(read('SECURITY.md')) : ['SECURITY.md: missing'])
   );
   if (exists('apps/api/Dockerfile')) {
+    const dockerfile = read('apps/api/Dockerfile');
+    errors.push(...unpinnedDockerImages(dockerfile).map((p) => `apps/api/Dockerfile: ${p}`));
+    let required = null;
+    try {
+      required = requiredRust(cargoMetadata(root));
+    } catch (error) {
+      errors.push(
+        `apps/api/Dockerfile: cannot read the Rust the dependencies need (cargo metadata): ${error.message.split('\n')[0]}`
+      );
+    }
     errors.push(
-      ...unpinnedDockerImages(read('apps/api/Dockerfile')).map(
-        (p) => `apps/api/Dockerfile: ${p}`
-      )
+      ...dockerRustProblems(dockerfile, required).map((p) => `apps/api/Dockerfile: ${p}`)
     );
   }
   return errors;

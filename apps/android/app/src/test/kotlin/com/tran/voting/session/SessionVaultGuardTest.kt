@@ -67,10 +67,15 @@ class SessionVaultGuardTest {
         val push = sources.getValue(pushFile)
         val puts = Regex("""\bput\w*\((\w+),\s*([\w.]+)\)""").findAll(push).map { it.groupValues[1] to it.groupValues[2] }.toSet()
         assertEquals(
-            setOf("KEY_INSTALLATION_ID" to "it", "KEY_TOKEN" to "value.token", "KEY_REGISTERED_AT" to "value.registeredAtUnixS"),
+            setOf(
+                "KEY_INSTALLATION_ID" to "it",
+                "KEY_SCHEMA" to "schema",
+                "KEY_TOKEN" to "value.token",
+                "KEY_REGISTERED_AT" to "value.registeredAtUnixS",
+            ),
             puts,
         )
-        assertEquals("nothing else is put", 3, Regex("""\bput\w*\(""").findAll(push).count())
+        assertEquals("nothing else is put", 4, Regex("""\bput\w*\(""").findAll(push).count())
         assertTrue(push.contains("newInstallationId()"))
         assertTrue(push.contains("Context.MODE_PRIVATE"))
         assertFalse("no session reaches it", Regex("""StoredSession|\bSessionVault\b|refreshToken|accessToken""").containsMatchIn(push))

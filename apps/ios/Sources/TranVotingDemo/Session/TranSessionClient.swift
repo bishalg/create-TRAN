@@ -50,8 +50,19 @@ actor TranSessionClient {
     }
 
     /// The answer every expired path ends with; `TranFeedback` presents it as the
-    /// `auth.session_expired` dialog.
+    /// `auth.session_expired` dialog. Without a trace: a restored session found dead at launch.
     static let expired = TranRequestFailure(code: .authSessionExpired, status: 401)
+
+    /// `expired` for the call that ended the session, carrying its trace id, so the logged event
+    /// joins the server's logs as on Android and the web (REQ-OBS-011).
+    static func expired(traceId: String?) -> TranRequestFailure {
+        TranRequestFailure(code: .authSessionExpired, status: 401, traceId: traceId)
+    }
+
+    /// Whether `failure` is the expired answer, whatever call it came from.
+    static func isExpired(_ failure: TranRequestFailure) -> Bool {
+        failure.code == expired.code && failure.status == expired.status
+    }
 
     // MARK: - Sign in and out
 
@@ -64,7 +75,7 @@ actor TranSessionClient {
         let span = TranRetry.newChildSpan(traceId: tid)
         let tp = span.map { formatTraceparentOffline(context: $0) }
         let data = try await send(http.request(.signIn, body: body, traceparent: tp))
-        return try adopt(data, epoch: epoch)
+        return try adopt(data, epoch: epoch, traceId: tid)
     }
 
     /// Clears the vault and the access token first, then revokes on the server. The server call
@@ -118,7 +129,7 @@ actor TranSessionClient {
                 let event = TranSessionEvent.unauthorized(hasRefreshCredential: false, alreadyRetried: false)
                 guard case .signOut = sessionRecovery(event: event) else { throw failure }
                 endSession()
-                throw Self.expired
+                throw Self.expired(traceId: tid)
             }
         }
         _ = try await authorized(.deleteAccount, traceId: traceId)
@@ -140,7 +151,7 @@ actor TranSessionClient {
         do {
             _ = try await authorized(.validateSession)
             return .valid
-        } catch let failure as TranRequestFailure where failure == Self.expired {
+        } catch let failure as TranRequestFailure where Self.isExpired(failure) {
             return .signedOut
         } catch {
             log(TranRequestFailure.classify(error))
@@ -182,7 +193,7 @@ actor TranSessionClient {
             case .signOut:
                 endSession()
                 // Thrown, so the caller logs it: one event (REQ-ROB-007).
-                throw Self.expired
+                throw Self.expired(traceId: tid)
             case .keep:
                 // Not a row of the table for a 401; keep the credential and fail this call.
                 throw TranRequestFailure(code: .clientUnexpected, traceId: tid)
@@ -204,7 +215,7 @@ actor TranSessionClient {
         guard let stored = vault.load() else {
             // Cleared since the call asked; no request is sent.
             endSession()
-            throw Self.expired
+            throw Self.expired(traceId: traceId)
         }
         let started = epoch
         let body = Self.json(["refresh_token": stored.refreshToken])
@@ -222,13 +233,13 @@ actor TranSessionClient {
             switch sessionRecovery(event: event) {
             case .signOut:
                 endSession()
-                throw Self.expired
+                throw Self.expired(traceId: tid)
             case .keep, .refresh:
                 throw failure
             }
         }
         // A 2xx we cannot use keeps the credential, like any other failed refresh.
-        _ = try adopt(data, epoch: started)
+        _ = try adopt(data, epoch: started, traceId: tid)
     }
 
     // MARK: - Plumbing
@@ -263,13 +274,13 @@ actor TranSessionClient {
     }
 
     /// Stores a token pair, unless the session ended while the request was in flight.
-    private func adopt(_ data: Data, epoch started: Int) throws -> TranStoredSession {
+    private func adopt(_ data: Data, epoch started: Int, traceId: String?) throws -> TranStoredSession {
         guard let pair = try? JSONDecoder().decode(TokenPair.self, from: data),
             let refreshToken = pair.refresh_token, TranUserRole(wire: pair.user.role) != nil
         else { throw TranRequestFailure(code: .clientUnexpected) }
         let stored = TranStoredSession(
             refreshToken: refreshToken, userId: pair.user.user_id, roleWire: pair.user.role)
-        guard started == epoch else { throw Self.expired }
+        guard started == epoch else { throw Self.expired(traceId: traceId) }
         do {
             try vault.save(stored)
         } catch {

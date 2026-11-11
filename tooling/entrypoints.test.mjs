@@ -36,7 +36,8 @@ const TOOLS = [
   ['todos/todos.mjs', [], /todos: ok \(\d+ test\(s\) switched off/],
   ['release/release.mjs', ['check'], /release: every version agrees/],
   ['contract/contract.mjs', [], /contract: /],
-  ['flags/flags.mjs', [], /flags:check passed/],
+  // A fixed date: this checks the entry guard, and must not turn red the day a flag expires.
+  ['flags/flags.mjs', ['--today', '2026-11-11'], /flags:check passed/],
 ];
 
 describe('tooling entry points run through a symlinked path', () => {

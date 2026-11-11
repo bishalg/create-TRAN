@@ -6,6 +6,8 @@
  *   high-confidence provider token shapes; findings never print the matched value
  * - env contract: the variables the application code reads and the keys of `.env.example` agree both ways
  * - client names: `VITE_*`, Android `buildConfigField` and custom iOS Info.plist keys carry no secret-like name
+ * - the API image (REQ-DEP-002): `.dockerignore` keeps environments, keys, data and `.git` out of the build
+ *   context at any depth, and `apps/api/Dockerfile` sets no secret-like `ARG` or `ENV`
  *
  * Zero dependencies (ADR-0016): it runs in the pre-commit hook before `pnpm install` is trusted.
  */
@@ -253,6 +255,77 @@ export function ymlInfoProperties(yaml, path = 'apps/ios/project.yml') {
   return names;
 }
 
+/** One `.dockerignore` pattern as a regular expression over a context-relative path. */
+function dockerPattern(pattern) {
+  let source = '';
+  for (let i = 0; i < pattern.length; i++) {
+    const c = pattern[i];
+    if (c === '*' && pattern[i + 1] === '*') {
+      const slash = pattern[i + 2] === '/';
+      source += slash ? '(?:.*/)?' : '.*';
+      i += slash ? 2 : 1;
+    } else if (c === '*') source += '[^/]*';
+    else if (c === '?') source += '[^/]';
+    else source += c.replace(/[.+^${}()|[\]\\]/g, '\\$&');
+  }
+  return new RegExp(`^${source}$`);
+}
+
+/**
+ * Whether Docker leaves `path` out of the build context: the last pattern that matches the path or one
+ * of its folders wins, and `!` re-includes (Docker's `.dockerignore` rules).
+ */
+export function dockerIgnored(dockerignore, path) {
+  const rules = dockerignore
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith('#'))
+    .map((line) => {
+      const negate = line.startsWith('!');
+      const body = (negate ? line.slice(1) : line).trim().replace(/^\/+|\/+$/g, '');
+      return { negate, regex: dockerPattern(body) };
+    });
+  const parts = path.split('/');
+  const candidates = parts.map((_, i) => parts.slice(0, i + 1).join('/'));
+  let ignored = false;
+  for (const { negate, regex } of rules)
+    if (candidates.some((candidate) => regex.test(candidate))) ignored = !negate;
+  return ignored;
+}
+
+/** Paths that must never reach the image build context, at the root and deep inside an allowed folder. */
+export const DOCKER_CONTEXT_SECRETS = [
+  '.env',
+  '.env.production',
+  'apps/api/.env',
+  'crates/rust-core/.env.local',
+  '.git/config',
+  'data/api.sqlite3',
+  'apps/api/data/api.sqlite3',
+  'apps/api/certs/server.pem',
+  'apps/api/server.key',
+  'crates/rust-core/AuthKey_ABC.p8',
+  'apps/api/push.p12',
+  'apps/api/upload.jks',
+  'crates/tran-uniffi/release.keystore',
+  'apps/api/dev.mobileprovision',
+];
+
+/** Problems of the image build: what `.dockerignore` lets in, and secret-like `ARG`/`ENV` (REQ-DEP-002). */
+export function dockerBuildProblems(dockerignore, dockerfile) {
+  const problems = DOCKER_CONTEXT_SECRETS.filter((path) => !dockerIgnored(dockerignore, path)).map(
+    (path) => `.dockerignore: ${path} would enter the image build context`
+  );
+  dockerfile.split('\n').forEach((line, index) => {
+    const match = /^\s*(ARG|ENV)\s+([A-Za-z_][A-Za-z0-9_]*)/.exec(line);
+    if (match && SECRET_LIKE.test(match[2]))
+      problems.push(
+        `apps/api/Dockerfile:${index + 1}: ${match[1]} ${match[2]} looks like a secret`
+      );
+  });
+  return problems;
+}
+
 const git = (...args) => execFileSync('git', args, { maxBuffer: 1 << 28 });
 const lines = (buffer) => buffer.toString('utf8').split('\n').filter(Boolean);
 
@@ -288,6 +361,8 @@ function main(argv) {
     );
     for (const { source, name } of secretLikeNames(clientNames(textFiles, code, example.keys)))
       problems.push(`${source}: ${name} is compiled into a client and looks like a secret`);
+    if (existsSync('apps/api/Dockerfile'))
+      problems.push(...dockerBuildProblems(text('.dockerignore'), text('apps/api/Dockerfile')));
   }
   if (problems.length) {
     console.error(

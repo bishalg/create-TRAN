@@ -61,6 +61,17 @@ final class FeedbackParityTests: XCTestCase {
         )
     }
 
+    // Verifies: REQ-OBS-002
+    func testTheLogLineIsBuiltFromTheRustSchemaOnly() throws {
+        let event = try fixture()["logEvent"] as! [String: Any]
+        let schema = logEvent()
+        XCTAssertEqual(schema.message, event["message"] as? String)
+        XCTAssertEqual(schema.fields, event["fields"] as? [String])
+        // A field the app adds outside the schema fails here.
+        let failure = TranRequestFailure(code: .serverInternal, status: 500, requestId: "r", traceId: "t")
+        XCTAssertEqual(Set(TranFeedback.logFields(failure).keys), Set(schema.fields))
+    }
+
     func testToastDurationsMatchTheFixture() throws {
         let durations = try fixture()["toastDurationsMs"] as! [String: Int]
         for duration in [TranToastDuration.short, .medium, .long] {

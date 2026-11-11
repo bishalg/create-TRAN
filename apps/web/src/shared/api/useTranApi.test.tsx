@@ -72,6 +72,24 @@ describe('useTranApi: startup', () => {
     );
   });
 
+  it('one load is one trace: every call and retry is a span of it, and the banner names it', async () => {
+    // Verifies: REQ-OBS-010 REQ-OBS-011
+    const { api, result } = await ready({ down: true });
+    const sent = api.fetchFn.mock.calls.map(([, init]) =>
+      new Headers((init as RequestInit | undefined)?.headers).get('traceparent')!
+    );
+    expect(sent).toHaveLength(6);
+    const traceIds = new Set(sent.map((tp) => tp.split('-')[1]));
+    const spanIds = new Set(sent.map((tp) => tp.split('-')[2]));
+    expect(traceIds.size).toBe(1);
+    expect(spanIds.size).toBe(6);
+    expect(result.current.banner?.traceId).toBe([...traceIds][0]);
+    expect(console.info).toHaveBeenCalledWith(
+      'request failed',
+      expect.objectContaining({ code: 'network.offline', trace_id: [...traceIds][0] })
+    );
+  });
+
   it('logs a broken health endpoint without calling the server offline', async () => {
     const api = createFakeApi();
     api.fetchFn.mockResolvedValue(envelope(500, 'server.internal', true));

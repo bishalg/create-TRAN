@@ -1,12 +1,11 @@
-// Verifies: REQ-PSH-010 REQ-DB-011
+// Verifies: REQ-PSH-010 REQ-DB-011 REQ-DB-012
 package com.tran.voting.push
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.tran.voting.storage.StoredSchema
 import uniffi.tran_uniffi.TranLastRegistration
-import uniffi.tran_uniffi.TranStoredRecordAction
 import uniffi.tran_uniffi.tranStoredPushSchema
-import uniffi.tran_uniffi.tranStoredRecordDecision
 
 /**
  * [PushStore] in plain `SharedPreferences` (`tran.push`, private to the app). The data-extraction
@@ -23,38 +22,45 @@ class PushPreferences(
             preferences.edit().putString(KEY_INSTALLATION_ID, it).apply()
         }
 
+    /**
+     * The registration the API answered `204` to (REQ-DB-011). An older version is read as it is; a
+     * newer one is left for the app version that wrote it; an unreadable one (a mistyped value, an
+     * invalid `schema`) is removed. Reading never writes, and never throws on a mistyped value.
+     */
     override var lastRegistration: TranLastRegistration?
         get() {
-            val token = preferences.getString(KEY_TOKEN, null) ?: return null
-            if (!preferences.contains(KEY_REGISTERED_AT)) return null
-            val schema = preferences.getInt(KEY_SCHEMA, 1)
-            val decision = tranStoredRecordDecision(schema.toUInt(), tranStoredPushSchema())
-            return when (decision) {
-                TranStoredRecordAction.USE ->
-                    TranLastRegistration(token = token, registeredAtUnixS = preferences.getLong(KEY_REGISTERED_AT, 0))
-                TranStoredRecordAction.UPGRADE -> {
-                    preferences.edit().putInt(KEY_SCHEMA, tranStoredPushSchema().toInt()).apply()
-                    TranLastRegistration(token = token, registeredAtUnixS = preferences.getLong(KEY_REGISTERED_AT, 0))
-                }
-                TranStoredRecordAction.DISCARD -> {
-                    preferences.edit().remove(KEY_SCHEMA).remove(KEY_TOKEN).remove(KEY_REGISTERED_AT).apply()
-                    null
-                }
+            val stored = preferences.all
+            if (REGISTRATION_KEYS.none { it in stored }) return null
+            when (StoredSchema.verdict(KEY_SCHEMA in stored, stored[KEY_SCHEMA], tranStoredPushSchema())) {
+                StoredSchema.Verdict.NEWER -> return null
+                StoredSchema.Verdict.UNREADABLE -> return forget()
+                StoredSchema.Verdict.USE -> Unit
             }
+            val token = stored[KEY_TOKEN] as? String ?: return forget()
+            val registeredAt = when (val at = stored[KEY_REGISTERED_AT]) {
+                is Long -> at
+                is Int -> at.toLong()
+                else -> return forget()
+            }
+            return TranLastRegistration(token = token, registeredAtUnixS = registeredAt)
         }
         set(value) {
+            val schema = tranStoredPushSchema().toInt()
             preferences.edit().apply {
                 if (value == null) {
-                    remove(KEY_SCHEMA)
-                    remove(KEY_TOKEN)
-                    remove(KEY_REGISTERED_AT)
+                    REGISTRATION_KEYS.forEach { remove(it) }
                 } else {
-                    putInt(KEY_SCHEMA, tranStoredPushSchema().toInt())
+                    putInt(KEY_SCHEMA, schema)
                     putString(KEY_TOKEN, value.token)
                     putLong(KEY_REGISTERED_AT, value.registeredAtUnixS)
                 }
             }.apply()
         }
+
+    private fun forget(): TranLastRegistration? {
+        lastRegistration = null
+        return null
+    }
 
     companion object {
         /** The file name `data_extraction_rules.xml` excludes (`tran.push.xml`). */
@@ -63,5 +69,6 @@ class PushPreferences(
         private const val KEY_INSTALLATION_ID = "installation_id"
         private const val KEY_TOKEN = "registered_token"
         private const val KEY_REGISTERED_AT = "registered_at_unix_s"
+        private val REGISTRATION_KEYS = listOf(KEY_SCHEMA, KEY_TOKEN, KEY_REGISTERED_AT)
     }
 }
