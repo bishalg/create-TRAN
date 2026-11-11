@@ -28,5 +28,10 @@
     "file": "packages/create-tran/tests/scaffold-smoke.test.ts",
     "count": 1,
     "reason": "A project scaffolded with --agents none has no .agents/ setup to scaffold from; the template itself always has it, so they run here."
+  },
+  {
+    "file": "e2e/smoke/image.spec.ts",
+    "count": 1,
+    "reason": "The container image smoke test requires a container runtime (Docker) to build and run the image; when absent it is skipped with the reason."
   }
 ]

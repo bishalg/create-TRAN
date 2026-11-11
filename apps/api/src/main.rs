@@ -53,6 +53,11 @@ async fn main() {
                 }
             }
         }
+        // Validate configuration for environment before rollout (REQ-DEP-003).
+        Command::CheckConfig => match commands::check_config(&config) {
+            Ok(msg) => tracing::info!("{msg}"),
+            Err(failure) => exit_with(failure),
+        },
         // Apply or check migrations (docs/PERSISTENCE.md), then exit.
         Command::Migrate { check } => match commands::migrate(&config, check) {
             Ok(done) => tracing::info!("{done}"),

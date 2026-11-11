@@ -1,0 +1,103 @@
+name: Deploy
+
+# REQ-DEP-004: Build once, promote by digest (ADR-0051)
+# REQ-DEP-008: Production deploys are deliberate and gated
+# Staging deploys automatically on tag; production requires manual dispatch and approval.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: 'Environment to deploy'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      image_digest:
+        description: 'Image digest (promoted from staging, required for manual production deploy)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+jobs:
+  build-image:
+    name: Build image once with SBOM and provenance
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
+
+      - name: Log in to Container Registry
+        if: ${{ env.REGISTRY_TOKEN != '' }}
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image once
+        id: build
+        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: ${{ env.REGISTRY_TOKEN != '' }}
+          tags: ghcr.io/${{ github.repository }}/api:${{ github.ref_name }}
+          provenance: mode=max
+          sbom: true
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-staging:
+    name: Deploy to Staging
+    needs: build-image
+    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.target_env == 'staging') }}
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Deploy to staging
+        run: |
+          if [ -z "${{ secrets.DEPLOY_HOST }}" ]; then
+            echo "::notice::Staging host not configured; deploy skipped (TODO(credentials): DEPLOY_HOST, DEPLOY_KEY)"
+            exit 0
+          fi
+          bash scripts/deploy.sh staging "${{ needs.build-image.outputs.digest }}"
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+
+  deploy-production:
+    name: Deploy to Production (Manual approval required)
+    needs: build-image
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.target_env == 'production' }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Deploy to production
+        run: |
+          DIGEST="${{ github.event.inputs.image_digest || needs.build-image.outputs.digest }}"
+          if [ -z "${{ secrets.DEPLOY_HOST }}" ]; then
+            echo "::notice::Production host not configured; deploy skipped (TODO(credentials): DEPLOY_HOST, DEPLOY_KEY)"
+            exit 0
+          fi
+          bash scripts/deploy.sh production "$DIGEST"
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}

@@ -14,6 +14,24 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const USES = /^\s*-?\s*uses:\s*([^\s#]+)(\s*#.*)?$/;
+const FROM_IMAGE = /^\s*FROM\s+(?:--platform=[^\s]+\s+)?([^\s]+)(?:\s+[aA][sS]\s+[^\s]+)?(\s*#.*)?$/;
+
+/** Unpinned base images in a Dockerfile (REQ-DEP-001). */
+export function unpinnedDockerImages(dockerfile) {
+  const problems = [];
+  dockerfile.split('\n').forEach((line, index) => {
+    const match = FROM_IMAGE.exec(line);
+    if (!match) return;
+    const [, image] = match;
+    if (image.toLowerCase() === 'scratch') return;
+    const at = image.indexOf('@');
+    const digest = at < 0 ? '' : image.slice(at + 1);
+    if (!/^sha256:[0-9a-fA-F]{64}$/.test(digest)) {
+      problems.push(`line ${index + 1}: ${image} is not pinned to a digest (image@sha256:...)`);
+    }
+  });
+  return problems;
+}
 
 /** Unpinned or uncommented `uses:` lines of one workflow. */
 export function unpinnedActions(yaml) {
@@ -119,6 +137,13 @@ export function checkAll(root) {
   errors.push(
     ...(exists('SECURITY.md') ? securityProblems(read('SECURITY.md')) : ['SECURITY.md: missing'])
   );
+  if (exists('apps/api/Dockerfile')) {
+    errors.push(
+      ...unpinnedDockerImages(read('apps/api/Dockerfile')).map(
+        (p) => `apps/api/Dockerfile: ${p}`
+      )
+    );
+  }
   return errors;
 }
 

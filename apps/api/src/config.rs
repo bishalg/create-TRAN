@@ -169,7 +169,7 @@ impl AppConfig {
     }
 
     /// `development` and `test`: a developer's machine or CI, not a deployment.
-    fn is_local(&self) -> bool {
+    pub fn is_local(&self) -> bool {
         matches!(self.environment.as_str(), "development" | "test")
     }
 

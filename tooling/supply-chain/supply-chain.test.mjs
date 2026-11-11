@@ -1,4 +1,4 @@
-// Verifies: REQ-SUP-001, REQ-SUP-002, REQ-SUP-003, REQ-SUP-004, REQ-MOB-001
+// Verifies: REQ-SUP-001, REQ-SUP-002, REQ-SUP-003, REQ-SUP-004, REQ-MOB-001, REQ-DEP-001
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { describe, it } from 'node:test';
@@ -10,6 +10,7 @@ import {
   securityProblems,
   unexplainedIgnores,
   unpinnedActions,
+  unpinnedDockerImages,
 } from './supply-chain.mjs';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
@@ -111,6 +112,25 @@ describe('SECURITY.md (REQ-SUP-004)', () => {
       'SECURITY.md: missing section "## Reporting a vulnerability"',
       'SECURITY.md: missing section "## Supported versions"',
     ]);
+  });
+});
+
+describe('Dockerfile base images are pinned by digest (REQ-DEP-001)', () => {
+  it('accepts base images with sha256 digest and rejects unpinned tags or bare names', () => {
+    const sha = 'a'.repeat(64);
+    assert.deepEqual(
+      unpinnedDockerImages(
+        `FROM rust:1.85-alpine@sha256:${sha} AS builder\nFROM alpine:3.21@sha256:${sha}\nFROM scratch\n`
+      ),
+      []
+    );
+    assert.deepEqual(
+      unpinnedDockerImages('FROM rust:1.85-alpine AS builder\nFROM alpine:3.21\n'),
+      [
+        'line 1: rust:1.85-alpine is not pinned to a digest (image@sha256:...)',
+        'line 2: alpine:3.21 is not pinned to a digest (image@sha256:...)',
+      ]
+    );
   });
 });
 

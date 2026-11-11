@@ -20,11 +20,12 @@ use crate::sessions::Sessions;
 
 /// How to call the binary, for an error message.
 pub const USAGE: &str =
-    "usage: api [migrate [--check] | prune | send-test-push …] (no arguments: serve)";
+    "usage: api [check-config | migrate [--check] | prune | send-test-push …] (no arguments: serve)";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Command {
     Serve,
+    CheckConfig,
     Migrate { check: bool },
     Prune,
     SendTestPush,
@@ -35,6 +36,7 @@ pub fn parse(args: &[String]) -> Result<Command, &'static str> {
     let args: Vec<&str> = args.iter().map(String::as_str).collect();
     match args.as_slice() {
         [] => Ok(Command::Serve),
+        ["check-config"] => Ok(Command::CheckConfig),
         ["migrate"] => Ok(Command::Migrate { check: false }),
         ["migrate", "--check"] => Ok(Command::Migrate { check: true }),
         ["prune"] => Ok(Command::Prune),
@@ -131,6 +133,40 @@ pub async fn prune(config: &AppConfig) -> Result<PruneReport, Failure> {
         .map_err(|error| Failure::new(error.to_string()))
 }
 
+/// `api check-config`: validates configuration for the given environment (REQ-DEP-003).
+pub fn check_config(config: &AppConfig) -> Result<String, Failure> {
+    crate::client_versions::ClientThresholds::from_settings(&config.client_versions)
+        .map_err(|error| Failure::new(error.to_string()))?;
+
+    crate::push::providers::PushProviders::from_settings(
+        &config.push,
+        crate::push::providers::Endpoints::real(),
+        Arc::new(SystemClock),
+    )
+    .map_err(|error| Failure::new(error.to_string()))?;
+
+    config.trusted_proxies().map_err(Failure::new)?;
+
+    config.rate_policy().map_err(Failure::new)?;
+
+    config.migrate_on_start().map_err(Failure::new)?;
+
+    if !config.is_local()
+        && (config.cors_allowed_origins.is_none() || config.allowed_origins().is_empty())
+    {
+        return Err(Failure::new(
+            "CORS_ALLOWED_ORIGINS must be set outside development",
+        ));
+    }
+
+    open(config)?;
+
+    Ok(format!(
+        "configuration is valid for environment '{}'",
+        config.environment
+    ))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -139,10 +175,11 @@ mod tests {
         raw.iter().map(|arg| arg.to_string()).collect()
     }
 
-    // Verifies: REQ-DB-003 REQ-DB-009
+    // Verifies: REQ-DB-003 REQ-DB-009 REQ-DEP-003
     #[test]
     fn arguments_name_one_command() {
         assert_eq!(parse(&args(&[])), Ok(Command::Serve));
+        assert_eq!(parse(&args(&["check-config"])), Ok(Command::CheckConfig));
         assert_eq!(
             parse(&args(&["migrate"])),
             Ok(Command::Migrate { check: false })
