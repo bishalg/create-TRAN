@@ -5,7 +5,8 @@
  * `apps/api/tests/contract_test.rs`) with the same files at the last release tag, and fails on a
  * removed route, a removed or renamed response field, a changed type, a new required request
  * field, or a removed request field. A deliberate break goes under a new API version
- * (`/api/v2`), never into an updated snapshot. Plain Node, no dependencies.
+ * (`/api/v2`), never into an updated snapshot. `openapi.json` is compared by declared schema
+ * (`openapi-diff.mjs`, REQ-CON-011). Plain Node, no dependencies.
  *
  *   pnpm contract:check [--base <git ref>]   compare with <ref> (default: the last v* tag)
  */
@@ -13,9 +14,11 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { diffOpenapi } from './openapi-diff.mjs';
 
 export const CONTRACT_DIR = 'fixtures/contract';
 export const FILES = ['routes.json', 'requests.json', 'responses.json'];
+export const OPENAPI = 'openapi.json';
 
 /** The JSON type of `value`, as the problems name it. */
 export function typeOf(value) {
@@ -30,7 +33,8 @@ export function shapeOf(value, path = '', into = new Map()) {
   if (path) add(path, typeOf(value));
   if (Array.isArray(value)) for (const item of value) shapeOf(item, `${path}[]`, into);
   else if (value !== null && typeof value === 'object')
-    for (const [key, item] of Object.entries(value)) shapeOf(item, path ? `${path}.${key}` : key, into);
+    for (const [key, item] of Object.entries(value))
+      shapeOf(item, path ? `${path}.${key}` : key, into);
   return into;
 }
 
@@ -81,7 +85,9 @@ export function diffRequests(before, after) {
       if (spec.required && !old?.required)
         problems.push(`${route}: request field ${name} is newly required`);
       else if (old && old.type !== spec.type)
-        problems.push(`${route}: request field ${name} changed type from ${old.type} to ${spec.type}`);
+        problems.push(
+          `${route}: request field ${name} changed type from ${old.type} to ${spec.type}`
+        );
     }
   }
   for (const [route, fields] of Object.entries(before)) {
@@ -109,7 +115,9 @@ export function compareVersions(versions, read) {
   const problems = [];
   for (const version of versions) {
     const side = (which) =>
-      Object.fromEntries(FILES.map((file) => [file.replace('.json', ''), read(version, file, which)]));
+      Object.fromEntries(
+        FILES.map((file) => [file.replace('.json', ''), read(version, file, which)])
+      );
     const [before, after] = [side('base'), side('tree')];
     if (Object.values(after).some((v) => v === undefined)) {
       problems.push(`${version}: the contract was removed; a version is retired, not deleted`);
@@ -120,8 +128,28 @@ export function compareVersions(versions, read) {
   return problems;
 }
 
+/**
+ * Compares `openapi.json` of every version the base had; `read(version, side)` returns the parsed
+ * document or `undefined`. A base without it is skipped (said through `say`), a tree without it fails.
+ */
+export function compareOpenapi(versions, read, say = console.log) {
+  const problems = [];
+  for (const version of versions) {
+    const [before, after] = [read(version, 'base'), read(version, 'tree')];
+    if (!before) say(`contract: ${version}/${OPENAPI} is not at the base, so it is skipped`);
+    else if (!after)
+      problems.push(`${version} ${OPENAPI}: removed; a version is retired, not deleted`);
+    else problems.push(...diffOpenapi(before, after).map((p) => `${version} ${OPENAPI} ${p}`));
+  }
+  return problems;
+}
+
 function git(root, args) {
-  return execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  return execFileSync('git', args, {
+    cwd: root,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
 }
 
 /** The last release tag, or `undefined` before the first release. */
@@ -154,10 +182,25 @@ function main(root, argv) {
   const versions = listed.split('\n').filter((name) => /^v\d+$/.test(name));
   const read = (version, file, side) => {
     const path = `${CONTRACT_DIR}/${version}/${file}`;
-    if (side === 'tree') return existsSync(join(root, path)) ? JSON.parse(readFileSync(join(root, path), 'utf8')) : undefined;
+    if (side === 'tree')
+      return existsSync(join(root, path))
+        ? JSON.parse(readFileSync(join(root, path), 'utf8'))
+        : undefined;
     return JSON.parse(git(root, ['show', `${base}:${path}`]));
   };
-  const problems = compareVersions(versions, read);
+  const readOpenapi = (version, side) => {
+    const path = `${CONTRACT_DIR}/${version}/${OPENAPI}`;
+    if (side === 'tree')
+      return existsSync(join(root, path))
+        ? JSON.parse(readFileSync(join(root, path), 'utf8'))
+        : undefined;
+    try {
+      return JSON.parse(git(root, ['show', `${base}:${path}`]));
+    } catch {
+      return undefined;
+    }
+  };
+  const problems = [...compareVersions(versions, read), ...compareOpenapi(versions, readOpenapi)];
   for (const problem of problems) console.error(`✗ ${problem}`);
   if (problems.length) {
     console.error(
