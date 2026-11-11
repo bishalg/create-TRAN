@@ -840,6 +840,60 @@ export const SCREENS: readonly Screen[] = [
         "within_ms": 4300
       },
       {
+        "name": "The reminder stays hidden until it is switched on",
+        "verifies": [
+          "REQ-CFG-007"
+        ],
+        "given": [
+          {
+            "session": "citizen_voter"
+          }
+        ],
+        "when": [
+          {
+            "type": {
+              "id": "age-field",
+              "text": "17"
+            }
+          },
+          {
+            "type": {
+              "id": "country-field",
+              "text": "US"
+            }
+          },
+          {
+            "tap": "check-button"
+          }
+        ],
+        "then": [
+          {
+            "text_is": {
+              "id": "offline-result",
+              "key": "eligibility.result.reasonBelow",
+              "args": [
+                {
+                  "name": "age",
+                  "value": "17"
+                },
+                {
+                  "name": "minimumAge",
+                  "value": "18"
+                },
+                {
+                  "name": "country",
+                  "value": "US"
+                }
+              ]
+            }
+          },
+          {
+            "missing": "notify-me-button"
+          }
+        ],
+        "within_ms": 4300
+      },
+      {
         "name": "A 16 year old in Brazil is eligible",
         "verifies": [
           "REQ-NAT-001",

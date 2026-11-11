@@ -7,6 +7,7 @@
 pub mod compat;
 pub mod error;
 pub mod feedback;
+pub mod flags;
 pub mod models;
 pub mod navigation;
 pub mod permissions;
@@ -24,6 +25,7 @@ pub mod validation;
 pub mod voting;
 
 pub use error::{CoreError, CoreResult};
+pub use flags::*;
 pub use models::*;
 pub use navigation::*;
 pub use screens::screens_json_snapshot;

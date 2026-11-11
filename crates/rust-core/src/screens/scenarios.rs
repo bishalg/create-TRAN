@@ -134,6 +134,16 @@ pub const ELIGIBILITY: &[Scenario] = &[
         &[verdict!(BELOW, "17", "18", "US")],
     ),
     Scenario::new(
+        "The reminder stays hidden until it is switched on",
+        &["REQ-CFG-007"],
+        &[VOTER],
+        &[age!("17"), country!("US"), CHECK],
+        &[
+            verdict!(BELOW, "17", "18", "US"),
+            Missing("notify-me-button"),
+        ],
+    ),
+    Scenario::new(
         "A 16 year old in Brazil is eligible",
         ELIGIBLE_CASES,
         &[VOTER],

@@ -6,6 +6,7 @@
 // Verifies: REQ-PRV-003 REQ-PRV-004 REQ-PRV-007
 // Verifies: REQ-PSH-008
 // Verifies: REQ-VER-009
+// Verifies: REQ-CFG-007
 package com.tran.voting.ui
 
 import android.content.res.Configuration

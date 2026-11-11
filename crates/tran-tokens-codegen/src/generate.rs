@@ -5,6 +5,7 @@ use crate::compat_gen::{render_compat_kotlin, render_compat_swift, render_compat
 use crate::config::CodegenPaths;
 use crate::files::read_file;
 use crate::files::GeneratedFile;
+use crate::flags_gen::{render_flags_kotlin, render_flags_swift, render_flags_ts};
 use crate::kotlin::{render_kotlin_strings, render_kotlin_tokens};
 use crate::locales::{
     feedback_message_keys, load_locales, privacy_message_keys, screen_message_keys,
@@ -61,6 +62,7 @@ pub fn generate_from(
         file(core.join("tokens.json"), render_tokens_json(snapshot)),
         file(core.join("tokens.ts"), render_tokens_ts(snapshot)),
         file(core.join("rules.ts"), render_rules_ts()),
+        file(core.join("flags.ts"), render_flags_ts()),
         file(core.join("feedback.ts"), render_feedback_ts()),
         file(
             core.join("screens.ts"),
@@ -76,10 +78,12 @@ pub fn generate_from(
             render_compat_ts(),
         ),
         file(ios.join("ApiContract.swift"), render_compat_swift()),
+        file(ios.join("Flags.swift"), render_flags_swift()),
         file(
             kotlin.join("ApiContract.kt"),
             render_compat_kotlin(kotlin_package),
         ),
+        file(kotlin.join("Flags.kt"), render_flags_kotlin(kotlin_package)),
         file(
             paths.web_generated_dir.join("theme.css"),
             render_theme_css(snapshot),

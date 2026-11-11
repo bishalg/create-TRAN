@@ -44,6 +44,21 @@
   },
   {
     "body": {
+      "client": {
+        "minimum_version": null,
+        "recommended_version": null
+      },
+      "config_version": 1,
+      "flags": {
+        "notify_me": false
+      }
+    },
+    "case": "config",
+    "route": "GET /api/v1/config",
+    "status": 200
+  },
+  {
+    "body": {
       "countries": [
         {
           "country_code": "BR",

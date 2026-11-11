@@ -24,9 +24,9 @@ use crate::error::ApiError;
 use crate::routes::is_product_path;
 
 /// Product routes that answer even a client below its minimum, below [`compat::API_BASE_PATH`]: the
-/// configuration route of spec 029 will be listed here, so an outdated app can still learn that it
+/// configuration route of spec 029 is listed here, so an outdated app can still learn that it
 /// must update (REQ-CFG-002).
-pub const UPGRADE_EXEMPT: [&str; 0] = [];
+pub const UPGRADE_EXEMPT: [&str; 1] = ["/config"];
 
 /// What the access log shows for a client without a version.
 pub const NO_VERSION: &str = "-";

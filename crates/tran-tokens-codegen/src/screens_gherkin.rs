@@ -351,7 +351,7 @@ mod tests {
             }
         }
         // The location and notification scenarios: the web has neither (REQ-PRV-007, ADR-0044).
-        assert_eq!(left_out.len(), 4, "{left_out:?}");
+        assert_eq!(left_out.len(), 5, "{left_out:?}");
         assert!(!SCREENS
             .iter()
             .map(render_screen_feature)

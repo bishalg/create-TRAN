@@ -3,6 +3,7 @@ pub mod client_versions;
 pub mod clock;
 pub mod commands;
 pub mod config;
+pub mod config_source;
 pub mod db;
 pub mod devices;
 pub mod error;

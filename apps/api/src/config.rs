@@ -54,6 +54,8 @@ pub struct AppConfig {
     pub metrics_addr: Option<String>,
     /// `SHUTDOWN_GRACE_MS`, drain window in ms on shutdown (REQ-OBS-008).
     pub shutdown_grace_ms: u64,
+    /// `REMOTE_CONFIG_PATH`, path to dynamic JSON feature flag rules file (REQ-CFG-004).
+    pub remote_config_path: Option<String>,
 }
 
 impl AppConfig {
@@ -94,6 +96,9 @@ impl AppConfig {
             shutdown_grace_ms: lookup("SHUTDOWN_GRACE_MS")
                 .and_then(|s| s.trim().parse().ok())
                 .unwrap_or(10_000),
+            remote_config_path: lookup("REMOTE_CONFIG_PATH")
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty()),
         }
     }
 
@@ -473,5 +478,13 @@ mod tests {
         let empty = config_from(&[("METRICS_ADDR", "   ")]);
         assert_eq!(empty.metrics_addr(), None);
         assert_eq!(empty.shutdown_grace_ms(), 10_000);
+
+        let remote_cfg = config_from(&[("REMOTE_CONFIG_PATH", " /etc/tran/flags.json ")]);
+        assert_eq!(
+            remote_cfg.remote_config_path.as_deref(),
+            Some("/etc/tran/flags.json")
+        );
+        let empty_remote = config_from(&[("REMOTE_CONFIG_PATH", "   ")]);
+        assert_eq!(empty_remote.remote_config_path, None);
     }
 }

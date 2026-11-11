@@ -11,7 +11,7 @@ use chrono::DateTime;
 use rust_core::compat::API_BASE_PATH;
 use rust_core::rate::RouteClass;
 
-use super::{account, auth, devices, tran, vote};
+use super::{account, auth, config, devices, tran, vote};
 use crate::state::AppState;
 
 /// A deprecated route's two dates, in seconds since the Unix epoch (REQ-VER-007). It keeps working
@@ -123,7 +123,7 @@ impl Route {
 
 /// Every product route, in documentation order. No route is deprecated in the sample; mark one
 /// with `deprecated: Some(Sunset { .. })` and the layer announces it (REQ-VER-007).
-pub static ROUTES: [Route; 11] = [
+pub static ROUTES: [Route; 12] = [
     Route::new(Verb::Get, "/tran/info", RouteClass::Read, || {
         get(tran::stack_info_handler)
     }),
@@ -166,6 +166,9 @@ pub static ROUTES: [Route; 11] = [
         RouteClass::Write,
         || delete(devices::unregister),
     ),
+    Route::new(Verb::Get, "/config", RouteClass::Read, || {
+        get(config::config_handler)
+    }),
 ];
 
 /// The route of `table` that answers `method` on `path`, if any.

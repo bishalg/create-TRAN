@@ -1,0 +1,136 @@
+{
+  "$comment": "Feature flags and remote configuration test cases and definitions (spec 029, ADR-0048). Pinned across Rust, UniFFI, TypeScript, iOS, and Android.",
+  "flags": [
+    {
+      "id": "notify_me",
+      "type": "boolean",
+      "defaultValue": false,
+      "live": true,
+      "owner": "growth",
+      "purpose": "Remind voter when registration opens",
+      "expiry": "2027-01-01"
+    }
+  ],
+  "buckets": [
+    {
+      "installationId": "2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c",
+      "bucket": 83
+    },
+    {
+      "installationId": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+      "bucket": 74
+    },
+    {
+      "installationId": "00000000-0000-0000-0000-000000000000",
+      "bucket": 52
+    },
+    {
+      "installationId": "ffffffff-ffff-ffff-ffff-ffffffffffff",
+      "bucket": 4
+    },
+    {
+      "installationId": "  2f1c7a5e-8b0d-4c3e-9f6a-1d2e3f4a5b6c  ",
+      "bucket": 83
+    },
+    {
+      "installationId": "2F1C7A5E-8B0D-4C3E-9F6A-1D2E3F4A5B6C",
+      "bucket": 83
+    }
+  ],
+  "evaluations": [
+    {
+      "name": "no rules returns default",
+      "flag": "notify_me",
+      "rules": [],
+      "client": { "platform": "ios", "version": "1.4.0", "bucket": 10 },
+      "expected": false
+    },
+    {
+      "name": "matching platform rule",
+      "flag": "notify_me",
+      "rules": [{ "platform": "ios", "rollout": 100, "value": true }],
+      "client": { "platform": "ios", "version": "1.0.0", "bucket": 50 },
+      "expected": true
+    },
+    {
+      "name": "non matching platform rule",
+      "flag": "notify_me",
+      "rules": [{ "platform": "android", "rollout": 100, "value": true }],
+      "client": { "platform": "ios", "version": "1.0.0", "bucket": 50 },
+      "expected": false
+    },
+    {
+      "name": "min version rule above min",
+      "flag": "notify_me",
+      "rules": [{ "platform": "ios", "min_version": "1.2.0", "rollout": 100, "value": true }],
+      "client": { "platform": "ios", "version": "1.4.0", "bucket": 50 },
+      "expected": true
+    },
+    {
+      "name": "min version rule below min",
+      "flag": "notify_me",
+      "rules": [{ "platform": "ios", "min_version": "1.2.0", "rollout": 100, "value": true }],
+      "client": { "platform": "ios", "version": "1.1.0", "bucket": 50 },
+      "expected": false
+    },
+    {
+      "name": "min version rule no client version",
+      "flag": "notify_me",
+      "rules": [{ "min_version": "1.2.0", "rollout": 100, "value": true }],
+      "client": { "platform": "unknown", "version": null, "bucket": 50 },
+      "expected": false
+    },
+    {
+      "name": "rollout rule bucket inside",
+      "flag": "notify_me",
+      "rules": [{ "rollout": 50, "value": true }],
+      "client": { "platform": "ios", "version": "1.0.0", "bucket": 25 },
+      "expected": true
+    },
+    {
+      "name": "rollout rule bucket outside",
+      "flag": "notify_me",
+      "rules": [{ "rollout": 50, "value": true }],
+      "client": { "platform": "ios", "version": "1.0.0", "bucket": 75 },
+      "expected": false
+    },
+    {
+      "name": "rollout rule bucket at boundary",
+      "flag": "notify_me",
+      "rules": [{ "rollout": 50, "value": true }],
+      "client": { "platform": "ios", "version": "1.0.0", "bucket": 50 },
+      "expected": false
+    },
+    {
+      "name": "rollout zero percent",
+      "flag": "notify_me",
+      "rules": [{ "rollout": 0, "value": true }],
+      "client": { "platform": "ios", "version": "1.0.0", "bucket": 0 },
+      "expected": false
+    },
+    {
+      "name": "rollout hundred percent",
+      "flag": "notify_me",
+      "rules": [{ "rollout": 100, "value": true }],
+      "client": { "platform": "ios", "version": "1.0.0", "bucket": 99 },
+      "expected": true
+    },
+    {
+      "name": "first matching rule wins",
+      "flag": "notify_me",
+      "rules": [
+        { "platform": "ios", "rollout": 100, "value": true },
+        { "platform": "ios", "rollout": 100, "value": false }
+      ],
+      "client": { "platform": "ios", "version": "1.0.0", "bucket": 10 },
+      "expected": true
+    },
+    {
+      "name": "type mismatch fallback to default",
+      "flag": "notify_me",
+      "rules": [{ "rollout": 100, "value": 123 }],
+      "client": { "platform": "ios", "version": "1.0.0", "bucket": 10 },
+      "expected": false
+    }
+  ]
+}

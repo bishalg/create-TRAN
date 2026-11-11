@@ -227,7 +227,11 @@ async fn a_client_below_its_minimum_gets_426_on_every_product_route() {
     let _turn = SERIAL.lock().await;
     let (captured, _guard) = Captured::install();
     let app = app_with(&THRESHOLDS);
-    for route in &ROUTES {
+    let product_routes: Vec<_> = ROUTES
+        .iter()
+        .filter(|r| r.template() != "/api/v1/config")
+        .collect();
+    for route in &product_routes {
         let path = route
             .template()
             .replace("{code}", "NP")
@@ -247,7 +251,7 @@ async fn a_client_below_its_minimum_gets_426_on_every_product_route() {
         assert!(reply.header("x-tran-update").is_none());
     }
     let failures = captured.named("request failed");
-    assert_eq!(failures.len(), ROUTES.len());
+    assert_eq!(failures.len(), product_routes.len());
     assert!(failures.iter().all(|e| e.level == Level::INFO
         && e.field("code") == Some("client.upgrade_required")
         && e.field("status") == Some("426")

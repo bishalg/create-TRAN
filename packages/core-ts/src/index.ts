@@ -12,4 +12,6 @@ export * from './session.js';
 export * from './permissions.js';
 export * from './push.js';
 export * from './trace.js';
+export * from './flags.js';
+export * from './generated/flags.js';
 export * from './generated/screens.js';

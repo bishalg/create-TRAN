@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::sync::atomic::AtomicUsize;
 use std::sync::Arc;
 use std::time::Instant;
@@ -7,7 +8,9 @@ use rust_core::TranEngine;
 
 use crate::account::{AccountEraser, SessionsOnly};
 use crate::client_versions::ClientThresholds;
+use crate::clock::SystemClock;
 use crate::config::{AppConfig, LOCAL_DEV_ORIGINS};
+use crate::config_source::{ConfigSource, FileConfigSource};
 use crate::geo::Cidr;
 use crate::push::providers::PushProviders;
 use crate::push::Push;
@@ -55,6 +58,8 @@ pub struct AppState {
     pub metrics_handle: metrics_exporter_prometheus::PrometheusHandle,
     /// Whether the server is ready to accept traffic (REQ-OBS-007, REQ-OBS-008).
     pub ready: Arc<std::sync::atomic::AtomicBool>,
+    /// Remote configuration source (REQ-CFG-002, REQ-CFG-004).
+    pub config_source: Arc<dyn ConfigSource>,
 }
 
 impl AppState {
@@ -69,6 +74,8 @@ impl AppState {
         let in_flight = Arc::new(AtomicUsize::new(0));
         let metrics_handle = crate::metrics::init_metrics();
         let ready = Arc::new(std::sync::atomic::AtomicBool::new(true));
+        let config_source: Arc<dyn ConfigSource> =
+            Arc::new(FileConfigSource::new(None, Arc::new(SystemClock)));
 
         Self {
             engine: Arc::new(TranEngine::new()),
@@ -91,6 +98,7 @@ impl AppState {
             in_flight,
             metrics_handle,
             ready,
+            config_source,
         }
     }
 
@@ -103,6 +111,10 @@ impl AppState {
         let rate_limit_store: Arc<dyn RateLimitStore> =
             Arc::new(MemoryRateLimitStore::new(rate_policy.max_keys));
         let in_flight = Arc::new(AtomicUsize::new(0));
+        let config_source: Arc<dyn ConfigSource> = Arc::new(FileConfigSource::new(
+            config.remote_config_path.as_ref().map(PathBuf::from),
+            Arc::new(SystemClock),
+        ));
 
         Self {
             allow_debug_headers: config.allows_debug_headers(),
@@ -123,6 +135,7 @@ impl AppState {
             push_providers: Arc::new(PushProviders::off()),
             rate_limit_store,
             in_flight,
+            config_source,
             ..Self::new()
         }
     }

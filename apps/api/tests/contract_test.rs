@@ -64,6 +64,10 @@ fn cases() -> Vec<(&'static str, Value)> {
             json!({ "method": "GET", "path": "/api/v1/tran/info" }),
         ),
         (
+            "config",
+            json!({ "method": "GET", "path": "/api/v1/config" }),
+        ),
+        (
             "countries",
             json!({ "method": "GET", "path": "/api/v1/vote/countries" }),
         ),

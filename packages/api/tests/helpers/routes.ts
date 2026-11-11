@@ -8,6 +8,7 @@ import { apiPath, HEALTH_PATH } from '../../src/compat.js';
 import { ErrorEnvelopeSchema } from '../../src/schemas/error.js';
 import { HealthReportSchema, StackInfoSchema } from '../../src/schemas/info.js';
 import { SessionTokenSchema, SessionUserSchema } from '../../src/schemas/session.js';
+import { RemoteConfigResponseSchema } from '../../src/schemas/config.js';
 import {
   CountriesSchema,
   CountryVotingAgeSchema,
@@ -17,6 +18,7 @@ import {
 export const SUCCESS_SCHEMAS: Record<string, ZodType> = {
   [`GET ${HEALTH_PATH}`]: HealthReportSchema,
   [`GET ${apiPath('/tran/info')}`]: StackInfoSchema,
+  [`GET ${apiPath('/config')}`]: RemoteConfigResponseSchema,
   [`GET ${apiPath('/vote/countries')}`]: CountriesSchema,
   [`GET ${apiPath('/vote/countries/{code}')}`]: CountryVotingAgeSchema,
   [`POST ${apiPath('/vote/eligibility')}`]: VoteEligibilityOutputSchema,

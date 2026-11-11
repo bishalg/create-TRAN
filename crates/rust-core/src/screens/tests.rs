@@ -630,6 +630,7 @@ fn scenarios_run_only_where_their_elements_and_givens_are() {
     assert_eq!(
         native_only,
         [
+            "The reminder stays hidden until it is switched on",
             "Using my location explains first and Not now changes nothing",
             "Using my location without permission keeps the chosen country",
             "Asking to be notified explains first",

@@ -20,6 +20,9 @@ pub use compat::*;
 mod feedback;
 pub use feedback::*;
 
+mod flags;
+pub use flags::*;
+
 mod permissions;
 pub use permissions::*;
 

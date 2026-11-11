@@ -4,7 +4,7 @@ use std::sync::{Mutex, PoisonError};
 
 use chrono::{DateTime, Duration, Utc};
 
-pub trait Clock: Send + Sync {
+pub trait Clock: std::fmt::Debug + Send + Sync {
     fn now(&self) -> DateTime<Utc>;
 }
 
